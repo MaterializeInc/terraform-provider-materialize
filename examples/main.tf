@@ -16,6 +16,8 @@ provider "materialize" {
   database = local.database
 }
 
+data "materialize_database" "current" {}
+
 # Create a database and schema
 resource "materialize_database" "example_database" {
   name = "example"

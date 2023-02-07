@@ -53,7 +53,10 @@ func (b *SchemaBuilder) Create() string {
 
 func (b *SchemaBuilder) Read() string {
 	return fmt.Sprintf(`
-		SELECT mz_schemas.id, mz_schemas.name, mz_databases.name
+		SELECT
+			mz_schemas.id,
+			mz_schemas.name,
+			mz_databases.name
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_schemas.name = '%s'
