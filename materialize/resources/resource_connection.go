@@ -110,15 +110,13 @@ func (b *ConnectionBuilder) SSHPort(sshPort int) *ConnectionBuilder {
 
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.connectionName, b.schemaName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.schemaName, b.connectionName))
 
-	if b.connectionType != "" {
-		q.WriteString(fmt.Sprintf(` TO %s (`, b.connectionType))
-	}
+	q.WriteString(fmt.Sprintf(` TO %s (`, b.connectionType))
 
 	if b.connectionType == "SSH TUNNEL" {
-		q.WriteString(fmt.Sprintf(`HOST '%s'`, b.sshHost))
-		q.WriteString(fmt.Sprintf(`USER '%s'`, b.sshUser))
+		q.WriteString(fmt.Sprintf(`HOST '%s',`, b.sshHost))
+		q.WriteString(fmt.Sprintf(`USER '%s',`, b.sshUser))
 		q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
 	}
 
@@ -176,20 +174,29 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
-	connectionType := d.Get("connection_type").(string)
 
-	builder := newConnectionBuilder(connectionName, schemaName).ConnectionType(connectionType)
+	builder := newConnectionBuilder(connectionName, schemaName)
 
-	if connectionType == "SSH TUNNEL" {
-		sshHost := d.Get("ssh_host").(string)
-		sshUser := d.Get("ssh_user").(string)
-		sshPort := d.Get("ssh_port").(int)
+	if v, ok := d.GetOk("connection_type"); ok {
+		builder.ConnectionType(v.(string))
+	}
 
-		builder.SSHHost(sshHost).SSHUser(sshUser).SSHPort(sshPort)
+	if v, ok := d.GetOk("ssh_host"); ok {
+		builder.SSHHost(v.(string))
+	}
+
+	if v, ok := d.GetOk("ssh_user"); ok {
+		builder.SSHUser(v.(string))
+	}
+
+	if v, ok := d.GetOk("ssh_port"); ok {
+		builder.SSHPort(v.(int))
 	}
 
 	q := builder.Create()
+
 	ExecResource(conn, q)
+
 	return resourceConnectionRead(ctx, d, meta)
 }
 
