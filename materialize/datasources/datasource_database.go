@@ -10,14 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func Cluster() *schema.Resource {
+func Database() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: clusterRead,
+		ReadContext: databaseRead,
 		Schema: map[string]*schema.Schema{
-			"clusters": {
+			"databases": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The clusters in the account",
+				Description: "The databases in the account",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -35,38 +35,38 @@ func Cluster() *schema.Resource {
 	}
 }
 
-func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*sql.DB)
-	rows, err := conn.Query(`SELECT id, name FROM mz_clusters;`)
+	rows, err := conn.Query(`SELECT * FROM mz_databases;`)
 	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no clusters found in account")
+		log.Printf("[DEBUG] no databases found in account")
 		d.SetId("")
 		return diag.FromErr(err)
 	} else if err != nil {
-		log.Println("[DEBUG] failed to list clusters")
+		log.Println("[DEBUG] failed to list databases")
 		d.SetId("")
 		return diag.FromErr(err)
 	}
 
-	clusterFormats := []map[string]interface{}{}
+	databaseFormats := []map[string]interface{}{}
 	for rows.Next() {
 		var id, name string
 		rows.Scan(&id, &name)
 
-		clusterMap := map[string]interface{}{}
+		databaseMap := map[string]interface{}{}
 
-		clusterMap["id"] = id
-		clusterMap["name"] = name
+		databaseMap["id"] = id
+		databaseMap["name"] = name
 
-		clusterFormats = append(clusterFormats, clusterMap)
+		databaseFormats = append(databaseFormats, databaseMap)
 	}
 
-	if err := d.Set("clusters", clusterFormats); err != nil {
+	if err := d.Set("databases", databaseFormats); err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId("clusters")
+	d.SetId("databases")
 	return diags
 }

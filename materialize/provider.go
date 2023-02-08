@@ -58,7 +58,13 @@ func Provider() *schema.Provider {
 			"materialize_source":          resources.Source(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"materialize_cluster": datasources.DatasourceCluster(),
+			"materialize_cluster":         datasources.Cluster(),
+			"materialize_cluster_replica": datasources.ClusterReplica(),
+			"materialize_database":        datasources.Database(),
+			"materialize_schema":          datasources.Schema(),
+			"materialize_secret":          datasources.Secret(),
+			"materialize_sink":            datasources.Sink(),
+			"materialize_source":          datasources.Source(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
