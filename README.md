@@ -1,5 +1,4 @@
-# terraform-provider-materialize
-# Terraform Provider for Materialize
+# Terraform Provider Materialize
 
 ⚠️⚠️ **WARNING!** ⚠️⚠️ The Terraform Provider for Materialize is under
 active development.
@@ -10,10 +9,6 @@ This repository contains a Terraform provider for the [Materialize platform](htt
 
 * [Terraform](https://www.terraform.io/downloads.html) >= 1.0.3
 * [Go](https://golang.org/doc/install) >= 1.16
-
-## Using the provider
-
-See the Terraform Registry: <https://registry.terraform.io/providers/materializeinc/mzcloud/latest>.
 
 ## Developing the provider
 
@@ -26,8 +21,6 @@ To compile the provider, run `make install`. This will build the provider and pu
 To generate or update documentation, run `go generate`.
 
 To run the full suite of acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
 
 ```sh
 $ make testacc
