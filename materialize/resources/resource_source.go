@@ -33,6 +33,12 @@ func Source() *schema.Resource {
 				Optional:    true,
 				Default:     "public",
 			},
+			"database_name": {
+				Description: "The identifier for the source database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "materialize",
+			},
 			"cluster_name": {
 				Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
 				Type:          schema.TypeString,
@@ -170,6 +176,7 @@ func Source() *schema.Resource {
 type SourceBuilder struct {
 	sourceName               string
 	schemaName               string
+	databaseName             string
 	clusterName              string
 	size                     string
 	connectionType           string
@@ -190,10 +197,11 @@ type SourceBuilder struct {
 	schemaRegistryConnection string
 }
 
-func newSourceBuilder(sourceName, schemaName string) *SourceBuilder {
+func newSourceBuilder(sourceName, schemaName, databaseName string) *SourceBuilder {
 	return &SourceBuilder{
-		sourceName: sourceName,
-		schemaName: schemaName,
+		sourceName:   sourceName,
+		schemaName:   schemaName,
+		databaseName: databaseName,
 	}
 }
 
@@ -289,7 +297,7 @@ func (b *SourceBuilder) SchemaRegistryConnection(s string) *SourceBuilder {
 
 func (b *SourceBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s.%s`, b.schemaName, b.sourceName))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s.%s.%s`, b.databaseName, b.schemaName, b.sourceName))
 
 	if b.connectionType != "" {
 		q.WriteString(fmt.Sprintf(` FROM %s`, b.connectionType))
@@ -374,6 +382,8 @@ func (b *SourceBuilder) Read() string {
 		SELECT
 			mz_sources.id,
 			mz_sources.name,
+			mz_schemas.name,
+			mz_databases.name,
 			mz_sources.type,
 			mz_sources.size,
 			mz_sources.envelope_type,
@@ -382,25 +392,28 @@ func (b *SourceBuilder) Read() string {
 		FROM mz_sources
 		JOIN mz_schemas
 			ON mz_sources.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
 		LEFT JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.name = '%s'
-		AND mz_schemas.name = '%s';
-	`, b.sourceName, b.schemaName)
+		AND mz_schemas.name = '%s'
+		AND mz_databases.name = '%s';
+	`, b.sourceName, b.schemaName, b.databaseName)
 }
 
 func (b *SourceBuilder) Rename(newName string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s.%s RENAME TO %s.%s;`, b.schemaName, b.sourceName, b.schemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName, b.databaseName, b.schemaName, newName)
 }
 
 func (b *SourceBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s.%s SET (SIZE = '%s');`, b.schemaName, b.sourceName, newSize)
+	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s SET (SIZE = '%s');`, b.databaseName, b.schemaName, b.sourceName, newSize)
 }
 
 func (b *SourceBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s.%s;`, b.schemaName, b.sourceName)
+	return fmt.Sprintf(`DROP SOURCE %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName)
 }
 
 func resourceSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -409,12 +422,13 @@ func resourceSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 	conn := meta.(*sql.DB)
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newSourceBuilder(sourceName, schemaName)
+	builder := newSourceBuilder(sourceName, schemaName, databaseName)
 	q := builder.Read()
 
-	var id, name, source_type, size, envelope_type, connection_name, cluster_name string
-	conn.QueryRow(q).Scan(&id, &name, &source_type, &size, &envelope_type, &connection_name, &cluster_name)
+	var id, name, source_type, schema_name, database_name, size, envelope_type, connection_name, cluster_name string
+	conn.QueryRow(q).Scan(&id, &name, &source_type, &schema_name, &database_name, &size, &envelope_type, &connection_name, &cluster_name)
 
 	d.SetId(id)
 
@@ -426,8 +440,9 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newSourceBuilder(sourceName, schemaName)
+	builder := newSourceBuilder(sourceName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		builder.ClusterName(v.(string))
@@ -506,11 +521,12 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any)
 func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sql.DB)
 	schemaName := d.Get("name").(string)
+	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 
-		builder := newSourceBuilder(oldName.(string), schemaName)
+		builder := newSourceBuilder(oldName.(string), schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
 		ExecResource(conn, q)
@@ -520,7 +536,7 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		sourceName := d.Get("sourceName").(string)
 		_, newSize := d.GetChange("size")
 
-		builder := newSourceBuilder(sourceName, schemaName)
+		builder := newSourceBuilder(sourceName, schemaName, databaseName)
 		q := builder.UpdateSize(newSize.(string))
 
 		ExecResource(conn, q)
@@ -535,8 +551,9 @@ func resourceSourceDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	conn := meta.(*sql.DB)
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newSourceBuilder(sourceName, schemaName)
+	builder := newSourceBuilder(sourceName, schemaName, databaseName)
 	q := builder.Drop()
 
 	ExecResource(conn, q)
