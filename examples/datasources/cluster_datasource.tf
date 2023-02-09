@@ -1,1 +1,1 @@
-data "materialize_cluster" "current" {}
+data "materialize_cluster" "all" {}

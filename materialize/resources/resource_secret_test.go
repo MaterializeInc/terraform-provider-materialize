@@ -8,36 +8,44 @@ import (
 
 func TestResourceSecretRead(t *testing.T) {
 	r := require.New(t)
-	b := newSecretBuilder("secret", "schema")
+	b := newSecretBuilder("secret", "schema", "database")
 	r.Equal(`
-		SELECT mz_secrets.id, mz_secrets.name, mz_schemas.name
-		FROM mz_secrets JOIN mz_schemas
+		SELECT
+			mz_secrets.id,
+			mz_secrets.name,
+			mz_schemas.name,
+			mz_databases.name
+		FROM mz_secrets
+		JOIN mz_schemas
 			ON mz_secrets.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_secrets.name = 'secret'
-		AND mz_schemas.name = 'schema';
+		AND mz_schemas.name = 'schema'
+		AND mz_databases.name = 'database';
 	`, b.Read())
 }
 
 func TestResourceSecretCreate(t *testing.T) {
 	r := require.New(t)
-	b := newSecretBuilder("secret", "schema")
-	r.Equal(`CREATE SECRET schema.secret AS decode('c2VjcmV0Cg==', 'base64');`, b.Create(`decode('c2VjcmV0Cg==', 'base64')`))
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`CREATE SECRET database.schema.secret AS decode('c2VjcmV0Cg==', 'base64');`, b.Create(`decode('c2VjcmV0Cg==', 'base64')`))
 }
 
 func TestResourceSecretRename(t *testing.T) {
 	r := require.New(t)
-	b := newSecretBuilder("secret", "schema")
-	r.Equal(`ALTER SECRET schema.secret RENAME TO schema.new_secret;`, b.Rename("new_secret"))
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`ALTER SECRET database.schema.secret RENAME TO database.schema.new_secret;`, b.Rename("new_secret"))
 }
 
 func TestResourceSecretUpdateValue(t *testing.T) {
 	r := require.New(t)
-	b := newSecretBuilder("secret", "schema")
-	r.Equal(`ALTER SECRET schema.secret AS decode('c2VjcmV0Cgdd', 'base64');`, b.UpdateValue(`decode('c2VjcmV0Cgdd', 'base64')`))
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`ALTER SECRET database.schema.secret AS decode('c2VjcmV0Cgdd', 'base64');`, b.UpdateValue(`decode('c2VjcmV0Cgdd', 'base64')`))
 }
 
 func TestResourceSecretDrop(t *testing.T) {
 	r := require.New(t)
-	b := newSecretBuilder("secret", "schema")
-	r.Equal(`DROP SECRET schema.secret;`, b.Drop())
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`DROP SECRET database.schema.secret;`, b.Drop())
 }

@@ -16,16 +16,11 @@ provider "materialize" {
   database = local.database
 }
 
-data "materialize_database" "current" {}
-
-# Create a database and schema
-resource "materialize_database" "example_database" {
-  name = "example"
-}
+data "materialize_secret" "all" {}
 
 resource "materialize_schema" "example_schema" {
   name          = "example"
-  database_name = materialize_database.example_database.name
+  database_name = "materialize"
 }
 
 # Create a cluster and attach two 2xsmall cluster replicas
@@ -48,7 +43,7 @@ resource "materialize_cluster_replica" "example_2_cluster_replica" {
 # Create a load generator source
 resource "materialize_source" "example_source_load_generator" {
   name                = "example"
-  schema_name         = "public"
+  schema_name         = materialize_schema.example_schema.name
   size                = "3xsmall"
   connection_type     = "LOAD GENERATOR"
   load_generator_type = "COUNTER"
@@ -58,6 +53,7 @@ resource "materialize_source" "example_source_load_generator" {
 
 # Create a secret
 resource "materialize_secret" "example_secret" {
-  name  = "example"
-  value = "decode('c2VjcmV0Cg==', 'base64')"
+  name        = "example"
+  schema_name = materialize_schema.example_schema.name
+  value       = "decode('c2VjcmV0Cg==', 'base64')"
 }

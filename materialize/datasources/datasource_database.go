@@ -39,7 +39,7 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	var diags diag.Diagnostics
 
 	conn := meta.(*sql.DB)
-	rows, err := conn.Query(`SELECT * FROM mz_databases;`)
+	rows, err := conn.Query(`SELECT id, name FROM mz_databases;`)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Printf("[DEBUG] no databases found in account")
 		d.SetId("")

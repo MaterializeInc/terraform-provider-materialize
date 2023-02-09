@@ -1,1 +1,1 @@
-data "materialize_database" "current" {}
+data "materialize_database" "all" {}

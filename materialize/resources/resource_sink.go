@@ -22,15 +22,21 @@ func Sink() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description: "The identifier for the secret.",
+				Description: "The identifier for the sink.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"schema_name": {
-				Description: "The identifier for the secret schema.",
+				Description: "The identifier for the sink schema.",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "public",
+			},
+			"database_name": {
+				Description: "The identifier for the sink database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "materialize",
 			},
 			"cluster_name": {
 				Description:   "The cluster to maintain this sink. If not specified, the size option must be specified.",
@@ -93,6 +99,7 @@ func Sink() *schema.Resource {
 type SinkBuilder struct {
 	sinkName                 string
 	schemaName               string
+	databaseName             string
 	clusterName              string
 	size                     string
 	itemName                 string
@@ -103,10 +110,11 @@ type SinkBuilder struct {
 	schemaRegistryConnection string
 }
 
-func newSinkBuilder(sinkName, schemaName string) *SinkBuilder {
+func newSinkBuilder(sinkName, schemaName, databaseName string) *SinkBuilder {
 	return &SinkBuilder{
-		sinkName:   sinkName,
-		schemaName: schemaName,
+		sinkName:     sinkName,
+		schemaName:   schemaName,
+		databaseName: databaseName,
 	}
 }
 
@@ -152,7 +160,7 @@ func (b *SinkBuilder) SchemaRegistryConnection(s string) *SinkBuilder {
 
 func (b *SinkBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SINK %s.%s FROM %s`, b.schemaName, b.sinkName, b.itemName))
+	q.WriteString(fmt.Sprintf(`CREATE SINK %s.%s.%s FROM %s`, b.databaseName, b.schemaName, b.sinkName, b.itemName))
 
 	// Broker
 	if b.kafkaConnection != "" {
@@ -192,6 +200,8 @@ func (b *SinkBuilder) Read() string {
 		SELECT
 			mz_sinks.id,
 			mz_sinks.name,
+			mz_schemas.name,
+			mz_databases.name,
 			mz_sinks.type,
 			mz_sinks.size,
 			mz_sinks.envelope_type,
@@ -200,25 +210,28 @@ func (b *SinkBuilder) Read() string {
 		FROM mz_sinks
 		JOIN mz_schemas
 			ON mz_sinks.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sinks.connection_id = mz_connections.id
 		LEFT JOIN mz_clusters
 			ON mz_sinks.cluster_id = mz_clusters.id
 		WHERE mz_sinks.name = '%s'
-		AND mz_schemas.name = '%s';
-	`, b.sinkName, b.schemaName)
+		AND mz_schemas.name = '%s'
+		AND mz_databases.name = '%s';
+	`, b.sinkName, b.schemaName, b.databaseName)
 }
 
 func (b *SinkBuilder) Rename(newName string) string {
-	return fmt.Sprintf(`ALTER SINK %s.%s RENAME TO %s.%s;`, b.schemaName, b.sinkName, b.schemaName, newName)
+	return fmt.Sprintf(`ALTER SINK %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName, b.databaseName, b.schemaName, newName)
 }
 
 func (b *SinkBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s.%s SET (SIZE = '%s');`, b.schemaName, b.sinkName, newSize)
+	return fmt.Sprintf(`ALTER SINK %s.%s.%s SET (SIZE = '%s');`, b.databaseName, b.schemaName, b.sinkName, newSize)
 }
 
 func (b *SinkBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SINK %s.%s;`, b.schemaName, b.sinkName)
+	return fmt.Sprintf(`DROP SINK %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName)
 }
 
 func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -226,8 +239,9 @@ func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newSinkBuilder(sinkName, schemaName)
+	builder := newSinkBuilder(sinkName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		builder.ClusterName(v.(string))
@@ -273,12 +287,13 @@ func resourceSinkRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 	conn := meta.(*sql.DB)
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newSinkBuilder(sinkName, schemaName)
+	builder := newSinkBuilder(sinkName, schemaName, databaseName)
 	q := builder.Read()
 
-	var id, name, sink_type, size, envelope_type, connection_name, cluster_name string
-	conn.QueryRow(q).Scan(&id, &name, &sink_type, &size, &envelope_type, &connection_name, &cluster_name)
+	var id, name, schema_name, database_name, sink_type, size, envelope_type, connection_name, cluster_name string
+	conn.QueryRow(q).Scan(&id, &name, &schema_name, &database_name, &sink_type, &size, &envelope_type, &connection_name, &cluster_name)
 
 	d.SetId(id)
 
@@ -288,11 +303,12 @@ func resourceSinkRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sql.DB)
 	schemaName := d.Get("name").(string)
+	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 
-		builder := newSinkBuilder(oldName.(string), schemaName)
+		builder := newSinkBuilder(oldName.(string), schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
 		ExecResource(conn, q)
@@ -302,7 +318,7 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		sourceName := d.Get("sourceName").(string)
 		_, newSize := d.GetChange("size")
 
-		builder := newSinkBuilder(sourceName, schemaName)
+		builder := newSinkBuilder(sourceName, schemaName, databaseName)
 		q := builder.UpdateSize(newSize.(string))
 
 		ExecResource(conn, q)
@@ -317,8 +333,9 @@ func resourceSinkDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	conn := meta.(*sql.DB)
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newSinkBuilder(sinkName, schemaName)
+	builder := newSinkBuilder(sinkName, schemaName, databaseName)
 	q := builder.Drop()
 
 	ExecResource(conn, q)

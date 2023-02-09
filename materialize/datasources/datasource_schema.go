@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,6 +16,11 @@ func Schema() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: schemaRead,
 		Schema: map[string]*schema.Schema{
+			"database_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Limit schemas to a specific database",
+			},
 			"schemas": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -39,18 +46,34 @@ func Schema() *schema.Resource {
 	}
 }
 
-func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
-	rows, err := conn.Query(`
+func schemaQuery(databaseName string) string {
+	q := strings.Builder{}
+	q.WriteString(`
 		SELECT
 			mz_schemas.id,
 			mz_schemas.name,
 			mz_databases.name
 		FROM mz_schemas JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id;
+			ON mz_schemas.database_id = mz_databases.id
 	`)
+
+	if databaseName != "" {
+		q.WriteString(fmt.Sprintf(`WHERE mz_databases.name = '%s'`, databaseName))
+	}
+
+	q.WriteString(`;`)
+	return q.String()
+}
+
+func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	conn := meta.(*sql.DB)
+
+	databaseName := d.Get("database_name").(string)
+	q := schemaQuery(databaseName)
+
+	rows, err := conn.Query(q)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Printf("[DEBUG] no schemas found in account")
 		d.SetId("")
@@ -79,6 +102,12 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	d.SetId("schemas")
+	if databaseName != "" {
+		id := fmt.Sprintf("%s|schemas", databaseName)
+		d.SetId(id)
+	} else {
+		d.SetId("schemas")
+	}
+
 	return diags
 }
