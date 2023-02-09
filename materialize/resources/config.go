@@ -3,7 +3,9 @@ package resources
 var connectionTypes = []string{
 	"KAFKA",
 	"POSTGRES",
-	"LOAD GENERATOR",
+	"AWS PRIVATELINK",
+	"SSH TUNNEL",
+	"CONFLUENT SCHEMA REGISTRY",
 }
 
 var envelopes = []string{
@@ -35,6 +37,18 @@ var replicaSizes = []string{
 	"x4large",
 	"x5large",
 	"x6large",
+}
+
+var saslMechanisms = []string{
+	"PLAIN",
+	"SCRAM-SHA-256",
+	"SCRAM-SHA-512",
+}
+
+var sourceConnectionTypes = []string{
+	"KAFKA",
+	"POSTGRES",
+	"LOAD GENERATOR",
 }
 
 var sourceSizes = []string{
