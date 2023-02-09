@@ -105,7 +105,6 @@ func Connection() *schema.Resource {
 					"postgres_user",
 					"postgres_password",
 				},
-				Default: 5432,
 			},
 			"postgres_user": {
 				Description: "The Postgres database username.",
@@ -153,13 +152,70 @@ func Connection() *schema.Resource {
 				Description: "The SSL mode for the Postgres database.",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "disable",
 			},
 			"postgres_aws_privatelink": {
 				Description: "The AWS PrivateLink configuration for the Postgres database.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"kafka_broker": {
+				Description:   "The Kafka broker configuration.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"kafka_brokers"},
+			},
+			"kafka_brokers": {
+				Description:   "The Kafka brokers configuration.",
+				Type:          schema.TypeList,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				ConflictsWith: []string{"kafka_broker"},
+			},
+			"kafka_progress_topic": {
+				Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"kafka_ssl_ca": {
+				Description: "The CA certificate for the Kafka broker.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"kafka_ssl_cert": {
+				Description: "The client certificate for the Kafka broker.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"kafka_ssl_key": {
+				Description: "The client key for the Kafka broker.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"kafka_sasl_mechanisms": {
+				Description:  "The SASL mechanism for the Kafka broker.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(saslMechanisms, true),
+				RequiredWith: []string{"kafka_sasl_username", "kafka_sasl_password"},
+			},
+			"kafka_sasl_username": {
+				Description:  "The SASL username for the Kafka broker.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"kafka_sasl_password", "kafka_sasl_mechanisms"},
+			},
+			"kafka_sasl_password": {
+				Description:  "The SASL password for the Kafka broker.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"kafka_sasl_username", "kafka_sasl_mechanisms"},
+			},
+			"kafka_ssh_tunnel": {
+				Description: "The SSH tunnel configuration for the Kafka broker.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			// TODO: Add support for Kafka AWS PrivateLink
 		},
 	}
 }
@@ -184,6 +240,16 @@ type ConnectionBuilder struct {
 	postgresSSLKey               string
 	postgresSSLMode              string
 	postgresAWSPrivateLink       string
+	kafkaBroker                  string
+	kafkaBrokers                 []string
+	kafkaProgressTopic           string
+	kafkaSSLCa                   string
+	kafkaSSLCert                 string
+	kafkaSSLKey                  string
+	kafkaSASLMechanisms          string
+	kafkaSASLUsername            string
+	kafkaSASLPassword            string
+	kafkaSSHTunnel               string
 }
 
 func newConnectionBuilder(connectionName, schemaName string) *ConnectionBuilder {
@@ -288,6 +354,56 @@ func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string
 	return b
 }
 
+func (b *ConnectionBuilder) KafkaBroker(kafkaBroker string) *ConnectionBuilder {
+	b.kafkaBroker = kafkaBroker
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []string) *ConnectionBuilder {
+	b.kafkaBrokers = kafkaBrokers
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaProgressTopic(kafkaProgressTopic string) *ConnectionBuilder {
+	b.kafkaProgressTopic = kafkaProgressTopic
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSSLCa(kafkaSSLCa string) *ConnectionBuilder {
+	b.kafkaSSLCa = kafkaSSLCa
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSSLCert(kafkaSSLCert string) *ConnectionBuilder {
+	b.kafkaSSLCert = kafkaSSLCert
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSSLKey(kafkaSSLKey string) *ConnectionBuilder {
+	b.kafkaSSLKey = kafkaSSLKey
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSASLMechanisms(kafkaSASLMechanisms string) *ConnectionBuilder {
+	b.kafkaSASLMechanisms = kafkaSASLMechanisms
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSASLUsername(kafkaSASLUsername string) *ConnectionBuilder {
+	b.kafkaSASLUsername = kafkaSASLUsername
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSASLPassword(kafkaSASLPassword string) *ConnectionBuilder {
+	b.kafkaSASLPassword = kafkaSASLPassword
+	return b
+}
+
+func (b *ConnectionBuilder) KafkaSSHTunnel(kafkaSSHTunnel string) *ConnectionBuilder {
+	b.kafkaSSHTunnel = kafkaSSHTunnel
+	return b
+}
+
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.schemaName, b.connectionName))
@@ -334,6 +450,48 @@ func (b *ConnectionBuilder) Create() string {
 		}
 
 		q.WriteString(fmt.Sprintf(`DATABASE '%s'`, b.postgresDatabase))
+	}
+
+	if b.connectionType == "KAFKA" {
+		if b.kafkaBroker != "" {
+			q.WriteString(fmt.Sprintf(`BROKER '%s',`, b.kafkaBroker))
+		}
+		if b.kafkaBrokers != nil {
+			if b.kafkaSSHTunnel != "" {
+				q.WriteString(`BROKERS (`)
+				for i, broker := range b.kafkaBrokers {
+					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker, b.kafkaSSHTunnel))
+					if i < len(b.kafkaBrokers)-1 {
+						q.WriteString(`,`)
+					}
+				}
+				q.WriteString(`),`)
+			} else {
+				q.WriteString(fmt.Sprintf(`BROKERS (%s),`, strings.Join(b.kafkaBrokers, ",")))
+			}
+		}
+		if b.kafkaProgressTopic != "" {
+			q.WriteString(fmt.Sprintf(`PROGRESS TOPIC '%s',`, b.kafkaProgressTopic))
+		}
+		if b.kafkaSSLCa != "" {
+			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE AUTHORITY SECRET %s,`, b.kafkaSSLCa))
+		}
+		if b.kafkaSSLCert != "" {
+			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE SECRET %s,`, b.kafkaSSLCert))
+		}
+		if b.kafkaSSLKey != "" {
+			q.WriteString(fmt.Sprintf(`SSL KEY SECRET %s,`, b.kafkaSSLKey))
+		}
+		if b.kafkaSASLMechanisms != "" {
+			q.WriteString(fmt.Sprintf(`SASL MECHANISMS '%s',`, b.kafkaSASLMechanisms))
+		}
+		if b.kafkaSASLUsername != "" {
+			q.WriteString(fmt.Sprintf(`SASL USERNAME '%s',`, b.kafkaSASLUsername))
+		}
+		if b.kafkaSASLPassword != "" {
+			q.WriteString(fmt.Sprintf(`SASL PASSWORD SECRET %s`, b.kafkaSASLPassword))
+		}
+
 	}
 
 	q.WriteString(`);`)
@@ -459,6 +617,46 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	if v, ok := d.GetOk("postgres_ssh_tunnel"); ok {
 		builder.PostgresSSHTunnel(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_broker"); ok {
+		builder.KafkaBroker(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_brokers"); ok {
+		builder.KafkaBrokers(v.([]string))
+	}
+
+	if v, ok := d.GetOk("kafka_progress_topic"); ok {
+		builder.KafkaProgressTopic(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_ssl_ca"); ok {
+		builder.KafkaSSLCa(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_ssl_cert"); ok {
+		builder.KafkaSSLCert(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_ssl_key"); ok {
+		builder.KafkaSSLKey(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_sasl_mechanisms"); ok {
+		builder.KafkaSASLMechanisms(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_sasl_username"); ok {
+		builder.KafkaSASLUsername(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_sasl_password"); ok {
+		builder.KafkaSASLPassword(v.(string))
+	}
+
+	if v, ok := d.GetOk("kafka_ssh_tunnel"); ok {
+		builder.KafkaSSHTunnel(v.(string))
 	}
 
 	q := builder.Create()

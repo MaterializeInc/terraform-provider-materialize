@@ -4,7 +4,7 @@ var connectionTypes = []string{
 	"KAFKA",
 	"POSTGRES",
 	"LOAD GENERATOR",
-	"AWS PRIVATELINK"
+	"AWS PRIVATELINK",
 	"SSH TUNNEL",
 	"CONFLUENT SCHEMA REGISTRY",
 }
@@ -38,6 +38,12 @@ var replicaSizes = []string{
 	"x4large",
 	"x5large",
 	"x6large",
+}
+
+var saslMechanisms = []string{
+	"PLAIN",
+	"SCRAM-SHA-256",
+	"SCRAM-SHA-512",
 }
 
 var sourceSizes = []string{
