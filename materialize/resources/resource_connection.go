@@ -501,14 +501,14 @@ func (b *ConnectionBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(` TO %s (`, b.connectionType))
 
 	if b.connectionType == "SSH TUNNEL" {
-		q.WriteString(fmt.Sprintf(`HOST '%s',`, b.sshHost))
-		q.WriteString(fmt.Sprintf(`USER '%s',`, b.sshUser))
+		q.WriteString(fmt.Sprintf(`HOST '%s', `, b.sshHost))
+		q.WriteString(fmt.Sprintf(`USER '%s', `, b.sshUser))
 		q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
 	}
 
 	if b.connectionType == "AWS PRIVATELINK" {
 		q.WriteString(fmt.Sprintf(`SERVICE NAME '%s',`, b.privateLinkServiceName))
-		q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES (%s)`, strings.Join(b.privateLinkAvailabilityZones, ",")))
+		q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES ('%s')`, strings.Join(b.privateLinkAvailabilityZones, "', '")))
 	}
 
 	if b.connectionType == "POSTGRES" {
@@ -540,7 +540,10 @@ func (b *ConnectionBuilder) Create() string {
 
 	if b.connectionType == "KAFKA" {
 		if b.kafkaBroker != "" {
-			q.WriteString(fmt.Sprintf(`BROKER '%s',`, b.kafkaBroker))
+			q.WriteString(fmt.Sprintf(`BROKER '%s'`, b.kafkaBroker))
+			if b.kafkaSSHTunnel != "" {
+				q.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`, b.kafkaSSHTunnel))
+			}
 		}
 		if b.kafkaBrokers != nil {
 			if b.kafkaSSHTunnel != "" {
@@ -551,31 +554,31 @@ func (b *ConnectionBuilder) Create() string {
 						q.WriteString(`,`)
 					}
 				}
-				q.WriteString(`),`)
+				q.WriteString(`)`)
 			} else {
-				q.WriteString(fmt.Sprintf(`BROKERS (%s),`, strings.Join(b.kafkaBrokers, ",")))
+				q.WriteString(fmt.Sprintf(`BROKERS ('%s')`, strings.Join(b.kafkaBrokers, "', '")))
 			}
 		}
 		if b.kafkaProgressTopic != "" {
-			q.WriteString(fmt.Sprintf(`PROGRESS TOPIC '%s',`, b.kafkaProgressTopic))
+			q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
 		}
 		if b.kafkaSSLCa != "" {
-			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE AUTHORITY SECRET %s,`, b.kafkaSSLCa))
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.kafkaSSLCa))
 		}
 		if b.kafkaSSLCert != "" {
-			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE SECRET %s,`, b.kafkaSSLCert))
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.kafkaSSLCert))
 		}
 		if b.kafkaSSLKey != "" {
-			q.WriteString(fmt.Sprintf(`SSL KEY SECRET %s,`, b.kafkaSSLKey))
+			q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.kafkaSSLKey))
 		}
 		if b.kafkaSASLMechanisms != "" {
-			q.WriteString(fmt.Sprintf(`SASL MECHANISMS '%s',`, b.kafkaSASLMechanisms))
+			q.WriteString(fmt.Sprintf(`, SASL MECHANISMS '%s'`, b.kafkaSASLMechanisms))
 		}
 		if b.kafkaSASLUsername != "" {
-			q.WriteString(fmt.Sprintf(`SASL USERNAME '%s',`, b.kafkaSASLUsername))
+			q.WriteString(fmt.Sprintf(`, SASL USERNAME '%s'`, b.kafkaSASLUsername))
 		}
 		if b.kafkaSASLPassword != "" {
-			q.WriteString(fmt.Sprintf(`SASL PASSWORD SECRET %s`, b.kafkaSASLPassword))
+			q.WriteString(fmt.Sprintf(`, SASL PASSWORD SECRET %s`, b.kafkaSASLPassword))
 		}
 
 	}
