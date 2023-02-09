@@ -51,16 +51,17 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":         resources.Cluster(),
 			"materialize_cluster_replica": resources.ClusterReplica(),
+			"materialize_connection":      resources.Connection(),
 			"materialize_database":        resources.Database(),
 			"materialize_schema":          resources.Schema(),
 			"materialize_secret":          resources.Secret(),
 			"materialize_sink":            resources.Sink(),
 			"materialize_source":          resources.Source(),
-			"materialize_connection":      resources.Connection(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":         datasources.Cluster(),
 			"materialize_cluster_replica": datasources.ClusterReplica(),
+			"materialize_connection":      datasources.Connection(),
 			"materialize_database":        datasources.Database(),
 			"materialize_schema":          datasources.Schema(),
 			"materialize_secret":          datasources.Secret(),

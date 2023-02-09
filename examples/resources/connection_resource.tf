@@ -18,10 +18,10 @@ resource "materialize_connection" "example_ssh_connection" {
 # Note: you need the max_aws_privatelink_connections increased for this to work:
 # show max_aws_privatelink_connections;
 resource "materialize_connection" "example_privatelink_connection" {
-  name            = "example_privatelink_connection"
-  schema_name     = "public"
-  connection_type = "AWS PRIVATELINK"
-  aws_privatelink_service_name = "com.amazonaws.us-east-1.materialize.example"
+  name                               = "example_privatelink_connection"
+  schema_name                        = "public"
+  connection_type                    = "AWS PRIVATELINK"
+  aws_privatelink_service_name       = "com.amazonaws.us-east-1.materialize.example"
   aws_privatelink_availability_zones = ["use1-az2", "use1-az6"]
 }
 
