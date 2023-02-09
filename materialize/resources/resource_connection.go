@@ -265,6 +265,7 @@ func Connection() *schema.Resource {
 type ConnectionBuilder struct {
 	connectionName                        string
 	schemaName                            string
+	databaseName                          string
 	connectionType                        string
 	sshHost                               string
 	sshUser                               string
@@ -302,10 +303,11 @@ type ConnectionBuilder struct {
 	confluentSchemaRegistryAWSPrivateLink string
 }
 
-func newConnectionBuilder(connectionName, schemaName string) *ConnectionBuilder {
+func newConnectionBuilder(connectionName, schemaName, databaseName string) *ConnectionBuilder {
 	return &ConnectionBuilder{
 		connectionName: connectionName,
 		schemaName:     schemaName,
+		databaseName:   databaseName,
 	}
 }
 
@@ -496,7 +498,7 @@ func (b *ConnectionBuilder) ConfluentSchemaRegistryAWSPrivateLink(confluentSchem
 
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s`, b.databaseName, b.schemaName, b.connectionName))
 
 	q.WriteString(fmt.Sprintf(` TO %s (`, b.connectionType))
 
@@ -623,17 +625,18 @@ func (b *ConnectionBuilder) Read() string {
 		JOIN mz_schemas
 			ON mz_connections.schema_id = mz_schemas.id
 		WHERE mz_connections.name = '%s'
-		AND mz_schemas.name = '%s';
-	`, b.connectionName, b.schemaName)
+		AND mz_schemas.name = '%s'
+		AND mz_databases.name = '%s';
+	`, b.connectionName, b.schemaName, b.databaseName)
 }
 
 func (b *ConnectionBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s RENAME TO %s.%s;`, b.schemaName, b.connectionName, b.schemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
 }
 
 func (b *ConnectionBuilder) Drop() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`DROP CONNECTION %s.%s;`, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName))
 	return q.String()
 }
 
@@ -643,12 +646,13 @@ func resourceConnectionRead(ctx context.Context, d *schema.ResourceData, meta in
 	conn := meta.(*sql.DB)
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newConnectionBuilder(connectionName, schemaName)
+	builder := newConnectionBuilder(connectionName, schemaName, databaseName)
 	q := builder.Read()
 
-	var id, name, connection_type, schema_name string
-	conn.QueryRow(q).Scan(&id, &name, &connection_type, &schema_name)
+	var id, name, connection_type, schema_name, database_name string
+	conn.QueryRow(q).Scan(&id, &name, &connection_type, &schema_name, &database_name)
 
 	d.SetId(id)
 
@@ -660,8 +664,9 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newConnectionBuilder(connectionName, schemaName)
+	builder := newConnectionBuilder(connectionName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("connection_type"); ok {
 		builder.ConnectionType(v.(string))
@@ -814,10 +819,11 @@ func resourceConnectionUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	conn := meta.(*sql.DB)
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
 		newConnectionName := d.Get("name").(string)
-		q := newConnectionBuilder(connectionName, schemaName).Rename(newConnectionName)
+		q := newConnectionBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName)
 		ExecResource(conn, q)
 	}
 
@@ -830,8 +836,9 @@ func resourceConnectionDelete(ctx context.Context, d *schema.ResourceData, meta 
 	conn := meta.(*sql.DB)
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	builder := newConnectionBuilder(connectionName, schemaName)
+	builder := newConnectionBuilder(connectionName, schemaName, databaseName)
 	q := builder.Drop()
 
 	ExecResource(conn, q)
