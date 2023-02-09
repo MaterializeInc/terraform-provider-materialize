@@ -4,6 +4,9 @@ var connectionTypes = []string{
 	"KAFKA",
 	"POSTGRES",
 	"LOAD GENERATOR",
+	"AWS PRIVATELINK"
+	"SSH TUNNEL",
+	"CONFLUENT SCHEMA REGISTRY",
 }
 
 var envelopes = []string{

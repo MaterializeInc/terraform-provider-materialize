@@ -33,16 +33,10 @@ func Connection() *schema.Resource {
 				Default:     "public",
 			},
 			"connection_type": {
-				Description: "The type of the connection.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"SSH TUNNEL",
-					"AWS PRIVATELINK",
-					"CONFLUENT SCHEMA REGISTRY",
-					"KAFKA",
-					"POSTGRES",
-				}, false),
+				Description:  "The type of the connection.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(connectionTypes, true),
 			},
 			"ssh_host": {
 				Description:  "The host of the SSH tunnel.",
@@ -79,6 +73,93 @@ func Connection() *schema.Resource {
 				ConflictsWith: []string{"ssh_host", "ssh_user", "ssh_port"},
 				RequiredWith:  []string{"aws_privatelink_service_name"},
 			},
+			"postgres_database": {
+				Description: "The target Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				RequiredWith: []string{
+					"postgres_host",
+					"postgres_port",
+					"postgres_user",
+					"postgres_password",
+				},
+			},
+			"postgres_host": {
+				Description: "The Postgres database hostname.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				RequiredWith: []string{
+					"postgres_database",
+					"postgres_port",
+					"postgres_user",
+					"postgres_password",
+				},
+			},
+			"postgres_port": {
+				Description: "The Postgres database port.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				RequiredWith: []string{
+					"postgres_database",
+					"postgres_host",
+					"postgres_user",
+					"postgres_password",
+				},
+				Default: 5432,
+			},
+			"postgres_user": {
+				Description: "The Postgres database username.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				RequiredWith: []string{
+					"postgres_database",
+					"postgres_host",
+					"postgres_port",
+					"postgres_password",
+				},
+			},
+			"postgres_password": {
+				Description: "The Postgres database password.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				RequiredWith: []string{
+					"postgres_database",
+					"postgres_host",
+					"postgres_port",
+					"postgres_user",
+				},
+			},
+			"postgres_ssh_tunnel": {
+				Description: "The SSH tunnel configuration for the Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"postgres_ssl_ca": {
+				Description: "The CA certificate for the Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"postgres_ssl_cert": {
+				Description: "The client certificate for the Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"postgres_ssl_key": {
+				Description: "The client key for the Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"postgres_ssl_mode": {
+				Description: "The SSL mode for the Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "disable",
+			},
+			"postgres_aws_privatelink": {
+				Description: "The AWS PrivateLink configuration for the Postgres database.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -92,6 +173,17 @@ type ConnectionBuilder struct {
 	sshPort                      int
 	privateLinkServiceName       string
 	privateLinkAvailabilityZones []string
+	postgresDatabase             string
+	postgresHost                 string
+	postgresPort                 int
+	postgresUser                 string
+	postgresPassword             string
+	postgresSSHTunnel            string
+	postgresSSLCa                string
+	postgresSSLCert              string
+	postgresSSLKey               string
+	postgresSSLMode              string
+	postgresAWSPrivateLink       string
 }
 
 func newConnectionBuilder(connectionName, schemaName string) *ConnectionBuilder {
@@ -141,6 +233,61 @@ func (b *ConnectionBuilder) PrivateLinkAvailabilityZones(privateLinkAvailability
 	return b
 }
 
+func (b *ConnectionBuilder) PostgresDatabase(postgresDatabase string) *ConnectionBuilder {
+	b.postgresDatabase = postgresDatabase
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresHost(postgresHost string) *ConnectionBuilder {
+	b.postgresHost = postgresHost
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresPort(postgresPort int) *ConnectionBuilder {
+	b.postgresPort = postgresPort
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresUser(postgresUser string) *ConnectionBuilder {
+	b.postgresUser = postgresUser
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresPassword(postgresPassword string) *ConnectionBuilder {
+	b.postgresPassword = postgresPassword
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresSSHTunnel(postgresSSHTunnel string) *ConnectionBuilder {
+	b.postgresSSHTunnel = postgresSSHTunnel
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresSSLCa(postgresSSLCa string) *ConnectionBuilder {
+	b.postgresSSLCa = postgresSSLCa
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresSSLCert(postgresSSLCert string) *ConnectionBuilder {
+	b.postgresSSLCert = postgresSSLCert
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresSSLKey(postgresSSLKey string) *ConnectionBuilder {
+	b.postgresSSLKey = postgresSSLKey
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresSSLMode(postgresSSLMode string) *ConnectionBuilder {
+	b.postgresSSLMode = postgresSSLMode
+	return b
+}
+
+func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string) *ConnectionBuilder {
+	b.postgresAWSPrivateLink = postgresAWSPrivateLink
+	return b
+}
+
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.schemaName, b.connectionName))
@@ -156,6 +303,37 @@ func (b *ConnectionBuilder) Create() string {
 	if b.connectionType == "AWS PRIVATELINK" {
 		q.WriteString(fmt.Sprintf(`SERVICE NAME '%s',`, b.privateLinkServiceName))
 		q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES (%s)`, strings.Join(b.privateLinkAvailabilityZones, ",")))
+	}
+
+	if b.connectionType == "POSTGRES" {
+		q.WriteString(fmt.Sprintf(`HOST '%s',`, b.postgresHost))
+		q.WriteString(fmt.Sprintf(`PORT %d,`, b.postgresPort))
+		if b.postgresUser != "" {
+			q.WriteString(fmt.Sprintf(`USER '%s',`, b.postgresUser))
+		}
+		if b.postgresPassword != "" {
+			q.WriteString(fmt.Sprintf(`PASSWORD SECRET %s,`, b.postgresPassword))
+		}
+		if b.postgresSSLMode != "" {
+			q.WriteString(fmt.Sprintf(`SSL MODE '%s',`, b.postgresSSLMode))
+		}
+		if b.postgresSSHTunnel != "" {
+			q.WriteString(fmt.Sprintf(`SSH TUNNEL '%s',`, b.postgresSSHTunnel))
+		}
+		if b.postgresSSLCa != "" {
+			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE AUTHORITY SECRET %s,`, b.postgresSSLCa))
+		}
+		if b.postgresSSLCert != "" {
+			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE SECRET %s,`, b.postgresSSLCert))
+		}
+		if b.postgresSSLKey != "" {
+			q.WriteString(fmt.Sprintf(`SSL KEY SECRET %s,`, b.postgresSSLKey))
+		}
+		if b.postgresAWSPrivateLink != "" {
+			q.WriteString(fmt.Sprintf(`AWS PRIVATELINK %s,`, b.postgresAWSPrivateLink))
+		}
+
+		q.WriteString(fmt.Sprintf(`DATABASE '%s'`, b.postgresDatabase))
 	}
 
 	q.WriteString(`);`)
@@ -237,6 +415,50 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	if v, ok := d.GetOk("private_link_availability_zones"); ok {
 		builder.PrivateLinkAvailabilityZones(v.([]string))
+	}
+
+	if v, ok := d.GetOk("postgres_host"); ok {
+		builder.PostgresHost(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_port"); ok {
+		builder.PostgresPort(v.(int))
+	}
+
+	if v, ok := d.GetOk("postgres_user"); ok {
+		builder.PostgresUser(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_password"); ok {
+		builder.PostgresPassword(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_database"); ok {
+		builder.PostgresDatabase(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_ssl_mode"); ok {
+		builder.PostgresSSLMode(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_ssl_ca"); ok {
+		builder.PostgresSSLCa(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_ssl_cert"); ok {
+		builder.PostgresSSLCert(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_ssl_key"); ok {
+		builder.PostgresSSLKey(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_aws_privatelink"); ok {
+		builder.PostgresAWSPrivateLink(v.(string))
+	}
+
+	if v, ok := d.GetOk("postgres_ssh_tunnel"); ok {
+		builder.PostgresSSHTunnel(v.(string))
 	}
 
 	q := builder.Create()
