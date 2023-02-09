@@ -58,7 +58,7 @@ func Source() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(connectionTypes, true),
+				ValidateFunc: validation.StringInSlice(sourceConnectionTypes, true),
 			},
 			// Load Generator
 			"load_generator_type": {
