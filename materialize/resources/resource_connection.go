@@ -216,40 +216,90 @@ func Connection() *schema.Resource {
 				Optional:    true,
 			},
 			// TODO: Add support for Kafka AWS PrivateLink
+			"confluent_schema_registry_url": {
+				Description: "The URL of the Confluent Schema Registry.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"confluent_schema_registry_ssl_ca": {
+				Description: "The CA certificate for the Confluent Schema Registry.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"confluent_schema_registry_ssl_cert": {
+				Description: "The client certificate for the Confluent Schema Registry.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"confluent_schema_registry_ssl_key": {
+				Description: "The client key for the Confluent Schema Registry.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"confluent_schema_registry_password": {
+				Description:  "The password for the Confluent Schema Registry.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"confluent_schema_registry_username"},
+			},
+			"confluent_schema_registry_username": {
+				Description:  "The username for the Confluent Schema Registry.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"confluent_schema_registry_password"},
+			},
+			"confluent_schema_registry_ssh_tunnel": {
+				Description: "The SSH tunnel configuration for the Confluent Schema Registry.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"confluent_schema_registry_aws_privatelink": {
+				Description: "The AWS PrivateLink configuration for the Confluent Schema Registry.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 		},
 	}
 }
 
 type ConnectionBuilder struct {
-	connectionName               string
-	schemaName                   string
-	connectionType               string
-	sshHost                      string
-	sshUser                      string
-	sshPort                      int
-	privateLinkServiceName       string
-	privateLinkAvailabilityZones []string
-	postgresDatabase             string
-	postgresHost                 string
-	postgresPort                 int
-	postgresUser                 string
-	postgresPassword             string
-	postgresSSHTunnel            string
-	postgresSSLCa                string
-	postgresSSLCert              string
-	postgresSSLKey               string
-	postgresSSLMode              string
-	postgresAWSPrivateLink       string
-	kafkaBroker                  string
-	kafkaBrokers                 []string
-	kafkaProgressTopic           string
-	kafkaSSLCa                   string
-	kafkaSSLCert                 string
-	kafkaSSLKey                  string
-	kafkaSASLMechanisms          string
-	kafkaSASLUsername            string
-	kafkaSASLPassword            string
-	kafkaSSHTunnel               string
+	connectionName                        string
+	schemaName                            string
+	connectionType                        string
+	sshHost                               string
+	sshUser                               string
+	sshPort                               int
+	privateLinkServiceName                string
+	privateLinkAvailabilityZones          []string
+	postgresDatabase                      string
+	postgresHost                          string
+	postgresPort                          int
+	postgresUser                          string
+	postgresPassword                      string
+	postgresSSHTunnel                     string
+	postgresSSLCa                         string
+	postgresSSLCert                       string
+	postgresSSLKey                        string
+	postgresSSLMode                       string
+	postgresAWSPrivateLink                string
+	kafkaBroker                           string
+	kafkaBrokers                          []string
+	kafkaProgressTopic                    string
+	kafkaSSLCa                            string
+	kafkaSSLCert                          string
+	kafkaSSLKey                           string
+	kafkaSASLMechanisms                   string
+	kafkaSASLUsername                     string
+	kafkaSASLPassword                     string
+	kafkaSSHTunnel                        string
+	confluentSchemaRegistryUrl            string
+	confluentSchemaRegistrySSLCa          string
+	confluentSchemaRegistrySSLCert        string
+	confluentSchemaRegistrySSLKey         string
+	confluentSchemaRegistryUsername       string
+	confluentSchemaRegistryPassword       string
+	confluentSchemaRegistrySSHTunnel      string
+	confluentSchemaRegistryAWSPrivateLink string
 }
 
 func newConnectionBuilder(connectionName, schemaName string) *ConnectionBuilder {
@@ -404,6 +454,46 @@ func (b *ConnectionBuilder) KafkaSSHTunnel(kafkaSSHTunnel string) *ConnectionBui
 	return b
 }
 
+func (b *ConnectionBuilder) ConfluentSchemaRegistryUrl(confluentSchemaRegistryUrl string) *ConnectionBuilder {
+	b.confluentSchemaRegistryUrl = confluentSchemaRegistryUrl
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistryUsername(confluentSchemaRegistryUsername string) *ConnectionBuilder {
+	b.confluentSchemaRegistryUsername = confluentSchemaRegistryUsername
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistryPassword(confluentSchemaRegistryPassword string) *ConnectionBuilder {
+	b.confluentSchemaRegistryPassword = confluentSchemaRegistryPassword
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistrySSLCa(confluentSchemaRegistrySSLCa string) *ConnectionBuilder {
+	b.confluentSchemaRegistrySSLCa = confluentSchemaRegistrySSLCa
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistrySSLCert(confluentSchemaRegistrySSLCert string) *ConnectionBuilder {
+	b.confluentSchemaRegistrySSLCert = confluentSchemaRegistrySSLCert
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistrySSLKey(confluentSchemaRegistrySSLKey string) *ConnectionBuilder {
+	b.confluentSchemaRegistrySSLKey = confluentSchemaRegistrySSLKey
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistrySSHTunnel(confluentSchemaRegistrySSHTunnel string) *ConnectionBuilder {
+	b.confluentSchemaRegistrySSHTunnel = confluentSchemaRegistrySSHTunnel
+	return b
+}
+
+func (b *ConnectionBuilder) ConfluentSchemaRegistryAWSPrivateLink(confluentSchemaRegistryAWSPrivateLink string) *ConnectionBuilder {
+	b.confluentSchemaRegistryAWSPrivateLink = confluentSchemaRegistryAWSPrivateLink
+	return b
+}
+
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.schemaName, b.connectionName))
@@ -424,32 +514,28 @@ func (b *ConnectionBuilder) Create() string {
 	if b.connectionType == "POSTGRES" {
 		q.WriteString(fmt.Sprintf(`HOST '%s',`, b.postgresHost))
 		q.WriteString(fmt.Sprintf(`PORT %d,`, b.postgresPort))
-		if b.postgresUser != "" {
-			q.WriteString(fmt.Sprintf(`USER '%s',`, b.postgresUser))
-		}
-		if b.postgresPassword != "" {
-			q.WriteString(fmt.Sprintf(`PASSWORD SECRET %s,`, b.postgresPassword))
-		}
+		q.WriteString(fmt.Sprintf(`USER '%s',`, b.postgresUser))
+		q.WriteString(fmt.Sprintf(`PASSWORD SECRET %s`, b.postgresPassword))
 		if b.postgresSSLMode != "" {
-			q.WriteString(fmt.Sprintf(`SSL MODE '%s',`, b.postgresSSLMode))
+			q.WriteString(fmt.Sprintf(`, SSL MODE '%s'`, b.postgresSSLMode))
 		}
 		if b.postgresSSHTunnel != "" {
-			q.WriteString(fmt.Sprintf(`SSH TUNNEL '%s',`, b.postgresSSHTunnel))
+			q.WriteString(fmt.Sprintf(`, SSH TUNNEL '%s'`, b.postgresSSHTunnel))
 		}
 		if b.postgresSSLCa != "" {
-			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE AUTHORITY SECRET %s,`, b.postgresSSLCa))
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa))
 		}
 		if b.postgresSSLCert != "" {
-			q.WriteString(fmt.Sprintf(`SSL CERTIFICATE SECRET %s,`, b.postgresSSLCert))
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.postgresSSLCert))
 		}
 		if b.postgresSSLKey != "" {
-			q.WriteString(fmt.Sprintf(`SSL KEY SECRET %s,`, b.postgresSSLKey))
+			q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.postgresSSLKey))
 		}
 		if b.postgresAWSPrivateLink != "" {
-			q.WriteString(fmt.Sprintf(`AWS PRIVATELINK %s,`, b.postgresAWSPrivateLink))
+			q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.postgresAWSPrivateLink))
 		}
 
-		q.WriteString(fmt.Sprintf(`DATABASE '%s'`, b.postgresDatabase))
+		q.WriteString(fmt.Sprintf(`, DATABASE '%s'`, b.postgresDatabase))
 	}
 
 	if b.connectionType == "KAFKA" {
@@ -492,6 +578,31 @@ func (b *ConnectionBuilder) Create() string {
 			q.WriteString(fmt.Sprintf(`SASL PASSWORD SECRET %s`, b.kafkaSASLPassword))
 		}
 
+	}
+
+	if b.connectionType == "CONFLUENT SCHEMA REGISTRY" {
+		q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
+		if b.confluentSchemaRegistryUsername != "" {
+			q.WriteString(fmt.Sprintf(`, USERNAME = '%s'`, b.confluentSchemaRegistryUsername))
+		}
+		if b.confluentSchemaRegistryPassword != "" {
+			q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword))
+		}
+		if b.confluentSchemaRegistrySSLCa != "" {
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, b.confluentSchemaRegistrySSLCa))
+		}
+		if b.confluentSchemaRegistrySSLCert != "" {
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, b.confluentSchemaRegistrySSLCert))
+		}
+		if b.confluentSchemaRegistrySSLKey != "" {
+			q.WriteString(fmt.Sprintf(`, SSL KEY = %s`, b.confluentSchemaRegistrySSLKey))
+		}
+		if b.confluentSchemaRegistryAWSPrivateLink != "" {
+			q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.confluentSchemaRegistryAWSPrivateLink))
+		}
+		if b.confluentSchemaRegistrySSHTunnel != "" {
+			q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, b.confluentSchemaRegistrySSHTunnel))
+		}
 	}
 
 	q.WriteString(`);`)
@@ -657,6 +768,38 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	if v, ok := d.GetOk("kafka_ssh_tunnel"); ok {
 		builder.KafkaSSHTunnel(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_url"); ok {
+		builder.ConfluentSchemaRegistryUrl(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_ssl_ca"); ok {
+		builder.ConfluentSchemaRegistrySSLCa(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_ssl_cert"); ok {
+		builder.ConfluentSchemaRegistrySSLCert(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_ssl_key"); ok {
+		builder.ConfluentSchemaRegistrySSLKey(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_username"); ok {
+		builder.ConfluentSchemaRegistryUsername(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_password"); ok {
+		builder.ConfluentSchemaRegistryPassword(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_ssh_tunnel"); ok {
+		builder.ConfluentSchemaRegistrySSHTunnel(v.(string))
+	}
+
+	if v, ok := d.GetOk("confluent_schema_registry_aws_privatelink"); ok {
+		builder.ConfluentSchemaRegistryAWSPrivateLink(v.(string))
 	}
 
 	q := builder.Create()
