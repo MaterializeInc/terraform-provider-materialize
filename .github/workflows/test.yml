@@ -4,10 +4,6 @@ on:
     paths-ignore:
       - README.md
       - CHANGELOG.md
-  push:
-    paths-ignore:
-      - README.md
-      - CHANGELOG.md
 
 jobs:
   test:
