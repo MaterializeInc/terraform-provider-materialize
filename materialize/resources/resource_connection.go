@@ -545,7 +545,7 @@ func (b *ConnectionBuilder) Create() string {
 				q.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`, b.kafkaSSHTunnel))
 			}
 		}
-		if b.kafkaBrokers != nil {
+		if len(b.kafkaBrokers) != 0 {
 			if b.kafkaSSHTunnel != "" {
 				q.WriteString(`BROKERS (`)
 				for i, broker := range b.kafkaBrokers {
@@ -628,9 +628,7 @@ func (b *ConnectionBuilder) Read() string {
 }
 
 func (b *ConnectionBuilder) Rename(newConnectionName string) string {
-	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`ALTER CONNECTION %s.%s RENAME TO %s.%s;`, b.schemaName, b.connectionName, b.schemaName, newConnectionName))
-	return q.String()
+	return fmt.Sprintf(`ALTER CONNECTION %s.%s RENAME TO %s.%s;`, b.schemaName, b.connectionName, b.schemaName, newConnectionName)
 }
 
 func (b *ConnectionBuilder) Drop() string {
