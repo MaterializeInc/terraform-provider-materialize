@@ -21,4 +21,4 @@ jobs:
 
       - run: go mod download
 
-      - run: go test -v -cover ./materialize/
+      - run: go test -v -cover ./...
