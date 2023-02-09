@@ -38,6 +38,10 @@ func Connection() *schema.Resource {
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"SSH TUNNEL",
+					"AWS PRIVATELINK",
+					"CONFLUENT SCHEMA REGISTRY",
+					"KAFKA",
+					"POSTGRES",
 				}, false),
 			},
 			"ssh_host": {
@@ -58,17 +62,36 @@ func Connection() *schema.Resource {
 				Optional:     true,
 				RequiredWith: []string{"ssh_host", "ssh_user"},
 			},
+			"aws_privatelink_service_name": {
+				Description:   "The name of the AWS PrivateLink service.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"ssh_host", "ssh_user", "ssh_port"},
+				RequiredWith:  []string{"aws_privatelink_availability_zones"},
+			},
+			"aws_privatelink_availability_zones": {
+				Description:   "The availability zones of the AWS PrivateLink service.",
+				Type:          schema.TypeList,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"ssh_host", "ssh_user", "ssh_port"},
+				RequiredWith:  []string{"aws_privatelink_service_name"},
+			},
 		},
 	}
 }
 
 type ConnectionBuilder struct {
-	connectionName string
-	schemaName     string
-	connectionType string
-	sshHost        string
-	sshUser        string
-	sshPort        int
+	connectionName               string
+	schemaName                   string
+	connectionType               string
+	sshHost                      string
+	sshUser                      string
+	sshPort                      int
+	privateLinkServiceName       string
+	privateLinkAvailabilityZones []string
 }
 
 func newConnectionBuilder(connectionName, schemaName string) *ConnectionBuilder {
@@ -108,6 +131,16 @@ func (b *ConnectionBuilder) SSHPort(sshPort int) *ConnectionBuilder {
 	return b
 }
 
+func (b *ConnectionBuilder) PrivateLinkServiceName(privateLinkServiceName string) *ConnectionBuilder {
+	b.privateLinkServiceName = privateLinkServiceName
+	return b
+}
+
+func (b *ConnectionBuilder) PrivateLinkAvailabilityZones(privateLinkAvailabilityZones []string) *ConnectionBuilder {
+	b.privateLinkAvailabilityZones = privateLinkAvailabilityZones
+	return b
+}
+
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s`, b.schemaName, b.connectionName))
@@ -118,6 +151,11 @@ func (b *ConnectionBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`HOST '%s',`, b.sshHost))
 		q.WriteString(fmt.Sprintf(`USER '%s',`, b.sshUser))
 		q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
+	}
+
+	if b.connectionType == "AWS PRIVATELINK" {
+		q.WriteString(fmt.Sprintf(`SERVICE NAME '%s',`, b.privateLinkServiceName))
+		q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES (%s)`, strings.Join(b.privateLinkAvailabilityZones, ",")))
 	}
 
 	q.WriteString(`);`)
@@ -191,6 +229,14 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	if v, ok := d.GetOk("ssh_port"); ok {
 		builder.SSHPort(v.(int))
+	}
+
+	if v, ok := d.GetOk("private_link_service_name"); ok {
+		builder.PrivateLinkServiceName(v.(string))
+	}
+
+	if v, ok := d.GetOk("private_link_availability_zones"); ok {
+		builder.PrivateLinkAvailabilityZones(v.([]string))
 	}
 
 	q := builder.Create()
