@@ -277,7 +277,9 @@ func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 
 	q := builder.Create()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return resourceSourceRead(ctx, d, meta)
 }
 
@@ -311,7 +313,9 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		builder := newSinkBuilder(oldName.(string), schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("size") {
@@ -321,7 +325,9 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		builder := newSinkBuilder(sourceName, schemaName, databaseName)
 		q := builder.UpdateSize(newSize.(string))
 
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceSecretRead(ctx, d, meta)
@@ -338,6 +344,8 @@ func resourceSinkDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	builder := newSinkBuilder(sinkName, schemaName, databaseName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }

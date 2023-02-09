@@ -124,7 +124,9 @@ func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	builder := newSecretBuilder(secretName, schemaName, databaseName)
 	q := builder.Create(value)
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return resourceSecretRead(ctx, d, meta)
 }
 
@@ -139,7 +141,9 @@ func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		builder := newSecretBuilder(oldName.(string), schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("value") {
@@ -148,7 +152,9 @@ func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		builder := newSecretBuilder(oldValue.(string), schemaName, databaseName)
 		q := builder.UpdateValue(newValue.(string))
 
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceSecretRead(ctx, d, meta)
@@ -165,6 +171,8 @@ func resourceSecretDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	builder := newSecretBuilder(secretName, schemaName, databaseName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }

@@ -208,7 +208,9 @@ func resourceClusterReplicaCreate(ctx context.Context, d *schema.ResourceData, m
 
 	q := builder.Create()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return resourceClusterReplicaRead(ctx, d, meta)
 }
 
@@ -222,6 +224,8 @@ func resourceClusterReplicaDelete(ctx context.Context, d *schema.ResourceData, m
 	builder := newClusterReplicaBuilder(replicaName, clusterName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }

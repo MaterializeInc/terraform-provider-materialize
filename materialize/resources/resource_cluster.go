@@ -75,7 +75,9 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta int
 	builder := newClusterBuilder(clusterName)
 	q := builder.Create()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return resourceClusterRead(ctx, d, meta)
 }
 
@@ -88,6 +90,8 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta int
 	builder := newClusterBuilder(clusterName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }

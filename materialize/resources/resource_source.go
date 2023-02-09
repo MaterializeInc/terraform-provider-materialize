@@ -514,7 +514,9 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	q := builder.Create()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return resourceSourceRead(ctx, d, meta)
 }
 
@@ -529,7 +531,9 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder := newSourceBuilder(oldName.(string), schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("size") {
@@ -539,7 +543,9 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder := newSourceBuilder(sourceName, schemaName, databaseName)
 		q := builder.UpdateSize(newSize.(string))
 
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceSecretRead(ctx, d, meta)
@@ -556,6 +562,8 @@ func resourceSourceDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	builder := newSourceBuilder(sourceName, schemaName, databaseName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }
