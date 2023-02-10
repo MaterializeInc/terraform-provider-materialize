@@ -19,6 +19,10 @@ func Secret() *schema.Resource {
 		UpdateContext: resourceSecretUpdate,
 		DeleteContext: resourceSecretDelete,
 
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Description: "The identifier for the secret.",
@@ -40,7 +44,7 @@ func Secret() *schema.Resource {
 			"value": {
 				Description: "The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.",
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 			},
 		},
@@ -65,13 +69,9 @@ func (b *SecretBuilder) Create(value string) string {
 	return fmt.Sprintf(`CREATE SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, value)
 }
 
-func (b *SecretBuilder) Read() string {
+func (b *SecretBuilder) ReadId() string {
 	return fmt.Sprintf(`
-		SELECT
-			mz_secrets.id,
-			mz_secrets.name,
-			mz_schemas.name,
-			mz_databases.name
+		SELECT mz_secrets.id
 		FROM mz_secrets
 		JOIN mz_schemas
 			ON mz_secrets.schema_id = mz_schemas.id
@@ -99,17 +99,28 @@ func resourceSecretRead(ctx context.Context, d *schema.ResourceData, meta interf
 	var diags diag.Diagnostics
 
 	conn := meta.(*sql.DB)
-	secretName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
+	SecretId := d.Id()
 
-	builder := newSecretBuilder(secretName, schemaName, databaseName)
-	q := builder.Read()
+	q := fmt.Sprintf(`
+		SELECT
+			mz_secrets.name,
+			mz_schemas.name,
+			mz_databases.name
+		FROM mz_secrets
+		JOIN mz_schemas
+			ON mz_secrets.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		WHERE mz_secrets.id = '%s';
+	`, SecretId)
 
-	var id, name, schema_name, database_name string
-	conn.QueryRow(q).Scan(&id, &name, &schema_name, &database_name)
+	var name, schema_name, database_name string
+	conn.QueryRow(q).Scan(&name, &schema_name, &database_name)
 
-	d.SetId(id)
+	d.SetId(SecretId)
+	d.Set("name", name)
+	d.Set("schema_name", schema_name)
+	d.Set("database_name", database_name)
 
 	return diags
 }
@@ -129,6 +140,11 @@ func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
+	rq := builder.ReadId()
+	var id string
+	conn.QueryRow(rq).Scan(&id)
+	d.SetId(id)
+
 	return resourceSecretRead(ctx, d, meta)
 }
 

@@ -6,15 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceSecretRead(t *testing.T) {
+func TestResourceSecretReadId(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
 	r.Equal(`
-		SELECT
-			mz_secrets.id,
-			mz_secrets.name,
-			mz_schemas.name,
-			mz_databases.name
+		SELECT mz_secrets.id
 		FROM mz_secrets
 		JOIN mz_schemas
 			ON mz_secrets.schema_id = mz_schemas.id
@@ -23,7 +19,7 @@ func TestResourceSecretRead(t *testing.T) {
 		WHERE mz_secrets.name = 'secret'
 		AND mz_schemas.name = 'schema'
 		AND mz_databases.name = 'database';
-	`, b.Read())
+	`, b.ReadId())
 }
 
 func TestResourceSecretCreate(t *testing.T) {
