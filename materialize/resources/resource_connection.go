@@ -819,8 +819,9 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	q := builder.Create()
 
-	ExecResource(conn, q)
-
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return resourceConnectionRead(ctx, d, meta)
 }
 
@@ -850,6 +851,8 @@ func resourceConnectionDelete(ctx context.Context, d *schema.ResourceData, meta 
 	builder := newConnectionBuilder(connectionName, schemaName, databaseName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }
