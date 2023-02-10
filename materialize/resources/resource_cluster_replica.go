@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -80,7 +81,7 @@ type ClusterReplicaBuilder struct {
 	idleArrangementMergeEffort int
 }
 
-func newClusterReplicaBuilder(clusterName, replicaName string) *ClusterReplicaBuilder {
+func newClusterReplicaBuilder(replicaName, clusterName string) *ClusterReplicaBuilder {
 	return &ClusterReplicaBuilder{
 		replicaName: replicaName,
 		clusterName: clusterName,
@@ -208,7 +209,10 @@ func resourceClusterReplicaCreate(ctx context.Context, d *schema.ResourceData, m
 
 	q := builder.Create()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
+		return diag.FromErr(err)
+	}
 	return resourceClusterReplicaRead(ctx, d, meta)
 }
 
@@ -222,6 +226,9 @@ func resourceClusterReplicaDelete(ctx context.Context, d *schema.ResourceData, m
 	builder := newClusterReplicaBuilder(replicaName, clusterName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
+	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
+		return diag.FromErr(err)
+	}
 	return diags
 }

@@ -2,17 +2,22 @@ package resources
 
 import (
 	"database/sql"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"fmt"
 )
 
-func ExecResource(conn *sql.DB, queryStr string) diag.Diagnostics {
-	var diags diag.Diagnostics
+type SQLError struct {
+	Err error
+}
 
+func (e *SQLError) Error() string {
+	return fmt.Sprintf("Unable to execute SQL: %v", e.Err)
+}
+
+func ExecResource(conn *sql.DB, queryStr string) error {
 	_, err := conn.Exec(queryStr)
 	if err != nil {
-		return diag.FromErr(err)
+		return &SQLError{Err: err}
 	}
 
-	return diags
+	return nil
 }
