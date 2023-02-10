@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -75,6 +76,7 @@ func resourceDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta in
 	q := builder.Create()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return resourceDatabaseRead(ctx, d, meta)
@@ -90,6 +92,7 @@ func resourceDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta in
 	q := builder.Drop()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return diags

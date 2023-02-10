@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -278,6 +279,7 @@ func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 	q := builder.Create()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return resourceSourceRead(ctx, d, meta)
@@ -314,6 +316,7 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		q := builder.Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -326,6 +329,7 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		q := builder.UpdateSize(newSize.(string))
 
 		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -345,6 +349,7 @@ func resourceSinkDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	q := builder.Drop()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return diags

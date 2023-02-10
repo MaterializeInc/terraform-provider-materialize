@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -820,6 +821,7 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, meta 
 	q := builder.Create()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return resourceConnectionRead(ctx, d, meta)
@@ -834,7 +836,10 @@ func resourceConnectionUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	if d.HasChange("name") {
 		newConnectionName := d.Get("name").(string)
 		q := newConnectionBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName)
-		ExecResource(conn, q)
+		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceConnectionRead(ctx, d, meta)
@@ -852,6 +857,7 @@ func resourceConnectionDelete(ctx context.Context, d *schema.ResourceData, meta 
 	q := builder.Drop()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return diags

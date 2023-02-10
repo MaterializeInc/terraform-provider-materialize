@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 
@@ -515,6 +516,7 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	q := builder.Create()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return resourceSourceRead(ctx, d, meta)
@@ -532,6 +534,7 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		q := builder.Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -544,6 +547,7 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		q := builder.UpdateSize(newSize.(string))
 
 		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -563,6 +567,7 @@ func resourceSourceDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	q := builder.Drop()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return diags

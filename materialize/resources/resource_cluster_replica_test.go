@@ -8,7 +8,7 @@ import (
 
 func TestResourceClusterReplicaCreate(t *testing.T) {
 	r := require.New(t)
-	b := newClusterReplicaBuilder("cluster", "replica")
+	b := newClusterReplicaBuilder("replica", "cluster")
 	r.Equal(`CREATE CLUSTER REPLICA cluster.replica;`, b.Create())
 
 	b.Size("xsmall")
@@ -29,7 +29,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 
 func TestResourceClusterReplicaRead(t *testing.T) {
 	r := require.New(t)
-	b := newClusterReplicaBuilder("cluster", "replica")
+	b := newClusterReplicaBuilder("replica", "cluster")
 	r.Equal(`
 		SELECT
 			mz_cluster_replicas.id,
@@ -47,6 +47,6 @@ func TestResourceClusterReplicaRead(t *testing.T) {
 
 func TestResourceClusterReplicaDrop(t *testing.T) {
 	r := require.New(t)
-	b := newClusterReplicaBuilder("cluster", "replica")
+	b := newClusterReplicaBuilder("replica", "cluster")
 	r.Equal(`DROP CLUSTER REPLICA cluster.replica;`, b.Drop())
 }

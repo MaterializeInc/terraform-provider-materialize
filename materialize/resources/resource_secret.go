@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -125,6 +126,7 @@ func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	q := builder.Create(value)
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return resourceSecretRead(ctx, d, meta)
@@ -142,6 +144,7 @@ func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		q := builder.Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -153,6 +156,7 @@ func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		q := builder.UpdateValue(newValue.(string))
 
 		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -172,6 +176,7 @@ func resourceSecretDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	q := builder.Drop()
 
 	if err := ExecResource(conn, q); err != nil {
+		log.Printf("[ERROR] could not execute query: %s", q)
 		return diag.FromErr(err)
 	}
 	return diags
