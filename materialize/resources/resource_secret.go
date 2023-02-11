@@ -8,16 +8,17 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func Secret() *schema.Resource {
 	return &schema.Resource{
 		Description: "A secret securely stores sensitive credentials (like passwords and SSL keys) in Materialize’s secret management system.",
 
-		CreateContext: resourceSecretCreate,
-		ReadContext:   resourceSecretRead,
-		UpdateContext: resourceSecretUpdate,
-		DeleteContext: resourceSecretDelete,
+		CreateContext: secretCreate,
+		ReadContext:   secretRead,
+		UpdateContext: secretUpdate,
+		DeleteContext: secretDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -95,13 +96,8 @@ func (b *SecretBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SECRET %s.%s.%s;`, b.databaseName, b.schemaName, b.secretName)
 }
 
-func resourceSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
-	SecretId := d.Id()
-
-	q := fmt.Sprintf(`
+func ReadParams(id string) string {
+	return fmt.Sprintf(`
 		SELECT
 			mz_secrets.name,
 			mz_schemas.name,
@@ -112,44 +108,41 @@ func resourceSecretRead(ctx context.Context, d *schema.ResourceData, meta interf
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_secrets.id = '%s';
-	`, SecretId)
-
-	var name, schema_name, database_name string
-	conn.QueryRow(q).Scan(&name, &schema_name, &database_name)
-
-	d.SetId(SecretId)
-	d.Set("name", name)
-	d.Set("schema_name", schema_name)
-	d.Set("database_name", database_name)
-
-	return diags
+	`, id)
 }
 
-func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type secret struct {
+	name          sql.NullString `db:"name"`
+	schema_name   sql.NullString `db:"schema_name"`
+	database_name sql.NullString `db:"database_name"`
+}
+
+func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+
+	q := ReadParams(i)
+
+	readResource(conn, d, i, q, secret{})
+	return nil
+}
+
+func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	secretName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-
 	value := d.Get("value").(string)
 
 	builder := newSecretBuilder(secretName, schemaName, databaseName)
-	q := builder.Create(value)
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	rq := builder.ReadId()
-	var id string
-	conn.QueryRow(rq).Scan(&id)
-	d.SetId(id)
-
-	return resourceSecretRead(ctx, d, meta)
+	createResource(conn, d, builder.Create(value), builder.ReadId())
+	return secretRead(ctx, d, meta)
 }
 
-func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
@@ -177,23 +170,17 @@ func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	return resourceSecretRead(ctx, d, meta)
+	return secretRead(ctx, d, meta)
 }
 
-func resourceSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
+func secretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	secretName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	builder := newSecretBuilder(secretName, schemaName, databaseName)
-	q := builder.Drop()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return diags
+	dropResource(conn, d, builder.Drop())
+	return nil
 }

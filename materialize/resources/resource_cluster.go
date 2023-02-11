@@ -2,12 +2,12 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func Cluster() *schema.Resource {
@@ -55,7 +55,7 @@ func (b *ClusterBuilder) Drop() string {
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
 	builder := newClusterBuilder(clusterName)
@@ -70,7 +70,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
 	builder := newClusterBuilder(clusterName)
@@ -86,7 +86,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta int
 func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
 	builder := newClusterBuilder(clusterName)

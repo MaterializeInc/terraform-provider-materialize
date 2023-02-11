@@ -2,12 +2,12 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func Database() *schema.Resource {
@@ -54,7 +54,7 @@ func (b *DatabaseBuilder) Drop() string {
 func resourceDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
 	builder := newDatabaseBuilder(databaseName)
@@ -69,7 +69,7 @@ func resourceDatabaseRead(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
 	builder := newDatabaseBuilder(databaseName)
@@ -85,7 +85,7 @@ func resourceDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta in
 func resourceDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
 	builder := newDatabaseBuilder(databaseName)

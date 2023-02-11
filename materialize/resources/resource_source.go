@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"sort"
@@ -11,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/jmoiron/sqlx"
 )
 
 func Source() *schema.Resource {
@@ -420,7 +420,7 @@ func (b *SourceBuilder) Drop() string {
 func resourceSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -437,7 +437,7 @@ func resourceSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
@@ -523,7 +523,7 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any)
 }
 
 func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
@@ -552,13 +552,13 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	return resourceSecretRead(ctx, d, meta)
+	return resourceSourceRead(ctx, d, meta)
 }
 
 func resourceSourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)

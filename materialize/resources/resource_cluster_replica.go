@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/jmoiron/sqlx"
 )
 
 func ClusterReplica() *schema.Resource {
@@ -164,7 +164,7 @@ func (b *ClusterReplicaBuilder) Drop() string {
 func resourceClusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
@@ -180,7 +180,7 @@ func resourceClusterReplicaRead(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceClusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
@@ -219,7 +219,7 @@ func resourceClusterReplicaCreate(ctx context.Context, d *schema.ResourceData, m
 func resourceClusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 

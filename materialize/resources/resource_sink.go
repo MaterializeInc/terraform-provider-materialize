@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/jmoiron/sqlx"
 )
 
 func Sink() *schema.Resource {
@@ -236,7 +236,7 @@ func (b *SinkBuilder) Drop() string {
 }
 
 func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
@@ -288,7 +288,7 @@ func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 func resourceSinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -305,7 +305,7 @@ func resourceSinkRead(ctx context.Context, d *schema.ResourceData, meta any) dia
 }
 
 func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
@@ -334,13 +334,13 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		}
 	}
 
-	return resourceSecretRead(ctx, d, meta)
+	return resourceSinkRead(ctx, d, meta)
 }
 
 func resourceSinkDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
