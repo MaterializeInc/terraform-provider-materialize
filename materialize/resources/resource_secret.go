@@ -11,6 +11,34 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var secretSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "The identifier for the secret.",
+		Type:        schema.TypeString,
+		Required:    true,
+	},
+	"schema_name": {
+		Description: "The schema of the secret.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "public",
+		ForceNew:    true,
+	},
+	"database_name": {
+		Description: "The database of the secret.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
+		ForceNew:    true,
+	},
+	"value": {
+		Description: "The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Sensitive:   true,
+	},
+}
+
 func Secret() *schema.Resource {
 	return &schema.Resource{
 		Description: "A secret securely stores sensitive credentials (like passwords and SSL keys) in Materialize’s secret management system.",
@@ -24,31 +52,7 @@ func Secret() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "The identifier for the secret.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"schema_name": {
-				Description: "The identifier for the secret schema.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "public",
-			},
-			"database_name": {
-				Description: "The identifier for the secret database.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "materialize",
-			},
-			"value": {
-				Description: "The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Sensitive:   true,
-			},
-		},
+		Schema: secretSchema,
 	}
 }
 
@@ -96,7 +100,7 @@ func (b *SecretBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SECRET %s.%s.%s;`, b.databaseName, b.schemaName, b.secretName)
 }
 
-func ReadParams(id string) string {
+func readSecretParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
 			mz_secrets.name,
@@ -121,10 +125,9 @@ type secret struct {
 func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
+	q := readSecretParams(i)
 
-	q := ReadParams(i)
-
-	readResource(conn, d, i, q, secret{})
+	readResource(conn, d, i, q, secret{}, "secret")
 	return nil
 }
 
@@ -136,36 +139,39 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	value := d.Get("value").(string)
 
 	builder := newSecretBuilder(secretName, schemaName, databaseName)
+	qc := builder.Create(value)
+	qr := builder.ReadId()
 
-	createResource(conn, d, builder.Create(value), builder.ReadId())
+	createResource(conn, d, qc, qr, "secret")
 	return secretRead(ctx, d, meta)
 }
 
 func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
-	schemaName := d.Get("name").(string)
+	secretName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
-		oldName, newName := d.GetChange("name")
+		_, newName := d.GetChange("name")
 
-		builder := newSecretBuilder(oldName.(string), schemaName, databaseName)
+		builder := newSecretBuilder(secretName, schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
+			log.Printf("[ERROR] could not rename secret: %s", q)
 			return diag.FromErr(err)
 		}
 	}
 
 	if d.HasChange("value") {
-		oldValue, newValue := d.GetChange("value")
+		_, newValue := d.GetChange("value")
 
-		builder := newSecretBuilder(oldValue.(string), schemaName, databaseName)
+		builder := newSecretBuilder(secretName, schemaName, databaseName)
 		q := builder.UpdateValue(newValue.(string))
 
 		if err := ExecResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
+			log.Printf("[ERROR] could not update value of secret: %s", q)
 			return diag.FromErr(err)
 		}
 	}
@@ -180,7 +186,8 @@ func secretDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	databaseName := d.Get("database_name").(string)
 
 	builder := newSecretBuilder(secretName, schemaName, databaseName)
+	q := builder.Drop()
 
-	dropResource(conn, d, builder.Drop())
+	dropResource(conn, d, q, "secret")
 	return nil
 }

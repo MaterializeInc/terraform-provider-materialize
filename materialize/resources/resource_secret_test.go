@@ -45,3 +45,20 @@ func TestResourceSecretDrop(t *testing.T) {
 	b := newSecretBuilder("secret", "schema", "database")
 	r.Equal(`DROP SECRET database.schema.secret;`, b.Drop())
 }
+
+func TestResourceSecretReadParams(t *testing.T) {
+	r := require.New(t)
+	b := readSecretParams("u1")
+	r.Equal(`
+		SELECT
+			mz_secrets.name,
+			mz_schemas.name,
+			mz_databases.name
+		FROM mz_secrets
+		JOIN mz_schemas
+			ON mz_secrets.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		WHERE mz_secrets.id = 'u1';
+	`, b)
+}
