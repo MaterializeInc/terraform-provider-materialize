@@ -1,0 +1,20 @@
+---
+version: "3.9"
+
+services:
+
+  materialized:
+    image: materialize/materialized:latest
+    container_name: materialized
+    ports:
+      - 6875:6875
+    healthcheck: {test: curl -f localhost:6875, interval: 1s, start_period: 30s}
+
+  provider:
+    build:
+      context: .
+    container_name: provider
+    depends_on:
+      - materialized
+    command: >
+      sh -c "terraform init && tail -F /dev/null"

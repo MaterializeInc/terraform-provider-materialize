@@ -1,5 +1,4 @@
-NAME=materialize
-BINARY=terraform-provider-${NAME}
+BINARY=terraform-provider-materialize
 PLATFORM=darwin_arm64
 PLUGIN_PATH=~/.terraform.d/plugins/materialize.com/devex/materialize/0.1/${PLATFORM}
 
