@@ -2,30 +2,36 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
 )
 
+var clusterSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "A name for the cluster.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+}
+
 func Cluster() *schema.Resource {
 	return &schema.Resource{
 		Description: "A logical cluster, which contains dataflow-powered objects.",
 
-		CreateContext: resourceClusterCreate,
-		ReadContext:   resourceClusterRead,
-		DeleteContext: resourceClusterDelete,
+		CreateContext: clusterCreate,
+		ReadContext:   clusterRead,
+		DeleteContext: clusterDelete,
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "A name for the cluster.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		Schema: clusterSchema,
 	}
 }
 
@@ -44,57 +50,51 @@ func (b *ClusterBuilder) Create() string {
 	return fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, b.clusterName)
 }
 
-func (b *ClusterBuilder) Read() string {
-	return fmt.Sprintf(`SELECT id, name FROM mz_clusters WHERE name = '%s';`, b.clusterName)
+func (b *ClusterBuilder) ReadId() string {
+	return fmt.Sprintf(`SELECT id FROM mz_clusters WHERE name = '%s';`, b.clusterName)
 }
 
 func (b *ClusterBuilder) Drop() string {
 	return fmt.Sprintf(`DROP CLUSTER %s;`, b.clusterName)
 }
 
-func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+func readClusterParams(id string) string {
+	return fmt.Sprintf("SELECT name FROM mz_clusters WHERE id = '%s';", id)
+}
 
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type _cluster struct {
+	name sql.NullString `db:"name"`
+}
+
+func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readClusterParams(i)
+
+	readResource(conn, d, i, q, _cluster{}, "cluster")
+	return nil
+}
+
+func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
 	builder := newClusterBuilder(clusterName)
-	q := builder.Read()
+	qc := builder.Create()
+	qr := builder.ReadId()
 
-	var id, name string
-	conn.QueryRow(q).Scan(&id, &name)
-
-	d.SetId(id)
-
-	return diags
+	createResource(conn, d, qc, qr, "cluster")
+	return clusterRead(ctx, d, meta)
 }
 
-func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	clusterName := d.Get("name").(string)
-
-	builder := newClusterBuilder(clusterName)
-	q := builder.Create()
-
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return resourceClusterRead(ctx, d, meta)
-}
-
-func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
 	builder := newClusterBuilder(clusterName)
 	q := builder.Drop()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return diags
+	dropResource(conn, d, q, "cluster")
+	return nil
 }

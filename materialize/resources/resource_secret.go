@@ -111,12 +111,11 @@ func readSecretParams(id string) string {
 			ON mz_secrets.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.id = '%s';
-	`, id)
+		WHERE mz_secrets.id = '%s';`, id)
 }
 
 //lint:ignore U1000 Ignore unused function temporarily for debugging
-type secret struct {
+type _secret struct {
 	name          sql.NullString `db:"name"`
 	schema_name   sql.NullString `db:"schema_name"`
 	database_name sql.NullString `db:"database_name"`
@@ -127,7 +126,7 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	i := d.Id()
 	q := readSecretParams(i)
 
-	readResource(conn, d, i, q, secret{}, "secret")
+	readResource(conn, d, i, q, _secret{}, "secret")
 	return nil
 }
 

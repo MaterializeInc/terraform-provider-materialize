@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"sort"
@@ -13,164 +14,170 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var sourceSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "The identifier for the source.",
+		Type:        schema.TypeString,
+		Required:    true,
+	},
+	"schema_name": {
+		Description: "The identifier for the source schema.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "public",
+	},
+	"database_name": {
+		Description: "The identifier for the source database.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "materialize",
+	},
+	"cluster_name": {
+		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"size"},
+	},
+	"size": {
+		Description:   "The size of the source.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ValidateFunc:  validation.StringInSlice(sourceSizes, true),
+		ConflictsWith: []string{"cluster_name"},
+	},
+	"connection_type": {
+		Description:  "The source connection type.",
+		Type:         schema.TypeString,
+		Required:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(sourceConnectionTypes, true),
+	},
+	// Load Generator
+	"load_generator_type": {
+		Description:   "The identifier for the secret schema.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		Default:       "public",
+		ValidateFunc:  validation.StringInSlice(loadGeneratorTypes, true),
+		ConflictsWith: []string{"postgres_connection", "publication"},
+	},
+	"tick_interval": {
+		Description: "The interval at which the next datum should be emitted. Defaults to one second.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"scale_factor": {
+		Description: "The scale factor for the TPCH generator. Defaults to 0.01 (~ 10MB).",
+		Type:        schema.TypeFloat,
+		Optional:    true,
+		Default:     0.01,
+		ForceNew:    true,
+	},
+	// Postgres
+	"postgres_connection": {
+		Description:   "The name of the PostgreSQL connection to use in the source.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"kafka_connection", "load_generator_type"},
+		RequiredWith:  []string{"postgres_connection", "publication"},
+	},
+	"publication": {
+		Description:   "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"kafka_connection", "load_generator_type"},
+		RequiredWith:  []string{"postgres_connection", "publication"},
+	},
+	"tables": {
+		Description: "Creates subsources for specific tables in the load generator.",
+		Type:        schema.TypeMap,
+		Elem: &schema.Schema{
+			Type: schema.TypeString,
+		},
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(replicaSizes, true),
+	},
+	// Broker
+	"kafka_connection": {
+		Description:   "The name of the Kafka connection to use in the source.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"load_generator_type", "postgres_connection"},
+		RequiredWith:  []string{"kafka_connection", "topic"},
+	},
+	"topic": {
+		Description:   "The Kafka topic you want to subscribe to.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"load_generator_type", "postgres_connection"},
+		RequiredWith:  []string{"kafka_connection", "topic"},
+	},
+	"include_key": {
+		Description: "Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named key. ",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_partition": {
+		Description: "Include a partition column containing the Kafka message partition",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_offset": {
+		Description: "Include an offset column containing the Kafka message offset.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_timestamp": {
+		Description: "Include a timestamp column containing the Kafka message timestamp.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"format": {
+		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"envelope": {
+		Description:  "How to interpret records (e.g. Append Only, Upsert).",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(envelopes, true),
+	},
+	"schema_registry_connection": {
+		Description: "The name of the connection to use for the shcema registry.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+}
+
 func Source() *schema.Resource {
 	return &schema.Resource{
-		Description: "Load generator sources produce synthetic data for use in demos and performance tests.",
+		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
 
-		CreateContext: resourceSourceCreate,
-		ReadContext:   resourceSourceRead,
-		UpdateContext: resourceSourceUpdate,
-		DeleteContext: resourceSourceDelete,
+		CreateContext: sourceCreate,
+		ReadContext:   sourceRead,
+		UpdateContext: sourceUpdate,
+		DeleteContext: sourceDelete,
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "The identifier for the source.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"schema_name": {
-				Description: "The identifier for the source schema.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "public",
-			},
-			"database_name": {
-				Description: "The identifier for the source database.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "materialize",
-			},
-			"cluster_name": {
-				Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"size"},
-			},
-			"size": {
-				Description:   "The size of the source.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ValidateFunc:  validation.StringInSlice(sourceSizes, true),
-				ConflictsWith: []string{"cluster_name"},
-			},
-			"connection_type": {
-				Description:  "The source connection type.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(sourceConnectionTypes, true),
-			},
-			// Load Generator
-			"load_generator_type": {
-				Description:   "The identifier for the secret schema.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				Default:       "public",
-				ValidateFunc:  validation.StringInSlice(loadGeneratorTypes, true),
-				ConflictsWith: []string{"postgres_connection", "publication"},
-			},
-			"tick_interval": {
-				Description: "The interval at which the next datum should be emitted. Defaults to one second.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"scale_factor": {
-				Description: "The scale factor for the TPCH generator. Defaults to 0.01 (~ 10MB).",
-				Type:        schema.TypeFloat,
-				Optional:    true,
-				Default:     0.01,
-				ForceNew:    true,
-			},
-			// Postgres
-			"postgres_connection": {
-				Description:   "The name of the PostgreSQL connection to use in the source.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"kafka_connection", "load_generator_type"},
-				RequiredWith:  []string{"postgres_connection", "publication"},
-			},
-			"publication": {
-				Description:   "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"kafka_connection", "load_generator_type"},
-				RequiredWith:  []string{"postgres_connection", "publication"},
-			},
-			"tables": {
-				Description: "Creates subsources for specific tables in the load generator.",
-				Type:        schema.TypeMap,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(replicaSizes, true),
-			},
-			// Broker
-			"kafka_connection": {
-				Description:   "The name of the Kafka connection to use in the source.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"load_generator_type", "postgres_connection"},
-				RequiredWith:  []string{"kafka_connection", "topic"},
-			},
-			"topic": {
-				Description:   "The Kafka topic you want to subscribe to.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"load_generator_type", "postgres_connection"},
-				RequiredWith:  []string{"kafka_connection", "topic"},
-			},
-			"include_key": {
-				Description: "Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named key. ",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"include_partition": {
-				Description: "Include a partition column containing the Kafka message partition",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"include_offset": {
-				Description: "Include an offset column containing the Kafka message offset.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"include_timestamp": {
-				Description: "Include a timestamp column containing the Kafka message timestamp.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"format": {
-				Description: "How to decode raw bytes from different formats into data structures it can understand at runtime",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"envelope": {
-				Description:  "How to interpret records (e.g. Append Only, Upsert).",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(envelopes, true),
-			},
-			"schema_registry_connection": {
-				Description: "The name of the connection to use for the shcema registry.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		Schema: sourceSchema,
 	}
 }
 
@@ -378,18 +385,9 @@ func (b *SourceBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SourceBuilder) Read() string {
+func (b *SourceBuilder) ReadId() string {
 	return fmt.Sprintf(`
-		SELECT
-			mz_sources.id,
-			mz_sources.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_sources.type,
-			mz_sources.size,
-			mz_sources.envelope_type,
-			mz_connections.name as connection_name,
-			mz_clusters.name as cluster_name
+		SELECT mz_sources.id
 		FROM mz_sources
 		JOIN mz_schemas
 			ON mz_sources.schema_id = mz_schemas.id
@@ -417,26 +415,51 @@ func (b *SourceBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SOURCE %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName)
 }
 
-func resourceSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	builder := newSourceBuilder(sourceName, schemaName, databaseName)
-	q := builder.Read()
-
-	var id, name, source_type, schema_name, database_name, size, envelope_type, connection_name, cluster_name string
-	conn.QueryRow(q).Scan(&id, &name, &source_type, &schema_name, &database_name, &size, &envelope_type, &connection_name, &cluster_name)
-
-	d.SetId(id)
-
-	return diags
+func readSourceParams(id string) string {
+	return fmt.Sprintf(`
+		SELECT
+			mz_sources.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_sources.type,
+			mz_sources.size,
+			mz_sources.envelope_type,
+			mz_connections.name as connection_name,
+			mz_clusters.name as cluster_name
+		FROM mz_sources
+		JOIN mz_schemas
+			ON mz_sources.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		LEFT JOIN mz_connections
+			ON mz_sources.connection_id = mz_connections.id
+		LEFT JOIN mz_clusters
+			ON mz_sources.cluster_id = mz_clusters.id
+		WHERE mz_sources.id = '%s';`, id)
 }
 
-func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type _source struct {
+	name            sql.NullString `db:"name"`
+	schema_name     sql.NullString `db:"schema_name"`
+	database_name   sql.NullString `db:"database_name"`
+	source_type     sql.NullString `db:"source_type"`
+	size            sql.NullString `db:"size"`
+	envelope_type   sql.NullString `db:"envelope_type"`
+	connection_name sql.NullString `db:"connection_name"`
+	cluster_name    sql.NullString `db:"cluster_name"`
+}
+
+func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readSourceParams(i)
+
+	readResource(conn, d, i, q, _source{}, "source")
+	return nil
+}
+
+func sourceCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 
 	sourceName := d.Get("name").(string)
@@ -513,16 +536,14 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder.SchemaRegistryConnection(v.(string))
 	}
 
-	q := builder.Create()
+	qc := builder.Create()
+	qr := builder.ReadId()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return resourceSourceRead(ctx, d, meta)
+	createResource(conn, d, qc, qr, "source")
+	return sourceRead(ctx, d, meta)
 }
 
-func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -552,12 +573,10 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	return resourceSourceRead(ctx, d, meta)
+	return sourceRead(ctx, d, meta)
 }
 
-func resourceSourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func sourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
@@ -566,9 +585,6 @@ func resourceSourceDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	builder := newSourceBuilder(sourceName, schemaName, databaseName)
 	q := builder.Drop()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return diags
+	dropResource(conn, d, q, "source")
+	return nil
 }

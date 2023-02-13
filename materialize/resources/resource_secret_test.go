@@ -59,6 +59,5 @@ func TestResourceSecretReadParams(t *testing.T) {
 			ON mz_secrets.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.id = 'u1';
-	`, b)
+		WHERE mz_secrets.id = 'u1';`, b)
 }

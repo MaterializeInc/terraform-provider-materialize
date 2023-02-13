@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -12,88 +13,94 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var sinkSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "The identifier for the sink.",
+		Type:        schema.TypeString,
+		Required:    true,
+	},
+	"schema_name": {
+		Description: "The identifier for the sink schema.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "public",
+	},
+	"database_name": {
+		Description: "The identifier for the sink database.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "materialize",
+	},
+	"cluster_name": {
+		Description:   "The cluster to maintain this sink. If not specified, the size option must be specified.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"size"},
+	},
+	"size": {
+		Description:   "The size of the sink.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ValidateFunc:  validation.StringInSlice(sourceSizes, true),
+		ConflictsWith: []string{"cluster_name"},
+	},
+	"item_name": {
+		Description: "The name of the source, table or materialized view you want to send to the sink.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+	// Broker
+	"kafka_connection": {
+		Description:  "The name of the Kafka connection to use in the source.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"kafka_connection", "topic"},
+	},
+	"topic": {
+		Description:  "The Kafka topic you want to subscribe to.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"kafka_connection", "topic"},
+	},
+	"format": {
+		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"envelope": {
+		Description:  "How to interpret records (e.g. Append Only, Upsert).",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(envelopes, true),
+	},
+	"schema_registry_connection": {
+		Description: "The name of the connection to use for the shcema registry.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+}
+
 func Sink() *schema.Resource {
 	return &schema.Resource{
-		Description: "A connects Materialize to an external system you want to write data to, and provides details about how to encode that data.",
+		Description: "A sink describes an external system you want Materialize to write data to, and provides details about how to encode that data.",
 
-		CreateContext: resourceSinkCreate,
-		ReadContext:   resourceSinkRead,
-		UpdateContext: resourceSinkUpdate,
-		DeleteContext: resourceSinkDelete,
+		CreateContext: sinkCreate,
+		ReadContext:   sinkRead,
+		UpdateContext: sinkUpdate,
+		DeleteContext: sinkDelete,
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "The identifier for the sink.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"schema_name": {
-				Description: "The identifier for the sink schema.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "public",
-			},
-			"database_name": {
-				Description: "The identifier for the sink database.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "materialize",
-			},
-			"cluster_name": {
-				Description:   "The cluster to maintain this sink. If not specified, the size option must be specified.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"size"},
-			},
-			"size": {
-				Description:   "The size of the sink.",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ValidateFunc:  validation.StringInSlice(sourceSizes, true),
-				ConflictsWith: []string{"cluster_name"},
-			},
-			"item_name": {
-				Description: "The name of the source, table or materialized view you want to send to the sink.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
-			// Broker
-			"kafka_connection": {
-				Description:  "The name of the Kafka connection to use in the source.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				RequiredWith: []string{"kafka_connection", "topic"},
-			},
-			"topic": {
-				Description:  "The Kafka topic you want to subscribe to.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				RequiredWith: []string{"kafka_connection", "topic"},
-			},
-			"format": {
-				Description: "How to decode raw bytes from different formats into data structures it can understand at runtime",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"envelope": {
-				Description:  "How to interpret records (e.g. Append Only, Upsert).",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(envelopes, true),
-			},
-			"schema_registry_connection": {
-				Description: "The name of the connection to use for the shcema registry.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		Schema: sinkSchema,
 	}
 }
 
@@ -196,18 +203,9 @@ func (b *SinkBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SinkBuilder) Read() string {
+func (b *SinkBuilder) ReadId() string {
 	return fmt.Sprintf(`
-		SELECT
-			mz_sinks.id,
-			mz_sinks.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_sinks.type,
-			mz_sinks.size,
-			mz_sinks.envelope_type,
-			mz_connections.name as connection_name,
-			mz_clusters.name as cluster_name
+		SELECT mz_sinks.id
 		FROM mz_sinks
 		JOIN mz_schemas
 			ON mz_sinks.schema_id = mz_schemas.id
@@ -235,7 +233,51 @@ func (b *SinkBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SINK %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName)
 }
 
-func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func readSinkParams(id string) string {
+	return fmt.Sprintf(`
+		SELECT
+			mz_sinks.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_sinks.type,
+			mz_sinks.size,
+			mz_sinks.envelope_type,
+			mz_connections.name as connection_name,
+			mz_clusters.name as cluster_name
+		FROM mz_sinks
+		JOIN mz_schemas
+			ON mz_sinks.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		LEFT JOIN mz_connections
+			ON mz_sinks.connection_id = mz_connections.id
+		LEFT JOIN mz_clusters
+			ON mz_sinks.cluster_id = mz_clusters.id
+		WHERE mz_sinks.id = '%s';`, id)
+}
+
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type _sink struct {
+	name            sql.NullString `db:"name"`
+	schema_name     sql.NullString `db:"schema_name"`
+	database_name   sql.NullString `db:"database_name"`
+	sink_type       sql.NullString `db:"sink_type"`
+	size            sql.NullString `db:"size"`
+	envelope_type   sql.NullString `db:"envelope_type"`
+	connection_name sql.NullString `db:"connection_name"`
+	cluster_name    sql.NullString `db:"cluster_name"`
+}
+
+func sinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readSinkParams(i)
+
+	readResource(conn, d, i, q, _sink{}, "sink")
+	return nil
+}
+
+func sinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 
 	sinkName := d.Get("name").(string)
@@ -276,35 +318,14 @@ func resourceSinkCreate(ctx context.Context, d *schema.ResourceData, meta any) d
 		builder.SchemaRegistryConnection(v.(string))
 	}
 
-	q := builder.Create()
+	qc := builder.Create()
+	qr := builder.ReadId()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return resourceSourceRead(ctx, d, meta)
+	createResource(conn, d, qc, qr, "sink")
+	return sourceRead(ctx, d, meta)
 }
 
-func resourceSinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sqlx.DB)
-	sinkName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	builder := newSinkBuilder(sinkName, schemaName, databaseName)
-	q := builder.Read()
-
-	var id, name, schema_name, database_name, sink_type, size, envelope_type, connection_name, cluster_name string
-	conn.QueryRow(q).Scan(&id, &name, &schema_name, &database_name, &sink_type, &size, &envelope_type, &connection_name, &cluster_name)
-
-	d.SetId(id)
-
-	return diags
-}
-
-func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -334,12 +355,10 @@ func resourceSinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) d
 		}
 	}
 
-	return resourceSinkRead(ctx, d, meta)
+	return sinkRead(ctx, d, meta)
 }
 
-func resourceSinkDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func sinkDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
@@ -348,9 +367,6 @@ func resourceSinkDelete(ctx context.Context, d *schema.ResourceData, meta any) d
 	builder := newSinkBuilder(sinkName, schemaName, databaseName)
 	q := builder.Drop()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return diags
+	dropResource(conn, d, q, "sink")
+	return nil
 }
