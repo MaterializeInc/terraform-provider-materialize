@@ -71,7 +71,7 @@ func newSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilde
 }
 
 func (b *SecretBuilder) Create(value string) string {
-	return fmt.Sprintf(`CREATE SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, value)
+	return fmt.Sprintf(`CREATE SECRET %s.%s.%s AS '%s';`, b.databaseName, b.schemaName, b.secretName, value)
 }
 
 func (b *SecretBuilder) ReadId() string {
@@ -93,7 +93,7 @@ func (b *SecretBuilder) Rename(newName string) string {
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
-	return fmt.Sprintf(`ALTER SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, newValue)
+	return fmt.Sprintf(`ALTER SECRET %s.%s.%s AS '%s';`, b.databaseName, b.schemaName, b.secretName, newValue)
 }
 
 func (b *SecretBuilder) Drop() string {
