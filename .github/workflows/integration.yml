@@ -13,9 +13,17 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up --build -d
 
-      - name: Materialize Secret
+      - name: Terraform Init
         run: |
-          docker exec provider terraform apply -target=materialize_secret.example_secret -auto-approve -compact-warnings && docker exec provider terraform destroy -target=materialize_secret.example_secret -auto-approve -compact-warnings
+          docker exec provider terraform init
+
+      - name: Secret (Create)
+        run: |
+          docker exec provider terraform apply -target=materialize_secret.example_secret -auto-approve -compact-warnings
+      
+      - name: Secret (Destroy)
+        run: |
+          docker exec provider terraform destroy -target=materialize_secret.example_secret -auto-approve -compact-warnings
 
       - name: Docker Compose Down
         run: docker compose down

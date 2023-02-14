@@ -17,4 +17,4 @@ services:
     depends_on:
       - materialized
     command: >
-      sh -c "terraform init && tail -F /dev/null"
+      sh -c "tail -F /dev/null"
