@@ -61,6 +61,7 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":          datasources.Cluster(),
 			"materialize_cluster_replica":  datasources.ClusterReplica(),
+			"materialize_connection":       datasources.Connection(),
 			"materialize_current_database": datasources.CurrentDatabase(),
 			"materialize_current_cluster":  datasources.CurrentCluster(),
 			"materialize_database":         datasources.Database(),
