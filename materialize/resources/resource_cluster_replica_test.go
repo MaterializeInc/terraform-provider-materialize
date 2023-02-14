@@ -8,7 +8,7 @@ import (
 
 func TestResourceClusterReplicaCreate(t *testing.T) {
 	r := require.New(t)
-	b := newClusterReplicaBuilder("cluster", "replica")
+	b := newClusterReplicaBuilder("replica", "cluster")
 	r.Equal(`CREATE CLUSTER REPLICA cluster.replica;`, b.Create())
 
 	b.Size("xsmall")
@@ -29,10 +29,28 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 
 func TestResourceClusterReplicaRead(t *testing.T) {
 	r := require.New(t)
-	b := newClusterReplicaBuilder("cluster", "replica")
+	b := newClusterReplicaBuilder("replica", "cluster")
+	r.Equal(`
+		SELECT mz_cluster_replicas.id
+		FROM mz_cluster_replicas
+		JOIN mz_clusters
+			ON mz_cluster_replicas.cluster_id = mz_clusters.id
+		WHERE mz_cluster_replicas.name = 'replica'
+		AND mz_clusters.name = 'cluster';
+	`, b.ReadId())
+}
+
+func TestResourceClusterReplicaDrop(t *testing.T) {
+	r := require.New(t)
+	b := newClusterReplicaBuilder("replica", "cluster")
+	r.Equal(`DROP CLUSTER REPLICA cluster.replica;`, b.Drop())
+}
+
+func TestResourceClusterReplicaReadParams(t *testing.T) {
+	r := require.New(t)
+	b := readClusterReplicaParams("u1")
 	r.Equal(`
 		SELECT
-			mz_cluster_replicas.id,
 			mz_cluster_replicas.name,
 			mz_clusters.name,
 			mz_cluster_replicas.size,
@@ -40,13 +58,5 @@ func TestResourceClusterReplicaRead(t *testing.T) {
 		FROM mz_cluster_replicas
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.name = 'replica'
-		AND mz_clusters.name = 'cluster';
-	`, b.Read())
-}
-
-func TestResourceClusterReplicaDrop(t *testing.T) {
-	r := require.New(t)
-	b := newClusterReplicaBuilder("cluster", "replica")
-	r.Equal(`DROP CLUSTER REPLICA cluster.replica;`, b.Drop())
+		WHERE mz_cluster_replicas.id = 'u1';`, b)
 }

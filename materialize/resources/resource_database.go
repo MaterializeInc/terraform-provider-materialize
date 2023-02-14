@@ -7,24 +7,31 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
+
+var databaseSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "The identifier for the database.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+}
 
 func Database() *schema.Resource {
 	return &schema.Resource{
 		Description: "The highest level namespace hierarchy in Materialize.",
 
-		CreateContext: resourceDatabaseCreate,
-		ReadContext:   resourceDatabaseRead,
-		DeleteContext: resourceDatabaseDelete,
+		CreateContext: databaseCreate,
+		ReadContext:   databaseRead,
+		DeleteContext: databaseDelete,
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "The identifier for the database.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		Schema: databaseSchema,
 	}
 }
 
@@ -42,51 +49,51 @@ func (b *DatabaseBuilder) Create() string {
 	return fmt.Sprintf(`CREATE DATABASE %s;`, b.databaseName)
 }
 
-func (b *DatabaseBuilder) Read() string {
-	return fmt.Sprintf(`SELECT id, name FROM mz_databases WHERE name = '%s';`, b.databaseName)
+func (b *DatabaseBuilder) ReadId() string {
+	return fmt.Sprintf(`SELECT id FROM mz_databases WHERE name = '%s';`, b.databaseName)
 }
 
 func (b *DatabaseBuilder) Drop() string {
 	return fmt.Sprintf(`DROP DATABASE %s;`, b.databaseName)
 }
 
-func resourceDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+func readDatabaseParams(id string) string {
+	return fmt.Sprintf("SELECT name FROM mz_databases WHERE id = '%s';", id)
+}
 
-	conn := meta.(*sql.DB)
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type _database struct {
+	name sql.NullString `db:"name"`
+}
+
+func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readDatabaseParams(i)
+
+	readResource(conn, d, i, q, _database{}, "database")
+	return nil
+}
+
+func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
 	builder := newDatabaseBuilder(databaseName)
-	q := builder.Read()
+	qc := builder.Create()
+	qr := builder.ReadId()
 
-	var id, name string
-	conn.QueryRow(q).Scan(&id, &name)
-
-	d.SetId(id)
-
-	return diags
+	createResource(conn, d, qc, qr, "database")
+	return databaseRead(ctx, d, meta)
 }
 
-func resourceDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
-	databaseName := d.Get("name").(string)
-
-	builder := newDatabaseBuilder(databaseName)
-	q := builder.Create()
-
-	ExecResource(conn, q)
-	return resourceDatabaseRead(ctx, d, meta)
-}
-
-func resourceDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
+func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
 	builder := newDatabaseBuilder(databaseName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
-	return diags
+	dropResource(conn, d, q, "database")
+	return nil
 }

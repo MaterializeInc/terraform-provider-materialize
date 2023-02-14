@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"terraform-materialize/materialize/datasources"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" //PostgreSQL db
 )
 
@@ -51,6 +51,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":         resources.Cluster(),
 			"materialize_cluster_replica": resources.ClusterReplica(),
+			"materialize_connection":      resources.Connection(),
 			"materialize_database":        resources.Database(),
 			"materialize_schema":          resources.Schema(),
 			"materialize_secret":          resources.Secret(),
@@ -86,7 +87,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	connStr := connectionString(host, username, password, port, database)
 
 	var diags diag.Diagnostics
-	db, err := sql.Open("postgres", connStr)
+	db, err := sqlx.Open("postgres", connStr)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,

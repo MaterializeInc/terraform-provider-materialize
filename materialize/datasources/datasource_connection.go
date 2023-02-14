@@ -13,25 +13,25 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func Secret() *schema.Resource {
+func Connection() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: secretRead,
+		ReadContext: connectionRead,
 		Schema: map[string]*schema.Schema{
 			"database_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Limit secrets to a specific database",
+				Description: "Limit connections to a specific database",
 			},
 			"schema_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "Limit secrets to a specific schema within a specific database",
+				Description:  "Limit connections to a specific schema within a specific database",
 				RequiredWith: []string{"database_name"},
 			},
-			"secrets": {
+			"connections": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The secrets in the account",
+				Description: "The schemas in the account",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -50,6 +50,10 @@ func Secret() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -57,17 +61,18 @@ func Secret() *schema.Resource {
 	}
 }
 
-func secretQuery(databaseName, schemaName string) string {
+func connectionQuery(databaseName, schemaName string) string {
 	q := strings.Builder{}
 	q.WriteString(`
 		SELECT
-			mz_secrets.id,
-			mz_secrets.name,
-			mz_schemas.name,
-			mz_databases.name
-		FROM mz_secrets
+			mz_connections.id,
+			mz_connections.name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name,
+			mz_connections.type
+		FROM mz_connections
 		JOIN mz_schemas
-			ON mz_secrets.schema_id = mz_schemas.id
+			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id`)
 
@@ -84,53 +89,54 @@ func secretQuery(databaseName, schemaName string) string {
 	return q.String()
 }
 
-func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*sqlx.DB)
 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-	q := secretQuery(databaseName, schemaName)
+	q := connectionQuery(databaseName, schemaName)
 
 	rows, err := conn.Query(q)
 	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no secrets found in account")
+		log.Printf("[DEBUG] no connections found in account")
 		d.SetId("")
 		return diag.FromErr(err)
 	} else if err != nil {
-		log.Println("[DEBUG] failed to list secrets")
+		log.Println("[DEBUG] failed to list connections")
 		d.SetId("")
 		return diag.FromErr(err)
 	}
 
-	secretFormats := []map[string]interface{}{}
+	connectionFormats := []map[string]interface{}{}
 	for rows.Next() {
-		var id, name, schema_name, database_name string
-		rows.Scan(&id, &name, &schema_name, &database_name)
+		var id, name, schema_name, database_name, connection_type string
+		rows.Scan(&id, &name, &schema_name, &database_name, &connection_type)
 
-		secretMap := map[string]interface{}{}
+		connectionMap := map[string]interface{}{}
 
-		secretMap["id"] = id
-		secretMap["name"] = name
-		secretMap["schema_name"] = schema_name
-		secretMap["database_name"] = database_name
+		connectionMap["id"] = id
+		connectionMap["name"] = name
+		connectionMap["schema_name"] = schema_name
+		connectionMap["database_name"] = database_name
+		connectionMap["type"] = connection_type
 
-		secretFormats = append(secretFormats, secretMap)
+		connectionFormats = append(connectionFormats, connectionMap)
 	}
 
-	if err := d.Set("secrets", secretFormats); err != nil {
+	if err := d.Set("connections", connectionFormats); err != nil {
 		return diag.FromErr(err)
 	}
 
 	if databaseName != "" && schemaName != "" {
-		id := fmt.Sprintf("%s|%s|secrets", databaseName, schemaName)
+		id := fmt.Sprintf("%s|%s|connections", databaseName, schemaName)
 		d.SetId(id)
 	} else if databaseName != "" {
-		id := fmt.Sprintf("%s|secrets", databaseName)
+		id := fmt.Sprintf("%s|connections", databaseName)
 		d.SetId(id)
 	} else {
-		d.SetId("secrets")
+		d.SetId("connections")
 	}
 
 	return diags

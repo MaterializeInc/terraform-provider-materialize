@@ -7,31 +7,38 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
+
+var schemaSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "The name of the schema.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+	"database_name": {
+		Description: "The name of the database.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     "materialize",
+	},
+}
 
 func Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "The highest level namespace hierarchy in Materialize.",
+		Description: "The second highest level namespace hierarchy in Materialize.",
 
-		CreateContext: resourceSchemaCreate,
-		ReadContext:   resourceSchemaRead,
-		DeleteContext: resourceSchemaDelete,
+		CreateContext: schemaCreate,
+		ReadContext:   schemaRead,
+		DeleteContext: schemaDelete,
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "The name of the schema.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
-			"database_name": {
-				Description: "The name of the database.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "materialize",
-			},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		Schema: schemaSchema,
 	}
 }
 
@@ -51,12 +58,9 @@ func (b *SchemaBuilder) Create() string {
 	return fmt.Sprintf(`CREATE SCHEMA %s.%s;`, b.databaseName, b.schemaName)
 }
 
-func (b *SchemaBuilder) Read() string {
+func (b *SchemaBuilder) ReadId() string {
 	return fmt.Sprintf(`
-		SELECT
-			mz_schemas.id,
-			mz_schemas.name,
-			mz_databases.name
+		SELECT mz_schemas.id
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_schemas.name = '%s'
@@ -68,46 +72,52 @@ func (b *SchemaBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SCHEMA %s.%s;`, b.databaseName, b.schemaName)
 }
 
-func resourceSchemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+func readSchemaParams(id string) string {
+	return fmt.Sprintf(`
+		SELECT
+			mz_schemas.name,
+			mz_databases.name
+		FROM mz_schemas JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		WHERE mz_schemas.id = '%s';`, id)
+}
 
-	conn := meta.(*sql.DB)
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type _schema struct {
+	schema_name   sql.NullString `db:"schema_name"`
+	database_name sql.NullString `db:"database_name"`
+}
+
+func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readSchemaParams(i)
+
+	readResource(conn, d, i, q, _schema{}, "schema")
+	return nil
+}
+
+func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	builder := newSchemaBuilder(schemaName, databaseName)
-	q := builder.Read()
+	qc := builder.Create()
+	qr := builder.ReadId()
 
-	var id, name, database string
-	conn.QueryRow(q).Scan(&id, &name, &database)
-
-	d.SetId(id)
-
-	return diags
+	createResource(conn, d, qc, qr, "schema")
+	return schemaRead(ctx, d, meta)
 }
 
-func resourceSchemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
-	schemaName := d.Get("name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	builder := newSchemaBuilder(schemaName, databaseName)
-	q := builder.Create()
-
-	ExecResource(conn, q)
-	return resourceSchemaRead(ctx, d, meta)
-}
-
-func resourceSchemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
+func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	builder := newSchemaBuilder(schemaName, databaseName)
 	q := builder.Drop()
 
-	ExecResource(conn, q)
-	return diags
+	dropResource(conn, d, q, "schema")
+	return nil
 }

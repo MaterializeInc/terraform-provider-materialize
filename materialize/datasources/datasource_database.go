@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func Database() *schema.Resource {
@@ -38,7 +39,7 @@ func Database() *schema.Resource {
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	rows, err := conn.Query(`SELECT id, name FROM mz_databases;`)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Printf("[DEBUG] no databases found in account")
