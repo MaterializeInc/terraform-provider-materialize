@@ -4,70 +4,76 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/jmoiron/sqlx"
 )
+
+var clusterReplicaSchema = map[string]*schema.Schema{
+	"name": {
+		Description: "A name for this replica.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+	"cluster_name": {
+		Description: "The cluster whose resources you want to create an additional computation of.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+	"size": {
+		Description:  "The size of the replica.",
+		Type:         schema.TypeString,
+		Required:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(replicaSizes, true),
+	},
+	"availability_zone": {
+		Description:  "If you want the replica to reside in a specific availability zone.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(regions, true),
+	},
+	"introspection_interval": {
+		Description: "The interval at which to collect introspection data.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     "1s",
+	},
+	"introspection_debugging": {
+		Description: "Whether to introspect the gathering of the introspection data.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     false,
+	},
+	"idle_arrangement_merge_effort": {
+		Description: "The amount of effort the replica should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
+		Type:        schema.TypeInt,
+		Optional:    true,
+		ForceNew:    true,
+	},
+}
 
 func ClusterReplica() *schema.Resource {
 	return &schema.Resource{
 		Description: "A cluster replica is the physical resource which maintains dataflow-powered objects.",
 
-		CreateContext: resourceClusterReplicaCreate,
-		ReadContext:   resourceClusterReplicaRead,
-		DeleteContext: resourceClusterReplicaDelete,
+		CreateContext: clusterReplicaCreate,
+		ReadContext:   clusterReplicaRead,
+		DeleteContext: clusterReplicaDelete,
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "A name for this replica.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
-			"cluster_name": {
-				Description: "The cluster whose resources you want to create an additional computation of.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
-			"size": {
-				Description:  "The size of the replica.",
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(replicaSizes, true),
-			},
-			"availability_zone": {
-				Description:  "If you want the replica to reside in a specific availability zone.",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(regions, true),
-			},
-			"introspection_interval": {
-				Description: "The interval at which to collect introspection data.",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "1s",
-			},
-			"introspection_debugging": {
-				Description: "Whether to introspect the gathering of the introspection data.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     false,
-			},
-			"idle_arrangement_merge_effort": {
-				Description: "The amount of effort the replica should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ForceNew:    true,
-			},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		Schema: clusterReplicaSchema,
 	}
 }
 
@@ -141,14 +147,9 @@ func (b *ClusterReplicaBuilder) Create() string {
 	return q.String()
 }
 
-func (b *ClusterReplicaBuilder) Read() string {
+func (b *ClusterReplicaBuilder) ReadId() string {
 	return fmt.Sprintf(`
-		SELECT
-			mz_cluster_replicas.id,
-			mz_cluster_replicas.name,
-			mz_clusters.name,
-			mz_cluster_replicas.size,
-			mz_cluster_replicas.availability_zone
+		SELECT mz_cluster_replicas.id
 		FROM mz_cluster_replicas
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
@@ -161,26 +162,38 @@ func (b *ClusterReplicaBuilder) Drop() string {
 	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
 }
 
-func resourceClusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
-	replicaName := d.Get("name").(string)
-	clusterName := d.Get("cluster_name").(string)
-
-	builder := newClusterReplicaBuilder(replicaName, clusterName)
-	q := builder.Read()
-
-	var id, name, cluster, size, availability_zone string
-	conn.QueryRow(q).Scan(&id, &name, &cluster, &size, &availability_zone)
-
-	d.SetId(id)
-
-	return diags
+func readClusterReplicaParams(id string) string {
+	return fmt.Sprintf(`
+		SELECT
+			mz_cluster_replicas.name,
+			mz_clusters.name,
+			mz_cluster_replicas.size,
+			mz_cluster_replicas.availability_zone
+		FROM mz_cluster_replicas
+		JOIN mz_clusters
+			ON mz_cluster_replicas.cluster_id = mz_clusters.id
+		WHERE mz_cluster_replicas.id = '%s';`, id)
 }
 
-func resourceClusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sql.DB)
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+type _clusterReplica struct {
+	name              sql.NullString `db:"name"`
+	cluster_name      sql.NullString `db:"cluster_name"`
+	size              sql.NullString `db:"size"`
+	availability_zone sql.NullString `db:"availability_zone"`
+}
+
+func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readClusterReplicaParams(i)
+
+	readResource(conn, d, i, q, _clusterReplica{}, "cluster replica")
+	return nil
+}
+
+func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
@@ -207,28 +220,21 @@ func resourceClusterReplicaCreate(ctx context.Context, d *schema.ResourceData, m
 		builder.IdleArrangementMergeEffort(v.(int))
 	}
 
-	q := builder.Create()
+	qc := builder.Create()
+	qr := builder.ReadId()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return resourceClusterReplicaRead(ctx, d, meta)
+	createResource(conn, d, qc, qr, "cluster replica")
+	return clusterReplicaRead(ctx, d, meta)
 }
 
-func resourceClusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sql.DB)
+func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
 	builder := newClusterReplicaBuilder(replicaName, clusterName)
 	q := builder.Drop()
 
-	if err := ExecResource(conn, q); err != nil {
-		log.Printf("[ERROR] could not execute query: %s", q)
-		return diag.FromErr(err)
-	}
-	return diags
+	dropResource(conn, d, q, "cluster replica")
+	return nil
 }
