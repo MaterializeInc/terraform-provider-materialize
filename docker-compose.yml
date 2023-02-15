@@ -17,5 +17,7 @@ services:
     container_name: provider
     depends_on:
       materialized: {condition: service_healthy}
+    volumes:
+      - ./integration:/usr/src/app/integration
     command: >
       sh -c "tail -F /dev/null"

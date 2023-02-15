@@ -51,7 +51,7 @@ func Source() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
-				ValidateFunc:  validation.StringInSlice(sourceSizes, true),
+				ValidateFunc:  validation.StringInSlice(append(sourceSizes, localSizes...), true),
 				ConflictsWith: []string{"cluster_name"},
 			},
 			"connection_type": {
@@ -300,6 +300,10 @@ func (b *SourceBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s.%s.%s`, b.databaseName, b.schemaName, b.sourceName))
 
+	if b.clusterName != "" {
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+	}
+
 	if b.connectionType != "" {
 		q.WriteString(fmt.Sprintf(` FROM %s`, b.connectionType))
 	}
@@ -368,10 +372,6 @@ func (b *SourceBuilder) Create() string {
 
 	if b.size != "" {
 		q.WriteString(fmt.Sprintf(` WITH (SIZE = '%s')`, b.size))
-	} else if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
-	} else {
-		panic(`Must include either size or cluster`)
 	}
 
 	q.WriteString(`;`)

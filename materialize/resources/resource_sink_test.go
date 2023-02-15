@@ -17,7 +17,7 @@ func TestResourceSinkCreate(t *testing.T) {
 	bc := newSinkBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.ItemName("schema.table")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table IN CLUSTER cluster;`, bc.Create())
+	r.Equal(`CREATE SINK database.schema.sink IN CLUSTER cluster FROM schema.table;`, bc.Create())
 }
 
 func TestResourceSinkCreateKafka(t *testing.T) {
