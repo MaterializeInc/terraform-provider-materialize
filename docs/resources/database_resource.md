@@ -22,3 +22,11 @@ resource "materialize_database" "example_database" {
 ### Required
 
 - `name` - (String) The name of the database.
+
+## Import
+
+Databases can be imported using the database id:
+
+```terraform
+terraform import materialize_database.example_database <database_id>
+```

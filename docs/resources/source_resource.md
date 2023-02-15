@@ -76,3 +76,11 @@ resource "materialize_source" "example_source_kafka" {
 - `format` - (String) The format of the Kafka source. Allowed with `connection_type` set to `KAFKA`. Defaults to `AVRO`.
 - `envelope` - (String) The envelope of the Kafka source. Allowed with `connection_type` set to `KAFKA`. Defaults to `data`.
 - `schema_registry_connection` - (String) The name of the schema registry connection to use. Required with `connection_type` set to `KAFKA`. Conflicts with `postgres_connection` and `load_generator_type`.
+
+## Import
+
+Sources can be imported using the source id:
+
+```sh
+terraform import materialize_source.example_source_load_generator <source_id>
+```

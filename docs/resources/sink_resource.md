@@ -42,3 +42,11 @@ resource "materialize_secret" "example_sink_kafka" {
 - `database_name` - (String) The name of the database to create the sink in. Defaults to `materialize`.
 - `schema_name` - (String) The name of the schema to create the sink in. Defaults to `public`.
 - `schema_registry_connection` - (String) The name of the schema registry connection to use. Required with `format` set to `AVRO`.
+
+## Import
+
+Sinks can be imported using the sink id:
+
+```terraform
+terraform import materialize_sink.example_sink_kafka <sink_id>
+```

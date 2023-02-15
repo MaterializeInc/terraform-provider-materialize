@@ -150,3 +150,11 @@ Required:
 - `ssh_host` - (String) The host for the SSH tunnel connection.
 - `ssh_port` - (Int) The port for the SSH tunnel connection.
 - `ssh_user` - (String) The username for the SSH tunnel connection.
+
+## Import
+
+Connections can be imported using the connection id:
+
+```sh
+terraform import materialize_connection.example <connection_id>
+```

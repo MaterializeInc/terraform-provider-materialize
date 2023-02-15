@@ -27,3 +27,11 @@ resource "materialize_secret" "example_secret" {
 
 - `database_name` - (String) The name of the database to create the secret in. Defaults to `materialize`.
 - `schema_name` - (String) The name of the schema to create the secret in. Defaults to `public`.
+
+## Import
+
+Secrets can be imported using the secret id:
+
+```terraform
+terraform import materialize_secret.example_secret <secret_id>
+```

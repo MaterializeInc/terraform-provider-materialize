@@ -27,3 +27,11 @@ resource "materialize_schema" "example_schema" {
 ### Optional
 
 - `database_name` - (String) The name of the database to create the schema in. Defaults to `materialize`.
+
+## Import
+
+Schemas can be imported using the schema id:
+
+```terraform
+terraform import materialize_schema.example_schema <schema_id>
+```

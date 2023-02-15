@@ -30,3 +30,11 @@ resource "materialize_cluster_replica" "example_1_cluster_replica" {
 - `cluster_name` - (String) The name of the cluster to create the replica in.
 - `name` - (String) The name of the replica.
 - `size` - (String) The size of the replica.
+
+## Import
+
+Cluster replicas can be imported using the cluster replica id:
+
+```terraform
+terraform import materialize_cluster_replica.example_1_cluster_replica <cluster_replica_id>
+```

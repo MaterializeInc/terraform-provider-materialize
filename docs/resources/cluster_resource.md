@@ -22,3 +22,11 @@ resource "materialize_cluster" "example_cluster" {
 ### Required
 
 - `name` - (String) The name of the cluster.
+
+## Import
+
+Clusters can be imported using the cluster id:
+
+```terraform
+terraform import materialize_cluster.example_cluster <cluster_id>
+```
