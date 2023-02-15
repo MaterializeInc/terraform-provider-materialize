@@ -70,16 +70,7 @@ func TestResourceSourceRead(t *testing.T) {
 	r := require.New(t)
 	b := newSourceBuilder("source", "schema", "database")
 	r.Equal(`
-		SELECT
-			mz_sources.id,
-			mz_sources.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_sources.type,
-			mz_sources.size,
-			mz_sources.envelope_type,
-			mz_connections.name as connection_name,
-			mz_clusters.name as cluster_name
+		SELECT mz_sources.id
 		FROM mz_sources
 		JOIN mz_schemas
 			ON mz_sources.schema_id = mz_schemas.id
@@ -92,7 +83,7 @@ func TestResourceSourceRead(t *testing.T) {
 		WHERE mz_sources.name = 'source'
 		AND mz_schemas.name = 'schema'
 		AND mz_databases.name = 'database';
-	`, b.Read())
+	`, b.ReadId())
 }
 
 func TestResourceSourceRename(t *testing.T) {
@@ -111,4 +102,29 @@ func TestResourceSourceDrop(t *testing.T) {
 	r := require.New(t)
 	b := newSourceBuilder("source", "schema", "database")
 	r.Equal(`DROP SOURCE database.schema.source;`, b.Drop())
+}
+
+func TestResourceSourceReadParams(t *testing.T) {
+	r := require.New(t)
+	b := readSourceParams("u1")
+	r.Equal(`
+		SELECT
+			mz_sources.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_sources.type,
+			mz_sources.size,
+			mz_sources.envelope_type,
+			mz_connections.name as connection_name,
+			mz_clusters.name as cluster_name
+		FROM mz_sources
+		JOIN mz_schemas
+			ON mz_sources.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		LEFT JOIN mz_connections
+			ON mz_sources.connection_id = mz_connections.id
+		LEFT JOIN mz_clusters
+			ON mz_sources.cluster_id = mz_clusters.id
+		WHERE mz_sources.id = 'u1';`, b)
 }

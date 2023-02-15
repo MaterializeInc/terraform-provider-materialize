@@ -39,3 +39,4 @@ website/vendor
 locals.tf
 terraform-provider-materialize
 .terraform.lock.hcl
+.terraform.tfstate.lock.info

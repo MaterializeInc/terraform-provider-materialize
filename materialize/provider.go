@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" //PostgreSQL db
 )
 
@@ -66,14 +66,16 @@ func Provider() *schema.Provider {
 			"materialize_source":          resources.Source(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"materialize_cluster":         datasources.Cluster(),
-			"materialize_cluster_replica": datasources.ClusterReplica(),
-			"materialize_connection":      datasources.Connection(),
-			"materialize_database":        datasources.Database(),
-			"materialize_schema":          datasources.Schema(),
-			"materialize_secret":          datasources.Secret(),
-			"materialize_sink":            datasources.Sink(),
-			"materialize_source":          datasources.Source(),
+			"materialize_cluster":          datasources.Cluster(),
+			"materialize_cluster_replica":  datasources.ClusterReplica(),
+			"materialize_connection":       datasources.Connection(),
+			"materialize_current_database": datasources.CurrentDatabase(),
+			"materialize_current_cluster":  datasources.CurrentCluster(),
+			"materialize_database":         datasources.Database(),
+			"materialize_schema":           datasources.Schema(),
+			"materialize_secret":           datasources.Secret(),
+			"materialize_sink":             datasources.Sink(),
+			"materialize_source":           datasources.Source(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
@@ -103,7 +105,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	connStr := connectionString(host, username, password, port, database, testing)
 
 	var diags diag.Diagnostics
-	db, err := sql.Open("postgres", connStr)
+	db, err := sqlx.Open("postgres", connStr)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,

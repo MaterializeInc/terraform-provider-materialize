@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func Cluster() *schema.Resource {
@@ -38,7 +39,7 @@ func Cluster() *schema.Resource {
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	rows, err := conn.Query(`SELECT id, name FROM mz_clusters;`)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Printf("[DEBUG] no clusters found in account")

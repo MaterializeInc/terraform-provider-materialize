@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func Connection() *schema.Resource {
@@ -91,7 +92,7 @@ func connectionQuery(databaseName, schemaName string) string {
 func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
