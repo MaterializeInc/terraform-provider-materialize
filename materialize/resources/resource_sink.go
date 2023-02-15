@@ -42,7 +42,7 @@ var sinkSchema = map[string]*schema.Schema{
 		Type:          schema.TypeString,
 		Optional:      true,
 		ForceNew:      true,
-		ValidateFunc:  validation.StringInSlice(sourceSizes, true),
+		ValidateFunc:  validation.StringInSlice(append(sourceSizes, localSizes...), true),
 		ConflictsWith: []string{"cluster_name"},
 	},
 	"item_name": {

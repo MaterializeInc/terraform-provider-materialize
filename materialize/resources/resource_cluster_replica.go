@@ -30,7 +30,7 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 		Type:         schema.TypeString,
 		Required:     true,
 		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(replicaSizes, true),
+		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
 	},
 	"availability_zone": {
 		Description:  "If you want the replica to reside in a specific availability zone.",
