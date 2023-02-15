@@ -16,6 +16,6 @@ services:
       context: .
     container_name: provider
     depends_on:
-      - materialized
+      materialized: {condition: service_healthy}
     command: >
       sh -c "tail -F /dev/null"
