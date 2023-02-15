@@ -9,13 +9,15 @@ description: |-
 # materialize_cluster (Resource)
 
 
-### Example Usage
+## Example Usage
 
 ```terraform
 resource "materialize_cluster" "example_cluster" {
   name = "cluster"
 }
 ```
+
+## Schema
 
 ### Required
 

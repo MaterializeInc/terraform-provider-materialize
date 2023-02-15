@@ -29,6 +29,10 @@ data "materialize_sink" "materialize_schema" {
 
 ### Attributes Reference
 
+- `sinks` - (List) A list of sinks.
+
+### Nested Schema for `sinks`
+
 - `id` - (String) The ID of the sink.
 - `name` - (String) The name of the sink.
 - `database_name` - (String) The name of the database the sink is in.

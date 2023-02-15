@@ -8,7 +8,7 @@ description: |-
 
 # materialize_secret (Resource)
 
-### Example Usage
+## Example Usage
 
 ```terraform
 resource "materialize_secret" "example_secret" {
@@ -16,6 +16,7 @@ resource "materialize_secret" "example_secret" {
   value = "some-secret-value"
 }
 ```
+## Schema
 
 ### Required
 

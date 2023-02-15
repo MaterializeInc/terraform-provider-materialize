@@ -29,6 +29,10 @@ data "materialize_source" "materialize_schema" {
 
 ### Attributes Reference
 
+- `sources` - (List) A list of sources.
+
+### Nested Schema for `sources`
+
 - `id` - (String) The ID of the source.
 - `name` - (String) The name of the source.
 - `database_name` - (String) The name of the database the source is in.

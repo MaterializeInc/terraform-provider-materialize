@@ -29,8 +29,12 @@ data "materialize_connection" "materialize_schema" {
 
 ### Attributes Reference
 
+- `connections` - (List) A list of connections.
+
+### Nested Schema for `connections`
+
+- `database_name` - (String) The name of the database the connection is in.
 - `id` - (String) The ID of the connection.
 - `name` - (String) The name of the connection.
-- `database_name` - (String) The name of the database the connection is in.
 - `schema_name` - (String) The name of the schema the connection is in.
 - `type` - (String) The type of the connection.

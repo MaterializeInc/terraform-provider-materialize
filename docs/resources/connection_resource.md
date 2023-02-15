@@ -9,7 +9,7 @@ description: |-
 # materialize_connection (Resource)
 
 
-### Example Usage
+## Example Usage
 
 ```terraform
 # Create a AWS Private Connection
@@ -75,6 +75,8 @@ resource "materialize_connection" "example_ssh_connection" {
   ssh_user        = "example"
 }
 ```
+
+## Schema
 
 ### Required
 

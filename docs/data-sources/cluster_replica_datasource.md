@@ -7,13 +7,19 @@ description: |-
 
 # materialize_cluster_replica (Data Source)
 
-### Example Usage
+## Example Usage
 
 ```terraform
 data "materialize_cluster_replica" "all" {}
 ```
 
+## Schema
+
 ### Attributes Reference
+
+- `cluster_replicas` - (List) A list of cluster replicas.
+
+### Nested Schema for `cluster_replicas`
 
 - `availability_zone` - (String) The availability zone of the cluster replica.
 - `id` - (String) The ID of the cluster replica.

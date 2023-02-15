@@ -29,6 +29,10 @@ data "materialize_secret" "materialize_schema" {
 
 ### Attributes Reference
 
+- `secrets` - (List) A list of secrets.
+
+### Nested Schema for `secrets`
+
 - `id` - (String) The ID of the secret.
 - `name` - (String) The name of the secret.
 - `database_name` - (String) The name of the database the secret is in.

@@ -8,7 +8,7 @@ description: |-
 
 # materialize_source (Resource)
 
-### Example Usage
+## Example Usage
 
 ```terraform
 # Create a source with a load generator
@@ -48,6 +48,8 @@ resource "materialize_source" "example_source_kafka" {
   envelope                   = "data"
 }
 ```
+
+## Schema
 
 ### Required
 

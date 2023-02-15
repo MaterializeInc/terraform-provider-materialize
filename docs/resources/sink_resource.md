@@ -8,7 +8,7 @@ description: |-
 
 # example_sink_kafka (Resource)
 
-### Example Usage
+## Example Usage
 
 ```terraform
 resource "materialize_secret" "example_sink_kafka" {
@@ -23,6 +23,8 @@ resource "materialize_secret" "example_sink_kafka" {
   envelope                   = "UPSERT"
 }
 ```
+
+## Schema
 
 ### Required
 

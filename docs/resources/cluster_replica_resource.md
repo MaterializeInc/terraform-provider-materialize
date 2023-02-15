@@ -9,7 +9,7 @@ description: |-
 # materialize_cluster_replica (Resource)
 
 
-### Example Usage
+## Example Usage
 
 ```terraform
 resource "materialize_cluster" "example_cluster" {
@@ -22,6 +22,8 @@ resource "materialize_cluster_replica" "example_1_cluster_replica" {
   size         = "2xsmall"
 }
 ```
+
+## Schema
 
 ### Required
 

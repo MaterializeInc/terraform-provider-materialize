@@ -9,13 +9,15 @@ description: |-
 # materialize_database (Resource)
 
 
-### Example Usage
+## Example Usage
 
 ```terraform
 resource "materialize_database" "example_database" {
   name = "database"
 }
 ```
+
+## Schema
 
 ### Required
 

@@ -23,6 +23,10 @@ data "materialize_schema" "materialize" {
 
 ### Attributes Reference
 
+- `schemas` - (List) A list of schemas.
+
+### Nested Schema for `schemas`
+
 - `id` - (String) The ID of the schema.
 - `name` - (String) The name of the schema.
 - `database_name` - (String) The name of the database the schema is in.
