@@ -5,7 +5,7 @@ on:
       - materialize/**
 
 jobs:
-  test:
+  integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,13 +17,13 @@ jobs:
         run: |
           docker exec provider terraform init
 
-      - name: Secret (Create)
+      - name: Terraform Apply
         run: |
-          docker exec provider terraform apply -target=materialize_secret.example_secret -auto-approve -compact-warnings
+          docker exec provider terraform apply -auto-approve -compact-warnings
       
-      - name: Secret (Destroy)
+      - name: Terraform Destroy
         run: |
-          docker exec provider terraform destroy -target=materialize_secret.example_secret -auto-approve -compact-warnings
+          docker exec provider terraform destroy -auto-approve -compact-warnings
 
       - name: Docker Compose Down
         run: docker compose down
