@@ -11,7 +11,7 @@ resource "materialize_connection" "example_ssh_connection" {
 # CREATE CONNECTION ssh_example_connection TO SSH TUNNEL (
 #    HOST 'example.com',
 #    PORT 22,
-#    USER 'example',
+#    USER 'example'
 # );
 
 # # Create a AWS Private Connection
