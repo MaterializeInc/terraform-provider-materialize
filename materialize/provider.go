@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"terraform-materialize/materialize/datasources"
 	"terraform-materialize/materialize/resources"
@@ -47,6 +48,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
 				Description: "The Materialize database",
 			},
+			"testing": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable to test the provider locally",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":         resources.Cluster(),
@@ -74,8 +81,17 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host string, username string, password string, port int, database string) string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=require", username, password, host, port, database)
+func connectionString(host, username, password string, port int, database string, testing bool) string {
+	c := strings.Builder{}
+	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
+
+	if testing {
+		c.WriteString("?sslmode=disable")
+	} else {
+		c.WriteString("?sslmode=require")
+	}
+
+	return c.String()
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -84,8 +100,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	password := d.Get("password").(string)
 	port := d.Get("port").(int)
 	database := d.Get("database").(string)
+	testing := d.Get("testing").(bool)
 
-	connStr := connectionString(host, username, password, port, database)
+	connStr := connectionString(host, username, password, port, database, testing)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("postgres", connStr)

@@ -42,7 +42,7 @@ var sinkSchema = map[string]*schema.Schema{
 		Type:          schema.TypeString,
 		Optional:      true,
 		ForceNew:      true,
-		ValidateFunc:  validation.StringInSlice(sourceSizes, true),
+		ValidateFunc:  validation.StringInSlice(append(sourceSizes, localSizes...), true),
 		ConflictsWith: []string{"cluster_name"},
 	},
 	"item_name": {
@@ -168,7 +168,13 @@ func (b *SinkBuilder) SchemaRegistryConnection(s string) *SinkBuilder {
 
 func (b *SinkBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SINK %s.%s.%s FROM %s`, b.databaseName, b.schemaName, b.sinkName, b.itemName))
+	q.WriteString(fmt.Sprintf(`CREATE SINK %s.%s.%s`, b.databaseName, b.schemaName, b.sinkName))
+
+	if b.clusterName != "" {
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+	}
+
+	q.WriteString(fmt.Sprintf(` FROM %s`, b.itemName))
 
 	// Broker
 	if b.kafkaConnection != "" {
@@ -193,10 +199,6 @@ func (b *SinkBuilder) Create() string {
 
 	if b.size != "" {
 		q.WriteString(fmt.Sprintf(` WITH (SIZE = '%s')`, b.size))
-	} else if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
-	} else {
-		panic(`Must include either size or cluster`)
 	}
 
 	q.WriteString(`;`)

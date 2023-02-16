@@ -1,0 +1,29 @@
+name: integration
+on:
+  pull_request:
+    paths:
+      - materialize/**
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Docker Compose Up
+        run: docker compose up --build -d
+
+      - name: Terraform Init
+        run: |
+          docker exec provider terraform init
+
+      - name: Terraform Apply
+        run: |
+          docker exec provider terraform apply -auto-approve -compact-warnings
+      
+      - name: Terraform Destroy
+        run: |
+          docker exec provider terraform destroy -auto-approve -compact-warnings
+
+      - name: Docker Compose Down
+        run: docker compose down
