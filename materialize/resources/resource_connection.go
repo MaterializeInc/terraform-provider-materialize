@@ -166,7 +166,7 @@ var connectionSchema = map[string]*schema.Schema{
 	"kafka_brokers": {
 		Description:   "The Kafka brokers configuration.",
 		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeString},
+		Elem:          &schema.Schema{Type: schema.TypeMap},
 		Optional:      true,
 		ConflictsWith: []string{"kafka_broker"},
 	},
@@ -298,7 +298,7 @@ type ConnectionBuilder struct {
 	postgresSSLMode                       string
 	postgresAWSPrivateLink                string
 	kafkaBroker                           string
-	kafkaBrokers                          []string
+	kafkaBrokers                          []map[string]interface{}
 	kafkaProgressTopic                    string
 	kafkaSSLCa                            string
 	kafkaSSLCert                          string
@@ -425,7 +425,7 @@ func (b *ConnectionBuilder) KafkaBroker(kafkaBroker string) *ConnectionBuilder {
 	return b
 }
 
-func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []string) *ConnectionBuilder {
+func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []map[string]interface{}) *ConnectionBuilder {
 	b.kafkaBrokers = kafkaBrokers
 	return b
 }
@@ -565,36 +565,50 @@ func (b *ConnectionBuilder) Create() string {
 			if b.kafkaSSHTunnel != "" {
 				q.WriteString(`BROKERS (`)
 				for i, broker := range b.kafkaBrokers {
-					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker, b.kafkaSSHTunnel))
+					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker["broker"], b.kafkaSSHTunnel))
 					if i < len(b.kafkaBrokers)-1 {
 						q.WriteString(`,`)
 					}
 				}
 				q.WriteString(`)`)
 			} else {
-				q.WriteString(fmt.Sprintf(`BROKERS ('%s')`, strings.Join(b.kafkaBrokers, "', '")))
+				q.WriteString(fmt.Sprintf(`BROKERS (`))
+				for i, broker := range b.kafkaBrokers {
+					if broker["target_group_port"] != nil && broker["availability_zone"] != nil && broker["privatelink_connection"] != nil {
+						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %s, AVAILABILITY ZONE '%s')`, broker["broker"], broker["privatelink_connection"], broker["target_group_port"], broker["availability_zone"]))
+						if i < len(b.kafkaBrokers)-1 {
+							q.WriteString(`, `)
+						}
+					} else {
+						q.WriteString(fmt.Sprintf(`'%s'`, broker["broker"]))
+						if i < len(b.kafkaBrokers)-1 {
+							q.WriteString(`, `)
+						}
+					}
+				}
+				q.WriteString(`)`)
 			}
 		}
 		if b.kafkaProgressTopic != "" {
 			q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
 		}
 		if b.kafkaSSLCa != "" {
-			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.kafkaSSLCa))
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa))
 		}
 		if b.kafkaSSLCert != "" {
-			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.kafkaSSLCert))
+			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.kafkaSSLCert))
 		}
 		if b.kafkaSSLKey != "" {
-			q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.kafkaSSLKey))
+			q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.kafkaSSLKey))
 		}
 		if b.kafkaSASLMechanisms != "" {
-			q.WriteString(fmt.Sprintf(`, SASL MECHANISMS '%s'`, b.kafkaSASLMechanisms))
+			q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = '%s'`, b.kafkaSASLMechanisms))
 		}
 		if b.kafkaSASLUsername != "" {
-			q.WriteString(fmt.Sprintf(`, SASL USERNAME '%s'`, b.kafkaSASLUsername))
+			q.WriteString(fmt.Sprintf(`, SASL USERNAME = '%s'`, b.kafkaSASLUsername))
 		}
 		if b.kafkaSASLPassword != "" {
-			q.WriteString(fmt.Sprintf(`, SASL PASSWORD SECRET %s`, b.kafkaSASLPassword))
+			q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword))
 		}
 
 	}
@@ -764,7 +778,7 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if v, ok := d.GetOk("kafka_brokers"); ok {
-		builder.KafkaBrokers(v.([]string))
+		builder.KafkaBrokers(v.([]map[string]interface{}))
 	}
 
 	if v, ok := d.GetOk("kafka_progress_topic"); ok {
