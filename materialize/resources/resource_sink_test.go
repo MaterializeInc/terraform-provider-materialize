@@ -11,11 +11,13 @@ func TestResourceSinkCreate(t *testing.T) {
 
 	bs := newSinkBuilder("sink", "schema", "database")
 	bs.Size("xsmall")
+	bs.Snapshot(true)
 	bs.ItemName("schema.table")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table WITH (SIZE = 'xsmall');`, bs.Create())
+	r.Equal(`CREATE SINK database.schema.sink FROM schema.table WITH ( SIZE = 'xsmall');`, bs.Create())
 
 	bc := newSinkBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
+	bc.Snapshot(true)
 	bc.ItemName("schema.table")
 	r.Equal(`CREATE SINK database.schema.sink IN CLUSTER cluster FROM schema.table;`, bc.Create())
 }
@@ -27,10 +29,11 @@ func TestResourceSinkCreateKafka(t *testing.T) {
 	b.ItemName("schema.table")
 	b.KafkaConnection("kafka_connection")
 	b.Topic("test_avro_topic")
+	b.Key([]string{"key_1", "key_2"})
 	b.Format("AVRO")
 	b.SchemaRegistryConnection("csr_connection")
 	b.Envelope("UPSERT")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
 }
 
 func TestResourceSinkRead(t *testing.T) {
