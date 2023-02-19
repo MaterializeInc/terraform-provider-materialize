@@ -28,6 +28,18 @@ func TestResourceSecretCreate(t *testing.T) {
 	r.Equal(`CREATE SECRET database.schema.secret AS 'c2VjcmV0Cg';`, b.Create(`c2VjcmV0Cg`))
 }
 
+func TestResourceSecretCreateEmptyValue(t *testing.T) {
+	r := require.New(t)
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`CREATE SECRET database.schema.secret AS '';`, b.Create(``))
+}
+
+func TestResourceSecretCreateEscapeValue(t *testing.T) {
+	r := require.New(t)
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`CREATE SECRET database.schema.secret AS 'c2Vjcm''V0Cg';`, b.Create(`c2Vjcm'V0Cg`))
+}
+
 func TestResourceSecretRename(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
