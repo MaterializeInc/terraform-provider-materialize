@@ -34,7 +34,7 @@ func TestResourceSecretCreateEmptyValue(t *testing.T) {
 	r.Equal(`CREATE SECRET database.schema.secret AS '';`, b.Create(``))
 }
 
-func TestResourceSecretCreateEscapeValue(t *testing.T) {
+func TestResourceSecretCreateEscapedValue(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
 	r.Equal(`CREATE SECRET database.schema.secret AS 'c2Vjcm''V0Cg';`, b.Create(`c2Vjcm'V0Cg`))
@@ -50,6 +50,12 @@ func TestResourceSecretUpdateValue(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
 	r.Equal(`ALTER SECRET database.schema.secret AS 'c2VjcmV0Cgdd';`, b.UpdateValue(`c2VjcmV0Cgdd`))
+}
+
+func TestResourceSecretUpdateEscapedValue(t *testing.T) {
+	r := require.New(t)
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`ALTER SECRET database.schema.secret AS 'c2Vjcm''V0Cgdd';`, b.UpdateValue(`c2Vjcm'V0Cgdd`))
 }
 
 func TestResourceSecretDrop(t *testing.T) {

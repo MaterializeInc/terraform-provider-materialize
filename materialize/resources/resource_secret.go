@@ -95,7 +95,8 @@ func (b *SecretBuilder) Rename(newName string) string {
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
-	return fmt.Sprintf(`ALTER SECRET %s.%s.%s AS '%s';`, b.databaseName, b.schemaName, b.secretName, newValue)
+	escapedValue := pq.QuoteLiteral(newValue)
+	return fmt.Sprintf(`ALTER SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, escapedValue)
 }
 
 func (b *SecretBuilder) Drop() string {
