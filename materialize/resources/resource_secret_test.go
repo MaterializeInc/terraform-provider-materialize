@@ -25,7 +25,19 @@ func TestResourceSecretReadId(t *testing.T) {
 func TestResourceSecretCreate(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET database.schema.secret AS decode('c2VjcmV0Cg==', 'base64');`, b.Create(`decode('c2VjcmV0Cg==', 'base64')`))
+	r.Equal(`CREATE SECRET database.schema.secret AS 'c2VjcmV0Cg';`, b.Create(`c2VjcmV0Cg`))
+}
+
+func TestResourceSecretCreateEmptyValue(t *testing.T) {
+	r := require.New(t)
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`CREATE SECRET database.schema.secret AS '';`, b.Create(``))
+}
+
+func TestResourceSecretCreateEscapedValue(t *testing.T) {
+	r := require.New(t)
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`CREATE SECRET database.schema.secret AS 'c2Vjcm''V0Cg';`, b.Create(`c2Vjcm'V0Cg`))
 }
 
 func TestResourceSecretRename(t *testing.T) {
@@ -37,7 +49,13 @@ func TestResourceSecretRename(t *testing.T) {
 func TestResourceSecretUpdateValue(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET database.schema.secret AS decode('c2VjcmV0Cgdd', 'base64');`, b.UpdateValue(`decode('c2VjcmV0Cgdd', 'base64')`))
+	r.Equal(`ALTER SECRET database.schema.secret AS 'c2VjcmV0Cgdd';`, b.UpdateValue(`c2VjcmV0Cgdd`))
+}
+
+func TestResourceSecretUpdateEscapedValue(t *testing.T) {
+	r := require.New(t)
+	b := newSecretBuilder("secret", "schema", "database")
+	r.Equal(`ALTER SECRET database.schema.secret AS 'c2Vjcm''V0Cgdd';`, b.UpdateValue(`c2Vjcm'V0Cgdd`))
 }
 
 func TestResourceSecretDrop(t *testing.T) {

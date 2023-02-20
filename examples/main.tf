@@ -55,7 +55,7 @@ resource "materialize_source" "example_source_load_generator" {
 resource "materialize_secret" "example_secret" {
   name        = "example"
   schema_name = materialize_schema.example_schema.name
-  value       = "decode('c2VjcmV0Cg==', 'base64')"
+  value       = "some-secret-value"
 }
 
 
