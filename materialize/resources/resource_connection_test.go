@@ -40,8 +40,8 @@ func TestResourceConnectionCreateAwsPrivateLink(t *testing.T) {
 	b := newConnectionBuilder("privatelink_conn", "schema", "database")
 	b.ConnectionType("AWS PRIVATELINK")
 	b.PrivateLinkServiceName("com.amazonaws.us-east-1.materialize.example")
-	b.PrivateLinkAvailabilityZones([]string{"us-east-1a", "us-east-1b"})
-	r.Equal(`CREATE CONNECTION database.schema.privatelink_conn TO AWS PRIVATELINK (SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES ('us-east-1a', 'us-east-1b'));`, b.Create())
+	b.PrivateLinkAvailabilityZones([]string{"use1-az1", "use1-az2"})
+	r.Equal(`CREATE CONNECTION database.schema.privatelink_conn TO AWS PRIVATELINK (SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES ('use1-az1', 'use1-az2'));`, b.Create())
 }
 
 func TestResourceConnectionCreateKafka(t *testing.T) {
@@ -54,6 +54,25 @@ func TestResourceConnectionCreateKafka(t *testing.T) {
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
 	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKER 'localhost:9092', PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+}
+
+func TestResourceConnectionCreateKafkaMultipleBrokers(t *testing.T) {
+	r := require.New(t)
+	b := newConnectionBuilder("kafka_conn", "schema", "database")
+	b.ConnectionType("KAFKA")
+	b.KafkaBrokers([]map[string]interface{}{
+		{
+			"broker": "localhost:9092",
+		},
+		{
+			"broker": "localhost:9093",
+		},
+	})
+	b.KafkaProgressTopic("topic")
+	b.KafkaSASLMechanisms("PLAIN")
+	b.KafkaSASLUsername("user")
+	b.KafkaSASLPassword("password")
+	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092', 'localhost:9093'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }
 
 func TestResourceConnectionCreateKafkaSsh(t *testing.T) {

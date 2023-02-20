@@ -72,12 +72,26 @@ resource "materialize_connection" "example_ssh_connection" {
 # # Create a AWS Private Connection
 # Note: you need the max_aws_privatelink_connections increased for this to work:
 # show max_aws_privatelink_connections;
-# resource "materialize_connection" "example_privatelink_connection" {
-#   name            = "example_privatelink_connection"
-#   schema_name     = "public"
-#   connection_type = "AWS PRIVATELINK"
-#   aws_privatelink_service_name = "com.amazonaws.us-east-1.materialize.example"
-#   aws_privatelink_availability_zones = ["use1-az2", "use1-az6"]
+# resource "materialize_connection" "example_kafka_connection" {
+#   name            = "example_kafka_connection"
+#   connection_type = "KAFKA"
+#   # kafka_broker    = "example.com:9092"
+#   kafka_brokers = [{
+#     "broker" : "b-1.hostname-1:9096",
+#     "target_group_port" : "9001",
+#     "availability_zone" : "use1-az1",
+#     "privatelink_connection" : "privatelink_conn",
+#     },
+#     {
+#       "broker" : "b-2.hostname-2:9096",
+#       "target_group_port" : "9002",
+#       "availability_zone" : "use1-az2",
+#       "privatelink_connection" : "privatelink_conn",
+#   }]
+#   kafka_sasl_username   = "example"
+#   kafka_sasl_password   = "kafka_password"
+#   kafka_sasl_mechanisms = "SCRAM-SHA-256"
+#   kafka_progress_topic  = "example"
 # }
 
 # Create a Postgres Connection
@@ -96,7 +110,12 @@ resource "materialize_connection" "example_kafka_connection" {
   name            = "example_kafka_connection"
   connection_type = "KAFKA"
   # kafka_broker    = "example.com:9092"
-  kafka_brokers         = ["example.com:9092", "example.com:9093"]
+  kafka_brokers = [{
+    "broker" : "b-1.hostname-1:9096",
+    },
+    {
+      "broker" : "b-2.hostname-2:9096",
+  }]
   kafka_sasl_username   = "example"
   kafka_sasl_password   = "kafka_password"
   kafka_sasl_mechanisms = "SCRAM-SHA-256"

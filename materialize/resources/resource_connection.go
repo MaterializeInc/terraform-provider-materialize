@@ -214,7 +214,6 @@ var connectionSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	// TODO: Add support for Kafka AWS PrivateLink
 	"confluent_schema_registry_url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,
@@ -721,12 +720,17 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		builder.SSHPort(v.(int))
 	}
 
-	if v, ok := d.GetOk("private_link_service_name"); ok {
+	if v, ok := d.GetOk("aws_privatelink_service_name"); ok {
 		builder.PrivateLinkServiceName(v.(string))
 	}
 
-	if v, ok := d.GetOk("private_link_availability_zones"); ok {
-		builder.PrivateLinkAvailabilityZones(v.([]string))
+	if v, ok := d.GetOk("aws_privatelink_availability_zones"); ok {
+		azs := v.([]interface{})
+		var azStrings []string
+		for _, az := range azs {
+			azStrings = append(azStrings, az.(string))
+		}
+		builder.PrivateLinkAvailabilityZones(azStrings)
 	}
 
 	if v, ok := d.GetOk("postgres_host"); ok {
@@ -778,7 +782,12 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if v, ok := d.GetOk("kafka_brokers"); ok {
-		builder.KafkaBrokers(v.([]map[string]interface{}))
+		brokers := []map[string]interface{}{}
+		for _, b := range v.([]interface{}) {
+			brokers = append(brokers, b.(map[string]interface{}))
+		}
+		// panic(fmt.Sprintf("kafka_brokers: %v, %T", brokers, brokers))
+		builder.KafkaBrokers(brokers)
 	}
 
 	if v, ok := d.GetOk("kafka_progress_topic"); ok {

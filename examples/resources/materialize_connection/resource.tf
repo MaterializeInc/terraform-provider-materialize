@@ -54,7 +54,12 @@ resource "materialize_connection" "example_kafka_connection" {
   name            = "example_kafka_connection"
   connection_type = "KAFKA"
   kafka_broker    = "example.com:9092"
-  # kafka_brokers = ["example.com:9092", "example.com:9093"]
+  # kafka_brokers         = [{
+  #   "broker": "b-1.hostname-1:9096",
+  # },
+  # {
+  #   "broker": "b-2.hostname-2:9096",
+  # }]
   kafka_sasl_username   = "example"
   kafka_sasl_password   = "kafka_password"
   kafka_sasl_mechanisms = "SCRAM-SHA-256"
