@@ -10,8 +10,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" //PostgreSQL db
 )
 
 func Provider() *schema.Provider {
@@ -105,7 +105,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	connStr := connectionString(host, username, password, port, database, testing)
 
 	var diags diag.Diagnostics
-	db, err := sqlx.Open("postgres", connStr)
+	db, err := sqlx.Open("pgx", connStr)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
