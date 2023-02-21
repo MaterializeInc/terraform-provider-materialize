@@ -63,7 +63,9 @@ func Provider() *schema.Provider {
 			"materialize_schema":          resources.Schema(),
 			"materialize_secret":          resources.Secret(),
 			"materialize_sink":            resources.Sink(),
-			"materialize_source":          resources.Source(),
+			"materialize_source_kafka":    resources.SourceKafka(),
+			"materialize_source_loadgen":  resources.SourceLoadgen(),
+			"materialize_source_postgres": resources.SourcePostgres(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":          datasources.Cluster(),

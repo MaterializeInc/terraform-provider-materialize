@@ -324,7 +324,7 @@ func sinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "sink")
-	return sourceRead(ctx, d, meta)
+	return sinkRead(ctx, d, meta)
 }
 
 func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {

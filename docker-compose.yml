@@ -19,5 +19,7 @@ services:
       materialized: {condition: service_healthy}
     volumes:
       - ./integration:/usr/src/app/integration
+    environment:
+      TF_LOG: INFO
     command: >
       sh -c "tail -F /dev/null"
