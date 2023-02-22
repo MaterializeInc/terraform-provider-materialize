@@ -27,8 +27,8 @@ services:
     links:
      - zookeeper
     environment:
-     - ZOOKEEPER_CONNECT=zookeeper:2181
-     - CREATE_TOPICS=topic1:1:2,topic2:1:2
+      ZOOKEEPER_CONNECT: zookeeper:2181
+      CREATE_TOPICS: topic1:1:1,topic2:1:1
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.2.0

@@ -15,5 +15,5 @@ resource "materialize_connection" "kafka_connection" {
 resource "materialize_connection" "schema_registry" {
   name                          = "schema_registry_connection"
   connection_type               = "CONFLUENT SCHEMA REGISTRY"
-  confluent_schema_registry_url = "http://schema-registry:8081"
+  confluent_schema_registry_url = "http://localhost:8081"
 }
