@@ -108,13 +108,13 @@ var sinkSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
 	},
-	"snapshot": {
-		Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
-		Default:     true,
-	},
+	// "snapshot": {
+	// 	Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
+	// 	Type:        schema.TypeBool,
+	// 	Optional:    true,
+	// 	ForceNew:    true,
+	// 	Default:     true,
+	// },
 }
 
 func Sink() *schema.Resource {
@@ -149,7 +149,7 @@ type SinkBuilder struct {
 	schemaRegistryConnection string
 	avroKeyFullname          string
 	avroValueFullname        string
-	snapshot                 bool
+	// snapshot                 bool
 }
 
 func newSinkBuilder(sinkName, schemaName, databaseName string) *SinkBuilder {
@@ -215,10 +215,10 @@ func (b *SinkBuilder) AvroValueFullname(a string) *SinkBuilder {
 	return b
 }
 
-func (b *SinkBuilder) Snapshot(s bool) *SinkBuilder {
-	b.snapshot = s
-	return b
-}
+// func (b *SinkBuilder) Snapshot(s bool) *SinkBuilder {
+// 	b.snapshot = s
+// 	return b
+// }
 
 func (b *SinkBuilder) Create() string {
 	q := strings.Builder{}
@@ -262,16 +262,16 @@ func (b *SinkBuilder) Create() string {
 	}
 
 	// With Options
-	if b.size != "" || !b.snapshot {
+	if b.size != "" {
 		w := strings.Builder{}
 
 		if b.size != "" {
-			w.WriteString(fmt.Sprintf(` SIZE = '%s'`, b.size))
+			w.WriteString(fmt.Sprintf(`SIZE = '%s'`, b.size))
 		}
 
-		if !b.snapshot {
-			w.WriteString(` SNAPSHOT = false`)
-		}
+		// if !b.snapshot {
+		// 	w.WriteString(`SNAPSHOT = false`)
+		// }
 
 		q.WriteString(fmt.Sprintf(` WITH (%s)`, w.String()))
 	}
