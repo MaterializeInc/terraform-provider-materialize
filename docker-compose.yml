@@ -8,6 +8,7 @@ services:
     container_name: materialized
     ports:
       - 6875:6875
+      - 6877:6877
       - 6878:6878
     healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 30s}
 
@@ -41,6 +42,22 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8081,http://localhost:8081
+
+  postgres:
+    container_name: postgres
+    build:
+      context: ./integration/postgres
+    init: true
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pg_password}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
 
   provider:
     build:
