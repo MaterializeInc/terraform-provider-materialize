@@ -4,6 +4,9 @@ on:
     paths:
       - materialize/**
 
+env:
+  TF_LOG: INFO
+
 jobs:
   integration:
     runs-on: ubuntu-latest
