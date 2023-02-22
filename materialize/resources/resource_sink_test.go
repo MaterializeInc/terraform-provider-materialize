@@ -27,10 +27,11 @@ func TestResourceSinkCreateKafka(t *testing.T) {
 	b.ItemName("schema.table")
 	b.KafkaConnection("kafka_connection")
 	b.Topic("test_avro_topic")
+	b.Key([]string{"key_1", "key_2"})
 	b.Format("AVRO")
 	b.SchemaRegistryConnection("csr_connection")
 	b.Envelope("UPSERT")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestResourceSinkRead(t *testing.T) {
