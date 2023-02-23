@@ -17,3 +17,7 @@ resource "materialize_connection" "schema_registry" {
   connection_type               = "CONFLUENT SCHEMA REGISTRY"
   confluent_schema_registry_url = "http://schema-registry:8081"
 }
+
+output "qualified_ssh_connection" {
+  value = materialize_connection.ssh_connection.qualified_name
+}

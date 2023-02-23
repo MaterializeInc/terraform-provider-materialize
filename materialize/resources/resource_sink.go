@@ -31,6 +31,11 @@ var sinkSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     "materialize",
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the sink.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
@@ -351,6 +356,7 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagno
 	q := readSinkParams(i)
 
 	readResource(conn, d, i, q, _sink{}, "sink")
+	setQualifiedName(d)
 	return nil
 }
 

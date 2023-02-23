@@ -32,6 +32,11 @@ var secretSchema = map[string]*schema.Schema{
 		DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
 		ForceNew:    true,
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the secret.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"value": {
 		Description: "The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.",
 		Type:        schema.TypeString,
@@ -130,6 +135,7 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	q := readSecretParams(i)
 
 	readResource(conn, d, i, q, _secret{}, "secret")
+	setQualifiedName(d)
 	return nil
 }
 
