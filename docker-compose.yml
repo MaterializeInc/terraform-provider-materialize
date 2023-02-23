@@ -8,7 +8,6 @@ services:
     container_name: materialized
     ports:
       - 6875:6875
-      - 6877:6877
       - 6878:6878
     healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 30s}
 

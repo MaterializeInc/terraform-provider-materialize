@@ -13,10 +13,6 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up --build -d
 
-      - name: Configure Materialize
-        run: |
-          docker exec materialized psql -U mz_system -h localhost -p 6877 -d materialize -c 'ALTER SYSTEM SET max_aws_privatelink_connections = 3;'
-
       - name: Terraform Init
         run: |
           docker exec provider terraform init
