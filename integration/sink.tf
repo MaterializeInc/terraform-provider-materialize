@@ -14,3 +14,7 @@ resource "materialize_sink" "sink_kafka" {
     materialize_source.load_generator
   ]
 }
+
+output "qualified_sink_kafka" {
+  value = materialize_sink.sink_kafka.qualified_name
+}

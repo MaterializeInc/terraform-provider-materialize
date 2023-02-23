@@ -53,3 +53,8 @@ resource "materialize_connection" "example_postgres_connection" {
   postgres_password = format("%s.%s.%s", materialize_database.database.name, materialize_schema.schema.name, materialize_secret.postgres_password.name)
   postgres_database = "postgres"
 }
+
+output "qualified_ssh_connection" {
+  value = materialize_connection.ssh_connection.qualified_name
+}
+

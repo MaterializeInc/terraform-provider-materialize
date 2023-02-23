@@ -16,3 +16,11 @@ resource "materialize_secret" "kafka_password" {
   database_name = materialize_database.database.name
   value         = "c2VjcmV0Cg=="
 }
+
+output "qualified_password" {
+  value = materialize_secret.password.qualified_name
+}
+
+output "qualified_kafka_password" {
+  value = materialize_secret.kafka_password.qualified_name
+}
