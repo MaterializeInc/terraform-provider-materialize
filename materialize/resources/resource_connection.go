@@ -166,9 +166,32 @@ var connectionSchema = map[string]*schema.Schema{
 	"kafka_brokers": {
 		Description:   "The Kafka brokers configuration.",
 		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeMap},
 		Optional:      true,
 		ConflictsWith: []string{"kafka_broker"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"broker": {
+					Description: "The Kafka broker, in the form of `host:port`.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"target_group_port": {
+					Description: "The port of the target group associated with the Kafka broker.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"availability_zone": {
+					Description: "The availability zone of the Kafka broker.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+				"privatelink_connection": {
+					Description: "The AWS PrivateLink connection name in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+			},
+		},
 	},
 	"kafka_progress_topic": {
 		Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
@@ -786,7 +809,6 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		for _, b := range v.([]interface{}) {
 			brokers = append(brokers, b.(map[string]interface{}))
 		}
-		// panic(fmt.Sprintf("kafka_brokers: %v, %T", brokers, brokers))
 		builder.KafkaBrokers(brokers)
 	}
 
