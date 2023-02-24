@@ -9,7 +9,9 @@ resource "materialize_connection" "ssh_connection" {
 resource "materialize_connection" "kafka_connection" {
   name            = "kafka_connection"
   connection_type = "KAFKA"
-  kafka_broker    = "kafka:9092"
+  kafka_broker {
+    broker = "kafka:9092"
+  }
 }
 
 resource "materialize_connection" "schema_registry" {
@@ -30,14 +32,12 @@ resource "materialize_connection" "example_ssh_connection" {
 resource "materialize_connection" "kafka_conn_multiple_brokers" {
   name            = "kafka_conn_multiple_brokers"
   connection_type = "KAFKA"
-  kafka_brokers = [
-    {
-      broker = "kafka:9092"
-    },
-    {
-      broker = "kafka2:9092"
-    }
-  ]
+  kafka_broker {
+    broker = "kafka:9092"
+  }
+  kafka_broker {
+    broker = "kafka2:9092"
+  }
   kafka_sasl_username   = "sasl_user"
   kafka_sasl_password   = format("%s.%s.%s", materialize_database.database.name, materialize_schema.schema.name, materialize_secret.kafka_password.name)
   kafka_sasl_mechanisms = "SCRAM-SHA-256"
@@ -57,4 +57,3 @@ resource "materialize_connection" "example_postgres_connection" {
 output "qualified_ssh_connection" {
   value = materialize_connection.ssh_connection.qualified_name
 }
-
