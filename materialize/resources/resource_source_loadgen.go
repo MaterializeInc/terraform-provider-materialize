@@ -31,6 +31,11 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     "materialize",
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the source.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
