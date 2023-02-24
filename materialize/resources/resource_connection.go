@@ -157,17 +157,10 @@ var connectionSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_broker": {
-		Description:   "The Kafka broker configuration.",
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"kafka_brokers"},
-	},
 	"kafka_brokers": {
-		Description:   "The Kafka brokers configuration.",
-		Type:          schema.TypeList,
-		Optional:      true,
-		ConflictsWith: []string{"kafka_broker"},
+		Description: "The Kafka brokers configuration.",
+		Type:        schema.TypeList,
+		Optional:    true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"broker": {
@@ -319,7 +312,6 @@ type ConnectionBuilder struct {
 	postgresSSLKey                        string
 	postgresSSLMode                       string
 	postgresAWSPrivateLink                string
-	kafkaBroker                           string
 	kafkaBrokers                          []map[string]interface{}
 	kafkaProgressTopic                    string
 	kafkaSSLCa                            string
@@ -439,11 +431,6 @@ func (b *ConnectionBuilder) PostgresSSLMode(postgresSSLMode string) *ConnectionB
 
 func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string) *ConnectionBuilder {
 	b.postgresAWSPrivateLink = postgresAWSPrivateLink
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaBroker(kafkaBroker string) *ConnectionBuilder {
-	b.kafkaBroker = kafkaBroker
 	return b
 }
 
@@ -577,12 +564,6 @@ func (b *ConnectionBuilder) Create() string {
 	}
 
 	if b.connectionType == "KAFKA" {
-		if b.kafkaBroker != "" {
-			q.WriteString(fmt.Sprintf(`BROKER '%s'`, b.kafkaBroker))
-			if b.kafkaSSHTunnel != "" {
-				q.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`, b.kafkaSSHTunnel))
-			}
-		}
 		if len(b.kafkaBrokers) != 0 {
 			if b.kafkaSSHTunnel != "" {
 				q.WriteString(`BROKERS (`)
@@ -597,7 +578,7 @@ func (b *ConnectionBuilder) Create() string {
 				q.WriteString(fmt.Sprintf(`BROKERS (`))
 				for i, broker := range b.kafkaBrokers {
 					if broker["target_group_port"] != nil && broker["availability_zone"] != nil && broker["privatelink_connection"] != nil {
-						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %s, AVAILABILITY ZONE '%s')`, broker["broker"], broker["privatelink_connection"], broker["target_group_port"], broker["availability_zone"]))
+						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker["broker"], broker["privatelink_connection"], broker["target_group_port"], broker["availability_zone"]))
 						if i < len(b.kafkaBrokers)-1 {
 							q.WriteString(`, `)
 						}
@@ -798,10 +779,6 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	if v, ok := d.GetOk("postgres_ssh_tunnel"); ok {
 		builder.PostgresSSHTunnel(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_broker"); ok {
-		builder.KafkaBroker(v.(string))
 	}
 
 	if v, ok := d.GetOk("kafka_brokers"); ok {
