@@ -20,7 +20,7 @@ jobs:
       - name: Terraform Apply
         run: |
           docker exec provider terraform apply -auto-approve -compact-warnings
-      
+
       - name: Terraform Destroy
         run: |
           docker exec provider terraform destroy -auto-approve -compact-warnings

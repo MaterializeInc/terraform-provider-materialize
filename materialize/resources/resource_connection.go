@@ -31,6 +31,11 @@ var connectionSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     "materialize",
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the connection.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"connection_type": {
 		Description:  "The type of the connection.",
 		Type:         schema.TypeString,
@@ -696,6 +701,7 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	q := readConnectionParams(i)
 
 	readResource(conn, d, i, q, _connection{}, "connection")
+	setQualifiedName(d)
 	return nil
 }
 
