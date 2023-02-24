@@ -219,6 +219,7 @@ func sourceLoadgenRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	q := readSourceParams(i)
 
 	readResource(conn, d, i, q, _source{}, "source")
+	setQualifiedName(d)
 	return nil
 }
 

@@ -274,6 +274,7 @@ func sourceKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface
 	q := readSourceParams(i)
 
 	readResource(conn, d, i, q, _source{}, "source")
+	setQualifiedName(d)
 	return nil
 }
 

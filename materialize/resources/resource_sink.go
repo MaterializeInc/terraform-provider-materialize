@@ -31,6 +31,11 @@ var sinkSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     "materialize",
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the sink.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
@@ -66,8 +71,17 @@ var sinkSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		RequiredWith: []string{"kafka_connection", "topic"},
 	},
+	"key": {
+		Description: "An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.",
+		Type:        schema.TypeList,
+		Elem: &schema.Schema{
+			Type: schema.TypeString,
+		},
+		Optional: true,
+		ForceNew: true,
+	},
 	"format": {
-		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime",
+		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
@@ -85,6 +99,27 @@ var sinkSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"avro_key_fullname": {
+		Description:  "ets the Avro fullname on the generated key schema, if a KEY is specified. When used, a value must be specified for AVRO VALUE FULLNAME.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
+	},
+	"avro_value_fullname": {
+		Description:  "Sets the Avro fullname on the generated value schema. When KEY is specified, AVRO KEY FULLNAME must additionally be specified.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
+	},
+	// "snapshot": {
+	// 	Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
+	// 	Type:        schema.TypeBool,
+	// 	Optional:    true,
+	// 	ForceNew:    true,
+	// 	Default:     true,
+	// },
 }
 
 func Sink() *schema.Resource {
@@ -113,9 +148,13 @@ type SinkBuilder struct {
 	itemName                 string
 	kafkaConnection          string
 	topic                    string
+	key                      []string
 	format                   string
 	envelope                 string
 	schemaRegistryConnection string
+	avroKeyFullname          string
+	avroValueFullname        string
+	// snapshot                 bool
 }
 
 func newSinkBuilder(sinkName, schemaName, databaseName string) *SinkBuilder {
@@ -151,6 +190,11 @@ func (b *SinkBuilder) Topic(t string) *SinkBuilder {
 	return b
 }
 
+func (b *SinkBuilder) Key(k []string) *SinkBuilder {
+	b.key = k
+	return b
+}
+
 func (b *SinkBuilder) Format(f string) *SinkBuilder {
 	b.format = f
 	return b
@@ -165,6 +209,21 @@ func (b *SinkBuilder) SchemaRegistryConnection(s string) *SinkBuilder {
 	b.schemaRegistryConnection = s
 	return b
 }
+
+func (b *SinkBuilder) AvroKeyFullname(a string) *SinkBuilder {
+	b.avroKeyFullname = a
+	return b
+}
+
+func (b *SinkBuilder) AvroValueFullname(a string) *SinkBuilder {
+	b.avroValueFullname = a
+	return b
+}
+
+// func (b *SinkBuilder) Snapshot(s bool) *SinkBuilder {
+// 	b.snapshot = s
+// 	return b
+// }
 
 func (b *SinkBuilder) Create() string {
 	q := strings.Builder{}
@@ -181,6 +240,11 @@ func (b *SinkBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection))
 	}
 
+	if len(b.key) > 0 {
+		o := strings.Join(b.key[:], ", ")
+		q.WriteString(fmt.Sprintf(` KEY (%s)`, o))
+	}
+
 	if b.topic != "" {
 		q.WriteString(fmt.Sprintf(` (TOPIC '%s')`, b.topic))
 	}
@@ -189,16 +253,32 @@ func (b *SinkBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` FORMAT %s`, b.format))
 	}
 
+	// CSR Options
 	if b.schemaRegistryConnection != "" {
 		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection))
+	}
+
+	if b.avroKeyFullname != "" && b.avroValueFullname != "" {
+		q.WriteString(fmt.Sprintf(` WITH (AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s)`, b.avroKeyFullname, b.avroValueFullname))
 	}
 
 	if b.envelope != "" {
 		q.WriteString(fmt.Sprintf(` ENVELOPE %s`, b.envelope))
 	}
 
+	// With Options
 	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = '%s')`, b.size))
+		w := strings.Builder{}
+
+		if b.size != "" {
+			w.WriteString(fmt.Sprintf(`SIZE = '%s'`, b.size))
+		}
+
+		// if !b.snapshot {
+		// 	w.WriteString(`SNAPSHOT = false`)
+		// }
+
+		q.WriteString(fmt.Sprintf(` WITH (%s)`, w.String()))
 	}
 
 	q.WriteString(`;`)
@@ -276,6 +356,7 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagno
 	q := readSinkParams(i)
 
 	readResource(conn, d, i, q, _sink{}, "sink")
+	setQualifiedName(d)
 	return nil
 }
 
@@ -306,6 +387,10 @@ func sinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 
 	if v, ok := d.GetOk("topic"); ok {
 		builder.Topic(v.(string))
+	}
+
+	if v, ok := d.GetOk("key"); ok {
+		builder.Key(v.([]string))
 	}
 
 	if v, ok := d.GetOk("format"); ok {

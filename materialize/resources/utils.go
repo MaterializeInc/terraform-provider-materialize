@@ -73,3 +73,11 @@ func dropResource(conn *sqlx.DB, d *schema.ResourceData, queryStr, resource stri
 	d.SetId("")
 	return nil
 }
+
+func setQualifiedName(d *schema.ResourceData) {
+	n := d.Get("name").(string)
+	s := d.Get("schema_name").(string)
+	db := d.Get("database_name").(string)
+	q := fmt.Sprintf("%s.%s.%s", db, s, n)
+	d.Set("qualified_name", q)
+}

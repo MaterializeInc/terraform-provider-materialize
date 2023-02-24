@@ -29,3 +29,7 @@ resource "materialize_source_loadgen" "load_generator_cluster" {
 #   format           = "AVRO"
 #   envelope         = "UPSERT"
 # }
+
+output "qualified_load_generator" {
+  value = materialize_source.load_generator.qualified_name
+}
