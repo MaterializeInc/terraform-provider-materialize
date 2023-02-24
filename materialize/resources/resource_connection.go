@@ -166,6 +166,7 @@ var connectionSchema = map[string]*schema.Schema{
 		Description: "The Kafka brokers configuration.",
 		Type:        schema.TypeList,
 		Optional:    true,
+		MinItems:    1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"broker": {
