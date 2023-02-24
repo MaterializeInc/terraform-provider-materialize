@@ -9,7 +9,9 @@ resource "materialize_connection" "ssh_connection" {
 resource "materialize_connection" "kafka_connection" {
   name            = "kafka_connection"
   connection_type = "KAFKA"
-  kafka_broker    = "kafka:9092"
+  kafka_brokers {
+    broker = "kafka:9092"
+  }
 }
 
 resource "materialize_connection" "schema_registry" {
