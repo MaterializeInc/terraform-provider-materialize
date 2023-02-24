@@ -54,7 +54,7 @@ resource "materialize_connection" "example_postgres_connection" {
 resource "materialize_connection" "example_kafka_connection" {
   name            = "example_kafka_connection"
   connection_type = "KAFKA"
-  kafka_brokers {
+  kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
   kafka_sasl_username   = "example"
@@ -89,13 +89,13 @@ resource "materialize_connection" "example_confluent_schema_registry_connection"
 resource "materialize_connection" "example_kafka_connection" {
   name            = "example_kafka_connection"
   connection_type = "KAFKA"
-  kafka_brokers {
+  kafka_broker {
     broker = "b-1.hostname-1:9096"
     target_group_port = "9001"
     availability_zone = "use1-az1"
     privatelink_connection = "privatelink_conn"
   }
-  kafka_brokers {
+  kafka_broker {
     broker = "b-2.hostname-2:9096"
     target_group_port = "9002"
     availability_zone = "use1-az2"

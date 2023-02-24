@@ -79,16 +79,16 @@ resource "materialize_connection" "privatelink_conn" {
   aws_privatelink_service_name       = "com.amazonaws.us-east-1.materialize.example"
   aws_privatelink_availability_zones = ["use1-az2", "use1-az1"]
 }
-resource "materialize_connection" "example_kafka_connection" {
-  name            = "example_kafka_connection"
+resource "materialize_connection" "example_kafka_privatelink_conn" {
+  name            = "example_kafka_privatelink_conn"
   connection_type = "KAFKA"
-  kafka_brokers {
+  kafka_broker {
     broker                 = "b-1.hostname-1:9096"
     target_group_port      = "9001"
     availability_zone      = "use1-az1"
     privatelink_connection = "privatelink_conn"
   }
-  kafka_brokers {
+  kafka_broker {
     broker                 = "b-2.hostname-2:9096"
     target_group_port      = "9002"
     availability_zone      = "use1-az2"
@@ -112,10 +112,10 @@ resource "materialize_connection" "example_postgres_connection" {
 resource "materialize_connection" "example_kafka_connection" {
   name            = "example_kafka_connection"
   connection_type = "KAFKA"
-  kafka_brokers {
+  kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
-  kafka_brokers {
+  kafka_broker {
     broker = "b-2.hostname-2:9096"
   }
   kafka_sasl_username   = "example"

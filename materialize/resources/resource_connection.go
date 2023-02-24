@@ -162,7 +162,7 @@ var connectionSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_brokers": {
+	"kafka_broker": {
 		Description: "The Kafka brokers configuration.",
 		Type:        schema.TypeList,
 		Optional:    true,
@@ -787,7 +787,7 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		builder.PostgresSSHTunnel(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_brokers"); ok {
+	if v, ok := d.GetOk("kafka_broker"); ok {
 		brokers := []map[string]interface{}{}
 		for _, b := range v.([]interface{}) {
 			brokers = append(brokers, b.(map[string]interface{}))

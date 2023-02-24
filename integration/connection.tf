@@ -9,7 +9,7 @@ resource "materialize_connection" "ssh_connection" {
 resource "materialize_connection" "kafka_connection" {
   name            = "kafka_connection"
   connection_type = "KAFKA"
-  kafka_brokers {
+  kafka_broker {
     broker = "kafka:9092"
   }
 }
@@ -32,10 +32,10 @@ resource "materialize_connection" "example_ssh_connection" {
 resource "materialize_connection" "kafka_conn_multiple_brokers" {
   name            = "kafka_conn_multiple_brokers"
   connection_type = "KAFKA"
-  kafka_brokers {
+  kafka_broker {
     broker = "kafka:9092"
   }
-  kafka_brokers {
+  kafka_broker {
     broker = "kafka2:9092"
   }
   kafka_sasl_username   = "sasl_user"
