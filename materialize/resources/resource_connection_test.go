@@ -48,9 +48,9 @@ func TestResourceConnectionCreateKafka(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker": "localhost:9092",
+			Broker: "localhost:9092",
 		},
 	})
 	b.KafkaProgressTopic("topic")
@@ -64,12 +64,12 @@ func TestResourceConnectionCreateKafkaMultipleBrokers(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker": "localhost:9092",
+			Broker: "localhost:9092",
 		},
 		{
-			"broker": "localhost:9093",
+			Broker: "localhost:9093",
 		},
 	})
 	b.KafkaProgressTopic("topic")
@@ -83,9 +83,9 @@ func TestResourceConnectionCreateKafkaSsh(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker": "localhost:9092",
+			Broker: "localhost:9092",
 		},
 	})
 	b.KafkaProgressTopic("topic")
@@ -100,12 +100,12 @@ func TestResourceConnectionCreateKafkaBrokers(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker": "localhost:9092",
+			Broker: "localhost:9092",
 		},
 		{
-			"broker": "localhost:9093",
+			Broker: "localhost:9093",
 		},
 	})
 	b.KafkaProgressTopic("topic")
@@ -119,12 +119,12 @@ func TestResourceConnectionCreateKafkaBrokersSsh(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker": "localhost:9092",
+			Broker: "localhost:9092",
 		},
 		{
-			"broker": "localhost:9093",
+			Broker: "localhost:9093",
 		},
 	})
 	b.KafkaProgressTopic("topic")
@@ -139,9 +139,9 @@ func TestResourceConnectionCreateKafkaSsl(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker": "localhost:9092",
+			Broker: "localhost:9092",
 		},
 	})
 	b.KafkaProgressTopic("topic")
@@ -166,18 +166,18 @@ func TestResourceConnectionKafkaAwsPrivatelink(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("kafka_conn", "schema", "database")
 	b.ConnectionType("KAFKA")
-	b.KafkaBrokers([]map[string]interface{}{
+	b.KafkaBrokers([]KafkaBroker{
 		{
-			"broker":                 "b-1.hostname-1:9096",
-			"target_group_port":      9001,
-			"availability_zone":      "use1-az1",
-			"privatelink_connection": "privatelink_conn",
+			Broker:                "b-1.hostname-1:9096",
+			TargetGroupPort:       9001,
+			AvailabilityZone:      "use1-az1",
+			PrivateLinkConnection: "privatelink_conn",
 		},
 		{
-			"broker":                 "b-1.hostname-1:9097",
-			"target_group_port":      9002,
-			"availability_zone":      "use1-az2",
-			"privatelink_connection": "privatelink_conn",
+			Broker:                "b-1.hostname-1:9097",
+			TargetGroupPort:       9002,
+			AvailabilityZone:      "use1-az2",
+			PrivateLinkConnection: "privatelink_conn",
 		},
 	})
 	b.KafkaSASLMechanisms("PLAIN")

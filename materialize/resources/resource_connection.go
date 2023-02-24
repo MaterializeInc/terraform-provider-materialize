@@ -297,6 +297,13 @@ func Connection() *schema.Resource {
 	}
 }
 
+type KafkaBroker struct {
+	Broker                string
+	TargetGroupPort       int
+	AvailabilityZone      string
+	PrivateLinkConnection string
+}
+
 type ConnectionBuilder struct {
 	connectionName                        string
 	schemaName                            string
@@ -318,7 +325,7 @@ type ConnectionBuilder struct {
 	postgresSSLKey                        string
 	postgresSSLMode                       string
 	postgresAWSPrivateLink                string
-	kafkaBrokers                          []map[string]interface{}
+	kafkaBrokers                          []KafkaBroker
 	kafkaProgressTopic                    string
 	kafkaSSLCa                            string
 	kafkaSSLCert                          string
@@ -440,7 +447,7 @@ func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string
 	return b
 }
 
-func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []map[string]interface{}) *ConnectionBuilder {
+func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionBuilder {
 	b.kafkaBrokers = kafkaBrokers
 	return b
 }
@@ -574,7 +581,7 @@ func (b *ConnectionBuilder) Create() string {
 			if b.kafkaSSHTunnel != "" {
 				q.WriteString(`BROKERS (`)
 				for i, broker := range b.kafkaBrokers {
-					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker["broker"], b.kafkaSSHTunnel))
+					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
 					if i < len(b.kafkaBrokers)-1 {
 						q.WriteString(`,`)
 					}
@@ -583,13 +590,13 @@ func (b *ConnectionBuilder) Create() string {
 			} else {
 				q.WriteString(fmt.Sprintf(`BROKERS (`))
 				for i, broker := range b.kafkaBrokers {
-					if broker["target_group_port"] != nil && broker["target_group_port"] != 0 && broker["availability_zone"] != nil && broker["availability_zone"] != "" && broker["privatelink_connection"] != nil && broker["privatelink_connection"] != "" {
-						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker["broker"], broker["privatelink_connection"], broker["target_group_port"], broker["availability_zone"]))
+					if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
+						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
 						if i < len(b.kafkaBrokers)-1 {
 							q.WriteString(`, `)
 						}
 					} else {
-						q.WriteString(fmt.Sprintf(`'%s'`, broker["broker"]))
+						q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
 						if i < len(b.kafkaBrokers)-1 {
 							q.WriteString(`, `)
 						}
@@ -789,9 +796,15 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
-		brokers := []map[string]interface{}{}
-		for _, b := range v.([]interface{}) {
-			brokers = append(brokers, b.(map[string]interface{}))
+		var brokers []KafkaBroker
+		for _, broker := range v.([]interface{}) {
+			b := broker.(map[string]interface{})
+			brokers = append(brokers, KafkaBroker{
+				Broker:                b["broker"].(string),
+				TargetGroupPort:       b["target_group_port"].(int),
+				AvailabilityZone:      b["availability_zone"].(string),
+				PrivateLinkConnection: b["privatelink_connection"].(string),
+			})
 		}
 		builder.KafkaBrokers(brokers)
 	}
