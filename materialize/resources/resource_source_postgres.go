@@ -62,6 +62,13 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"text_columns": {
+		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"tables": {
 		Description: "Creates subsources for specific tables in the load generator.",
 		Type:        schema.TypeMap,
@@ -96,6 +103,7 @@ type SourcePostgresBuilder struct {
 	size               string
 	postgresConnection string
 	publication        string
+	textColumns        []string
 	tables             map[string]string
 }
 
@@ -127,6 +135,11 @@ func (b *SourcePostgresBuilder) Publication(p string) *SourcePostgresBuilder {
 	return b
 }
 
+func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
+	b.textColumns = t
+	return b
+}
+
 func (b *SourcePostgresBuilder) Tables(t map[string]string) *SourcePostgresBuilder {
 	b.tables = t
 	return b
@@ -140,7 +153,17 @@ func (b *SourcePostgresBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s (PUBLICATION '%s')`, b.postgresConnection, b.publication))
+	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, b.postgresConnection))
+
+	// Publication
+	p := fmt.Sprintf(`PUBLICATION '%s'`, b.publication)
+
+	if len(b.textColumns) > 0 {
+		s := strings.Join(b.textColumns, ", ")
+		p = p + fmt.Sprintf(`, TEXT COLUMNS (%s)`, s)
+	}
+
+	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
 	var o []string
 	if len(b.tables) > 0 {
@@ -222,6 +245,10 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if v, ok := d.GetOk("tables"); ok {
 		builder.Tables(v.(map[string]string))
+	}
+
+	if v, ok := d.GetOk("textColumns"); ok {
+		builder.TextColumns(v.([]string))
 	}
 
 	qc := builder.Create()

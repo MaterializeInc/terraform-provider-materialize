@@ -62,10 +62,17 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"include_key": {
-		Description: "Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named key. ",
+		Description: "Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named \"key\".",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
+	},
+	"include_headers": {
+		Description: "Include message headers.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     false,
 	},
 	"include_partition": {
 		Description: "Include a partition column containing the Kafka message partition",
@@ -86,21 +93,61 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"format": {
-		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime",
+		Description: "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
+		ForceNew:    true,
+	},
+	"key_format": {
+		Description: "Set the key and value encodings explicitly.",
+		Type:        schema.TypeString,
+		Required:    true,
 		ForceNew:    true,
 	},
 	"envelope": {
-		Description:  "How to interpret records (e.g. Append Only, Upsert).",
+		Description:  "How Materialize should interpret records (e.g. append-only, upsert).",
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(envelopes, true),
 	},
 	"schema_registry_connection": {
-		Description: "The name of the connection to use for the shcema registry.",
+		Description: "The name of a schema registry connection.",
 		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"key_strategy": {
+		Description:  "How Materialize will define the Avro schema reader key strategy.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(strategy, true),
+	},
+	"value_strategy": {
+		Description:  "How Materialize will define the Avro schema reader value strategy.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(strategy, true),
+	},
+	"primary_key": {
+		Description: "Declare a set of columns as a primary key.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"start_offset": {
+		Description: "Read partitions from the specified offset.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeInt},
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"start_timestamp": {
+		Description: "Use the specified value to set \"START OFFSET\" based on the Kafka timestamp.",
+		Type:        schema.TypeInt,
 		Optional:    true,
 		ForceNew:    true,
 	},
@@ -132,12 +179,19 @@ type SourceKafkaBuilder struct {
 	kafkaConnection          string
 	topic                    string
 	includeKey               string
+	includeHeaders           bool
 	includePartition         string
 	includeOffset            string
 	includeTimestamp         string
 	format                   string
+	keyFormat                string
 	envelope                 string
 	schemaRegistryConnection string
+	keyStrategy              string
+	valueStrategy            string
+	primaryKey               []string
+	startOffset              []int
+	startTimestamp           int
 }
 
 func newSourceKafkaBuilder(sourceName, schemaName, databaseName string) *SourceKafkaBuilder {
@@ -173,6 +227,11 @@ func (b *SourceKafkaBuilder) IncludeKey(i string) *SourceKafkaBuilder {
 	return b
 }
 
+func (b *SourceKafkaBuilder) IncludeHeaders() *SourceKafkaBuilder {
+	b.includeHeaders = true
+	return b
+}
+
 func (b *SourceKafkaBuilder) IncludePartition(i string) *SourceKafkaBuilder {
 	b.includePartition = i
 	return b
@@ -203,6 +262,36 @@ func (b *SourceKafkaBuilder) SchemaRegistryConnection(s string) *SourceKafkaBuil
 	return b
 }
 
+func (b *SourceKafkaBuilder) KeyFormat(k string) *SourceKafkaBuilder {
+	b.keyFormat = k
+	return b
+}
+
+func (b *SourceKafkaBuilder) KeyStrategy(k string) *SourceKafkaBuilder {
+	b.keyStrategy = k
+	return b
+}
+
+func (b *SourceKafkaBuilder) ValueStrategy(v string) *SourceKafkaBuilder {
+	b.valueStrategy = v
+	return b
+}
+
+func (b *SourceKafkaBuilder) PrimaryKey(p []string) *SourceKafkaBuilder {
+	b.primaryKey = p
+	return b
+}
+
+func (b *SourceKafkaBuilder) StartOffset(s []int) *SourceKafkaBuilder {
+	b.startOffset = s
+	return b
+}
+
+func (b *SourceKafkaBuilder) StartTimestamp(s int) *SourceKafkaBuilder {
+	b.startTimestamp = s
+	return b
+}
+
 func (b *SourceKafkaBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s.%s.%s`, b.databaseName, b.schemaName, b.sourceName))
@@ -213,7 +302,10 @@ func (b *SourceKafkaBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC '%s')`, b.kafkaConnection, b.topic))
 
-	if b.format != "" {
+	// Format
+	if b.keyFormat != "" {
+		q.WriteString(fmt.Sprintf(` KEY FORMAT %s VALUE FORMAT %s`, b.keyFormat, b.format))
+	} else {
 		q.WriteString(fmt.Sprintf(` FORMAT %s`, b.format))
 	}
 
@@ -221,11 +313,40 @@ func (b *SourceKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection))
 	}
 
-	// Include
+	// Key Constraint
+	if len(b.primaryKey) > 0 {
+		k := strings.Join(b.primaryKey[:], ", ")
+		q.WriteString(fmt.Sprintf(` PRIMARY KEY (%s) NOT ENFORCED`, k))
+	}
+
+	// Time-based Offsets
+	if len(b.startOffset) > 0 {
+		k := strings.Join(strings.Fields(fmt.Sprint(b.startOffset)), ", ")
+		q.WriteString(fmt.Sprintf(` START OFFSET %s`, k))
+	}
+
+	if b.startTimestamp != 0 {
+		q.WriteString(fmt.Sprintf(` START TIMESTAMP %d`, b.startTimestamp))
+	}
+
+	// Strategy
+	if b.keyStrategy != "" {
+		q.WriteString(fmt.Sprintf(` KEY STRATEGY %s`, b.keyStrategy))
+	}
+
+	if b.valueStrategy != "" {
+		q.WriteString(fmt.Sprintf(` VALUE STRATEGY %s`, b.valueStrategy))
+	}
+
+	// Metadata
 	var i []string
 
 	if b.includeKey != "" {
 		i = append(i, b.includeKey)
+	}
+
+	if b.includeHeaders {
+		i = append(i, "HEADERS")
 	}
 
 	if b.includePartition != "" {
@@ -308,6 +429,10 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		builder.IncludeKey(v.(string))
 	}
 
+	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
+		builder.IncludeHeaders()
+	}
+
 	if v, ok := d.GetOk("include_partition"); ok {
 		builder.IncludePartition(v.(string))
 	}
@@ -324,12 +449,36 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		builder.Format(v.(string))
 	}
 
+	if v, ok := d.GetOk("key_format"); ok {
+		builder.KeyFormat(v.(string))
+	}
+
 	if v, ok := d.GetOk("envelope"); ok {
 		builder.Envelope(v.(string))
 	}
 
 	if v, ok := d.GetOk("schema_registry_connection"); ok {
 		builder.SchemaRegistryConnection(v.(string))
+	}
+
+	if v, ok := d.GetOk("key_strategy"); ok {
+		builder.KeyStrategy(v.(string))
+	}
+
+	if v, ok := d.GetOk("value_strategy"); ok {
+		builder.ValueStrategy(v.(string))
+	}
+
+	if v, ok := d.GetOk("primary_key"); ok {
+		builder.PrimaryKey(v.([]string))
+	}
+
+	if v, ok := d.GetOk("start_offset"); ok {
+		builder.StartOffset(v.([]int))
+	}
+
+	if v, ok := d.GetOk("start_timestamp"); ok {
+		builder.StartTimestamp(v.(int))
 	}
 
 	qc := builder.Create()

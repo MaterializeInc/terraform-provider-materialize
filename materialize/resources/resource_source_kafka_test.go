@@ -6,23 +6,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceSourceCreateKafka(t *testing.T) {
+func TestResourceSourceKafkaCreate(t *testing.T) {
 	r := require.New(t)
 
 	bs := newSourceKafkaBuilder("source", "schema", "database")
 	bs.Size("xsmall")
 	bs.KafkaConnection("kafka_connection")
 	bs.Topic("events")
-	r.Equal(`CREATE SOURCE database.schema.source FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') WITH (SIZE = 'xsmall');`, bs.Create())
+	bs.Format("TEXT")
+	r.Equal(`CREATE SOURCE database.schema.source FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT TEXT WITH (SIZE = 'xsmall');`, bs.Create())
 
 	bc := newSourceKafkaBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.KafkaConnection("kafka_connection")
 	bc.Topic("events")
-	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM KAFKA CONNECTION kafka_connection (TOPIC 'events');`, bc.Create())
+	bc.Format("TEXT")
+	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT TEXT;`, bc.Create())
 }
 
-func TestResourceSourceCreateKafkaParams(t *testing.T) {
+func TestResourceSourceKafkaCreateParams(t *testing.T) {
 	r := require.New(t)
 	b := newSourceKafkaBuilder("source", "schema", "database")
 	b.Size("xsmall")
@@ -34,8 +36,8 @@ func TestResourceSourceCreateKafkaParams(t *testing.T) {
 	b.IncludeOffset("OFFSET")
 	b.IncludeTimestamp("TIMESTAMP")
 	b.SchemaRegistryConnection("csr_connection")
-	b.Envelope("DEBEZIUM")
-	r.Equal(`CREATE SOURCE database.schema.source FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection INCLUDE KEY, PARTITION, OFFSET, TIMESTAMP ENVELOPE DEBEZIUM WITH (SIZE = 'xsmall');`, b.Create())
+	b.Envelope("UPSERT")
+	r.Equal(`CREATE SOURCE database.schema.source FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection INCLUDE KEY, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestResourceSourceKafkaReadId(t *testing.T) {
@@ -50,7 +52,7 @@ func TestResourceSourceKafkaReadId(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.name = 'source'
 		AND mz_schemas.name = 'schema'
@@ -96,7 +98,7 @@ func TestResourceSourceKafkaReadParams(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.id = 'u1';`, b)
 }

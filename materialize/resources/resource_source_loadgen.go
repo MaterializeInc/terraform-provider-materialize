@@ -69,6 +69,12 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Default:     0.01,
 		ForceNew:    true,
 	},
+	"max_cardinality": {
+		Description: "Valid for the COUNTER generator. Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"tables": {
 		Description: "Creates subsources for specific tables in the load generator.",
 		Type:        schema.TypeMap,
@@ -104,6 +110,7 @@ type SourceLoadgenBuilder struct {
 	loadGeneratorType string
 	tickInterval      string
 	scaleFactor       float64
+	maxCardinality    bool
 	tables            map[string]string
 }
 
@@ -140,6 +147,11 @@ func (b *SourceLoadgenBuilder) ScaleFactor(s float64) *SourceLoadgenBuilder {
 	return b
 }
 
+func (b *SourceLoadgenBuilder) MaxCardinality(m bool) *SourceLoadgenBuilder {
+	b.maxCardinality = m
+	return b
+}
+
 func (b *SourceLoadgenBuilder) Tables(t map[string]string) *SourceLoadgenBuilder {
 	b.tables = t
 	return b
@@ -155,7 +167,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` FROM LOAD GENERATOR %s`, b.loadGeneratorType))
 
-	if b.tickInterval != "" || b.scaleFactor != 0 {
+	if b.tickInterval != "" || b.scaleFactor != 0 || b.maxCardinality {
 		var p []string
 		if b.tickInterval != "" {
 			t := fmt.Sprintf(`TICK INTERVAL '%s'`, b.tickInterval)
@@ -165,6 +177,10 @@ func (b *SourceLoadgenBuilder) Create() string {
 		if b.scaleFactor != 0 {
 			s := fmt.Sprintf(`SCALE FACTOR %.2f`, b.scaleFactor)
 			p = append(p, s)
+		}
+
+		if b.maxCardinality {
+			p = append(p, ` MAX CARDINALITY`)
 		}
 
 		if len(p) != 0 {
@@ -255,6 +271,10 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	if v, ok := d.GetOk("scale_factor"); ok {
 		builder.ScaleFactor(v.(float64))
+	}
+
+	if v, ok := d.GetOk("max_cardinality"); ok {
+		builder.MaxCardinality(v.(bool))
 	}
 
 	if v, ok := d.GetOk("tables"); ok {

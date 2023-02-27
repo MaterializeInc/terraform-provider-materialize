@@ -15,7 +15,7 @@ func readsourceId(name, schema, database string) string {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.name = '%s'
 		AND mz_schemas.name = '%s'
@@ -41,7 +41,7 @@ func readSourceParams(id string) string {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.id = '%s';`, id)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceSourceCreateLoadgen(t *testing.T) {
+func TestResourceSourceLoadgenCreate(t *testing.T) {
 	r := require.New(t)
 
 	bs := newSourceLoadgenBuilder("source", "schema", "database")
@@ -20,7 +20,7 @@ func TestResourceSourceCreateLoadgen(t *testing.T) {
 	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM LOAD GENERATOR COUNTER;`, bc.Create())
 }
 
-func TestResourceSourceCreateLoadgenParams(t *testing.T) {
+func TestResourceSourceLoadgenCreateParams(t *testing.T) {
 	r := require.New(t)
 	b := newSourceLoadgenBuilder("source", "schema", "database")
 	b.Size("xsmall")
@@ -42,7 +42,7 @@ func TestResourceSourceLoadgenReadId(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.name = 'source'
 		AND mz_schemas.name = 'schema'
@@ -88,7 +88,7 @@ func TestResourceSourceLoadgenReadParams(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.id = 'u1';`, b)
 }

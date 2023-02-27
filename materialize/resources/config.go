@@ -45,12 +45,6 @@ var saslMechanisms = []string{
 	"SCRAM-SHA-512",
 }
 
-var sourceConnectionTypes = []string{
-	"KAFKA",
-	"POSTGRES",
-	"LOAD GENERATOR",
-}
-
 var sourceSizes = []string{
 	"3xsmall",
 	"2xsmall",
@@ -59,6 +53,12 @@ var sourceSizes = []string{
 	"medium",
 	"large",
 	"xlarge",
+}
+
+var strategy = []string{
+	"INLINE",
+	"ID",
+	"LATEST",
 }
 
 var localSizes = []string{

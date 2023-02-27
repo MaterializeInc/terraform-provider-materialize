@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceSourceCreatePostgres(t *testing.T) {
+func TestResourceSourcePostgresCreate(t *testing.T) {
 	r := require.New(t)
 
 	bs := newSourcePostgresBuilder("source", "schema", "database")
@@ -22,17 +22,18 @@ func TestResourceSourceCreatePostgres(t *testing.T) {
 	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES;`, bc.Create())
 }
 
-func TestResourceSourceCreatePostgresParams(t *testing.T) {
+func TestResourceSourcePostgresCreateParams(t *testing.T) {
 	r := require.New(t)
 	b := newSourcePostgresBuilder("source", "schema", "database")
 	b.Size("xsmall")
 	b.PostgresConnection("pg_connection")
 	b.Publication("mz_source")
+	b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})
 	b.Tables(map[string]string{
 		"schema1.table_1": "s1_table_1",
 		"schema2_table_1": "s2_table_1",
 	})
-	r.Equal(`CREATE SOURCE database.schema.source FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR TABLES (schema1.table_1 AS s1_table_1, schema2_table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE database.schema.source FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2_table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestResourceSourcePostgresReadId(t *testing.T) {
@@ -47,7 +48,7 @@ func TestResourceSourcePostgresReadId(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.name = 'source'
 		AND mz_schemas.name = 'schema'
@@ -93,7 +94,7 @@ func TestResourceSourcePostgresReadParams(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		WHERE mz_sources.id = 'u1';`, b)
 }
