@@ -43,4 +43,7 @@ The id for all provider resources is the corresponding id in [mz_catalog](https:
 When initially creating a resource via SQL, the id is not returned as part of the command. That is why after we create a resource the provider will query the mz_catalog using the name (and if applicable schema and database names) to lookup the id which will then be set with the `ReadContext`.
 
 ### Dividing Resources
-Complex Materailize resources are separated out into more specific provider resources. For example sources are divided across `materialize_source_kafka`, `materialize_source_loadgen`, `materialize_source_postgres`. Resources that have a large number of possibly contradictory parameters should be given their own resource. This offers more guidance by allowing more accurate required parameters and not confusing users with details for unnecessary fields.
+Complex Materialize resources are separated out into more specific provider resources. For example sources are divided across `materialize_source_kafka`, `materialize_source_load_generator`, `materialize_source_postgres`. Resources that have a large number of possibly contradictory parameters should be given their own resource. This offers more guidance by allowing more accurate required parameters and not confusing users with details for unnecessary fields.
+
+### Naming Resources
+The names of resources should exactly match Materialize. For example the load generator source should be named `materialize_source_load_generator` to match the [SQL statement](https://materialize.com/docs/sql/create-source/load-generator/).
