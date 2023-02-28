@@ -1,4 +1,4 @@
-resource "materialize_source_loadgen" "example_source_load_generator" {
+resource "materialize_source_load_generator" "example_source_load_generator" {
   name                = "source_load_generator"
   schema_name         = "schema"
   size                = "3xsmall"
