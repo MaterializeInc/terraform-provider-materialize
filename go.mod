@@ -8,7 +8,6 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/lib/pq v1.10.2
 	github.com/stretchr/testify v1.8.0
 )
 
