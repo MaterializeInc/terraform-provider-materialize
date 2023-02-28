@@ -11,7 +11,7 @@ resource "materialize_sink" "sink_kafka" {
   envelope                   = "DEBEZIUM"
 
   depends_on = [
-    materialize_source_loadgen.load_generator
+    materialize_source_load_generator.load_generator
   ]
 }
 
