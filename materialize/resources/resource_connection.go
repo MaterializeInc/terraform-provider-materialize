@@ -31,6 +31,11 @@ var connectionSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     "materialize",
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the connection.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"connection_type": {
 		Description:  "The type of the connection.",
 		Type:         schema.TypeString,
@@ -158,17 +163,34 @@ var connectionSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"kafka_broker": {
-		Description:   "The Kafka broker configuration.",
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"kafka_brokers"},
-	},
-	"kafka_brokers": {
-		Description:   "The Kafka brokers configuration.",
-		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeMap},
-		Optional:      true,
-		ConflictsWith: []string{"kafka_broker"},
+		Description: "The Kafka brokers configuration.",
+		Type:        schema.TypeList,
+		Optional:    true,
+		MinItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"broker": {
+					Description: "The Kafka broker, in the form of `host:port`.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"target_group_port": {
+					Description: "The port of the target group associated with the Kafka broker.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"availability_zone": {
+					Description: "The availability zone of the Kafka broker.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+				"privatelink_connection": {
+					Description: "The AWS PrivateLink connection name in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+			},
+		},
 	},
 	"kafka_progress_topic": {
 		Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
@@ -275,6 +297,13 @@ func Connection() *schema.Resource {
 	}
 }
 
+type KafkaBroker struct {
+	Broker                string
+	TargetGroupPort       int
+	AvailabilityZone      string
+	PrivateLinkConnection string
+}
+
 type ConnectionBuilder struct {
 	connectionName                        string
 	schemaName                            string
@@ -296,8 +325,7 @@ type ConnectionBuilder struct {
 	postgresSSLKey                        string
 	postgresSSLMode                       string
 	postgresAWSPrivateLink                string
-	kafkaBroker                           string
-	kafkaBrokers                          []map[string]interface{}
+	kafkaBrokers                          []KafkaBroker
 	kafkaProgressTopic                    string
 	kafkaSSLCa                            string
 	kafkaSSLCert                          string
@@ -419,12 +447,7 @@ func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string
 	return b
 }
 
-func (b *ConnectionBuilder) KafkaBroker(kafkaBroker string) *ConnectionBuilder {
-	b.kafkaBroker = kafkaBroker
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []map[string]interface{}) *ConnectionBuilder {
+func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionBuilder {
 	b.kafkaBrokers = kafkaBrokers
 	return b
 }
@@ -554,32 +577,26 @@ func (b *ConnectionBuilder) Create() string {
 	}
 
 	if b.connectionType == "KAFKA" {
-		if b.kafkaBroker != "" {
-			q.WriteString(fmt.Sprintf(`BROKER '%s'`, b.kafkaBroker))
-			if b.kafkaSSHTunnel != "" {
-				q.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`, b.kafkaSSHTunnel))
-			}
-		}
 		if len(b.kafkaBrokers) != 0 {
 			if b.kafkaSSHTunnel != "" {
 				q.WriteString(`BROKERS (`)
 				for i, broker := range b.kafkaBrokers {
-					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker["broker"], b.kafkaSSHTunnel))
+					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
 					if i < len(b.kafkaBrokers)-1 {
 						q.WriteString(`,`)
 					}
 				}
 				q.WriteString(`)`)
 			} else {
-				q.WriteString(fmt.Sprintf(`BROKERS (`))
+				q.WriteString(`BROKERS (`)
 				for i, broker := range b.kafkaBrokers {
-					if broker["target_group_port"] != nil && broker["availability_zone"] != nil && broker["privatelink_connection"] != nil {
-						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %s, AVAILABILITY ZONE '%s')`, broker["broker"], broker["privatelink_connection"], broker["target_group_port"], broker["availability_zone"]))
+					if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
+						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
 						if i < len(b.kafkaBrokers)-1 {
 							q.WriteString(`, `)
 						}
 					} else {
-						q.WriteString(fmt.Sprintf(`'%s'`, broker["broker"]))
+						q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
 						if i < len(b.kafkaBrokers)-1 {
 							q.WriteString(`, `)
 						}
@@ -692,6 +709,7 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	q := readConnectionParams(i)
 
 	readResource(conn, d, i, q, _connection{}, "connection")
+	setQualifiedName(d)
 	return nil
 }
 
@@ -778,15 +796,16 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
-		builder.KafkaBroker(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_brokers"); ok {
-		brokers := []map[string]interface{}{}
-		for _, b := range v.([]interface{}) {
-			brokers = append(brokers, b.(map[string]interface{}))
+		var brokers []KafkaBroker
+		for _, broker := range v.([]interface{}) {
+			b := broker.(map[string]interface{})
+			brokers = append(brokers, KafkaBroker{
+				Broker:                b["broker"].(string),
+				TargetGroupPort:       b["target_group_port"].(int),
+				AvailabilityZone:      b["availability_zone"].(string),
+				PrivateLinkConnection: b["privatelink_connection"].(string),
+			})
 		}
-		// panic(fmt.Sprintf("kafka_brokers: %v, %T", brokers, brokers))
 		builder.KafkaBrokers(brokers)
 	}
 
