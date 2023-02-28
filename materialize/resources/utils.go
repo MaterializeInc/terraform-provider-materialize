@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -72,4 +73,14 @@ func dropResource(conn *sqlx.DB, d *schema.ResourceData, queryStr, resource stri
 	// Explicit set id to empty
 	d.SetId("")
 	return nil
+}
+
+func QuoteString(input string) (output string) {
+	output = "'" + strings.Replace(input, "'", "''", -1) + "'"
+	return
+}
+
+func QuoteIdentifier(input string) (output string) {
+	output = `"` + strings.Replace(input, `"`, `""`, -1) + `"`
+	return
 }
