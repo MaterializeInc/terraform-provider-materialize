@@ -1,4 +1,4 @@
-resource "materialize_sink" "example_sink_kafka" {
+resource "materialize_sink_kafka" "example_sink_kafka" {
   name                       = "sink_kafka"
   schema_name                = "schema"
   size                       = "3xsmall"

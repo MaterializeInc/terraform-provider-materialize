@@ -193,7 +193,7 @@ func (b *SourcePostgresBuilder) Create() string {
 }
 
 func (b *SourcePostgresBuilder) ReadId() string {
-	return readsourceId(b.sourceName, b.schemaName, b.databaseName)
+	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
 }
 
 func (b *SourcePostgresBuilder) Rename(newName string) string {

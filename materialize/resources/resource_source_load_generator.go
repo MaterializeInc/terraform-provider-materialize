@@ -219,7 +219,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 }
 
 func (b *SourceLoadgenBuilder) ReadId() string {
-	return readsourceId(b.sourceName, b.schemaName, b.databaseName)
+	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
 }
 
 func (b *SourceLoadgenBuilder) Rename(newName string) string {
