@@ -588,7 +588,7 @@ func (b *ConnectionBuilder) Create() string {
 				}
 				q.WriteString(`)`)
 			} else {
-				q.WriteString(fmt.Sprintf(`BROKERS (`))
+				q.WriteString(`BROKERS (`)
 				for i, broker := range b.kafkaBrokers {
 					if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
 						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
