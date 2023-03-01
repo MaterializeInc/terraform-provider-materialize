@@ -95,14 +95,13 @@ resource "materialize_connection_kafka" "example_kafka_privatelink_conn" {
 }
 
 # Create a Postgres Connection
-resource "materialize_connection" "example_postgres_connection" {
-  name              = "example_postgres_connection"
-  connection_type   = "POSTGRES"
-  postgres_host     = "instance.foo000.us-west-1.rds.amazonaws.com"
-  postgres_port     = 5432
-  postgres_user     = "example"
-  postgres_password = "example"
-  postgres_database = "example"
+resource "materialize_connection_postgres" "example_postgres_connection" {
+  name     = "example_postgres_connection"
+  host     = "instance.foo000.us-west-1.rds.amazonaws.com"
+  port     = 5432
+  user     = "example"
+  password = "example"
+  database = "example"
 }
 
 # Create a Kafka Connection

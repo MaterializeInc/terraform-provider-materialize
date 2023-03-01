@@ -8,7 +8,7 @@ import (
 
 func TestResourceConnectionKafkaReadId(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionKafkaBuilder("connection", "schema", "database")
 	r.Equal(`
 		SELECT mz_connections.id
 		FROM mz_connections
@@ -24,13 +24,13 @@ func TestResourceConnectionKafkaReadId(t *testing.T) {
 
 func TestResourceConnectionKafkaRename(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionKafkaBuilder("connection", "schema", "database")
 	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
 }
 
 func TestResourceConnectionKafkaDrop(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionKafkaBuilder("connection", "schema", "database")
 	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
 }
 

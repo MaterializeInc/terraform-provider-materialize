@@ -6,8 +6,8 @@ resource "materialize_connection_kafka" "kafka_connection" {
 }
 
 resource "materialize_connection_confluent_schema_registry" "schema_registry" {
-  name                          = "schema_registry_connection"
-  confluent_schema_registry_url = "http://schema-registry:8081"
+  name = "schema_registry_connection"
+  url  = "http://schema-registry:8081"
 }
 
 resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
@@ -32,14 +32,13 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   kafka_progress_topic  = "progress_topic"
 }
 
-resource "materialize_connection" "example_postgres_connection" {
-  name              = "example_postgres_connection"
-  connection_type   = "POSTGRES"
-  postgres_host     = "postgres"
-  postgres_port     = 5432
-  postgres_user     = "materialize"
-  postgres_password = format("%s.%s.%s", materialize_database.database.name, materialize_schema.schema.name, materialize_secret.postgres_password.name)
-  postgres_database = "postgres"
+resource "materialize_connection_postgres" "example_postgres_connection" {
+  name     = "example_postgres_connection"
+  host     = "postgres"
+  port     = 5432
+  user     = "materialize"
+  password = format("%s.%s.%s", materialize_database.database.name, materialize_schema.schema.name, materialize_secret.postgres_password.name)
+  database = "postgres"
 }
 
 output "qualified_ssh_connection" {

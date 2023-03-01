@@ -7,7 +7,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   kafka_connection           = materialize_connection_kafka.kafka_connection.name
   topic                      = "topic1"
   format                     = "AVRO"
-  schema_registry_connection = materialize_connection.schema_registry.name
+  schema_registry_connection = materialize_connection_confluent_schema_registry.schema_registry.name
   envelope                   = "DEBEZIUM"
 
   depends_on = [

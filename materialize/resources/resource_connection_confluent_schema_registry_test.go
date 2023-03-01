@@ -8,7 +8,7 @@ import (
 
 func TestResourceConnectionConfluentSchemaRegistryReadId(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionConfluentSchemaRegistryBuilder("connection", "schema", "database")
 	r.Equal(`
 		SELECT mz_connections.id
 		FROM mz_connections
@@ -24,13 +24,13 @@ func TestResourceConnectionConfluentSchemaRegistryReadId(t *testing.T) {
 
 func TestResourceConnectionConfluentSchemaRegistryRename(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionConfluentSchemaRegistryBuilder("connection", "schema", "database")
 	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
 }
 
 func TestResourceConnectionConfluentSchemaRegistryDrop(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionConfluentSchemaRegistryBuilder("connection", "schema", "database")
 	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
 }
 
