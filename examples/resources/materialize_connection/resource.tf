@@ -1,19 +1,3 @@
-# Create SSH Connection
-resource "materialize_connection" "example_ssh_connection" {
-  name            = "ssh_example_connection"
-  schema_name     = "public"
-  connection_type = "SSH TUNNEL"
-  ssh_host        = "example.com"
-  ssh_port        = 22
-  ssh_user        = "example"
-}
-
-# CREATE CONNECTION ssh_example_connection TO SSH TUNNEL (
-#    HOST 'example.com',
-#    PORT 22,
-#    USER 'example'
-# );
-
 # # Create a AWS Private Connection
 # Note: you need the max_aws_privatelink_connections increased for this to work:
 # show max_aws_privatelink_connections;

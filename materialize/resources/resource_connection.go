@@ -41,40 +41,20 @@ var connectionSchema = map[string]*schema.Schema{
 		Required:     true,
 		ValidateFunc: validation.StringInSlice(connectionTypes, true),
 	},
-	"ssh_host": {
-		Description:  "The host of the SSH tunnel.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"ssh_user", "ssh_port"},
-	},
-	"ssh_user": {
-		Description:  "The user of the SSH tunnel.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"ssh_host", "ssh_port"},
-	},
-	"ssh_port": {
-		Description:  "The port of the SSH tunnel.",
-		Type:         schema.TypeInt,
-		Optional:     true,
-		RequiredWith: []string{"ssh_host", "ssh_user"},
-	},
 	"aws_privatelink_service_name": {
-		Description:   "The name of the AWS PrivateLink service.",
-		Type:          schema.TypeString,
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"ssh_host", "ssh_user", "ssh_port"},
-		RequiredWith:  []string{"aws_privatelink_availability_zones"},
+		Description:  "The name of the AWS PrivateLink service.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"aws_privatelink_availability_zones"},
 	},
 	"aws_privatelink_availability_zones": {
-		Description:   "The availability zones of the AWS PrivateLink service.",
-		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeString},
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"ssh_host", "ssh_user", "ssh_port"},
-		RequiredWith:  []string{"aws_privatelink_service_name"},
+		Description:  "The availability zones of the AWS PrivateLink service.",
+		Type:         schema.TypeList,
+		Elem:         &schema.Schema{Type: schema.TypeString},
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"aws_privatelink_service_name"},
 	},
 	"postgres_database": {
 		Description: "The target Postgres database.",
@@ -227,9 +207,6 @@ type ConnectionBuilder struct {
 	schemaName                            string
 	databaseName                          string
 	connectionType                        string
-	sshHost                               string
-	sshUser                               string
-	sshPort                               int
 	privateLinkServiceName                string
 	privateLinkAvailabilityZones          []string
 	postgresDatabase                      string
@@ -273,21 +250,6 @@ func (b *ConnectionBuilder) SchemaName(schemaName string) *ConnectionBuilder {
 
 func (b *ConnectionBuilder) ConnectionType(connectionType string) *ConnectionBuilder {
 	b.connectionType = connectionType
-	return b
-}
-
-func (b *ConnectionBuilder) SSHHost(sshHost string) *ConnectionBuilder {
-	b.sshHost = sshHost
-	return b
-}
-
-func (b *ConnectionBuilder) SSHUser(sshUser string) *ConnectionBuilder {
-	b.sshUser = sshUser
-	return b
-}
-
-func (b *ConnectionBuilder) SSHPort(sshPort int) *ConnectionBuilder {
-	b.sshPort = sshPort
 	return b
 }
 
@@ -402,12 +364,6 @@ func (b *ConnectionBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` TO %s (`, b.connectionType))
 
-	if b.connectionType == "SSH TUNNEL" {
-		q.WriteString(fmt.Sprintf(`HOST '%s', `, b.sshHost))
-		q.WriteString(fmt.Sprintf(`USER '%s', `, b.sshUser))
-		q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
-	}
-
 	if b.connectionType == "AWS PRIVATELINK" {
 		q.WriteString(fmt.Sprintf(`SERVICE NAME '%s',`, b.privateLinkServiceName))
 		q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES ('%s')`, strings.Join(b.privateLinkAvailabilityZones, "', '")))
@@ -502,18 +458,6 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	if v, ok := d.GetOk("connection_type"); ok {
 		builder.ConnectionType(v.(string))
-	}
-
-	if v, ok := d.GetOk("ssh_host"); ok {
-		builder.SSHHost(v.(string))
-	}
-
-	if v, ok := d.GetOk("ssh_user"); ok {
-		builder.SSHUser(v.(string))
-	}
-
-	if v, ok := d.GetOk("ssh_port"); ok {
-		builder.SSHPort(v.(int))
 	}
 
 	if v, ok := d.GetOk("aws_privatelink_service_name"); ok {

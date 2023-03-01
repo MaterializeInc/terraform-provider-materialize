@@ -52,17 +52,6 @@ func TestResourceConnectionReadParams(t *testing.T) {
 }
 
 // here are common ^
-func TestResourceConnectionCreateSsh(t *testing.T) {
-	r := require.New(t)
-
-	b := newConnectionBuilder("ssh_conn", "schema", "database")
-	b.ConnectionType("SSH TUNNEL")
-	b.SSHHost("localhost")
-	b.SSHPort(123)
-	b.SSHUser("user")
-	r.Equal(`CREATE CONNECTION database.schema.ssh_conn TO SSH TUNNEL (HOST 'localhost', USER 'user', PORT 123);`, b.Create())
-
-}
 
 func TestResourceConnectionCreateAwsPrivateLink(t *testing.T) {
 	r := require.New(t)

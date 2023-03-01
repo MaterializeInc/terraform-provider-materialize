@@ -60,13 +60,12 @@ resource "materialize_secret" "example_secret" {
 
 
 # Create SSH Connection
-resource "materialize_connection" "example_ssh_connection" {
+resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
   name            = "ssh_example_connection"
   schema_name     = "public"
-  connection_type = "SSH TUNNEL"
-  ssh_host        = "example.com"
-  ssh_port        = 22
-  ssh_user        = "example"
+  host            = "example.com"
+  port            = 22
+  user            = "example"
 }
 
 # # Create a AWS Private Connection

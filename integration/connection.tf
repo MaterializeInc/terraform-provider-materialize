@@ -1,11 +1,3 @@
-resource "materialize_connection" "ssh_connection" {
-  name            = "ssh_connection"
-  connection_type = "SSH TUNNEL"
-  ssh_host        = "example.com"
-  ssh_port        = 22
-  ssh_user        = "example"
-}
-
 resource "materialize_connection_kafka" "kafka_connection" {
   name            = "kafka_connection"
   kafka_broker {
@@ -19,13 +11,12 @@ resource "materialize_connection" "schema_registry" {
   confluent_schema_registry_url = "http://schema-registry:8081"
 }
 
-resource "materialize_connection" "example_ssh_connection" {
+resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
   name            = "ssh_example_connection"
   schema_name     = "public"
-  connection_type = "SSH TUNNEL"
-  ssh_host        = "ssh_host"
-  ssh_user        = "ssh_user"
-  ssh_port        = 22
+  host        = "ssh_host"
+  user        = "ssh_user"
+  port        = 22
 }
 
 resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
@@ -53,5 +44,5 @@ resource "materialize_connection" "example_postgres_connection" {
 }
 
 output "qualified_ssh_connection" {
-  value = materialize_connection.ssh_connection.qualified_name
+  value = materialize_connection_ssh_tunnel.example_ssh_connection.qualified_name
 }

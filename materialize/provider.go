@@ -60,6 +60,7 @@ func Provider() *schema.Provider {
 			"materialize_cluster_replica":       resources.ClusterReplica(),
 			"materialize_connection":            resources.Connection(),
 			"materialize_connection_kafka":      resources.ConnectionKafka(),
+			"materialize_connection_ssh_tunnel": resources.ConnectionSshTunnel(),
 			"materialize_database":              resources.Database(),
 			"materialize_schema":                resources.Schema(),
 			"materialize_secret":                resources.Secret(),
