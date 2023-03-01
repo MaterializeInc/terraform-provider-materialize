@@ -32,4 +32,5 @@ provider "materialize" {
 - `host` (String) Materialize host
 - `password` (String, Sensitive) Materialize host
 - `port` (Number) The Materialize port number to connect to at the server host
+- `testing` (Boolean) Enable to test the provider locally
 - `username` (String) Materialize username

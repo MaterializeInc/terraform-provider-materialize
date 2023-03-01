@@ -15,7 +15,7 @@ A secret securely stores sensitive credentials (like passwords and SSL keys) in 
 ```terraform
 resource "materialize_secret" "example_secret" {
   name  = "secret"
-  value = "decode('c2VjcmV0Cg==', 'base64')"
+  value = "some-secret-value"
 }
 ```
 
@@ -35,6 +35,7 @@ resource "materialize_secret" "example_secret" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `qualified_name` (String) The fully qualified name of the secret.
 
 ## Import
 
