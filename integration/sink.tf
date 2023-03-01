@@ -1,4 +1,4 @@
-resource "materialize_sink" "sink_kafka" {
+resource "materialize_sink_kafka" "sink_kafka" {
   name                       = "sink_kafka"
   schema_name                = materialize_schema.schema.name
   database_name              = materialize_database.database.name
@@ -16,5 +16,5 @@ resource "materialize_sink" "sink_kafka" {
 }
 
 output "qualified_sink_kafka" {
-  value = materialize_sink.sink_kafka.qualified_name
+  value = materialize_sink_kafka.sink_kafka.qualified_name
 }

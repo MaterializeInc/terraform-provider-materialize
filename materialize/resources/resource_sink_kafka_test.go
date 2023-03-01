@@ -6,23 +6,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceSinkCreate(t *testing.T) {
+func TestResourceSinkKafkaCreate(t *testing.T) {
 	r := require.New(t)
 
-	bs := newSinkBuilder("sink", "schema", "database")
+	bs := newSinkKafkaBuilder("sink", "schema", "database")
 	bs.Size("xsmall")
 	bs.ItemName("schema.table")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table WITH (SIZE = 'xsmall');`, bs.Create())
+	r.Equal(`CREATE SINK database.schema.sink FROM schema.table WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
 
-	bc := newSinkBuilder("sink", "schema", "database")
+	bc := newSinkKafkaBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.ItemName("schema.table")
+	bc.Snapshot(true)
 	r.Equal(`CREATE SINK database.schema.sink IN CLUSTER cluster FROM schema.table;`, bc.Create())
 }
 
-func TestResourceSinkCreateKafka(t *testing.T) {
+func TestResourceSinkKafkaCreateParams(t *testing.T) {
 	r := require.New(t)
-	b := newSinkBuilder("sink", "schema", "database")
+	b := newSinkKafkaBuilder("sink", "schema", "database")
 	b.Size("xsmall")
 	b.ItemName("schema.table")
 	b.KafkaConnection("kafka_connection")
@@ -31,12 +32,13 @@ func TestResourceSinkCreateKafka(t *testing.T) {
 	b.Format("AVRO")
 	b.SchemaRegistryConnection("csr_connection")
 	b.Envelope("UPSERT")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
+	b.Snapshot(false)
+	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
 }
 
-func TestResourceSinkRead(t *testing.T) {
+func TestResourceSinkKafkaReadId(t *testing.T) {
 	r := require.New(t)
-	b := newSinkBuilder("sink", "schema", "database")
+	b := newSinkKafkaBuilder("sink", "schema", "database")
 	r.Equal(`
 		SELECT mz_sinks.id
 		FROM mz_sinks
@@ -46,7 +48,7 @@ func TestResourceSinkRead(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sinks.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sinks.cluster_id = mz_clusters.id
 		WHERE mz_sinks.name = 'sink'
 		AND mz_schemas.name = 'schema'
@@ -54,25 +56,25 @@ func TestResourceSinkRead(t *testing.T) {
 	`, b.ReadId())
 }
 
-func TestResourceSinkRename(t *testing.T) {
+func TestResourceSinkKafkaRename(t *testing.T) {
 	r := require.New(t)
-	b := newSinkBuilder("sink", "schema", "database")
+	b := newSinkKafkaBuilder("sink", "schema", "database")
 	r.Equal(`ALTER SINK database.schema.sink RENAME TO database.schema.new_sink;`, b.Rename("new_sink"))
 }
 
-func TestResourceSinkResize(t *testing.T) {
+func TestResourceSinkKafkaResize(t *testing.T) {
 	r := require.New(t)
-	b := newSinkBuilder("sink", "schema", "database")
+	b := newSinkKafkaBuilder("sink", "schema", "database")
 	r.Equal(`ALTER SINK database.schema.sink SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
 }
 
-func TestResourceSinkDrop(t *testing.T) {
+func TestResourceSinkKafkaDrop(t *testing.T) {
 	r := require.New(t)
-	b := newSinkBuilder("sink", "schema", "database")
+	b := newSinkKafkaBuilder("sink", "schema", "database")
 	r.Equal(`DROP SINK database.schema.sink;`, b.Drop())
 }
 
-func TestResourceSinkReadParams(t *testing.T) {
+func TestResourceSinkKafkaReadParams(t *testing.T) {
 	r := require.New(t)
 	b := readSinkParams("u1")
 	r.Equal(`
@@ -92,7 +94,7 @@ func TestResourceSinkReadParams(t *testing.T) {
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sinks.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
+		JOIN mz_clusters
 			ON mz_sinks.cluster_id = mz_clusters.id
 		WHERE mz_sinks.id = 'u1';`, b)
 }

@@ -379,7 +379,7 @@ func (b *SourceKafkaBuilder) Create() string {
 }
 
 func (b *SourceKafkaBuilder) ReadId() string {
-	return readsourceId(b.sourceName, b.schemaName, b.databaseName)
+	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
 }
 
 func (b *SourceKafkaBuilder) Rename(newName string) string {

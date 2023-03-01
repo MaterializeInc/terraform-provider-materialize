@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -13,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var sinkSchema = map[string]*schema.Schema{
+var sinkKafkaSchema = map[string]*schema.Schema{
 	"name": {
 		Description: "The identifier for the sink.",
 		Type:        schema.TypeString,
@@ -56,29 +55,24 @@ var sinkSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
-	// Broker
 	"kafka_connection": {
-		Description:  "The name of the Kafka connection to use in the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"kafka_connection", "topic"},
+		Description: "The name of the Kafka connection to use in the source.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
 	},
 	"topic": {
-		Description:  "The Kafka topic you want to subscribe to.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"kafka_connection", "topic"},
+		Description: "The Kafka topic you want to subscribe to.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
 	},
 	"key": {
 		Description: "An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.",
 		Type:        schema.TypeList,
-		Elem: &schema.Schema{
-			Type: schema.TypeString,
-		},
-		Optional: true,
-		ForceNew: true,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"format": {
 		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime.",
@@ -113,33 +107,33 @@ var sinkSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
 	},
-	// "snapshot": {
-	// 	Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
-	// 	Type:        schema.TypeBool,
-	// 	Optional:    true,
-	// 	ForceNew:    true,
-	// 	Default:     true,
-	// },
+	"snapshot": {
+		Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     true,
+	},
 }
 
-func Sink() *schema.Resource {
+func SinkKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A sink describes an external system you want Materialize to write data to, and provides details about how to encode that data.",
 
-		CreateContext: sinkCreate,
-		ReadContext:   sinkRead,
-		UpdateContext: sinkUpdate,
-		DeleteContext: sinkDelete,
+		CreateContext: sinkKafkaCreate,
+		ReadContext:   sinkKafkaRead,
+		UpdateContext: sinkKafkaUpdate,
+		DeleteContext: sinkKafkaDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sinkSchema,
+		Schema: sinkKafkaSchema,
 	}
 }
 
-type SinkBuilder struct {
+type SinkKafkaBuilder struct {
 	sinkName                 string
 	schemaName               string
 	databaseName             string
@@ -154,78 +148,78 @@ type SinkBuilder struct {
 	schemaRegistryConnection string
 	avroKeyFullname          string
 	avroValueFullname        string
-	// snapshot                 bool
+	snapshot                 bool
 }
 
-func newSinkBuilder(sinkName, schemaName, databaseName string) *SinkBuilder {
-	return &SinkBuilder{
+func newSinkKafkaBuilder(sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
+	return &SinkKafkaBuilder{
 		sinkName:     sinkName,
 		schemaName:   schemaName,
 		databaseName: databaseName,
 	}
 }
 
-func (b *SinkBuilder) ClusterName(c string) *SinkBuilder {
+func (b *SinkKafkaBuilder) ClusterName(c string) *SinkKafkaBuilder {
 	b.clusterName = c
 	return b
 }
 
-func (b *SinkBuilder) Size(s string) *SinkBuilder {
+func (b *SinkKafkaBuilder) Size(s string) *SinkKafkaBuilder {
 	b.size = s
 	return b
 }
 
-func (b *SinkBuilder) ItemName(i string) *SinkBuilder {
+func (b *SinkKafkaBuilder) ItemName(i string) *SinkKafkaBuilder {
 	b.itemName = i
 	return b
 }
 
-func (b *SinkBuilder) KafkaConnection(k string) *SinkBuilder {
+func (b *SinkKafkaBuilder) KafkaConnection(k string) *SinkKafkaBuilder {
 	b.kafkaConnection = k
 	return b
 }
 
-func (b *SinkBuilder) Topic(t string) *SinkBuilder {
+func (b *SinkKafkaBuilder) Topic(t string) *SinkKafkaBuilder {
 	b.topic = t
 	return b
 }
 
-func (b *SinkBuilder) Key(k []string) *SinkBuilder {
+func (b *SinkKafkaBuilder) Key(k []string) *SinkKafkaBuilder {
 	b.key = k
 	return b
 }
 
-func (b *SinkBuilder) Format(f string) *SinkBuilder {
+func (b *SinkKafkaBuilder) Format(f string) *SinkKafkaBuilder {
 	b.format = f
 	return b
 }
 
-func (b *SinkBuilder) Envelope(e string) *SinkBuilder {
+func (b *SinkKafkaBuilder) Envelope(e string) *SinkKafkaBuilder {
 	b.envelope = e
 	return b
 }
 
-func (b *SinkBuilder) SchemaRegistryConnection(s string) *SinkBuilder {
+func (b *SinkKafkaBuilder) SchemaRegistryConnection(s string) *SinkKafkaBuilder {
 	b.schemaRegistryConnection = s
 	return b
 }
 
-func (b *SinkBuilder) AvroKeyFullname(a string) *SinkBuilder {
+func (b *SinkKafkaBuilder) AvroKeyFullname(a string) *SinkKafkaBuilder {
 	b.avroKeyFullname = a
 	return b
 }
 
-func (b *SinkBuilder) AvroValueFullname(a string) *SinkBuilder {
+func (b *SinkKafkaBuilder) AvroValueFullname(a string) *SinkKafkaBuilder {
 	b.avroValueFullname = a
 	return b
 }
 
-// func (b *SinkBuilder) Snapshot(s bool) *SinkBuilder {
-// 	b.snapshot = s
-// 	return b
-// }
+func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
+	b.snapshot = s
+	return b
+}
 
-func (b *SinkBuilder) Create() string {
+func (b *SinkKafkaBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s.%s.%s`, b.databaseName, b.schemaName, b.sinkName))
 
@@ -267,16 +261,16 @@ func (b *SinkBuilder) Create() string {
 	}
 
 	// With Options
-	if b.size != "" {
+	if b.size != "" || !b.snapshot {
 		w := strings.Builder{}
 
 		if b.size != "" {
-			w.WriteString(fmt.Sprintf(`SIZE = '%s'`, b.size))
+			w.WriteString(fmt.Sprintf(` SIZE = '%s'`, b.size))
 		}
 
-		// if !b.snapshot {
-		// 	w.WriteString(`SNAPSHOT = false`)
-		// }
+		if !b.snapshot {
+			w.WriteString(` SNAPSHOT = false`)
+		}
 
 		q.WriteString(fmt.Sprintf(` WITH (%s)`, w.String()))
 	}
@@ -285,72 +279,23 @@ func (b *SinkBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SinkBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_sinks.id
-		FROM mz_sinks
-		JOIN mz_schemas
-			ON mz_sinks.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		LEFT JOIN mz_connections
-			ON mz_sinks.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
-			ON mz_sinks.cluster_id = mz_clusters.id
-		WHERE mz_sinks.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.sinkName, b.schemaName, b.databaseName)
+func (b *SinkKafkaBuilder) ReadId() string {
+	return readSinkId(b.sinkName, b.schemaName, b.databaseName)
 }
 
-func (b *SinkBuilder) Rename(newName string) string {
+func (b *SinkKafkaBuilder) Rename(newName string) string {
 	return fmt.Sprintf(`ALTER SINK %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName, b.databaseName, b.schemaName, newName)
 }
 
-func (b *SinkBuilder) UpdateSize(newSize string) string {
+func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
 	return fmt.Sprintf(`ALTER SINK %s.%s.%s SET (SIZE = '%s');`, b.databaseName, b.schemaName, b.sinkName, newSize)
 }
 
-func (b *SinkBuilder) Drop() string {
+func (b *SinkKafkaBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SINK %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName)
 }
 
-func readSinkParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_sinks.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_sinks.type,
-			mz_sinks.size,
-			mz_sinks.envelope_type,
-			mz_connections.name as connection_name,
-			mz_clusters.name as cluster_name
-		FROM mz_sinks
-		JOIN mz_schemas
-			ON mz_sinks.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		LEFT JOIN mz_connections
-			ON mz_sinks.connection_id = mz_connections.id
-		LEFT JOIN mz_clusters
-			ON mz_sinks.cluster_id = mz_clusters.id
-		WHERE mz_sinks.id = '%s';`, id)
-}
-
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _sink struct {
-	name            sql.NullString `db:"name"`
-	schema_name     sql.NullString `db:"schema_name"`
-	database_name   sql.NullString `db:"database_name"`
-	sink_type       sql.NullString `db:"sink_type"`
-	size            sql.NullString `db:"size"`
-	envelope_type   sql.NullString `db:"envelope_type"`
-	connection_name sql.NullString `db:"connection_name"`
-	cluster_name    sql.NullString `db:"cluster_name"`
-}
-
-func sinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sinkKafkaRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := readSinkParams(i)
@@ -360,14 +305,14 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagno
 	return nil
 }
 
-func sinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSinkBuilder(sinkName, schemaName, databaseName)
+	builder := newSinkKafkaBuilder(sinkName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		builder.ClusterName(v.(string))
@@ -405,14 +350,26 @@ func sinkCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 		builder.SchemaRegistryConnection(v.(string))
 	}
 
+	if v, ok := d.GetOk("avro_key_fullname"); ok {
+		builder.AvroKeyFullname(v.(string))
+	}
+
+	if v, ok := d.GetOk("avro_value_fullname"); ok {
+		builder.AvroValueFullname(v.(string))
+	}
+
+	if v, ok := d.GetOk("snapshot"); ok {
+		builder.Snapshot(v.(bool))
+	}
+
 	qc := builder.Create()
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "sink")
-	return sinkRead(ctx, d, meta)
+	return sinkKafkaRead(ctx, d, meta)
 }
 
-func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sinkKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -420,7 +377,7 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 
-		builder := newSinkBuilder(oldName.(string), schemaName, databaseName)
+		builder := newSinkKafkaBuilder(oldName.(string), schemaName, databaseName)
 		q := builder.Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
@@ -433,7 +390,7 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 		sourceName := d.Get("sourceName").(string)
 		_, newSize := d.GetChange("size")
 
-		builder := newSinkBuilder(sourceName, schemaName, databaseName)
+		builder := newSinkKafkaBuilder(sourceName, schemaName, databaseName)
 		q := builder.UpdateSize(newSize.(string))
 
 		if err := ExecResource(conn, q); err != nil {
@@ -442,16 +399,16 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 		}
 	}
 
-	return sinkRead(ctx, d, meta)
+	return sinkKafkaRead(ctx, d, meta)
 }
 
-func sinkDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sinkKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSinkBuilder(sinkName, schemaName, databaseName)
+	builder := newSinkKafkaBuilder(sinkName, schemaName, databaseName)
 	q := builder.Drop()
 
 	dropResource(conn, d, q, "sink")
