@@ -5,15 +5,14 @@ resource "materialize_connection_kafka" "kafka_connection" {
   }
 }
 
-resource "materialize_connection" "schema_registry" {
+resource "materialize_connection_confluent_schema_registry" "schema_registry" {
   name                          = "schema_registry_connection"
-  connection_type               = "CONFLUENT SCHEMA REGISTRY"
   confluent_schema_registry_url = "http://schema-registry:8081"
 }
 
 resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
-  name            = "ssh_example_connection"
-  schema_name     = "public"
+  name        = "ssh_example_connection"
+  schema_name = "public"
   host        = "ssh_host"
   user        = "ssh_user"
   port        = 22

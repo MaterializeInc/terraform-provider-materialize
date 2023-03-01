@@ -126,48 +126,6 @@ var connectionSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"confluent_schema_registry_url": {
-		Description: "The URL of the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"confluent_schema_registry_ssl_ca": {
-		Description: "The CA certificate for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"confluent_schema_registry_ssl_cert": {
-		Description: "The client certificate for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"confluent_schema_registry_ssl_key": {
-		Description: "The client key for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"confluent_schema_registry_password": {
-		Description:  "The password for the Confluent Schema Registry.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"confluent_schema_registry_username"},
-	},
-	"confluent_schema_registry_username": {
-		Description:  "The username for the Confluent Schema Registry.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"confluent_schema_registry_password"},
-	},
-	"confluent_schema_registry_ssh_tunnel": {
-		Description: "The SSH tunnel configuration for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"confluent_schema_registry_aws_privatelink": {
-		Description: "The AWS PrivateLink configuration for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
 }
 
 func Connection() *schema.Resource {
@@ -188,29 +146,21 @@ func Connection() *schema.Resource {
 }
 
 type ConnectionBuilder struct {
-	connectionName                        string
-	schemaName                            string
-	databaseName                          string
-	connectionType                        string
-	postgresDatabase                      string
-	postgresHost                          string
-	postgresPort                          int
-	postgresUser                          string
-	postgresPassword                      string
-	postgresSSHTunnel                     string
-	postgresSSLCa                         string
-	postgresSSLCert                       string
-	postgresSSLKey                        string
-	postgresSSLMode                       string
-	postgresAWSPrivateLink                string
-	confluentSchemaRegistryUrl            string
-	confluentSchemaRegistrySSLCa          string
-	confluentSchemaRegistrySSLCert        string
-	confluentSchemaRegistrySSLKey         string
-	confluentSchemaRegistryUsername       string
-	confluentSchemaRegistryPassword       string
-	confluentSchemaRegistrySSHTunnel      string
-	confluentSchemaRegistryAWSPrivateLink string
+	connectionName         string
+	schemaName             string
+	databaseName           string
+	connectionType         string
+	postgresDatabase       string
+	postgresHost           string
+	postgresPort           int
+	postgresUser           string
+	postgresPassword       string
+	postgresSSHTunnel      string
+	postgresSSLCa          string
+	postgresSSLCert        string
+	postgresSSLKey         string
+	postgresSSLMode        string
+	postgresAWSPrivateLink string
 }
 
 func newConnectionBuilder(connectionName, schemaName, databaseName string) *ConnectionBuilder {
@@ -291,46 +241,6 @@ func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string
 	return b
 }
 
-func (b *ConnectionBuilder) ConfluentSchemaRegistryUrl(confluentSchemaRegistryUrl string) *ConnectionBuilder {
-	b.confluentSchemaRegistryUrl = confluentSchemaRegistryUrl
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistryUsername(confluentSchemaRegistryUsername string) *ConnectionBuilder {
-	b.confluentSchemaRegistryUsername = confluentSchemaRegistryUsername
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistryPassword(confluentSchemaRegistryPassword string) *ConnectionBuilder {
-	b.confluentSchemaRegistryPassword = confluentSchemaRegistryPassword
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistrySSLCa(confluentSchemaRegistrySSLCa string) *ConnectionBuilder {
-	b.confluentSchemaRegistrySSLCa = confluentSchemaRegistrySSLCa
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistrySSLCert(confluentSchemaRegistrySSLCert string) *ConnectionBuilder {
-	b.confluentSchemaRegistrySSLCert = confluentSchemaRegistrySSLCert
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistrySSLKey(confluentSchemaRegistrySSLKey string) *ConnectionBuilder {
-	b.confluentSchemaRegistrySSLKey = confluentSchemaRegistrySSLKey
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistrySSHTunnel(confluentSchemaRegistrySSHTunnel string) *ConnectionBuilder {
-	b.confluentSchemaRegistrySSHTunnel = confluentSchemaRegistrySSHTunnel
-	return b
-}
-
-func (b *ConnectionBuilder) ConfluentSchemaRegistryAWSPrivateLink(confluentSchemaRegistryAWSPrivateLink string) *ConnectionBuilder {
-	b.confluentSchemaRegistryAWSPrivateLink = confluentSchemaRegistryAWSPrivateLink
-	return b
-}
-
 func (b *ConnectionBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s`, b.databaseName, b.schemaName, b.connectionName))
@@ -362,31 +272,6 @@ func (b *ConnectionBuilder) Create() string {
 		}
 
 		q.WriteString(fmt.Sprintf(`, DATABASE '%s'`, b.postgresDatabase))
-	}
-
-	if b.connectionType == "CONFLUENT SCHEMA REGISTRY" {
-		q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
-		if b.confluentSchemaRegistryUsername != "" {
-			q.WriteString(fmt.Sprintf(`, USERNAME = '%s'`, b.confluentSchemaRegistryUsername))
-		}
-		if b.confluentSchemaRegistryPassword != "" {
-			q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword))
-		}
-		if b.confluentSchemaRegistrySSLCa != "" {
-			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, b.confluentSchemaRegistrySSLCa))
-		}
-		if b.confluentSchemaRegistrySSLCert != "" {
-			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, b.confluentSchemaRegistrySSLCert))
-		}
-		if b.confluentSchemaRegistrySSLKey != "" {
-			q.WriteString(fmt.Sprintf(`, SSL KEY = %s`, b.confluentSchemaRegistrySSLKey))
-		}
-		if b.confluentSchemaRegistryAWSPrivateLink != "" {
-			q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.confluentSchemaRegistryAWSPrivateLink))
-		}
-		if b.confluentSchemaRegistrySSHTunnel != "" {
-			q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, b.confluentSchemaRegistrySSHTunnel))
-		}
 	}
 
 	q.WriteString(`);`)
@@ -470,38 +355,6 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	if v, ok := d.GetOk("postgres_ssh_tunnel"); ok {
 		builder.PostgresSSHTunnel(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_url"); ok {
-		builder.ConfluentSchemaRegistryUrl(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_ssl_ca"); ok {
-		builder.ConfluentSchemaRegistrySSLCa(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_ssl_cert"); ok {
-		builder.ConfluentSchemaRegistrySSLCert(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_ssl_key"); ok {
-		builder.ConfluentSchemaRegistrySSLKey(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_username"); ok {
-		builder.ConfluentSchemaRegistryUsername(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_password"); ok {
-		builder.ConfluentSchemaRegistryPassword(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_ssh_tunnel"); ok {
-		builder.ConfluentSchemaRegistrySSHTunnel(v.(string))
-	}
-
-	if v, ok := d.GetOk("confluent_schema_registry_aws_privatelink"); ok {
-		builder.ConfluentSchemaRegistryAWSPrivateLink(v.(string))
 	}
 
 	qc := builder.Create()

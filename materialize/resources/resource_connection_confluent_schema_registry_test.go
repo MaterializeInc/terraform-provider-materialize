@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceConnectoinReadId(t *testing.T) {
+func TestResourceConnectionConfluentSchemaRegistryReadId(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("connection", "schema", "database")
 	r.Equal(`
@@ -22,19 +22,19 @@ func TestResourceConnectoinReadId(t *testing.T) {
 	`, b.ReadId())
 }
 
-func TestResourceConnectionRename(t *testing.T) {
+func TestResourceConnectionConfluentSchemaRegistryRename(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("connection", "schema", "database")
 	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
 }
 
-func TestResourceConnectionDrop(t *testing.T) {
+func TestResourceConnectionConfluentSchemaRegistryDrop(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("connection", "schema", "database")
 	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
 }
 
-func TestResourceConnectionReadParams(t *testing.T) {
+func TestResourceConnectionConfluentSchemaRegistryReadParams(t *testing.T) {
 	r := require.New(t)
 	b := readConnectionParams("u1")
 	r.Equal(`
@@ -49,4 +49,16 @@ func TestResourceConnectionReadParams(t *testing.T) {
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_connections.id = 'u1';`, b)
+}
+
+// here are common ^
+
+func TestResourceConnectionCreateConfluentSchemaRegistry(t *testing.T) {
+	r := require.New(t)
+	b := newConnectionConfluentSchemaRegistryBuilder("csr_conn", "schema", "database")
+	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
+	b.ConfluentSchemaRegistryUsername("user")
+	b.ConfluentSchemaRegistryPassword("password")
+	r.Equal(`CREATE CONNECTION database.schema.csr_conn TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
+
 }
