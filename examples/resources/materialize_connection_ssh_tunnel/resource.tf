@@ -1,7 +1,7 @@
 # Create SSH Connection
 resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
-  name            = "ssh_example_connection"
-  schema_name     = "public"
+  name        = "ssh_example_connection"
+  schema_name = "public"
   host        = "example.com"
   port        = 22
   user        = "example"

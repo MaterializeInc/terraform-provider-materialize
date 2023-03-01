@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceConnectoinReadId(t *testing.T) {
+func TestResourceConnectionAwsPrivatelinkReadId(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("connection", "schema", "database")
 	r.Equal(`
@@ -22,19 +22,19 @@ func TestResourceConnectoinReadId(t *testing.T) {
 	`, b.ReadId())
 }
 
-func TestResourceConnectionRename(t *testing.T) {
+func TestResourceConnectionAwsPrivatelinkRename(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("connection", "schema", "database")
 	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
 }
 
-func TestResourceConnectionDrop(t *testing.T) {
+func TestResourceConnectionAwsPrivatelinkDrop(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionBuilder("connection", "schema", "database")
 	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
 }
 
-func TestResourceConnectionReadParams(t *testing.T) {
+func TestResourceConnectionAwsPrivatelinkReadParams(t *testing.T) {
 	r := require.New(t)
 	b := readConnectionParams("u1")
 	r.Equal(`
@@ -53,13 +53,11 @@ func TestResourceConnectionReadParams(t *testing.T) {
 
 // here are common ^
 
-func TestResourceConnectionCreateConfluentSchemaRegistry(t *testing.T) {
+func TestResourceConnectionCreateAwsPrivateLink(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("csr_conn", "schema", "database")
-	b.ConnectionType("CONFLUENT SCHEMA REGISTRY")
-	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
-	b.ConfluentSchemaRegistryUsername("user")
-	b.ConfluentSchemaRegistryPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.csr_conn TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
 
+	b := newConnectionAwsPrivatelinkBuilder("privatelink_conn", "schema", "database")
+	b.PrivateLinkServiceName("com.amazonaws.us-east-1.materialize.example")
+	b.PrivateLinkAvailabilityZones([]string{"use1-az1", "use1-az2"})
+	r.Equal(`CREATE CONNECTION database.schema.privatelink_conn TO AWS PRIVATELINK (SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES ('use1-az1', 'use1-az2'));`, b.Create())
 }

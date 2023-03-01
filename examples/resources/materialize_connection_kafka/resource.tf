@@ -1,7 +1,6 @@
 # Create a Kafka Connection
 resource "materialize_connection_kafka" "example_kafka_connection" {
   name            = "example_kafka_connection"
-  connection_type = "KAFKA"
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
@@ -21,7 +20,6 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
 
 resource "materialize_connection_kafka" "example_kafka_connection" {
   name            = "example_kafka_connection"
-  connection_type = "KAFKA"
   kafka_broker {
     broker = "b-1.hostname-1:9096"
     target_group_port = "9001"

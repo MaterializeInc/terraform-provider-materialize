@@ -41,21 +41,6 @@ var connectionSchema = map[string]*schema.Schema{
 		Required:     true,
 		ValidateFunc: validation.StringInSlice(connectionTypes, true),
 	},
-	"aws_privatelink_service_name": {
-		Description:  "The name of the AWS PrivateLink service.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"aws_privatelink_availability_zones"},
-	},
-	"aws_privatelink_availability_zones": {
-		Description:  "The availability zones of the AWS PrivateLink service.",
-		Type:         schema.TypeList,
-		Elem:         &schema.Schema{Type: schema.TypeString},
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"aws_privatelink_service_name"},
-	},
 	"postgres_database": {
 		Description: "The target Postgres database.",
 		Type:        schema.TypeString,
@@ -207,8 +192,6 @@ type ConnectionBuilder struct {
 	schemaName                            string
 	databaseName                          string
 	connectionType                        string
-	privateLinkServiceName                string
-	privateLinkAvailabilityZones          []string
 	postgresDatabase                      string
 	postgresHost                          string
 	postgresPort                          int
@@ -250,16 +233,6 @@ func (b *ConnectionBuilder) SchemaName(schemaName string) *ConnectionBuilder {
 
 func (b *ConnectionBuilder) ConnectionType(connectionType string) *ConnectionBuilder {
 	b.connectionType = connectionType
-	return b
-}
-
-func (b *ConnectionBuilder) PrivateLinkServiceName(privateLinkServiceName string) *ConnectionBuilder {
-	b.privateLinkServiceName = privateLinkServiceName
-	return b
-}
-
-func (b *ConnectionBuilder) PrivateLinkAvailabilityZones(privateLinkAvailabilityZones []string) *ConnectionBuilder {
-	b.privateLinkAvailabilityZones = privateLinkAvailabilityZones
 	return b
 }
 
@@ -364,11 +337,6 @@ func (b *ConnectionBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` TO %s (`, b.connectionType))
 
-	if b.connectionType == "AWS PRIVATELINK" {
-		q.WriteString(fmt.Sprintf(`SERVICE NAME '%s',`, b.privateLinkServiceName))
-		q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES ('%s')`, strings.Join(b.privateLinkAvailabilityZones, "', '")))
-	}
-
 	if b.connectionType == "POSTGRES" {
 		q.WriteString(fmt.Sprintf(`HOST '%s',`, b.postgresHost))
 		q.WriteString(fmt.Sprintf(`PORT %d,`, b.postgresPort))
@@ -458,19 +426,6 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	if v, ok := d.GetOk("connection_type"); ok {
 		builder.ConnectionType(v.(string))
-	}
-
-	if v, ok := d.GetOk("aws_privatelink_service_name"); ok {
-		builder.PrivateLinkServiceName(v.(string))
-	}
-
-	if v, ok := d.GetOk("aws_privatelink_availability_zones"); ok {
-		azs := v.([]interface{})
-		var azStrings []string
-		for _, az := range azs {
-			azStrings = append(azStrings, az.(string))
-		}
-		builder.PrivateLinkAvailabilityZones(azStrings)
 	}
 
 	if v, ok := d.GetOk("postgres_host"); ok {
