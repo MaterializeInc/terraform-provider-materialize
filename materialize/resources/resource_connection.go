@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -162,80 +161,6 @@ var connectionSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_broker": {
-		Description: "The Kafka brokers configuration.",
-		Type:        schema.TypeList,
-		Optional:    true,
-		MinItems:    1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"broker": {
-					Description: "The Kafka broker, in the form of `host:port`.",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
-				"target_group_port": {
-					Description: "The port of the target group associated with the Kafka broker.",
-					Type:        schema.TypeInt,
-					Optional:    true,
-				},
-				"availability_zone": {
-					Description: "The availability zone of the Kafka broker.",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
-				"privatelink_connection": {
-					Description: "The AWS PrivateLink connection name in Materialize.",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
-			},
-		},
-	},
-	"kafka_progress_topic": {
-		Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"kafka_ssl_ca": {
-		Description: "The CA certificate for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"kafka_ssl_cert": {
-		Description: "The client certificate for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"kafka_ssl_key": {
-		Description: "The client key for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"kafka_sasl_mechanisms": {
-		Description:  "The SASL mechanism for the Kafka broker.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ValidateFunc: validation.StringInSlice(saslMechanisms, true),
-		RequiredWith: []string{"kafka_sasl_username", "kafka_sasl_password"},
-	},
-	"kafka_sasl_username": {
-		Description:  "The SASL username for the Kafka broker.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"kafka_sasl_password", "kafka_sasl_mechanisms"},
-	},
-	"kafka_sasl_password": {
-		Description:  "The SASL password for the Kafka broker.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"kafka_sasl_username", "kafka_sasl_mechanisms"},
-	},
-	"kafka_ssh_tunnel": {
-		Description: "The SSH tunnel configuration for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
 	"confluent_schema_registry_url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,
@@ -297,13 +222,6 @@ func Connection() *schema.Resource {
 	}
 }
 
-type KafkaBroker struct {
-	Broker                string
-	TargetGroupPort       int
-	AvailabilityZone      string
-	PrivateLinkConnection string
-}
-
 type ConnectionBuilder struct {
 	connectionName                        string
 	schemaName                            string
@@ -325,15 +243,6 @@ type ConnectionBuilder struct {
 	postgresSSLKey                        string
 	postgresSSLMode                       string
 	postgresAWSPrivateLink                string
-	kafkaBrokers                          []KafkaBroker
-	kafkaProgressTopic                    string
-	kafkaSSLCa                            string
-	kafkaSSLCert                          string
-	kafkaSSLKey                           string
-	kafkaSASLMechanisms                   string
-	kafkaSASLUsername                     string
-	kafkaSASLPassword                     string
-	kafkaSSHTunnel                        string
 	confluentSchemaRegistryUrl            string
 	confluentSchemaRegistrySSLCa          string
 	confluentSchemaRegistrySSLCert        string
@@ -447,51 +356,6 @@ func (b *ConnectionBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string
 	return b
 }
 
-func (b *ConnectionBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionBuilder {
-	b.kafkaBrokers = kafkaBrokers
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaProgressTopic(kafkaProgressTopic string) *ConnectionBuilder {
-	b.kafkaProgressTopic = kafkaProgressTopic
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSSLCa(kafkaSSLCa string) *ConnectionBuilder {
-	b.kafkaSSLCa = kafkaSSLCa
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSSLCert(kafkaSSLCert string) *ConnectionBuilder {
-	b.kafkaSSLCert = kafkaSSLCert
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSSLKey(kafkaSSLKey string) *ConnectionBuilder {
-	b.kafkaSSLKey = kafkaSSLKey
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSASLMechanisms(kafkaSASLMechanisms string) *ConnectionBuilder {
-	b.kafkaSASLMechanisms = kafkaSASLMechanisms
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSASLUsername(kafkaSASLUsername string) *ConnectionBuilder {
-	b.kafkaSASLUsername = kafkaSASLUsername
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSASLPassword(kafkaSASLPassword string) *ConnectionBuilder {
-	b.kafkaSASLPassword = kafkaSASLPassword
-	return b
-}
-
-func (b *ConnectionBuilder) KafkaSSHTunnel(kafkaSSHTunnel string) *ConnectionBuilder {
-	b.kafkaSSHTunnel = kafkaSSHTunnel
-	return b
-}
-
 func (b *ConnectionBuilder) ConfluentSchemaRegistryUrl(confluentSchemaRegistryUrl string) *ConnectionBuilder {
 	b.confluentSchemaRegistryUrl = confluentSchemaRegistryUrl
 	return b
@@ -576,59 +440,6 @@ func (b *ConnectionBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`, DATABASE '%s'`, b.postgresDatabase))
 	}
 
-	if b.connectionType == "KAFKA" {
-		if len(b.kafkaBrokers) != 0 {
-			if b.kafkaSSHTunnel != "" {
-				q.WriteString(`BROKERS (`)
-				for i, broker := range b.kafkaBrokers {
-					q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
-					if i < len(b.kafkaBrokers)-1 {
-						q.WriteString(`,`)
-					}
-				}
-				q.WriteString(`)`)
-			} else {
-				q.WriteString(`BROKERS (`)
-				for i, broker := range b.kafkaBrokers {
-					if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
-						q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
-						if i < len(b.kafkaBrokers)-1 {
-							q.WriteString(`, `)
-						}
-					} else {
-						q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
-						if i < len(b.kafkaBrokers)-1 {
-							q.WriteString(`, `)
-						}
-					}
-				}
-				q.WriteString(`)`)
-			}
-		}
-		if b.kafkaProgressTopic != "" {
-			q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
-		}
-		if b.kafkaSSLCa != "" {
-			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa))
-		}
-		if b.kafkaSSLCert != "" {
-			q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.kafkaSSLCert))
-		}
-		if b.kafkaSSLKey != "" {
-			q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.kafkaSSLKey))
-		}
-		if b.kafkaSASLMechanisms != "" {
-			q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = '%s'`, b.kafkaSASLMechanisms))
-		}
-		if b.kafkaSASLUsername != "" {
-			q.WriteString(fmt.Sprintf(`, SASL USERNAME = '%s'`, b.kafkaSASLUsername))
-		}
-		if b.kafkaSASLPassword != "" {
-			q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword))
-		}
-
-	}
-
 	if b.connectionType == "CONFLUENT SCHEMA REGISTRY" {
 		q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
 		if b.confluentSchemaRegistryUsername != "" {
@@ -678,39 +489,6 @@ func (b *ConnectionBuilder) Rename(newConnectionName string) string {
 
 func (b *ConnectionBuilder) Drop() string {
 	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
-}
-
-func readConnectionParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_connections.type
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.id = '%s';`, id)
-}
-
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _connection struct {
-	name            sql.NullString `db:"name"`
-	schema_name     sql.NullString `db:"schema_name"`
-	database_name   sql.NullString `db:"database_name"`
-	connection_type sql.NullString `db:"connection_type"`
-}
-
-func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
 }
 
 func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -795,52 +573,6 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		builder.PostgresSSHTunnel(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_broker"); ok {
-		var brokers []KafkaBroker
-		for _, broker := range v.([]interface{}) {
-			b := broker.(map[string]interface{})
-			brokers = append(brokers, KafkaBroker{
-				Broker:                b["broker"].(string),
-				TargetGroupPort:       b["target_group_port"].(int),
-				AvailabilityZone:      b["availability_zone"].(string),
-				PrivateLinkConnection: b["privatelink_connection"].(string),
-			})
-		}
-		builder.KafkaBrokers(brokers)
-	}
-
-	if v, ok := d.GetOk("kafka_progress_topic"); ok {
-		builder.KafkaProgressTopic(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_ssl_ca"); ok {
-		builder.KafkaSSLCa(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_ssl_cert"); ok {
-		builder.KafkaSSLCert(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_ssl_key"); ok {
-		builder.KafkaSSLKey(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_sasl_mechanisms"); ok {
-		builder.KafkaSASLMechanisms(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_sasl_username"); ok {
-		builder.KafkaSASLUsername(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_sasl_password"); ok {
-		builder.KafkaSASLPassword(v.(string))
-	}
-
-	if v, ok := d.GetOk("kafka_ssh_tunnel"); ok {
-		builder.KafkaSSHTunnel(v.(string))
-	}
-
 	if v, ok := d.GetOk("confluent_schema_registry_url"); ok {
 		builder.ConfluentSchemaRegistryUrl(v.(string))
 	}
@@ -878,6 +610,16 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	createResource(conn, d, qc, qr, "connection")
 	return connectionRead(ctx, d, meta)
+}
+
+func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readConnectionParams(i)
+
+	readResource(conn, d, i, q, _connection{}, "connection")
+	setQualifiedName(d)
+	return nil
 }
 
 func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

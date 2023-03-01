@@ -6,9 +6,8 @@ resource "materialize_connection" "ssh_connection" {
   ssh_user        = "example"
 }
 
-resource "materialize_connection" "kafka_connection" {
+resource "materialize_connection_kafka" "kafka_connection" {
   name            = "kafka_connection"
-  connection_type = "KAFKA"
   kafka_broker {
     broker = "kafka:9092"
   }
@@ -29,9 +28,8 @@ resource "materialize_connection" "example_ssh_connection" {
   ssh_port        = 22
 }
 
-resource "materialize_connection" "kafka_conn_multiple_brokers" {
+resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   name            = "kafka_conn_multiple_brokers"
-  connection_type = "KAFKA"
   kafka_broker {
     broker = "kafka:9092"
   }
