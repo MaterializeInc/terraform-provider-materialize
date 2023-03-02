@@ -26,10 +26,10 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   kafka_broker {
     broker = "kafka2:9092"
   }
-  kafka_sasl_username   = "sasl_user"
-  kafka_sasl_password   = materialize_secret.kafka_password.qualified_name
-  kafka_sasl_mechanisms = "SCRAM-SHA-256"
-  kafka_progress_topic  = "progress_topic"
+  sasl_username   = "sasl_user"
+  sasl_password   = materialize_secret.kafka_password.qualified_name
+  sasl_mechanisms = "SCRAM-SHA-256"
+  progress_topic  = "progress_topic"
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {

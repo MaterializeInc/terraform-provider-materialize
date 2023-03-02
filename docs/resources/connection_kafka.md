@@ -19,10 +19,10 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
-  kafka_sasl_username   = "example"
-  kafka_sasl_password   = "kafka_password"
-  kafka_sasl_mechanisms = "SCRAM-SHA-256"
-  kafka_progress_topic  = "example"
+  sasl_username   = "example"
+  sasl_password   = "kafka_password"
+  sasl_mechanisms = "SCRAM-SHA-256"
+  progress_topic  = "example"
 }
 
 # CREATE CONNECTION database.schema.kafka_conn TO KAFKA (
@@ -68,12 +68,12 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 ### Optional
 
 - `database_name` (String) The identifier for the connection database.
-- `kafka_progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
-- `kafka_sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
-- `kafka_sasl_password` (String) The SASL password for the Kafka broker.
-- `kafka_sasl_username` (String) The SASL username for the Kafka broker.
-- `kafka_ssh_tunnel` (String) The SSH tunnel configuration for the Kafka broker.
+- `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
+- `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
+- `sasl_password` (String) The SASL password for the Kafka broker.
+- `sasl_username` (String) The SASL username for the Kafka broker.
 - `schema_name` (String) The identifier for the connection schema.
+- `ssh_tunnel` (String) The SSH tunnel configuration for the Kafka broker.
 - `ssl_certificate` (String) The client certificate for the Kafka broker.
 - `ssl_certificate_authority` (String) The CA certificate for the Kafka broker.
 - `ssl_key` (String) The client key for the Kafka broker.

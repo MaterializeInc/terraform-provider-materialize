@@ -65,7 +65,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 			},
 		},
 	},
-	"kafka_progress_topic": {
+	"progress_topic": {
 		Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -85,26 +85,26 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_sasl_mechanisms": {
+	"sasl_mechanisms": {
 		Description:  "The SASL mechanism for the Kafka broker.",
 		Type:         schema.TypeString,
 		Optional:     true,
 		ValidateFunc: validation.StringInSlice(saslMechanisms, true),
-		RequiredWith: []string{"kafka_sasl_username", "kafka_sasl_password"},
+		RequiredWith: []string{"sasl_username", "sasl_password"},
 	},
-	"kafka_sasl_username": {
+	"sasl_username": {
 		Description:  "The SASL username for the Kafka broker.",
 		Type:         schema.TypeString,
 		Optional:     true,
-		RequiredWith: []string{"kafka_sasl_password", "kafka_sasl_mechanisms"},
+		RequiredWith: []string{"sasl_password", "sasl_mechanisms"},
 	},
-	"kafka_sasl_password": {
+	"sasl_password": {
 		Description:  "The SASL password for the Kafka broker.",
 		Type:         schema.TypeString,
 		Optional:     true,
-		RequiredWith: []string{"kafka_sasl_username", "kafka_sasl_mechanisms"},
+		RequiredWith: []string{"sasl_username", "sasl_mechanisms"},
 	},
-	"kafka_ssh_tunnel": {
+	"ssh_tunnel": {
 		Description: "The SSH tunnel configuration for the Kafka broker.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -330,7 +330,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		builder.KafkaBrokers(brokers)
 	}
 
-	if v, ok := d.GetOk("kafka_progress_topic"); ok {
+	if v, ok := d.GetOk("progress_topic"); ok {
 		builder.KafkaProgressTopic(v.(string))
 	}
 
@@ -346,19 +346,19 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		builder.KafkaSSLKey(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_sasl_mechanisms"); ok {
+	if v, ok := d.GetOk("sasl_mechanisms"); ok {
 		builder.KafkaSASLMechanisms(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_sasl_username"); ok {
+	if v, ok := d.GetOk("sasl_username"); ok {
 		builder.KafkaSASLUsername(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_sasl_password"); ok {
+	if v, ok := d.GetOk("sasl_password"); ok {
 		builder.KafkaSASLPassword(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_ssh_tunnel"); ok {
+	if v, ok := d.GetOk("ssh_tunnel"); ok {
 		builder.KafkaSSHTunnel(v.(string))
 	}
 
