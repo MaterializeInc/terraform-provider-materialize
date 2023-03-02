@@ -37,44 +37,24 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 	"database": {
 		Description: "The target Postgres database.",
 		Type:        schema.TypeString,
-		Optional:    true,
-		RequiredWith: []string{
-			"host",
-			"port",
-			"user",
-			"password",
-		},
+		Required:    true,
 	},
 	"host": {
 		Description: "The Postgres database hostname.",
 		Type:        schema.TypeString,
-		Optional:    true,
-		RequiredWith: []string{
-			"database",
-			"port",
-			"user",
-			"password",
-		},
+		Required:    true,
 	},
 	"port": {
 		Description: "The Postgres database port.",
 		Type:        schema.TypeInt,
 		Optional:    true,
-		RequiredWith: []string{
-			"database",
-			"host",
-			"user",
-			"password",
-		},
+		Default:     5432,
 	},
 	"user": {
 		Description: "The Postgres database username.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		RequiredWith: []string{
-			"database",
-			"host",
-			"port",
 			"password",
 		},
 	},
@@ -83,9 +63,6 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 		RequiredWith: []string{
-			"database",
-			"host",
-			"port",
 			"user",
 		},
 	},
@@ -94,12 +71,12 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_ca": {
+	"ssl_certificate_authority": {
 		Description: "The CA certificate for the Postgres database.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_cert": {
+	"ssl_certificate": {
 		Description: "The client certificate for the Postgres database.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -241,7 +218,9 @@ func (b *ConnectionPostgresBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`HOST '%s'`, b.postgresHost))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
 	q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser))
-	q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
+	if b.postgresPassword != "" {
+		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
+	}
 	if b.postgresSSLMode != "" {
 		q.WriteString(fmt.Sprintf(`, SSL MODE '%s'`, b.postgresSSLMode))
 	}
@@ -326,11 +305,11 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		builder.PostgresSSLMode(v.(string))
 	}
 
-	if v, ok := d.GetOk("ssl_ca"); ok {
+	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
 		builder.PostgresSSLCa(v.(string))
 	}
 
-	if v, ok := d.GetOk("ssl_cert"); ok {
+	if v, ok := d.GetOk("ssl_certificate"); ok {
 		builder.PostgresSSLCert(v.(string))
 	}
 

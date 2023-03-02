@@ -35,19 +35,17 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"service_name": {
-		Description:  "The name of the AWS PrivateLink service.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"availability_zones"},
+		Description: "The name of the AWS PrivateLink service.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
 	},
 	"availability_zones": {
-		Description:  "The availability zones of the AWS PrivateLink service.",
-		Type:         schema.TypeList,
-		Elem:         &schema.Schema{Type: schema.TypeString},
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"service_name"},
+		Description: "The availability zones of the AWS PrivateLink service.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Required:    true,
+		ForceNew:    true,
 	},
 }
 

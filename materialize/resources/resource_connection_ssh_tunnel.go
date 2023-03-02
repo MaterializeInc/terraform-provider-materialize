@@ -35,22 +35,19 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"host": {
-		Description:  "The host of the SSH tunnel.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"user", "port"},
+		Description: "The host of the SSH tunnel.",
+		Type:        schema.TypeString,
+		Required:    true,
 	},
 	"user": {
-		Description:  "The user of the SSH tunnel.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"host", "port"},
+		Description: "The user of the SSH tunnel.",
+		Type:        schema.TypeString,
+		Required:    true,
 	},
 	"port": {
-		Description:  "The port of the SSH tunnel.",
-		Type:         schema.TypeInt,
-		Optional:     true,
-		RequiredWith: []string{"host", "user"},
+		Description: "The port of the SSH tunnel.",
+		Type:        schema.TypeInt,
+		Required:    true,
 	},
 }
 
@@ -157,17 +154,9 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	builder := newConnectionSshTunnelBuilder(connectionName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("host"); ok {
-		builder.SSHHost(v.(string))
-	}
-
-	if v, ok := d.GetOk("user"); ok {
-		builder.SSHUser(v.(string))
-	}
-
-	if v, ok := d.GetOk("port"); ok {
-		builder.SSHPort(v.(int))
-	}
+	builder.SSHHost(d.Get("host").(string))
+	builder.SSHUser(d.Get("user").(string))
+	builder.SSHPort(d.Get("port").(int))
 
 	qc := builder.Create()
 	qr := builder.ReadId()

@@ -38,7 +38,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"kafka_broker": {
 		Description: "The Kafka brokers configuration.",
 		Type:        schema.TypeList,
-		Optional:    true,
+		Required:    true,
 		MinItems:    1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -70,17 +70,17 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_ssl_ca": {
+	"ssl_certificate_authority": {
 		Description: "The CA certificate for the Kafka broker.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_ssl_cert": {
+	"ssl_certificate": {
 		Description: "The client certificate for the Kafka broker.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"kafka_ssl_key": {
+	"ssl_key": {
 		Description: "The client key for the Kafka broker.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -217,34 +217,33 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s TO KAFKA (`, b.databaseName, b.schemaName, b.connectionName))
 
-	if len(b.kafkaBrokers) != 0 {
-		if b.kafkaSSHTunnel != "" {
-			q.WriteString(`BROKERS (`)
-			for i, broker := range b.kafkaBrokers {
-				q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
-				if i < len(b.kafkaBrokers)-1 {
-					q.WriteString(`,`)
-				}
+	if b.kafkaSSHTunnel != "" {
+		q.WriteString(`BROKERS (`)
+		for i, broker := range b.kafkaBrokers {
+			q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
+			if i < len(b.kafkaBrokers)-1 {
+				q.WriteString(`,`)
 			}
-			q.WriteString(`)`)
-		} else {
-			q.WriteString(`BROKERS (`)
-			for i, broker := range b.kafkaBrokers {
-				if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
-					q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
-					if i < len(b.kafkaBrokers)-1 {
-						q.WriteString(`, `)
-					}
-				} else {
-					q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
-					if i < len(b.kafkaBrokers)-1 {
-						q.WriteString(`, `)
-					}
-				}
-			}
-			q.WriteString(`)`)
 		}
+		q.WriteString(`)`)
+	} else {
+		q.WriteString(`BROKERS (`)
+		for i, broker := range b.kafkaBrokers {
+			if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
+				q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
+				if i < len(b.kafkaBrokers)-1 {
+					q.WriteString(`, `)
+				}
+			} else {
+				q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
+				if i < len(b.kafkaBrokers)-1 {
+					q.WriteString(`, `)
+				}
+			}
+		}
+		q.WriteString(`)`)
 	}
+
 	if b.kafkaProgressTopic != "" {
 		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
 	}
@@ -345,15 +344,15 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		builder.KafkaProgressTopic(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_ssl_ca"); ok {
+	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
 		builder.KafkaSSLCa(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_ssl_cert"); ok {
+	if v, ok := d.GetOk("ssl_certificate"); ok {
 		builder.KafkaSSLCert(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_ssl_key"); ok {
+	if v, ok := d.GetOk("ssl_key"); ok {
 		builder.KafkaSSLKey(v.(string))
 	}
 

@@ -71,8 +71,8 @@ resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
 # # Create a AWS Private Connection
 # Note: you need the max_aws_privatelink_connections increased for this to work:
 # show max_aws_privatelink_connections;
-resource "materialize_connection_aws_privatelink" "privatelink_conn" {
-  name               = "privatelink_conn"
+resource "materialize_connection_aws_privatelink" "example_aws_privatelink_conn" {
+  name               = "example_aws_privatelink_conn"
   schema_name        = "public"
   service_name       = "com.amazonaws.us-east-1.materialize.example"
   availability_zones = ["use1-az2", "use1-az1"]
@@ -83,13 +83,13 @@ resource "materialize_connection_kafka" "example_kafka_privatelink_conn" {
     broker                 = "b-1.hostname-1:9096"
     target_group_port      = "9001"
     availability_zone      = "use1-az1"
-    privatelink_connection = "privatelink_conn"
+    privatelink_connection = "example_aws_privatelink_conn"
   }
   kafka_broker {
     broker                 = "b-2.hostname-2:9096"
     target_group_port      = "9002"
     availability_zone      = "use1-az2"
-    privatelink_connection = "privatelink_conn"
+    privatelink_connection = "example_aws_privatelink_conn"
   }
   depends_on = [materialize_connection.privatelink_conn]
 }

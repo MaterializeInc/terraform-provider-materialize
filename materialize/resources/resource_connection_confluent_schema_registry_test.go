@@ -51,8 +51,6 @@ func TestResourceConnectionConfluentSchemaRegistryReadParams(t *testing.T) {
 		WHERE mz_connections.id = 'u1';`, b)
 }
 
-// here are common ^
-
 func TestResourceConnectionCreateConfluentSchemaRegistry(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionConfluentSchemaRegistryBuilder("csr_conn", "schema", "database")

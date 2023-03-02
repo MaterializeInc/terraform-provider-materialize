@@ -18,25 +18,25 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
 #     SASL PASSWORD SECRET password
 # );
 
-resource "materialize_connection_kafka" "example_kafka_connection" {
-  name            = "example_kafka_connection"
+resource "materialize_connection_kafka" "example_kafka_connection_multiple_brokers" {
+  name            = "example_kafka_connection_multiple_brokers"
   kafka_broker {
     broker = "b-1.hostname-1:9096"
     target_group_port = "9001"
     availability_zone = "use1-az1"
-    privatelink_connection = "privatelink_conn"
+    privatelink_connection = "example_aws_privatelink_conn"
   }
   kafka_broker {
     broker = "b-2.hostname-2:9096"
     target_group_port = "9002"
     availability_zone = "use1-az2"
-    privatelink_connection = "privatelink_conn"
+    privatelink_connection = "example_aws_privatelink_conn"
   }
 }
 
-# CREATE CONNECTION materialize.public.example_kafka_connection TO KAFKA (
+# CREATE CONNECTION materialize.public.example_kafka_connection_multiple_brokers TO KAFKA (
 #     BROKERS (
-#        'b-1.hostname-1:9096' USING AWS PRIVATELINK privatelink_conn (PORT 9001, AVAILABILITY ZONE 'use1-az1'),
-#        'b-2.hostname-2:9096' USING AWS PRIVATELINK privatelink_conn (PORT 9002, AVAILABILITY ZONE 'use1-az2')
+#        'b-1.hostname-1:9096' USING AWS PRIVATELINK example_aws_privatelink_conn (PORT 9001, AVAILABILITY ZONE 'use1-az1'),
+#        'b-2.hostname-2:9096' USING AWS PRIVATELINK example_aws_privatelink_conn (PORT 9002, AVAILABILITY ZONE 'use1-az2')
 #     )
 # );

@@ -37,14 +37,14 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 	},
-	"ssl_ca": {
+	"ssl_certificate_authority": {
 		Description: "The CA certificate for the Confluent Schema Registry.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_cert": {
+	"ssl_certificate": {
 		Description: "The client certificate for the Confluent Schema Registry.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -233,11 +233,11 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		builder.ConfluentSchemaRegistryUrl(v.(string))
 	}
 
-	if v, ok := d.GetOk("ssl_ca"); ok {
+	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
 		builder.ConfluentSchemaRegistrySSLCa(v.(string))
 	}
 
-	if v, ok := d.GetOk("ssl_cert"); ok {
+	if v, ok := d.GetOk("ssl_certificate"); ok {
 		builder.ConfluentSchemaRegistrySSLCert(v.(string))
 	}
 

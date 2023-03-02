@@ -51,8 +51,6 @@ func TestResourceConnectionAwsPrivatelinkReadParams(t *testing.T) {
 		WHERE mz_connections.id = 'u1';`, b)
 }
 
-// here are common ^
-
 func TestResourceConnectionCreateAwsPrivateLink(t *testing.T) {
 	r := require.New(t)
 
