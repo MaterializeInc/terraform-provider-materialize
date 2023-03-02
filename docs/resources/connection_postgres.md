@@ -37,23 +37,23 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 ### Required
 
+- `database` (String) The target Postgres database.
+- `host` (String) The Postgres database hostname.
 - `name` (String) The name of the connection.
+- `user` (String) The Postgres database username.
 
 ### Optional
 
 - `aws_privatelink` (String) The AWS PrivateLink configuration for the Postgres database.
-- `database` (String) The target Postgres database.
 - `database_name` (String) The identifier for the connection database.
-- `host` (String) The Postgres database hostname.
 - `password` (String) The Postgres database password.
 - `port` (Number) The Postgres database port.
 - `schema_name` (String) The identifier for the connection schema.
 - `ssh_tunnel` (String) The SSH tunnel configuration for the Postgres database.
-- `ssl_ca` (String) The CA certificate for the Postgres database.
-- `ssl_cert` (String) The client certificate for the Postgres database.
+- `ssl_certificate` (String) The client certificate for the Postgres database.
+- `ssl_certificate_authority` (String) The CA certificate for the Postgres database.
 - `ssl_key` (String) The client key for the Postgres database.
 - `ssl_mode` (String) The SSL mode for the Postgres database.
-- `user` (String) The Postgres database username.
 
 ### Read-Only
 

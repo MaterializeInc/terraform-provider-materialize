@@ -34,6 +34,7 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 ### Required
 
 - `name` (String) The name of the connection.
+- `url` (String) The URL of the Confluent Schema Registry.
 
 ### Optional
 
@@ -42,10 +43,9 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 - `password` (String) The password for the Confluent Schema Registry.
 - `schema_name` (String) The identifier for the connection schema.
 - `ssh_tunnel` (String) The SSH tunnel configuration for the Confluent Schema Registry.
-- `ssl_ca` (String) The CA certificate for the Confluent Schema Registry.
-- `ssl_cert` (String) The client certificate for the Confluent Schema Registry.
+- `ssl_certificate` (String) The client certificate for the Confluent Schema Registry.
+- `ssl_certificate_authority` (String) The CA certificate for the Confluent Schema Registry.
 - `ssl_key` (String) The client key for the Confluent Schema Registry.
-- `url` (String) The URL of the Confluent Schema Registry.
 - `username` (String) The username for the Confluent Schema Registry.
 
 ### Read-Only
