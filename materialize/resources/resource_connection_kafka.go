@@ -158,16 +158,6 @@ func newConnectionKafkaBuilder(connectionName, schemaName, databaseName string) 
 	}
 }
 
-func (b *ConnectionKafkaBuilder) ConnectionName(connectionName string) *ConnectionKafkaBuilder {
-	b.connectionName = connectionName
-	return b
-}
-
-func (b *ConnectionKafkaBuilder) SchemaName(schemaName string) *ConnectionKafkaBuilder {
-	b.schemaName = schemaName
-	return b
-}
-
 func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionKafkaBuilder {
 	b.kafkaBrokers = kafkaBrokers
 	return b

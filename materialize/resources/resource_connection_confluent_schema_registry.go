@@ -117,16 +117,6 @@ func newConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, dat
 	}
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) ConnectionName(connectionName string) *ConnectionConfluentSchemaRegistryBuilder {
-	b.connectionName = connectionName
-	return b
-}
-
-func (b *ConnectionConfluentSchemaRegistryBuilder) SchemaName(schemaName string) *ConnectionConfluentSchemaRegistryBuilder {
-	b.schemaName = schemaName
-	return b
-}
-
 func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryUrl(confluentSchemaRegistryUrl string) *ConnectionConfluentSchemaRegistryBuilder {
 	b.confluentSchemaRegistryUrl = confluentSchemaRegistryUrl
 	return b

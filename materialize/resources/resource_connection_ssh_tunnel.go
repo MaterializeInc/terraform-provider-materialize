@@ -86,16 +86,6 @@ func newConnectionSshTunnelBuilder(connectionName, schemaName, databaseName stri
 	}
 }
 
-func (b *ConnectionSshTunnelBuilder) ConnectionName(connectionName string) *ConnectionSshTunnelBuilder {
-	b.connectionName = connectionName
-	return b
-}
-
-func (b *ConnectionSshTunnelBuilder) SchemaName(schemaName string) *ConnectionSshTunnelBuilder {
-	b.schemaName = schemaName
-	return b
-}
-
 func (b *ConnectionSshTunnelBuilder) SSHHost(sshHost string) *ConnectionSshTunnelBuilder {
 	b.sshHost = sshHost
 	return b

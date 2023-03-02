@@ -53,18 +53,12 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 	"user": {
 		Description: "The Postgres database username.",
 		Type:        schema.TypeString,
-		Optional:    true,
-		RequiredWith: []string{
-			"password",
-		},
+		Required:    true,
 	},
 	"password": {
 		Description: "The Postgres database password.",
 		Type:        schema.TypeString,
 		Optional:    true,
-		RequiredWith: []string{
-			"user",
-		},
 	},
 	"ssh_tunnel": {
 		Description: "The SSH tunnel configuration for the Postgres database.",
@@ -139,16 +133,6 @@ func newConnectionPostgresBuilder(connectionName, schemaName, databaseName strin
 		schemaName:     schemaName,
 		databaseName:   databaseName,
 	}
-}
-
-func (b *ConnectionPostgresBuilder) ConnectionName(connectionName string) *ConnectionPostgresBuilder {
-	b.connectionName = connectionName
-	return b
-}
-
-func (b *ConnectionPostgresBuilder) SchemaName(schemaName string) *ConnectionPostgresBuilder {
-	b.schemaName = schemaName
-	return b
 }
 
 func (b *ConnectionPostgresBuilder) ConnectionType(connectionType string) *ConnectionPostgresBuilder {

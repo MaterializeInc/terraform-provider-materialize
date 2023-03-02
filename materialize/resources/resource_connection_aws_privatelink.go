@@ -83,16 +83,6 @@ func newConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName
 	}
 }
 
-func (b *ConnectionAwsPrivatelinkBuilder) ConnectionName(connectionName string) *ConnectionAwsPrivatelinkBuilder {
-	b.connectionName = connectionName
-	return b
-}
-
-func (b *ConnectionAwsPrivatelinkBuilder) SchemaName(schemaName string) *ConnectionAwsPrivatelinkBuilder {
-	b.schemaName = schemaName
-	return b
-}
-
 func (b *ConnectionAwsPrivatelinkBuilder) PrivateLinkServiceName(privateLinkServiceName string) *ConnectionAwsPrivatelinkBuilder {
 	b.privateLinkServiceName = privateLinkServiceName
 	return b
