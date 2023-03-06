@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceConnectoinReadId(t *testing.T) {
+func TestResourceConnectionKafkaReadId(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
+	b := newConnectionKafkaBuilder("connection", "schema", "database")
 	r.Equal(`
 		SELECT mz_connections.id
 		FROM mz_connections
@@ -22,32 +22,38 @@ func TestResourceConnectoinReadId(t *testing.T) {
 	`, b.ReadId())
 }
 
-func TestResourceConnectionCreateSsh(t *testing.T) {
+func TestResourceConnectionKafkaRename(t *testing.T) {
 	r := require.New(t)
-
-	b := newConnectionBuilder("ssh_conn", "schema", "database")
-	b.ConnectionType("SSH TUNNEL")
-	b.SSHHost("localhost")
-	b.SSHPort(123)
-	b.SSHUser("user")
-	r.Equal(`CREATE CONNECTION database.schema.ssh_conn TO SSH TUNNEL (HOST 'localhost', USER 'user', PORT 123);`, b.Create())
-
+	b := newConnectionKafkaBuilder("connection", "schema", "database")
+	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
 }
 
-func TestResourceConnectionCreateAwsPrivateLink(t *testing.T) {
+func TestResourceConnectionKafkaDrop(t *testing.T) {
 	r := require.New(t)
+	b := newConnectionKafkaBuilder("connection", "schema", "database")
+	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
+}
 
-	b := newConnectionBuilder("privatelink_conn", "schema", "database")
-	b.ConnectionType("AWS PRIVATELINK")
-	b.PrivateLinkServiceName("com.amazonaws.us-east-1.materialize.example")
-	b.PrivateLinkAvailabilityZones([]string{"use1-az1", "use1-az2"})
-	r.Equal(`CREATE CONNECTION database.schema.privatelink_conn TO AWS PRIVATELINK (SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES ('use1-az1', 'use1-az2'));`, b.Create())
+func TestResourceConnectionKafkaReadParams(t *testing.T) {
+	r := require.New(t)
+	b := readConnectionParams("u1")
+	r.Equal(`
+		SELECT
+			mz_connections.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_connections.type
+		FROM mz_connections
+		JOIN mz_schemas
+			ON mz_connections.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		WHERE mz_connections.id = 'u1';`, b)
 }
 
 func TestResourceConnectionCreateKafka(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker: "localhost:9092",
@@ -62,8 +68,7 @@ func TestResourceConnectionCreateKafka(t *testing.T) {
 
 func TestResourceConnectionCreateKafkaMultipleBrokers(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker: "localhost:9092",
@@ -81,8 +86,7 @@ func TestResourceConnectionCreateKafkaMultipleBrokers(t *testing.T) {
 
 func TestResourceConnectionCreateKafkaSsh(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker: "localhost:9092",
@@ -98,8 +102,7 @@ func TestResourceConnectionCreateKafkaSsh(t *testing.T) {
 
 func TestResourceConnectionCreateKafkaBrokers(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker: "localhost:9092",
@@ -117,8 +120,7 @@ func TestResourceConnectionCreateKafkaBrokers(t *testing.T) {
 
 func TestResourceConnectionCreateKafkaBrokersSsh(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker: "localhost:9092",
@@ -137,8 +139,7 @@ func TestResourceConnectionCreateKafkaBrokersSsh(t *testing.T) {
 
 func TestResourceConnectionCreateKafkaSsl(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker: "localhost:9092",
@@ -151,21 +152,9 @@ func TestResourceConnectionCreateKafkaSsl(t *testing.T) {
 	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092'), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET ca, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key);`, b.Create())
 }
 
-func TestResourceConnectionCreateConfluentSchemaRegistry(t *testing.T) {
-	r := require.New(t)
-	b := newConnectionBuilder("csr_conn", "schema", "database")
-	b.ConnectionType("CONFLUENT SCHEMA REGISTRY")
-	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
-	b.ConfluentSchemaRegistryUsername("user")
-	b.ConfluentSchemaRegistryPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.csr_conn TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
-
-}
-
 func TestResourceConnectionKafkaAwsPrivatelink(t *testing.T) {
 	r := require.New(t)
-	b := newConnectionBuilder("kafka_conn", "schema", "database")
-	b.ConnectionType("KAFKA")
+	b := newConnectionKafkaBuilder("kafka_conn", "schema", "database")
 	b.KafkaBrokers([]KafkaBroker{
 		{
 			Broker:                "b-1.hostname-1:9096",
@@ -184,33 +173,4 @@ func TestResourceConnectionKafkaAwsPrivatelink(t *testing.T) {
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
 	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('b-1.hostname-1:9096' USING AWS PRIVATELINK privatelink_conn (PORT 9001, AVAILABILITY ZONE 'use1-az1'), 'b-1.hostname-1:9097' USING AWS PRIVATELINK privatelink_conn (PORT 9002, AVAILABILITY ZONE 'use1-az2')), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
-}
-
-func TestResourceConnectionRename(t *testing.T) {
-	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
-	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
-}
-
-func TestResourceConnectionDrop(t *testing.T) {
-	r := require.New(t)
-	b := newConnectionBuilder("connection", "schema", "database")
-	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
-}
-
-func TestResourceConnectionReadParams(t *testing.T) {
-	r := require.New(t)
-	b := readConnectionParams("u1")
-	r.Equal(`
-		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_connections.type
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.id = 'u1';`, b)
 }

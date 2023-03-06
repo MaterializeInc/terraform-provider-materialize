@@ -60,68 +60,63 @@ resource "materialize_secret" "example_secret" {
 
 
 # Create SSH Connection
-resource "materialize_connection" "example_ssh_connection" {
+resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
   name            = "ssh_example_connection"
   schema_name     = "public"
-  connection_type = "SSH TUNNEL"
-  ssh_host        = "example.com"
-  ssh_port        = 22
-  ssh_user        = "example"
+  host            = "example.com"
+  port            = 22
+  user            = "example"
 }
 
 # # Create a AWS Private Connection
 # Note: you need the max_aws_privatelink_connections increased for this to work:
 # show max_aws_privatelink_connections;
-resource "materialize_connection" "privatelink_conn" {
-  name                               = "privatelink_conn"
-  schema_name                        = "public"
-  connection_type                    = "AWS PRIVATELINK"
-  aws_privatelink_service_name       = "com.amazonaws.us-east-1.materialize.example"
-  aws_privatelink_availability_zones = ["use1-az2", "use1-az1"]
+resource "materialize_connection_aws_privatelink" "example_aws_privatelink_conn" {
+  name               = "example_aws_privatelink_conn"
+  schema_name        = "public"
+  service_name       = "com.amazonaws.us-east-1.materialize.example"
+  availability_zones = ["use1-az2", "use1-az1"]
 }
-resource "materialize_connection" "example_kafka_privatelink_conn" {
+resource "materialize_connection_kafka" "example_kafka_privatelink_conn" {
   name            = "example_kafka_privatelink_conn"
-  connection_type = "KAFKA"
   kafka_broker {
     broker                 = "b-1.hostname-1:9096"
     target_group_port      = "9001"
     availability_zone      = "use1-az1"
-    privatelink_connection = "privatelink_conn"
+    privatelink_connection = "example_aws_privatelink_conn"
   }
   kafka_broker {
     broker                 = "b-2.hostname-2:9096"
     target_group_port      = "9002"
     availability_zone      = "use1-az2"
-    privatelink_connection = "privatelink_conn"
+    privatelink_connection = "example_aws_privatelink_conn"
   }
   depends_on = [materialize_connection.privatelink_conn]
 }
 
 # Create a Postgres Connection
-resource "materialize_connection" "example_postgres_connection" {
-  name              = "example_postgres_connection"
-  connection_type   = "POSTGRES"
-  postgres_host     = "instance.foo000.us-west-1.rds.amazonaws.com"
-  postgres_port     = 5432
-  postgres_user     = "example"
-  postgres_password = "example"
-  postgres_database = "example"
+resource "materialize_connection_postgres" "example_postgres_connection" {
+  name     = "example_postgres_connection"
+  host     = "instance.foo000.us-west-1.rds.amazonaws.com"
+  port     = 5432
+  user     = "example"
+  password = "example"
+  database = "example"
 }
 
 # Create a Kafka Connection
-resource "materialize_connection" "example_kafka_connection" {
+resource "materialize_connection_kafka" "example_kafka_connection" {
   name            = "example_kafka_connection"
-  connection_type = "KAFKA"
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
   kafka_broker {
     broker = "b-2.hostname-2:9096"
   }
-  kafka_sasl_username   = "example"
-  kafka_sasl_password   = "kafka_password"
-  kafka_sasl_mechanisms = "SCRAM-SHA-256"
-  kafka_progress_topic  = "example"
+  sasl_username   = "example"
+  sasl_password   = "kafka_password"
+  sasl_mechanisms = "SCRAM-SHA-256"
+  progress_topic  = "example"
 }
 
 # Create a Confluent Schema Registry Connection
