@@ -1,4 +1,4 @@
-resource "materialize_source" "example_source_kafka" {
+resource "materialize_source_kafka" "example_source_kafka" {
   name                       = "source_kafka"
   schema_name                = "schema"
   size                       = "3xsmall"
