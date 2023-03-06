@@ -21,7 +21,7 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
 resource "materialize_source_postgres" "example_source_postgres" {
   name                = "source_postgres"
   size                = "2"
-  postgres_connection = materialize_connection.example_postgres_connection.qualified_name
+  postgres_connection = materialize_connection_postgres.postgres_connection.qualified_name
   publication         = "mz_source"
   tables {
     name  = "table1"
@@ -36,7 +36,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name                       = "source_kafka_text"
   size                       = "2"
-  kafka_connection           = materialize_connection.kafka_connection.qualified_name
+  kafka_connection           = materialize_connection_kafka.kafka_connection.qualified_name
   format                     = "TEXT"
   topic                      = "topic1"
   key_format                 = "TEXT"
