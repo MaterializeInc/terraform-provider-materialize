@@ -13,7 +13,7 @@ A source describes an external system you want Materialize to read data from, an
 ## Example Usage
 
 ```terraform
-resource "materialize_source" "example_source_kafka" {
+resource "materialize_source_kafka" "example_source_kafka" {
   name                       = "source_kafka"
   schema_name                = "schema"
   size                       = "3xsmall"
@@ -37,7 +37,6 @@ resource "materialize_source" "example_source_kafka" {
 
 - `format` (String) How to decode raw bytes from different formats into data structures Materialize can understand at runtime.
 - `kafka_connection` (String) The name of the Kafka connection to use in the source.
-- `key_format` (String) Set the key and value encodings explicitly.
 - `name` (String) The identifier for the source.
 - `topic` (String) The Kafka topic you want to subscribe to.
 
@@ -51,6 +50,7 @@ resource "materialize_source" "example_source_kafka" {
 - `include_offset` (String) Include an offset column containing the Kafka message offset.
 - `include_partition` (String) Include a partition column containing the Kafka message partition
 - `include_timestamp` (String) Include a timestamp column containing the Kafka message timestamp.
+- `key_format` (String) Set the key and value encodings explicitly.
 - `key_strategy` (String) How Materialize will define the Avro schema reader key strategy.
 - `primary_key` (List of String) Declare a set of columns as a primary key.
 - `schema_name` (String) The identifier for the source schema.
