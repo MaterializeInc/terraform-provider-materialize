@@ -42,15 +42,15 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   key_format                 = "TEXT"
 }
 
-# resource "materialize_source_kafka" "example_source_kafka_format_avro" {
-#   name                       = "source_kafka_avro"
-#   size                       = "2"
-#   kafka_connection           = materialize_connection.kafka_connection.qualified_name
-#   format                     = "AVRO"
-#   topic                      = "topic1"
-#   schema_registry_connection = materialize_connection.schema_registry.name
-#   key_format                 = "TEXT"
-# }
+resource "materialize_source_kafka" "example_source_kafka_format_avro" {
+  name                       = "source_kafka_avro"
+  size                       = "2"
+  kafka_connection           = materialize_connection_kafka.kafka_connection.qualified_name
+  format                     = "AVRO"
+  topic                      = "topic1"
+  schema_registry_connection = materialize_connection_confluent_schema_registry.schema_registry.qualified_name
+  depends_on                 = [materialize_sink_kafka.sink_kafka]
+}
 
 output "qualified_load_generator" {
   value = materialize_source_load_generator.load_generator.qualified_name

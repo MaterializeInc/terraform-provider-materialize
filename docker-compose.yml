@@ -9,7 +9,7 @@ services:
     ports:
       - 6875:6875
       - 6878:6878
-    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 30s}
+    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
 
   zookeeper:
     image: quay.io/debezium/zookeeper:1.9

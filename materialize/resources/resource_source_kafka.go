@@ -101,7 +101,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"key_format": {
 		Description: "Set the key and value encodings explicitly.",
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 	},
 	"envelope": {
@@ -423,6 +423,10 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 	if v, ok := d.GetOk("kafka_connection"); ok {
 		builder.KafkaConnection(v.(string))
+	}
+
+	if v, ok := d.GetOk("topic"); ok {
+		builder.Topic(v.(string))
 	}
 
 	if v, ok := d.GetOk("include_key"); ok {
