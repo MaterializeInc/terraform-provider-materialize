@@ -41,7 +41,7 @@ resource "materialize_cluster_replica" "example_2_cluster_replica" {
 }
 
 # Create a load generator source
-resource "materialize_source" "example_source_load_generator" {
+resource "materialize_source_load_generator" "example_source_load_generator" {
   name                = "load_gen_example"
   schema_name         = materialize_schema.example_schema.name
   size                = "3xsmall"

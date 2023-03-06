@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -71,10 +70,24 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	},
 	"tables": {
 		Description: "Creates subsources for specific tables in the load generator.",
-		Type:        schema.TypeMap,
-		Elem:        &schema.Schema{Type: schema.TypeString},
-		Optional:    true,
-		ForceNew:    true,
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"name": {
+					Description: "The name of the table.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"alias": {
+					Description: "The alias of the table.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+			},
+		},
+		Optional: true,
+		MinItems: 1,
+		ForceNew: true,
 	},
 }
 
@@ -95,6 +108,11 @@ func SourcePostgres() *schema.Resource {
 	}
 }
 
+type Table struct {
+	Name  string
+	Alias string
+}
+
 type SourcePostgresBuilder struct {
 	sourceName         string
 	schemaName         string
@@ -104,7 +122,7 @@ type SourcePostgresBuilder struct {
 	postgresConnection string
 	publication        string
 	textColumns        []string
-	tables             map[string]string
+	tables             []Table
 }
 
 func newSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
@@ -140,7 +158,7 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Tables(t map[string]string) *SourcePostgresBuilder {
+func (b *SourcePostgresBuilder) Tables(t []Table) *SourcePostgresBuilder {
 	b.tables = t
 	return b
 }
@@ -165,21 +183,18 @@ func (b *SourcePostgresBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
-	var o []string
 	if len(b.tables) > 0 {
-		// Need to sort tables to ensure order for tests
-		var keys []string
-		for k := range b.tables {
-			keys = append(keys, k)
+		q.WriteString(` FOR TABLES (`)
+		for i, t := range b.tables {
+			if t.Alias == "" {
+				t.Alias = t.Name
+			}
+			q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
+			if i < len(b.tables)-1 {
+				q.WriteString(`, `)
+			}
 		}
-		sort.Strings(keys)
-
-		for _, k := range keys {
-			s := fmt.Sprintf(`%s AS %s`, k, b.tables[k])
-			o = append(o, s)
-		}
-		o := strings.Join(o[:], ", ")
-		q.WriteString(fmt.Sprintf(` FOR TABLES (%s)`, o))
+		q.WriteString(`)`)
 	} else {
 		q.WriteString(` FOR ALL TABLES`)
 	}
@@ -235,7 +250,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder.Size(v.(string))
 	}
 
-	if v, ok := d.GetOk("postgresConnection"); ok {
+	if v, ok := d.GetOk("postgres_connection"); ok {
 		builder.PostgresConnection(v.(string))
 	}
 
@@ -244,7 +259,15 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("tables"); ok {
-		builder.Tables(v.(map[string]string))
+		var tables []Table
+		for _, table := range v.([]interface{}) {
+			t := table.(map[string]interface{})
+			tables = append(tables, Table{
+				Name:  t["name"].(string),
+				Alias: t["alias"].(string),
+			})
+		}
+		builder.Tables(tables)
 	}
 
 	if v, ok := d.GetOk("textColumns"); ok {

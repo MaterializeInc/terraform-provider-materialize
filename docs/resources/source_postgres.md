@@ -13,7 +13,7 @@ A source describes an external system you want Materialize to read data from, an
 ## Example Usage
 
 ```terraform
-resource "materialize_source" "example_source_postgres" {
+resource "materialize_source_postgres" "example_source_postgres" {
   name                = "source_postgres"
   schema_name         = "schema"
   size                = "3xsmall"
@@ -46,13 +46,24 @@ resource "materialize_source" "example_source_postgres" {
 - `database_name` (String) The identifier for the source database.
 - `schema_name` (String) The identifier for the source schema.
 - `size` (String) The size of the source.
-- `tables` (Map of String) Creates subsources for specific tables in the load generator.
+- `tables` (Block List) Creates subsources for specific tables in the load generator. (see [below for nested schema](#nestedblock--tables))
 - `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the source.
+
+<a id="nestedblock--tables"></a>
+### Nested Schema for `tables`
+
+Required:
+
+- `name` (String) The name of the table.
+
+Optional:
+
+- `alias` (String) The alias of the table.
 
 ## Import
 

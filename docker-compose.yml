@@ -9,7 +9,7 @@ services:
     ports:
       - 6875:6875
       - 6878:6878
-    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 30s}
+    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
 
   zookeeper:
     image: quay.io/debezium/zookeeper:1.9
@@ -46,17 +46,16 @@ services:
     container_name: postgres
     build:
       context: ./integration/postgres
+    volumes:
+     - ${PWD}/integration/postgres:/docker-entrypoint-initdb.d
     init: true
     ports:
       - 5432:5432
     restart: always
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pg_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-c2VjcmV0Cg==}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-    command:
-      - postgres
-      - -c
-      - wal_level=logical
 
   provider:
     build:

@@ -29,11 +29,17 @@ func TestResourceSourcePostgresCreateParams(t *testing.T) {
 	b.PostgresConnection("pg_connection")
 	b.Publication("mz_source")
 	b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})
-	b.Tables(map[string]string{
-		"schema1.table_1": "s1_table_1",
-		"schema2_table_1": "s2_table_1",
+	b.Tables([]Table{
+		{
+			Name:  "schema1.table_1",
+			Alias: "s1_table_1",
+		},
+		{
+			Name:  "schema2.table_1",
+			Alias: "s2_table_1",
+		},
 	})
-	r.Equal(`CREATE SOURCE database.schema.source FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2_table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE database.schema.source FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestResourceSourcePostgresReadId(t *testing.T) {

@@ -1,4 +1,4 @@
-resource "materialize_source" "example_source_postgres" {
+resource "materialize_source_postgres" "example_source_postgres" {
   name                = "source_postgres"
   schema_name         = "schema"
   size                = "3xsmall"
