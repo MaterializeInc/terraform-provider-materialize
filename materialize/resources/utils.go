@@ -56,7 +56,9 @@ func readResource(conn *sqlx.DB, d *schema.ResourceData, id, queryStr string, re
 	values := reflect.ValueOf(resourceStruct)
 	types := values.Type()
 	for i := 0; i < values.NumField(); i++ {
-		d.Set(types.Field(i).Name, values.Field(i))
+		if err := d.Set(types.Field(i).Name, values.Field(i)); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 
@@ -81,20 +80,6 @@ func (b *SecretBuilder) Create(value string) string {
 	return fmt.Sprintf(`CREATE SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, escapedValue)
 }
 
-func (b *SecretBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_secrets.id
-		FROM mz_secrets
-		JOIN mz_schemas
-			ON mz_secrets.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.secretName, b.schemaName, b.databaseName)
-}
-
 func (b *SecretBuilder) Rename(newName string) string {
 	return fmt.Sprintf(`ALTER SECRET %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.secretName, b.databaseName, b.schemaName, newName)
 }
@@ -108,12 +93,25 @@ func (b *SecretBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SECRET %s.%s.%s;`, b.databaseName, b.schemaName, b.secretName)
 }
 
+func (b *SecretBuilder) ReadId() string {
+	return fmt.Sprintf(`
+		SELECT mz_secrets.id
+		FROM mz_secrets
+		JOIN mz_schemas
+			ON mz_secrets.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		WHERE mz_secrets.name = '%s'
+		AND mz_schemas.name = '%s'
+		AND mz_databases.name = '%s';`, b.secretName, b.schemaName, b.databaseName)
+}
+
 func readSecretParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
-			mz_secrets.name,
-			mz_schemas.name,
-			mz_databases.name
+			mz_secrets.name AS name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name
 		FROM mz_secrets
 		JOIN mz_schemas
 			ON mz_secrets.schema_id = mz_schemas.id
@@ -122,19 +120,30 @@ func readSecretParams(id string) string {
 		WHERE mz_secrets.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _secret struct {
-	name          sql.NullString `db:"name"`
-	schema_name   sql.NullString `db:"schema_name"`
-	database_name sql.NullString `db:"database_name"`
-}
-
 func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := readSecretParams(i)
 
-	readResource(conn, d, i, q, _secret{}, "secret")
+	var name, schema, database string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", schema); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
 	setQualifiedName(d)
 	return nil
 }
@@ -150,7 +159,9 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	qc := builder.Create(value)
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "secret")
+	if err := createResource(conn, d, qc, qr, "secret"); err != nil {
+		return diag.FromErr(err)
+	}
 	return secretRead(ctx, d, meta)
 }
 
@@ -163,8 +174,7 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
 
-		builder := newSecretBuilder(secretName, schemaName, databaseName)
-		q := builder.Rename(newName.(string))
+		q := newSecretBuilder(secretName, schemaName, databaseName).Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename secret: %s", q)
@@ -175,8 +185,7 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if d.HasChange("value") {
 		_, newValue := d.GetChange("value")
 
-		builder := newSecretBuilder(secretName, schemaName, databaseName)
-		q := builder.UpdateValue(newValue.(string))
+		q := newSecretBuilder(secretName, schemaName, databaseName).UpdateValue(newValue.(string))
 
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not update value of secret: %s", q)
@@ -193,9 +202,10 @@ func secretDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSecretBuilder(secretName, schemaName, databaseName)
-	q := builder.Drop()
+	q := newSecretBuilder(secretName, schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "secret")
+	if err := dropResource(conn, d, q, "secret"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }
