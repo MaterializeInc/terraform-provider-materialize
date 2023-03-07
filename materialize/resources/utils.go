@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -80,4 +81,14 @@ func setQualifiedName(d *schema.ResourceData) {
 	db := d.Get("database_name").(string)
 	q := fmt.Sprintf("%s.%s.%s", db, s, n)
 	d.Set("qualified_name", q)
+}
+
+func QuoteString(input string) (output string) {
+	output = "'" + strings.Replace(input, "'", "''", -1) + "'"
+	return
+}
+
+func QuoteIdentifier(input string) (output string) {
+	output = `"` + strings.Replace(input, `"`, `""`, -1) + `"`
+	return
 }
