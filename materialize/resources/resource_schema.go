@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -82,12 +81,6 @@ func readSchemaParams(id string) string {
 		WHERE mz_schemas.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _schema struct {
-	name          sql.NullString `db:"schema_name"`
-	database_name sql.NullString `db:"database_name"`
-}
-
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
@@ -120,7 +113,9 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "schema")
+	if err := createResource(conn, d, qc, qr, "schema"); err != nil {
+		return diag.FromErr(err)
+	}
 	return schemaRead(ctx, d, meta)
 }
 
@@ -129,9 +124,10 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSchemaBuilder(schemaName, databaseName)
-	q := builder.Drop()
+	q := newSchemaBuilder(schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "schema")
+	if err := dropResource(conn, d, q, "schema"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

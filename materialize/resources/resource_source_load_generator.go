@@ -36,6 +36,11 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"source_type": {
+		Description: "The type of source.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
@@ -89,7 +94,7 @@ func SourceLoadgen() *schema.Resource {
 		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
 
 		CreateContext: sourceLoadgenCreate,
-		ReadContext:   sourceLoadgenRead,
+		ReadContext:   SourceRead,
 		UpdateContext: sourceLoadgenUpdate,
 		DeleteContext: sourceLoadgenDelete,
 
@@ -218,10 +223,6 @@ func (b *SourceLoadgenBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SourceLoadgenBuilder) ReadId() string {
-	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
-}
-
 func (b *SourceLoadgenBuilder) Rename(newName string) string {
 	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName, b.databaseName, b.schemaName, newName)
 }
@@ -234,14 +235,8 @@ func (b *SourceLoadgenBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SOURCE %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName)
 }
 
-func sourceLoadgenRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readSourceParams(i)
-
-	readResource(conn, d, i, q, _source{}, "source")
-	setQualifiedName(d)
-	return nil
+func (b *SourceLoadgenBuilder) ReadId() string {
+	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
 }
 
 func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -284,8 +279,10 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "source")
-	return sourceLoadgenRead(ctx, d, meta)
+	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+		return diag.FromErr(err)
+	}
+	return SourceRead(ctx, d, meta)
 }
 
 func sourceLoadgenUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -318,7 +315,7 @@ func sourceLoadgenUpdate(ctx context.Context, d *schema.ResourceData, meta any) 
 		}
 	}
 
-	return sourceLoadgenRead(ctx, d, meta)
+	return SourceRead(ctx, d, meta)
 }
 
 func sourceLoadgenDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -327,9 +324,10 @@ func sourceLoadgenDelete(ctx context.Context, d *schema.ResourceData, meta any) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSourceLoadgenBuilder(sourceName, schemaName, databaseName)
-	q := builder.Drop()
+	q := newSourceLoadgenBuilder(sourceName, schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "source")
+	if err := dropResource(conn, d, q, "source"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

@@ -1,8 +1,12 @@
 package resources
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func readSourceId(name, schema, database string) string {
@@ -31,7 +35,6 @@ func readSourceParams(id string) string {
 			mz_databases.name,
 			mz_sources.type,
 			mz_sources.size,
-			mz_sources.envelope_type,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name
 		FROM mz_sources
@@ -46,14 +49,42 @@ func readSourceParams(id string) string {
 		WHERE mz_sources.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _source struct {
-	name            sql.NullString `db:"name"`
-	schema_name     sql.NullString `db:"schema_name"`
-	database_name   sql.NullString `db:"database_name"`
-	source_type     sql.NullString `db:"source_type"`
-	size            sql.NullString `db:"size"`
-	envelope_type   sql.NullString `db:"envelope_type"`
-	connection_name sql.NullString `db:"connection_name"`
-	cluster_name    sql.NullString `db:"cluster_name"`
+func SourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readSourceParams(i)
+
+	var name, schema, database, source_type, size, connection_name, cluster_name *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &source_type, &size, &connection_name, &cluster_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", schema); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("source_type", source_type); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", size); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", cluster_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	setQualifiedName(d)
+	return nil
 }

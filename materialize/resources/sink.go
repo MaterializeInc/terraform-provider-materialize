@@ -35,7 +35,6 @@ func readSinkParams(id string) string {
 			mz_databases.name,
 			mz_sinks.type,
 			mz_sinks.size,
-			mz_sinks.envelope_type,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name
 		FROM mz_sinks
@@ -55,8 +54,8 @@ func SinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	i := d.Id()
 	q := readSinkParams(i)
 
-	var name, schema, database, source_type, size, envelope_type, connection_name, cluster_name string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &source_type, &size, &envelope_type, &connection_name, &cluster_name); err != nil {
+	var name, schema, database, sink_type, size, connection_name, cluster_name *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &sink_type, &size, &connection_name, &cluster_name); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -74,19 +73,11 @@ func SinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("source_type", source_type); err != nil {
+	if err := d.Set("sink_type", sink_type); err != nil {
 		return diag.FromErr(err)
 	}
 
 	if err := d.Set("size", size); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("envelope_type", envelope_type); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("connection_name", connection_name); err != nil {
 		return diag.FromErr(err)
 	}
 

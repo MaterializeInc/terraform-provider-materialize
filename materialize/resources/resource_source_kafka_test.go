@@ -88,7 +88,6 @@ func TestResourceSourceKafkaReadParams(t *testing.T) {
 			mz_databases.name,
 			mz_sources.type,
 			mz_sources.size,
-			mz_sources.envelope_type,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name
 		FROM mz_sources

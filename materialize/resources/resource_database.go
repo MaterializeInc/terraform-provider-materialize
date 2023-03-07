@@ -87,7 +87,9 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "database")
+	if err := createResource(conn, d, qc, qr, "database"); err != nil {
+		return diag.FromErr(err)
+	}
 	return databaseRead(ctx, d, meta)
 }
 
@@ -95,9 +97,10 @@ func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
-	builder := newDatabaseBuilder(databaseName)
-	q := builder.Drop()
+	q := newDatabaseBuilder(databaseName).Drop()
 
-	dropResource(conn, d, q, "database")
+	if err := dropResource(conn, d, q, "database"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

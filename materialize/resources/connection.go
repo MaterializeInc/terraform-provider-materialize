@@ -43,8 +43,8 @@ func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	i := d.Id()
 	q := readConnectionParams(i)
 
-	var name, schema, database, connection_type string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
+	var name, schema, database, connection_type *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &connection_type); err != nil {
 		return diag.FromErr(err)
 	}
 

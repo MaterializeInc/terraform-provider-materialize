@@ -3,7 +3,6 @@ package resources
 import (
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -41,26 +40,6 @@ func createResource(conn *sqlx.DB, d *schema.ResourceData, queryCreateStr, query
 	}
 
 	d.SetId(i)
-	return nil
-}
-
-func readResource(conn *sqlx.DB, d *schema.ResourceData, id, queryStr string, resourceStruct interface{}, resource string) error {
-	err := conn.QueryRowx(queryStr).StructScan(resourceStruct)
-	if err != nil {
-		log.Printf("[ERROR] could not read %s: %s", resource, queryStr)
-		return &SQLError{Err: err}
-	}
-
-	d.SetId(id)
-
-	values := reflect.ValueOf(resourceStruct)
-	types := values.Type()
-	for i := 0; i < values.NumField(); i++ {
-		if err := d.Set(types.Field(i).Name, values.Field(i)); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

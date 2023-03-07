@@ -35,6 +35,11 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"sink_type": {
+		Description: "The type of sink.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
@@ -355,7 +360,9 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "sink")
+	if err := createResource(conn, d, qc, qr, "sink"); err != nil {
+		return diag.FromErr(err)
+	}
 	return SinkRead(ctx, d, meta)
 }
 
@@ -398,9 +405,10 @@ func sinkKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSinkKafkaBuilder(sinkName, schemaName, databaseName)
-	q := builder.Drop()
+	q := newSinkKafkaBuilder(sinkName, schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "sink")
+	if err := dropResource(conn, d, q, "sink"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

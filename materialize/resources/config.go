@@ -1,13 +1,5 @@
 package resources
 
-var connectionTypes = []string{
-	"KAFKA",
-	"POSTGRES",
-	"AWS PRIVATELINK",
-	"SSH TUNNEL",
-	"CONFLUENT SCHEMA REGISTRY",
-}
-
 var envelopes = []string{
 	"DEBEZIUM",
 	"UPSERT",
@@ -18,6 +10,26 @@ var loadGeneratorTypes = []string{
 	"AUCTION",
 	"COUNTER",
 	"NONE",
+}
+
+var localSizes = []string{
+	"1",
+	"2",
+	"2-1",
+	"2-2",
+	"2-4",
+	"4",
+	"4-1",
+	"4-4",
+	"8",
+	"8-1",
+	"8-8",
+	"16",
+	"16-1",
+	"16-16",
+	"32",
+	"32-1",
+	"32-32",
 }
 
 var regions = []string{
@@ -59,24 +71,4 @@ var strategy = []string{
 	"INLINE",
 	"ID",
 	"LATEST",
-}
-
-var localSizes = []string{
-	"1",
-	"2",
-	"2-1",
-	"2-2",
-	"2-4",
-	"4",
-	"4-1",
-	"4-4",
-	"8",
-	"8-1",
-	"8-8",
-	"16",
-	"16-1",
-	"16-16",
-	"32",
-	"32-1",
-	"32-32",
 }

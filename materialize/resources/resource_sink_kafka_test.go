@@ -84,7 +84,6 @@ func TestResourceSinkKafkaReadParams(t *testing.T) {
 			mz_databases.name,
 			mz_sinks.type,
 			mz_sinks.size,
-			mz_sinks.envelope_type,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name
 		FROM mz_sinks

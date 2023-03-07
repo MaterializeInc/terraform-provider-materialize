@@ -43,7 +43,7 @@ func TestResourceSecretCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"Name", "SchemaName", "DatabaseName"}).
+		ip := sqlmock.NewRows([]string{"name", "schema_name", "database_name"}).
 			AddRow("secret", "schema", "database")
 		mock.ExpectQuery(`
 			SELECT
@@ -77,10 +77,7 @@ func TestResourceSecretDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		// Create
-		mock.ExpectExec(
-			`DROP SECRET database.schema.secret;`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SECRET database.schema.secret;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := secretDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

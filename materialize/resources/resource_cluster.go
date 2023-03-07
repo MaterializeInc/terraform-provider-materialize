@@ -88,7 +88,9 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "cluster")
+	if err := createResource(conn, d, qc, qr, "cluster"); err != nil {
+		return diag.FromErr(err)
+	}
 	return clusterRead(ctx, d, meta)
 }
 
@@ -96,9 +98,10 @@ func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
-	builder := newClusterBuilder(clusterName)
-	q := builder.Drop()
+	q := newClusterBuilder(clusterName).Drop()
 
-	dropResource(conn, d, q, "cluster")
+	if err := dropResource(conn, d, q, "cluster"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

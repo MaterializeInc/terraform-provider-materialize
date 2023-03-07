@@ -35,6 +35,11 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"source_type": {
+		Description: "The type of source.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
@@ -96,7 +101,7 @@ func SourcePostgres() *schema.Resource {
 		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
 
 		CreateContext: sourcePostgresCreate,
-		ReadContext:   sourcePostgresRead,
+		ReadContext:   SourceRead,
 		UpdateContext: sourcePostgresUpdate,
 		DeleteContext: sourcePostgresDelete,
 
@@ -207,10 +212,6 @@ func (b *SourcePostgresBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SourcePostgresBuilder) ReadId() string {
-	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
-}
-
 func (b *SourcePostgresBuilder) Rename(newName string) string {
 	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName, b.databaseName, b.schemaName, newName)
 }
@@ -223,14 +224,8 @@ func (b *SourcePostgresBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SOURCE %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName)
 }
 
-func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readSourceParams(i)
-
-	readResource(conn, d, i, q, _source{}, "source")
-	setQualifiedName(d)
-	return nil
+func (b *SourcePostgresBuilder) ReadId() string {
+	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
 }
 
 func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -277,8 +272,10 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "source")
-	return sourcePostgresRead(ctx, d, meta)
+	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+		return diag.FromErr(err)
+	}
+	return SourceRead(ctx, d, meta)
 }
 
 func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -311,7 +308,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	return sourcePostgresRead(ctx, d, meta)
+	return SourceRead(ctx, d, meta)
 }
 
 func sourcePostgresDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -320,9 +317,10 @@ func sourcePostgresDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSourcePostgresBuilder(sourceName, schemaName, databaseName)
-	q := builder.Drop()
+	q := newSourcePostgresBuilder(sourceName, schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "source")
+	if err := dropResource(conn, d, q, "source"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }
