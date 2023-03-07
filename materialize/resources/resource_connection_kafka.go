@@ -116,7 +116,7 @@ func ConnectionKafka() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionKafkaCreate,
-		ReadContext:   connectionKafkaRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionKafkaUpdate,
 		DeleteContext: connectionKafkaDelete,
 
@@ -297,16 +297,6 @@ func readConnectionKafkaParams(id string) string {
 		WHERE mz_connections.id = '%s';`, id)
 }
 
-func connectionKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionKafkaParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
-}
-
 func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 
@@ -366,7 +356,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "connection")
-	return connectionKafkaRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -384,7 +374,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	return connectionKafkaRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionKafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

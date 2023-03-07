@@ -83,7 +83,7 @@ func ConnectionConfluentSchemaRegistry() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionConfluentSchemaRegistryCreate,
-		ReadContext:   connectionConfluentSchemaRegistryRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionConfluentSchemaRegistryUpdate,
 		DeleteContext: connectionConfluentSchemaRegistryDelete,
 
@@ -255,17 +255,7 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "connection")
-	return connectionConfluentSchemaRegistryRead(ctx, d, meta)
-}
-
-func connectionConfluentSchemaRegistryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionConfluentSchemaRegistryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -283,7 +273,7 @@ func connectionConfluentSchemaRegistryUpdate(ctx context.Context, d *schema.Reso
 		}
 	}
 
-	return connectionConfluentSchemaRegistryRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionConfluentSchemaRegistryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

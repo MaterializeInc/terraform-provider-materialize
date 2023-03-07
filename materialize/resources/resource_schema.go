@@ -58,6 +58,10 @@ func (b *SchemaBuilder) Create() string {
 	return fmt.Sprintf(`CREATE SCHEMA %s.%s;`, b.databaseName, b.schemaName)
 }
 
+func (b *SchemaBuilder) Drop() string {
+	return fmt.Sprintf(`DROP SCHEMA %s.%s;`, b.databaseName, b.schemaName)
+}
+
 func (b *SchemaBuilder) ReadId() string {
 	return fmt.Sprintf(`
 		SELECT mz_schemas.id
@@ -66,10 +70,6 @@ func (b *SchemaBuilder) ReadId() string {
 		WHERE mz_schemas.name = '%s'
 		AND mz_databases.name = '%s';	
 	`, b.schemaName, b.databaseName)
-}
-
-func (b *SchemaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SCHEMA %s.%s;`, b.databaseName, b.schemaName)
 }
 
 func readSchemaParams(id string) string {
@@ -84,7 +84,7 @@ func readSchemaParams(id string) string {
 
 //lint:ignore U1000 Ignore unused function temporarily for debugging
 type _schema struct {
-	schema_name   sql.NullString `db:"schema_name"`
+	name          sql.NullString `db:"schema_name"`
 	database_name sql.NullString `db:"database_name"`
 }
 
@@ -93,7 +93,21 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	i := d.Id()
 	q := readSchemaParams(i)
 
-	readResource(conn, d, i, q, _schema{}, "schema")
+	var name, database_name string
+	if err := conn.QueryRowx(q).Scan(&name, &database_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database_name); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 

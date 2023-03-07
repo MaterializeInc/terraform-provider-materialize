@@ -1,8 +1,12 @@
 package resources
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func readConnectionId(name, schema, database string) string {
@@ -34,10 +38,34 @@ func readConnectionParams(id string) string {
 		WHERE mz_connections.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _connection struct {
-	name            sql.NullString `db:"name"`
-	schema_name     sql.NullString `db:"schema_name"`
-	database_name   sql.NullString `db:"database_name"`
-	connection_type sql.NullString `db:"connection_type"`
+func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := readConnectionParams(i)
+
+	var name, schema, database, connection_type string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", schema); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("connection_type", connection_type); err != nil {
+		return diag.FromErr(err)
+	}
+
+	setQualifiedName(d)
+	return nil
 }

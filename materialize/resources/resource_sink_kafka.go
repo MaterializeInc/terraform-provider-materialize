@@ -121,7 +121,7 @@ func SinkKafka() *schema.Resource {
 		Description: "A sink describes an external system you want Materialize to write data to, and provides details about how to encode that data.",
 
 		CreateContext: sinkKafkaCreate,
-		ReadContext:   sinkKafkaRead,
+		ReadContext:   SinkRead,
 		UpdateContext: sinkKafkaUpdate,
 		DeleteContext: sinkKafkaDelete,
 
@@ -279,10 +279,6 @@ func (b *SinkKafkaBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SinkKafkaBuilder) ReadId() string {
-	return readSinkId(b.sinkName, b.schemaName, b.databaseName)
-}
-
 func (b *SinkKafkaBuilder) Rename(newName string) string {
 	return fmt.Sprintf(`ALTER SINK %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName, b.databaseName, b.schemaName, newName)
 }
@@ -295,14 +291,8 @@ func (b *SinkKafkaBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SINK %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName)
 }
 
-func sinkKafkaRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readSinkParams(i)
-
-	readResource(conn, d, i, q, _sink{}, "sink")
-	setQualifiedName(d)
-	return nil
+func (b *SinkKafkaBuilder) ReadId() string {
+	return readSinkId(b.sinkName, b.schemaName, b.databaseName)
 }
 
 func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -366,7 +356,7 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "sink")
-	return sinkKafkaRead(ctx, d, meta)
+	return SinkRead(ctx, d, meta)
 }
 
 func sinkKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -399,7 +389,7 @@ func sinkKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		}
 	}
 
-	return sinkKafkaRead(ctx, d, meta)
+	return SinkRead(ctx, d, meta)
 }
 
 func sinkKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {

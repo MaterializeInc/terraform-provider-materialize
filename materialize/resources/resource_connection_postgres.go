@@ -97,7 +97,7 @@ func ConnectionPostgres() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionPostgresCreate,
-		ReadContext:   connectionPostgresRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionPostgresUpdate,
 		DeleteContext: connectionPostgresDelete,
 
@@ -313,17 +313,7 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "connection")
-	return connectionPostgresRead(ctx, d, meta)
-}
-
-func connectionPostgresRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionPostgresUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -341,7 +331,7 @@ func connectionPostgresUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	return connectionPostgresRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionPostgresDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

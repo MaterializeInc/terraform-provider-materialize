@@ -54,7 +54,7 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionAwsPrivatelinkCreate,
-		ReadContext:   connectionAwsPrivatelinkRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionAwsPrivatelinkUpdate,
 		DeleteContext: connectionAwsPrivatelinkDelete,
 
@@ -152,17 +152,7 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "connection")
-	return connectionAwsPrivatelinkRead(ctx, d, meta)
-}
-
-func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -180,7 +170,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	return connectionAwsPrivatelinkRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionAwsPrivatelinkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

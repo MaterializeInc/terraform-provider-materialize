@@ -56,7 +56,7 @@ func ConnectionSshTunnel() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionSshTunnelCreate,
-		ReadContext:   connectionSshTunnelRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionSshTunnelUpdate,
 		DeleteContext: connectionSshTunnelDelete,
 
@@ -72,7 +72,6 @@ type ConnectionSshTunnelBuilder struct {
 	connectionName string
 	schemaName     string
 	databaseName   string
-	connectionType string
 	sshHost        string
 	sshUser        string
 	sshPort        int
@@ -152,17 +151,7 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 	qr := builder.ReadId()
 
 	createResource(conn, d, qc, qr, "connection")
-	return connectionSshTunnelRead(ctx, d, meta)
-}
-
-func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -180,7 +169,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
-	return connectionSshTunnelRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionSshTunnelDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

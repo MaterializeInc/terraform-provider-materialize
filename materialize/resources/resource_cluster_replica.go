@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -147,6 +146,10 @@ func (b *ClusterReplicaBuilder) Create() string {
 	return q.String()
 }
 
+func (b *ClusterReplicaBuilder) Drop() string {
+	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
+}
+
 func (b *ClusterReplicaBuilder) ReadId() string {
 	return fmt.Sprintf(`
 		SELECT mz_cluster_replicas.id
@@ -156,10 +159,6 @@ func (b *ClusterReplicaBuilder) ReadId() string {
 		WHERE mz_cluster_replicas.name = '%s'
 		AND mz_clusters.name = '%s';
 	`, b.replicaName, b.clusterName)
-}
-
-func (b *ClusterReplicaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
 }
 
 func readClusterReplicaParams(id string) string {
@@ -175,20 +174,34 @@ func readClusterReplicaParams(id string) string {
 		WHERE mz_cluster_replicas.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _clusterReplica struct {
-	name              sql.NullString `db:"name"`
-	cluster_name      sql.NullString `db:"cluster_name"`
-	size              sql.NullString `db:"size"`
-	availability_zone sql.NullString `db:"availability_zone"`
-}
-
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := readClusterReplicaParams(i)
 
-	readResource(conn, d, i, q, _clusterReplica{}, "cluster replica")
+	var name, cluster_name, size, availability_zone string
+	if err := conn.QueryRowx(q).Scan(&name, &cluster_name, &size, &availability_zone); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", cluster_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", size); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("availability_zone", availability_zone); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
