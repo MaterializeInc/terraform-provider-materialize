@@ -208,7 +208,6 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Drop() string {
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) ReadId() string {
 	return readConnectionId(b.connectionName, b.schemaName, b.databaseName)
-
 }
 
 func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
