@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -123,28 +122,42 @@ func (b *ClusterReplicaBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s.%s`, b.clusterName, b.replicaName))
 
+	var p []string
 	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` SIZE = '%s'`, b.size))
+		s := fmt.Sprintf(` SIZE = '%s'`, b.size)
+		p = append(p, s)
 	}
 
 	if b.availabilityZone != "" {
-		q.WriteString(fmt.Sprintf(` AVAILABILITY ZONE = '%s'`, b.availabilityZone))
+		a := fmt.Sprintf(` AVAILABILITY ZONE = '%s'`, b.availabilityZone)
+		p = append(p, a)
 	}
 
 	if b.introspectionInterval != "" {
-		q.WriteString(fmt.Sprintf(` INTROSPECTION INTERVAL = '%s'`, b.introspectionInterval))
+		i := fmt.Sprintf(` INTROSPECTION INTERVAL = '%s'`, b.introspectionInterval)
+		p = append(p, i)
 	}
 
 	if b.introspectionDebugging {
-		q.WriteString(` INTROSPECTION DEBUGGING = TRUE`)
+		p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
 	}
 
 	if b.idleArrangementMergeEffort != 0 {
-		q.WriteString(fmt.Sprintf(` IDLE ARRANGEMENT MERGE EFFORT = %d`, b.idleArrangementMergeEffort))
+		m := fmt.Sprintf(` IDLE ARRANGEMENT MERGE EFFORT = %d`, b.idleArrangementMergeEffort)
+		p = append(p, m)
+	}
+
+	if len(p) > 0 {
+		p := strings.Join(p[:], ",")
+		q.WriteString(p)
 	}
 
 	q.WriteString(`;`)
 	return q.String()
+}
+
+func (b *ClusterReplicaBuilder) Drop() string {
+	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
 }
 
 func (b *ClusterReplicaBuilder) ReadId() string {
@@ -154,12 +167,7 @@ func (b *ClusterReplicaBuilder) ReadId() string {
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
 		WHERE mz_cluster_replicas.name = '%s'
-		AND mz_clusters.name = '%s';
-	`, b.replicaName, b.clusterName)
-}
-
-func (b *ClusterReplicaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
+		AND mz_clusters.name = '%s';`, b.replicaName, b.clusterName)
 }
 
 func readClusterReplicaParams(id string) string {
@@ -175,20 +183,34 @@ func readClusterReplicaParams(id string) string {
 		WHERE mz_cluster_replicas.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _clusterReplica struct {
-	name              sql.NullString `db:"name"`
-	cluster_name      sql.NullString `db:"cluster_name"`
-	size              sql.NullString `db:"size"`
-	availability_zone sql.NullString `db:"availability_zone"`
-}
-
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := readClusterReplicaParams(i)
 
-	readResource(conn, d, i, q, _clusterReplica{}, "cluster replica")
+	var name, cluster_name, size, availability_zone *string
+	if err := conn.QueryRowx(q).Scan(&name, &cluster_name, &size, &availability_zone); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", cluster_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", size); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("availability_zone", availability_zone); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -204,26 +226,28 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		builder.Size(v.(string))
 	}
 
-	if v, ok := d.GetOk("availabilityZone"); ok {
+	if v, ok := d.GetOk("availability_zone"); ok {
 		builder.AvailabilityZone(v.(string))
 	}
 
-	if v, ok := d.GetOk("introspectionInterval"); ok {
-		builder.AvailabilityZone(v.(string))
+	if v, ok := d.GetOk("introspection_interval"); ok {
+		builder.IntrospectionInterval(v.(string))
 	}
 
-	if v, ok := d.GetOk("introspectionDebugging"); ok && v.(bool) {
+	if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
 		builder.IntrospectionDebugging()
 	}
 
-	if v, ok := d.GetOk("idleArrangementMergeEffort"); ok {
+	if v, ok := d.GetOk("idle_arrangement_merge_effort"); ok {
 		builder.IdleArrangementMergeEffort(v.(int))
 	}
 
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "cluster replica")
+	if err := createResource(conn, d, qc, qr, "cluster replica"); err != nil {
+		return diag.FromErr(err)
+	}
 	return clusterReplicaRead(ctx, d, meta)
 }
 
@@ -232,9 +256,10 @@ func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	builder := newClusterReplicaBuilder(replicaName, clusterName)
-	q := builder.Drop()
+	q := newClusterReplicaBuilder(replicaName, clusterName).Drop()
 
-	dropResource(conn, d, q, "cluster replica")
+	if err := dropResource(conn, d, q, "cluster replica"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

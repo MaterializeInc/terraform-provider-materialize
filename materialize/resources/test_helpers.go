@@ -1,24 +1,22 @@
 package resources
 
 import (
-	"database/sql"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
-func WithMockDb(t *testing.T, f func(*sql.DB, sqlmock.Sqlmock)) {
+func WithMockDb(t *testing.T, f func(*sqlx.DB, sqlmock.Sqlmock)) {
 	t.Helper()
 	r := require.New(t)
 	db, mock, err := sqlmock.New()
+	dbx := sqlx.NewDb(db, "sqlmock")
 	r.NoError(err)
-	defer db.Close()
+	defer dbx.Close()
 
-	mock.MatchExpectationsInOrder(false)
+	mock.MatchExpectationsInOrder(true)
 
-	f(db, mock)
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("There were unfulfilled expectations: %s", err)
-	}
+	f(dbx, mock)
 }

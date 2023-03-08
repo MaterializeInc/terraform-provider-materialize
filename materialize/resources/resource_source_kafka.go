@@ -35,6 +35,11 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"source_type": {
+		Description: "The type of source.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"cluster_name": {
 		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:          schema.TypeString,
@@ -158,7 +163,7 @@ func SourceKafka() *schema.Resource {
 		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
 
 		CreateContext: sourceKafkaCreate,
-		ReadContext:   sourceKafkaRead,
+		ReadContext:   SourceRead,
 		UpdateContext: sourceKafkaUpdate,
 		DeleteContext: sourceKafkaDelete,
 
@@ -378,10 +383,6 @@ func (b *SourceKafkaBuilder) Create() string {
 	return q.String()
 }
 
-func (b *SourceKafkaBuilder) ReadId() string {
-	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
-}
-
 func (b *SourceKafkaBuilder) Rename(newName string) string {
 	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName, b.databaseName, b.schemaName, newName)
 }
@@ -394,14 +395,8 @@ func (b *SourceKafkaBuilder) Drop() string {
 	return fmt.Sprintf(`DROP SOURCE %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName)
 }
 
-func sourceKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readSourceParams(i)
-
-	readResource(conn, d, i, q, _source{}, "source")
-	setQualifiedName(d)
-	return nil
+func (b *SourceKafkaBuilder) ReadId() string {
+	return readSourceId(b.sourceName, b.schemaName, b.databaseName)
 }
 
 func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -488,8 +483,10 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "source")
-	return sourceKafkaRead(ctx, d, meta)
+	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+		return diag.FromErr(err)
+	}
+	return SourceRead(ctx, d, meta)
 }
 
 func sourceKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -522,7 +519,7 @@ func sourceKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		}
 	}
 
-	return sourceKafkaRead(ctx, d, meta)
+	return SourceRead(ctx, d, meta)
 }
 
 func sourceKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -531,9 +528,10 @@ func sourceKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) di
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSourceKafkaBuilder(sourceName, schemaName, databaseName)
-	q := builder.Drop()
+	q := newSourceKafkaBuilder(sourceName, schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "source")
+	if err := dropResource(conn, d, q, "source"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

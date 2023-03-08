@@ -61,11 +61,11 @@ resource "materialize_secret" "example_secret" {
 
 # Create SSH Connection
 resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
-  name            = "ssh_example_connection"
-  schema_name     = "public"
-  host            = "example.com"
-  port            = 22
-  user            = "example"
+  name        = "ssh_example_connection"
+  schema_name = "public"
+  host        = "example.com"
+  port        = 22
+  user        = "example"
 }
 
 # # Create a AWS Private Connection
@@ -78,7 +78,7 @@ resource "materialize_connection_aws_privatelink" "example_aws_privatelink_conn"
   availability_zones = ["use1-az2", "use1-az1"]
 }
 resource "materialize_connection_kafka" "example_kafka_privatelink_conn" {
-  name            = "example_kafka_privatelink_conn"
+  name = "example_kafka_privatelink_conn"
   kafka_broker {
     broker                 = "b-1.hostname-1:9096"
     target_group_port      = "9001"
@@ -106,7 +106,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 # Create a Kafka Connection
 resource "materialize_connection_kafka" "example_kafka_connection" {
-  name            = "example_kafka_connection"
+  name = "example_kafka_connection"
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }

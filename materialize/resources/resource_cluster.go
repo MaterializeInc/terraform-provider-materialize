@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -50,21 +49,16 @@ func (b *ClusterBuilder) Create() string {
 	return fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, b.clusterName)
 }
 
-func (b *ClusterBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_clusters WHERE name = '%s';`, b.clusterName)
-}
-
 func (b *ClusterBuilder) Drop() string {
 	return fmt.Sprintf(`DROP CLUSTER %s;`, b.clusterName)
 }
 
-func readClusterParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_clusters WHERE id = '%s';", id)
+func (b *ClusterBuilder) ReadId() string {
+	return fmt.Sprintf(`SELECT id FROM mz_clusters WHERE name = '%s';`, b.clusterName)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _cluster struct {
-	name sql.NullString `db:"name"`
+func readClusterParams(id string) string {
+	return fmt.Sprintf("SELECT name FROM mz_clusters WHERE id = '%s';", id)
 }
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -72,7 +66,17 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	i := d.Id()
 	q := readClusterParams(i)
 
-	readResource(conn, d, i, q, _cluster{}, "cluster")
+	var name string
+	if err := conn.QueryRowx(q).Scan(&name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -84,7 +88,9 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "cluster")
+	if err := createResource(conn, d, qc, qr, "cluster"); err != nil {
+		return diag.FromErr(err)
+	}
 	return clusterRead(ctx, d, meta)
 }
 
@@ -92,9 +98,10 @@ func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
-	builder := newClusterBuilder(clusterName)
-	q := builder.Drop()
+	q := newClusterBuilder(clusterName).Drop()
 
-	dropResource(conn, d, q, "cluster")
+	if err := dropResource(conn, d, q, "cluster"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

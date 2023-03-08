@@ -1,5 +1,5 @@
 resource "materialize_connection_kafka" "kafka_connection" {
-  name            = "kafka_connection"
+  name = "kafka_connection"
   kafka_broker {
     broker = "kafka:9092"
   }
@@ -19,7 +19,7 @@ resource "materialize_connection_ssh_tunnel" "ssh_connection" {
 }
 
 resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
-  name            = "kafka_conn_multiple_brokers"
+  name = "kafka_conn_multiple_brokers"
   kafka_broker {
     broker = "kafka:9092"
   }

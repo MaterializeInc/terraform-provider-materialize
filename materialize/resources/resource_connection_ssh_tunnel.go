@@ -34,6 +34,11 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"connection_type": {
+		Description: "The type of connection.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"host": {
 		Description: "The host of the SSH tunnel.",
 		Type:        schema.TypeString,
@@ -56,7 +61,7 @@ func ConnectionSshTunnel() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionSshTunnelCreate,
-		ReadContext:   connectionSshTunnelRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionSshTunnelUpdate,
 		DeleteContext: connectionSshTunnelDelete,
 
@@ -72,7 +77,6 @@ type ConnectionSshTunnelBuilder struct {
 	connectionName string
 	schemaName     string
 	databaseName   string
-	connectionType string
 	sshHost        string
 	sshUser        string
 	sshPort        int
@@ -113,6 +117,14 @@ func (b *ConnectionSshTunnelBuilder) Create() string {
 	return q.String()
 }
 
+func (b *ConnectionSshTunnelBuilder) Rename(newConnectionName string) string {
+	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
+}
+
+func (b *ConnectionSshTunnelBuilder) Drop() string {
+	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
+}
+
 func (b *ConnectionSshTunnelBuilder) ReadId() string {
 	return fmt.Sprintf(`
 		SELECT mz_connections.id
@@ -125,14 +137,6 @@ func (b *ConnectionSshTunnelBuilder) ReadId() string {
 		AND mz_schemas.name = '%s'
 		AND mz_databases.name = '%s';
 	`, b.connectionName, b.schemaName, b.databaseName)
-}
-
-func (b *ConnectionSshTunnelBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
-}
-
-func (b *ConnectionSshTunnelBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
 }
 
 func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -151,18 +155,10 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "connection")
-	return connectionSshTunnelRead(ctx, d, meta)
-}
-
-func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
+	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+		return diag.FromErr(err)
+	}
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -180,7 +176,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
-	return connectionSshTunnelRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionSshTunnelDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -189,9 +185,10 @@ func connectionSshTunnelDelete(ctx context.Context, d *schema.ResourceData, meta
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newConnectionSshTunnelBuilder(connectionName, schemaName, databaseName)
-	q := builder.Drop()
+	q := newConnectionSshTunnelBuilder(connectionName, schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "connection")
+	if err := dropResource(conn, d, q, "connection"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

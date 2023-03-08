@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -58,6 +57,10 @@ func (b *SchemaBuilder) Create() string {
 	return fmt.Sprintf(`CREATE SCHEMA %s.%s;`, b.databaseName, b.schemaName)
 }
 
+func (b *SchemaBuilder) Drop() string {
+	return fmt.Sprintf(`DROP SCHEMA %s.%s;`, b.databaseName, b.schemaName)
+}
+
 func (b *SchemaBuilder) ReadId() string {
 	return fmt.Sprintf(`
 		SELECT mz_schemas.id
@@ -66,10 +69,6 @@ func (b *SchemaBuilder) ReadId() string {
 		WHERE mz_schemas.name = '%s'
 		AND mz_databases.name = '%s';	
 	`, b.schemaName, b.databaseName)
-}
-
-func (b *SchemaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SCHEMA %s.%s;`, b.databaseName, b.schemaName)
 }
 
 func readSchemaParams(id string) string {
@@ -82,18 +81,26 @@ func readSchemaParams(id string) string {
 		WHERE mz_schemas.id = '%s';`, id)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _schema struct {
-	schema_name   sql.NullString `db:"schema_name"`
-	database_name sql.NullString `db:"database_name"`
-}
-
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := readSchemaParams(i)
 
-	readResource(conn, d, i, q, _schema{}, "schema")
+	var name, database_name string
+	if err := conn.QueryRowx(q).Scan(&name, &database_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database_name); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -106,7 +113,9 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "schema")
+	if err := createResource(conn, d, qc, qr, "schema"); err != nil {
+		return diag.FromErr(err)
+	}
 	return schemaRead(ctx, d, meta)
 }
 
@@ -115,9 +124,10 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := newSchemaBuilder(schemaName, databaseName)
-	q := builder.Drop()
+	q := newSchemaBuilder(schemaName, databaseName).Drop()
 
-	dropResource(conn, d, q, "schema")
+	if err := dropResource(conn, d, q, "schema"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

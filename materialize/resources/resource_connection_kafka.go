@@ -35,6 +35,11 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"connection_type": {
+		Description: "The type of connection.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"kafka_broker": {
 		Description: "The Kafka brokers configuration.",
 		Type:        schema.TypeList,
@@ -116,7 +121,7 @@ func ConnectionKafka() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionKafkaCreate,
-		ReadContext:   connectionKafkaRead,
+		ReadContext:   ConnectionRead,
 		UpdateContext: connectionKafkaUpdate,
 		DeleteContext: connectionKafkaDelete,
 
@@ -260,20 +265,6 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	return q.String()
 }
 
-func (b *ConnectionKafkaBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_connections.id
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.connectionName, b.schemaName, b.databaseName)
-}
-
 func (b *ConnectionKafkaBuilder) Rename(newConnectionName string) string {
 	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
 }
@@ -282,29 +273,8 @@ func (b *ConnectionKafkaBuilder) Drop() string {
 	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
 }
 
-func readConnectionKafkaParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_connections.type
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.id = '%s';`, id)
-}
-
-func connectionKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	i := d.Id()
-	q := readConnectionKafkaParams(i)
-
-	readResource(conn, d, i, q, _connection{}, "connection")
-	setQualifiedName(d)
-	return nil
+func (b *ConnectionKafkaBuilder) ReadId() string {
+	return readConnectionId(b.connectionName, b.schemaName, b.databaseName)
 }
 
 func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -365,8 +335,10 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "connection")
-	return connectionKafkaRead(ctx, d, meta)
+	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+		return diag.FromErr(err)
+	}
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -384,7 +356,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	return connectionKafkaRead(ctx, d, meta)
+	return ConnectionRead(ctx, d, meta)
 }
 
 func connectionKafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -396,6 +368,8 @@ func connectionKafkaDelete(ctx context.Context, d *schema.ResourceData, meta int
 	builder := newConnectionKafkaBuilder(connectionName, schemaName, databaseName)
 	q := builder.Drop()
 
-	dropResource(conn, d, q, "connection")
+	if err := dropResource(conn, d, q, "connection"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

@@ -8,7 +8,8 @@ resource "materialize_cluster_replica" "cluster_replica_2" {
   name                          = "r2"
   cluster_name                  = materialize_cluster.cluster.name
   size                          = "4"
-  availability_zone             = "us-east-1"
+  # TODO: Find availability zone that works with Docker
+  # availability_zone             = "us-east-1"
   introspection_interval        = "2s"
   introspection_debugging       = true
   idle_arrangement_merge_effort = 1

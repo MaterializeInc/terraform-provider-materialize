@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,21 +48,16 @@ func (b *DatabaseBuilder) Create() string {
 	return fmt.Sprintf(`CREATE DATABASE %s;`, b.databaseName)
 }
 
-func (b *DatabaseBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_databases WHERE name = '%s';`, b.databaseName)
-}
-
 func (b *DatabaseBuilder) Drop() string {
 	return fmt.Sprintf(`DROP DATABASE %s;`, b.databaseName)
 }
 
-func readDatabaseParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_databases WHERE id = '%s';", id)
+func (b *DatabaseBuilder) ReadId() string {
+	return fmt.Sprintf(`SELECT id FROM mz_databases WHERE name = '%s';`, b.databaseName)
 }
 
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-type _database struct {
-	name sql.NullString `db:"name"`
+func readDatabaseParams(id string) string {
+	return fmt.Sprintf("SELECT name FROM mz_databases WHERE id = '%s';", id)
 }
 
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -71,7 +65,17 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	i := d.Id()
 	q := readDatabaseParams(i)
 
-	readResource(conn, d, i, q, _database{}, "database")
+	var name string
+	if err := conn.QueryRowx(q).Scan(&name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -83,7 +87,9 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	qc := builder.Create()
 	qr := builder.ReadId()
 
-	createResource(conn, d, qc, qr, "database")
+	if err := createResource(conn, d, qc, qr, "database"); err != nil {
+		return diag.FromErr(err)
+	}
 	return databaseRead(ctx, d, meta)
 }
 
@@ -91,9 +97,10 @@ func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
-	builder := newDatabaseBuilder(databaseName)
-	q := builder.Drop()
+	q := newDatabaseBuilder(databaseName).Drop()
 
-	dropResource(conn, d, q, "database")
+	if err := dropResource(conn, d, q, "database"); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

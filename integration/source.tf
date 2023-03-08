@@ -34,12 +34,12 @@ resource "materialize_source_postgres" "example_source_postgres" {
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
-  name                       = "source_kafka_text"
-  size                       = "2"
-  kafka_connection           = materialize_connection_kafka.kafka_connection.qualified_name
-  format                     = "TEXT"
-  topic                      = "topic1"
-  key_format                 = "TEXT"
+  name             = "source_kafka_text"
+  size             = "2"
+  kafka_connection = materialize_connection_kafka.kafka_connection.qualified_name
+  format           = "TEXT"
+  topic            = "topic1"
+  key_format       = "TEXT"
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
