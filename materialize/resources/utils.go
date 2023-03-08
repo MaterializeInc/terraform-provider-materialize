@@ -3,6 +3,7 @@ package resources
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
