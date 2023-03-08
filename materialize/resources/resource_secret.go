@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 var secretSchema = map[string]*schema.Schema{
@@ -76,7 +75,7 @@ func newSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilde
 }
 
 func (b *SecretBuilder) Create(value string) string {
-	escapedValue := pq.QuoteLiteral(value)
+	escapedValue := QuoteString(value)
 	return fmt.Sprintf(`CREATE SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, escapedValue)
 }
 
@@ -85,7 +84,7 @@ func (b *SecretBuilder) Rename(newName string) string {
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
-	escapedValue := pq.QuoteLiteral(newValue)
+	escapedValue := QuoteString(newValue)
 	return fmt.Sprintf(`ALTER SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, escapedValue)
 }
 

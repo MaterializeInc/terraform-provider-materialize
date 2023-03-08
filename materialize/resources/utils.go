@@ -62,3 +62,13 @@ func setQualifiedName(d *schema.ResourceData) {
 	q := fmt.Sprintf("%s.%s.%s", db, s, n)
 	d.Set("qualified_name", q)
 }
+
+func QuoteString(input string) (output string) {
+	output = "'" + strings.Replace(input, "'", "''", -1) + "'"
+	return
+}
+
+func QuoteIdentifier(input string) (output string) {
+	output = `"` + strings.Replace(input, `"`, `""`, -1) + `"`
+	return
+}
