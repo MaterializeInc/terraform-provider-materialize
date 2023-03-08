@@ -66,6 +66,10 @@ func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	setQualifiedName(d)
+	qn := QualifiedName(*database, *schema, *name)
+	if err := d.Set("qualified_name", qn); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }

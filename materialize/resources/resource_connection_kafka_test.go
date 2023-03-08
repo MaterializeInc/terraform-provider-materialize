@@ -34,7 +34,7 @@ func TestResourceKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION database.schema.conn TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING SSH TUNNEL tunnel\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET key, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key, SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'username', SASL PASSWORD = SECRET password\);`,
+			`CREATE CONNECTION "database"."schema"."conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING SSH TUNNEL tunnel\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET key, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key, SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'username', SASL PASSWORD = SECRET password\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -85,7 +85,7 @@ func TestResourceKafkaDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION database.schema.conn;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := connectionKafkaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -113,13 +113,13 @@ func TestConnectionKafkaReadIdQuery(t *testing.T) {
 func TestConnectionKafkaRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionKafkaBuilder("connection", "schema", "database")
-	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
+	r.Equal(`ALTER CONNECTION "database"."schema"."connection" RENAME TO "database"."schema"."new_connection";`, b.Rename("new_connection"))
 }
 
 func TestConnectionKafkaDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionKafkaBuilder("connection", "schema", "database")
-	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
+	r.Equal(`DROP CONNECTION "database"."schema"."connection";`, b.Drop())
 }
 
 func TestConnectionKafkaReadParamsQuery(t *testing.T) {
@@ -151,7 +151,7 @@ func TestConnectionCreateKafkaQuery(t *testing.T) {
 	b.KafkaSASLMechanisms("PLAIN")
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }
 
 func TestConnectionCreateKafkaMultipleBrokersQuery(t *testing.T) {
@@ -169,7 +169,7 @@ func TestConnectionCreateKafkaMultipleBrokersQuery(t *testing.T) {
 	b.KafkaSASLMechanisms("PLAIN")
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092', 'localhost:9093'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092', 'localhost:9093'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }
 
 func TestConnectionCreateKafkaSshQuery(t *testing.T) {
@@ -185,7 +185,7 @@ func TestConnectionCreateKafkaSshQuery(t *testing.T) {
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
 	b.KafkaSSHTunnel("ssh_conn")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092' USING SSH TUNNEL ssh_conn), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092' USING SSH TUNNEL ssh_conn), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }
 
 func TestConnectionCreateKafkaBrokersQuery(t *testing.T) {
@@ -203,7 +203,7 @@ func TestConnectionCreateKafkaBrokersQuery(t *testing.T) {
 	b.KafkaSASLMechanisms("PLAIN")
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092', 'localhost:9093'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092', 'localhost:9093'), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }
 
 func TestConnectionCreateKafkaBrokersSshQuery(t *testing.T) {
@@ -222,7 +222,7 @@ func TestConnectionCreateKafkaBrokersSshQuery(t *testing.T) {
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
 	b.KafkaSSHTunnel("ssh_conn")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092' USING SSH TUNNEL ssh_conn,'localhost:9093' USING SSH TUNNEL ssh_conn), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092' USING SSH TUNNEL ssh_conn,'localhost:9093' USING SSH TUNNEL ssh_conn), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }
 
 func TestConnectionCreateKafkaSslQuery(t *testing.T) {
@@ -237,7 +237,7 @@ func TestConnectionCreateKafkaSslQuery(t *testing.T) {
 	b.KafkaSSLKey("key")
 	b.KafkaSSLCert("cert")
 	b.KafkaSSLCa("ca")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('localhost:9092'), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET ca, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092'), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET ca, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key);`, b.Create())
 }
 
 func TestConnectionKafkaAwsPrivatelinkQuery(t *testing.T) {
@@ -260,5 +260,5 @@ func TestConnectionKafkaAwsPrivatelinkQuery(t *testing.T) {
 	b.KafkaSASLMechanisms("PLAIN")
 	b.KafkaSASLUsername("user")
 	b.KafkaSASLPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.kafka_conn TO KAFKA (BROKERS ('b-1.hostname-1:9096' USING AWS PRIVATELINK privatelink_conn (PORT 9001, AVAILABILITY ZONE 'use1-az1'), 'b-1.hostname-1:9097' USING AWS PRIVATELINK privatelink_conn (PORT 9002, AVAILABILITY ZONE 'use1-az2')), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('b-1.hostname-1:9096' USING AWS PRIVATELINK privatelink_conn (PORT 9001, AVAILABILITY ZONE 'use1-az1'), 'b-1.hostname-1:9097' USING AWS PRIVATELINK privatelink_conn (PORT 9002, AVAILABILITY ZONE 'use1-az2')), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET password);`, b.Create())
 }

@@ -23,7 +23,7 @@ func TestResourceSchemaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SCHEMA database.schema;`,
+			`CREATE SCHEMA "database"."schema";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -66,7 +66,7 @@ func TestResourceSchemaDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SCHEMA database.schema;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SCHEMA "database"."schema";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := schemaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -90,13 +90,13 @@ func TestSchemaReadIdQuery(t *testing.T) {
 func TestSchemaCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSchemaBuilder("schema", "database")
-	r.Equal(`CREATE SCHEMA database.schema;`, b.Create())
+	r.Equal(`CREATE SCHEMA "database"."schema";`, b.Create())
 }
 
 func TestSchemaDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSchemaBuilder("schema", "database")
-	r.Equal(`DROP SCHEMA database.schema;`, b.Drop())
+	r.Equal(`DROP SCHEMA "database"."schema";`, b.Drop())
 }
 
 func TestSchemaReadParamsQuery(t *testing.T) {

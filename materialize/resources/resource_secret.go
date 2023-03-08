@@ -66,6 +66,10 @@ type SecretBuilder struct {
 	databaseName string
 }
 
+func (b *SecretBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.secretName)
+}
+
 func newSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilder {
 	return &SecretBuilder{
 		secretName:   secretName,
@@ -76,20 +80,21 @@ func newSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilde
 
 func (b *SecretBuilder) Create(value string) string {
 	escapedValue := QuoteString(value)
-	return fmt.Sprintf(`CREATE SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, escapedValue)
+	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.qualifiedName(), escapedValue)
 }
 
 func (b *SecretBuilder) Rename(newName string) string {
-	return fmt.Sprintf(`ALTER SECRET %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.secretName, b.databaseName, b.schemaName, newName)
+	n := QualifiedName(b.databaseName, b.schemaName, newName)
+	return fmt.Sprintf(`ALTER SECRET %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
 	escapedValue := QuoteString(newValue)
-	return fmt.Sprintf(`ALTER SECRET %s.%s.%s AS %s;`, b.databaseName, b.schemaName, b.secretName, escapedValue)
+	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.qualifiedName(), escapedValue)
 }
 
 func (b *SecretBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SECRET %s.%s.%s;`, b.databaseName, b.schemaName, b.secretName)
+	return fmt.Sprintf(`DROP SECRET %s;`, b.qualifiedName())
 }
 
 func (b *SecretBuilder) ReadId() string {
@@ -143,7 +148,11 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	setQualifiedName(d)
+	qn := QualifiedName(database, schema, name)
+	if err := d.Set("qualified_name", qn); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 

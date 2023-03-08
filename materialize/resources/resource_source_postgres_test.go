@@ -30,7 +30,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection \(PUBLICATION 'mz_source'\) FOR ALL TABLES WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection \(PUBLICATION 'mz_source'\) FOR ALL TABLES WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -93,7 +93,7 @@ func TestResourceSourcePostgresDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SOURCE database.schema.source;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SOURCE "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := sourcePostgresDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -109,13 +109,13 @@ func TestSourcePostgresCreateQuery(t *testing.T) {
 	bs.Size("xsmall")
 	bs.PostgresConnection("pg_connection")
 	bs.Publication("mz_source")
-	r.Equal(`CREATE SOURCE database.schema.source FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES WITH (SIZE = 'xsmall');`, bs.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES WITH (SIZE = 'xsmall');`, bs.Create())
 
 	bc := newSourcePostgresBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.PostgresConnection("pg_connection")
 	bc.Publication("mz_source")
-	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES;`, bc.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES;`, bc.Create())
 }
 
 func TestSourcePostgresCreateParamsQuery(t *testing.T) {
@@ -135,7 +135,7 @@ func TestSourcePostgresCreateParamsQuery(t *testing.T) {
 			Alias: "s2_table_1",
 		},
 	})
-	r.Equal(`CREATE SOURCE database.schema.source FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestSourcePostgresReadIdQuery(t *testing.T) {
@@ -161,19 +161,19 @@ func TestSourcePostgresReadIdQuery(t *testing.T) {
 func TestSourcePostgresRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourcePostgresBuilder("source", "schema", "database")
-	r.Equal(`ALTER SOURCE database.schema.source RENAME TO database.schema.new_source;`, b.Rename("new_source"))
+	r.Equal(`ALTER SOURCE "database"."schema"."source" RENAME TO "database"."schema"."new_source";`, b.Rename("new_source"))
 }
 
 func TestSourcePostgresResizeQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourcePostgresBuilder("source", "schema", "database")
-	r.Equal(`ALTER SOURCE database.schema.source SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
+	r.Equal(`ALTER SOURCE "database"."schema"."source" SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
 }
 
 func TestSourcePostgresDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourcePostgresBuilder("source", "schema", "database")
-	r.Equal(`DROP SOURCE database.schema.source;`, b.Drop())
+	r.Equal(`DROP SOURCE "database"."schema"."source";`, b.Drop())
 }
 
 func TestSourcePostgresReadParamsQuery(t *testing.T) {

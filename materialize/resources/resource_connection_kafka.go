@@ -163,6 +163,10 @@ func newConnectionKafkaBuilder(connectionName, schemaName, databaseName string) 
 	}
 }
 
+func (b *ConnectionKafkaBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
+}
+
 func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionKafkaBuilder {
 	b.kafkaBrokers = kafkaBrokers
 	return b
@@ -210,7 +214,7 @@ func (b *ConnectionKafkaBuilder) KafkaSSHTunnel(kafkaSSHTunnel string) *Connecti
 
 func (b *ConnectionKafkaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s TO KAFKA (`, b.databaseName, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.qualifiedName()))
 
 	if b.kafkaSSHTunnel != "" {
 		q.WriteString(`BROKERS (`)
@@ -266,11 +270,12 @@ func (b *ConnectionKafkaBuilder) Create() string {
 }
 
 func (b *ConnectionKafkaBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
+	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *ConnectionKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
 }
 
 func (b *ConnectionKafkaBuilder) ReadId() string {

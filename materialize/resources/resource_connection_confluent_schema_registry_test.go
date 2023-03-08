@@ -33,7 +33,7 @@ func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION database.schema.conn TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password, SSL CERTIFICATE AUTHORITY = ssl, SSL CERTIFICATE = ssl, SSL KEY = ssl, AWS PRIVATELINK privatelink, SSH TUNNEL tunnel\)`,
+			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password, SSL CERTIFICATE AUTHORITY = ssl, SSL CERTIFICATE = ssl, SSL KEY = ssl, AWS PRIVATELINK privatelink, SSH TUNNEL tunnel\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -84,7 +84,7 @@ func TestResourceConfluentSchemaRegistrykDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION database.schema.conn;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := connectionConfluentSchemaRegistryDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -112,13 +112,13 @@ func TestResourceConnectionConfluentSchemaRegistryReadId(t *testing.T) {
 func TestConnectionConfluentSchemaRegistryRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionConfluentSchemaRegistryBuilder("connection", "schema", "database")
-	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
+	r.Equal(`ALTER CONNECTION "database"."schema"."connection" RENAME TO "database"."schema"."new_connection";`, b.Rename("new_connection"))
 }
 
 func TestConnectionConfluentSchemaRegistryDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionConfluentSchemaRegistryBuilder("connection", "schema", "database")
-	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
+	r.Equal(`DROP CONNECTION "database"."schema"."connection";`, b.Drop())
 }
 
 func TestConnectionConfluentSchemaRegistryReadParamsQuery(t *testing.T) {
@@ -144,6 +144,6 @@ func TestConnectionCreateConfluentSchemaRegistryQuery(t *testing.T) {
 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
 	b.ConfluentSchemaRegistryUsername("user")
 	b.ConfluentSchemaRegistryPassword("password")
-	r.Equal(`CREATE CONNECTION database.schema.csr_conn TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
 
 }
