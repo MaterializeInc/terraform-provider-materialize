@@ -74,7 +74,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"tables": {
-		Description: "Creates subsources for specific tables in the load generator.",
+		Description: "Creates subsources for specific tables.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -113,9 +113,9 @@ func SourcePostgres() *schema.Resource {
 	}
 }
 
-type Table struct {
-	Name  string
-	Alias string
+type TablePostgres struct {
+	name  string
+	alias string
 }
 
 type SourcePostgresBuilder struct {
@@ -127,7 +127,7 @@ type SourcePostgresBuilder struct {
 	postgresConnection string
 	publication        string
 	textColumns        []string
-	tables             []Table
+	tables             []TablePostgres
 }
 
 func (b *SourcePostgresBuilder) qualifiedName() string {
@@ -167,7 +167,7 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Tables(t []Table) *SourcePostgresBuilder {
+func (b *SourcePostgresBuilder) Tables(t []TablePostgres) *SourcePostgresBuilder {
 	b.tables = t
 	return b
 }
@@ -195,10 +195,10 @@ func (b *SourcePostgresBuilder) Create() string {
 	if len(b.tables) > 0 {
 		q.WriteString(` FOR TABLES (`)
 		for i, t := range b.tables {
-			if t.Alias == "" {
-				t.Alias = t.Name
+			if t.alias == "" {
+				t.alias = t.name
 			}
-			q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
+			q.WriteString(fmt.Sprintf(`%s AS %s`, t.name, t.alias))
 			if i < len(b.tables)-1 {
 				q.WriteString(`, `)
 			}
@@ -259,12 +259,12 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("tables"); ok {
-		var tables []Table
+		var tables []TablePostgres
 		for _, table := range v.([]interface{}) {
 			t := table.(map[string]interface{})
-			tables = append(tables, Table{
-				Name:  t["name"].(string),
-				Alias: t["alias"].(string),
+			tables = append(tables, TablePostgres{
+				name:  t["name"].(string),
+				alias: t["alias"].(string),
 			})
 		}
 		builder.Tables(tables)

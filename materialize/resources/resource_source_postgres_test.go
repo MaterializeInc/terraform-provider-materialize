@@ -22,7 +22,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		"postgres_connection": "pg_connection",
 		"publication":         "mz_source",
 		"text_columns":        []interface{}{"table.unsupported_type_1"},
-		// "tables":              []interface{}{},
+		"tables":              []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
 	}
 	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, in)
 	r.NotNil(d)
@@ -30,7 +30,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection \(PUBLICATION 'mz_source'\) FOR ALL TABLES WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection \(PUBLICATION 'mz_source'\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -125,14 +125,14 @@ func TestSourcePostgresCreateParamsQuery(t *testing.T) {
 	b.PostgresConnection("pg_connection")
 	b.Publication("mz_source")
 	b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})
-	b.Tables([]Table{
+	b.Tables([]TablePostgres{
 		{
-			Name:  "schema1.table_1",
-			Alias: "s1_table_1",
+			name:  "schema1.table_1",
+			alias: "s1_table_1",
 		},
 		{
-			Name:  "schema2.table_1",
-			Alias: "s2_table_1",
+			name:  "schema2.table_1",
+			alias: "s2_table_1",
 		},
 	})
 	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
