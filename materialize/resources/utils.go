@@ -56,14 +56,6 @@ func dropResource(conn *sqlx.DB, d *schema.ResourceData, queryStr, resource stri
 	return nil
 }
 
-func setQualifiedName(d *schema.ResourceData) {
-	n := d.Get("name").(string)
-	s := d.Get("schema_name").(string)
-	db := d.Get("database_name").(string)
-	q := fmt.Sprintf("%s.%s.%s", db, s, n)
-	d.Set("qualified_name", q)
-}
-
 func QuoteString(input string) (output string) {
 	output = "'" + strings.Replace(input, "'", "''", -1) + "'"
 	return
@@ -72,4 +64,15 @@ func QuoteString(input string) (output string) {
 func QuoteIdentifier(input string) (output string) {
 	output = `"` + strings.Replace(input, `"`, `""`, -1) + `"`
 	return
+}
+
+func QualifiedName(fields ...string) string {
+	var o []string
+	for _, f := range fields {
+		c := fmt.Sprintf(`"%v"`, f)
+		o = append(o, c)
+	}
+
+	q := strings.Join(o[:], ".")
+	return q
 }

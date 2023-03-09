@@ -156,6 +156,10 @@ type SinkKafkaBuilder struct {
 	snapshot                 bool
 }
 
+func (b *SinkKafkaBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.sinkName)
+}
+
 func newSinkKafkaBuilder(sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
 	return &SinkKafkaBuilder{
 		sinkName:     sinkName,
@@ -226,7 +230,7 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 
 func (b *SinkKafkaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SINK %s.%s.%s`, b.databaseName, b.schemaName, b.sinkName))
+	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
@@ -285,15 +289,16 @@ func (b *SinkKafkaBuilder) Create() string {
 }
 
 func (b *SinkKafkaBuilder) Rename(newName string) string {
-	return fmt.Sprintf(`ALTER SINK %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName, b.databaseName, b.schemaName, newName)
+	n := QualifiedName(b.databaseName, b.schemaName, newName)
+	return fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s.%s.%s SET (SIZE = '%s');`, b.databaseName, b.schemaName, b.sinkName, newSize)
+	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
 }
 
 func (b *SinkKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SINK %s.%s.%s;`, b.databaseName, b.schemaName, b.sinkName)
+	return fmt.Sprintf(`DROP SINK %s;`, b.qualifiedName())
 }
 
 func (b *SinkKafkaBuilder) ReadId() string {

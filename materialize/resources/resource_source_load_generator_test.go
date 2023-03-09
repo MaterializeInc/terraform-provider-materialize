@@ -31,7 +31,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -94,7 +94,7 @@ func TestResourceSourceLoadgenDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SOURCE database.schema.source;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SOURCE "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := sourceLoadgenDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -109,12 +109,12 @@ func TestSourceLoadgenCreateQuery(t *testing.T) {
 	bs := newSourceLoadgenBuilder("source", "schema", "database")
 	bs.Size("xsmall")
 	bs.LoadGeneratorType("COUNTER")
-	r.Equal(`CREATE SOURCE database.schema.source FROM LOAD GENERATOR COUNTER WITH (SIZE = 'xsmall');`, bs.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER WITH (SIZE = 'xsmall');`, bs.Create())
 
 	bc := newSourceLoadgenBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.LoadGeneratorType("COUNTER")
-	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM LOAD GENERATOR COUNTER;`, bc.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM LOAD GENERATOR COUNTER;`, bc.Create())
 }
 
 func TestSourceLoadgenCreateParamsQuery(t *testing.T) {
@@ -134,7 +134,7 @@ func TestSourceLoadgenCreateParamsQuery(t *testing.T) {
 			alias: "s2_table_1",
 		},
 	})
-	r.Equal(`CREATE SOURCE database.schema.source FROM LOAD GENERATOR TPCH (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestSourceLoadgenReadIdQuery(t *testing.T) {
@@ -160,19 +160,19 @@ func TestSourceLoadgenReadIdQuery(t *testing.T) {
 func TestSourceLoadgenRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourceLoadgenBuilder("source", "schema", "database")
-	r.Equal(`ALTER SOURCE database.schema.source RENAME TO database.schema.new_source;`, b.Rename("new_source"))
+	r.Equal(`ALTER SOURCE "database"."schema"."source" RENAME TO "database"."schema"."new_source";`, b.Rename("new_source"))
 }
 
 func TestSourceLoadgenResizeQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourceLoadgenBuilder("source", "schema", "database")
-	r.Equal(`ALTER SOURCE database.schema.source SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
+	r.Equal(`ALTER SOURCE "database"."schema"."source" SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
 }
 
 func TestSourceLoadgenDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourceLoadgenBuilder("source", "schema", "database")
-	r.Equal(`DROP SOURCE database.schema.source;`, b.Drop())
+	r.Equal(`DROP SOURCE "database"."schema"."source";`, b.Drop())
 }
 
 func TestSourceLoadgenReadParamsQuery(t *testing.T) {

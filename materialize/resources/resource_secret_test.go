@@ -25,7 +25,7 @@ func TestResourceSecretCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SECRET database.schema.secret AS 'value';`,
+			`CREATE SECRET "database"."schema"."secret" AS 'value';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -77,7 +77,7 @@ func TestResourceSecretDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SECRET database.schema.secret;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SECRET "database"."schema"."secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := secretDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -89,43 +89,43 @@ func TestResourceSecretDelete(t *testing.T) {
 func TestSecretCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET database.schema.secret AS 'c2VjcmV0Cg';`, b.Create(`c2VjcmV0Cg`))
+	r.Equal(`CREATE SECRET "database"."schema"."secret" AS 'c2VjcmV0Cg';`, b.Create(`c2VjcmV0Cg`))
 }
 
 func TestSecretCreateEmptyValueQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET database.schema.secret AS '';`, b.Create(``))
+	r.Equal(`CREATE SECRET "database"."schema"."secret" AS '';`, b.Create(``))
 }
 
 func TestSecretCreateEscapedValueQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET database.schema.secret AS 'c2Vjcm''V0Cg';`, b.Create(`c2Vjcm'V0Cg`))
+	r.Equal(`CREATE SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cg';`, b.Create(`c2Vjcm'V0Cg`))
 }
 
 func TestSecretRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET database.schema.secret RENAME TO database.schema.new_secret;`, b.Rename("new_secret"))
+	r.Equal(`ALTER SECRET "database"."schema"."secret" RENAME TO "database"."schema"."new_secret";`, b.Rename("new_secret"))
 }
 
 func TestSecretUpdateValueQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET database.schema.secret AS 'c2VjcmV0Cgdd';`, b.UpdateValue(`c2VjcmV0Cgdd`))
+	r.Equal(`ALTER SECRET "database"."schema"."secret" AS 'c2VjcmV0Cgdd';`, b.UpdateValue(`c2VjcmV0Cgdd`))
 }
 
 func TestSecretUpdateEscapedValueQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET database.schema.secret AS 'c2Vjcm''V0Cgdd';`, b.UpdateValue(`c2Vjcm'V0Cgdd`))
+	r.Equal(`ALTER SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cgdd';`, b.UpdateValue(`c2Vjcm'V0Cgdd`))
 }
 
 func TestSecretDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSecretBuilder("secret", "schema", "database")
-	r.Equal(`DROP SECRET database.schema.secret;`, b.Drop())
+	r.Equal(`DROP SECRET "database"."schema"."secret";`, b.Drop())
 }
 
 func TestSecretReadIdQuery(t *testing.T) {

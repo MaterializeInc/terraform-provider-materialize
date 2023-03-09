@@ -130,6 +130,10 @@ type SourcePostgresBuilder struct {
 	tables             []TablePostgres
 }
 
+func (b *SourcePostgresBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.sourceName)
+}
+
 func newSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
 	return &SourcePostgresBuilder{
 		sourceName:   sourceName,
@@ -170,7 +174,7 @@ func (b *SourcePostgresBuilder) Tables(t []TablePostgres) *SourcePostgresBuilder
 
 func (b *SourcePostgresBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s.%s.%s`, b.databaseName, b.schemaName, b.sourceName))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
@@ -213,15 +217,16 @@ func (b *SourcePostgresBuilder) Create() string {
 }
 
 func (b *SourcePostgresBuilder) Rename(newName string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName, b.databaseName, b.schemaName, newName)
+	n := QualifiedName(b.databaseName, b.schemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *SourcePostgresBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s.%s.%s SET (SIZE = '%s');`, b.databaseName, b.schemaName, b.sourceName, newSize)
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
 }
 
 func (b *SourcePostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s.%s.%s;`, b.databaseName, b.schemaName, b.sourceName)
+	return fmt.Sprintf(`DROP SOURCE %s;`, b.qualifiedName())
 }
 
 func (b *SourcePostgresBuilder) ReadId() string {

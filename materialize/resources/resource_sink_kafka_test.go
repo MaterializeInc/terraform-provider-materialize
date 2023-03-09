@@ -36,7 +36,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SINK database.schema.sink IN CLUSTER cluster FROM item INTO KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
+			`CREATE SINK "database"."schema"."sink" IN CLUSTER cluster FROM item INTO KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -99,7 +99,7 @@ func TestResourceSinkKafkaDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SINK database.schema.sink;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SINK "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := sinkKafkaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -114,13 +114,13 @@ func TestSinkKafkaCreateQuery(t *testing.T) {
 	bs := newSinkKafkaBuilder("sink", "schema", "database")
 	bs.Size("xsmall")
 	bs.ItemName("schema.table")
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" FROM schema.table WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
 
 	bc := newSinkKafkaBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.ItemName("schema.table")
 	bc.Snapshot(true)
-	r.Equal(`CREATE SINK database.schema.sink IN CLUSTER cluster FROM schema.table;`, bc.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" IN CLUSTER cluster FROM schema.table;`, bc.Create())
 }
 
 func TestSinkKafkaCreateParamsQuery(t *testing.T) {
@@ -135,7 +135,7 @@ func TestSinkKafkaCreateParamsQuery(t *testing.T) {
 	b.SchemaRegistryConnection("csr_connection")
 	b.Envelope("UPSERT")
 	b.Snapshot(false)
-	r.Equal(`CREATE SINK database.schema.sink FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
 }
 
 func TestSinkKafkaReadIdQuery(t *testing.T) {
@@ -161,19 +161,19 @@ func TestSinkKafkaReadIdQuery(t *testing.T) {
 func TestSinkKafkaRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSinkKafkaBuilder("sink", "schema", "database")
-	r.Equal(`ALTER SINK database.schema.sink RENAME TO database.schema.new_sink;`, b.Rename("new_sink"))
+	r.Equal(`ALTER SINK "database"."schema"."sink" RENAME TO "database"."schema"."new_sink";`, b.Rename("new_sink"))
 }
 
 func TestSinkKafkaResizeQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSinkKafkaBuilder("sink", "schema", "database")
-	r.Equal(`ALTER SINK database.schema.sink SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
+	r.Equal(`ALTER SINK "database"."schema"."sink" SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
 }
 
 func TestSinkKafkaDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSinkKafkaBuilder("sink", "schema", "database")
-	r.Equal(`DROP SINK database.schema.sink;`, b.Drop())
+	r.Equal(`DROP SINK "database"."schema"."sink";`, b.Drop())
 }
 
 func TestSinkKafkaReadParamsQuery(t *testing.T) {

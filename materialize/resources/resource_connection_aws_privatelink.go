@@ -79,6 +79,10 @@ type ConnectionAwsPrivatelinkBuilder struct {
 	privateLinkAvailabilityZones []string
 }
 
+func (b *ConnectionAwsPrivatelinkBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
+}
+
 func newConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName string) *ConnectionAwsPrivatelinkBuilder {
 	return &ConnectionAwsPrivatelinkBuilder{
 		connectionName: connectionName,
@@ -99,7 +103,7 @@ func (b *ConnectionAwsPrivatelinkBuilder) PrivateLinkAvailabilityZones(privateLi
 
 func (b *ConnectionAwsPrivatelinkBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s TO AWS PRIVATELINK (`, b.databaseName, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO AWS PRIVATELINK (`, b.qualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`SERVICE NAME '%s',`, b.privateLinkServiceName))
 	q.WriteString(fmt.Sprintf(`AVAILABILITY ZONES ('%s')`, strings.Join(b.privateLinkAvailabilityZones, "', '")))
@@ -109,11 +113,12 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() string {
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
+	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) ReadId() string {

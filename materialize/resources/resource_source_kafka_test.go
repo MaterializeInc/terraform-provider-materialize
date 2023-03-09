@@ -42,7 +42,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) KEY FORMAT AVRO VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn START TIMESTAMP 100 VALUE STRATEGY avro_key_fullname INCLUDE key, HEADERS, parition, offset, timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) KEY FORMAT AVRO VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn START TIMESTAMP 100 VALUE STRATEGY avro_key_fullname INCLUDE key, HEADERS, parition, offset, timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -105,7 +105,7 @@ func TestResourceSourceKafkaDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SOURCE database.schema.source;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP SOURCE "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := sourceKafkaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -122,14 +122,14 @@ func TestResourceSourceKafkaCreateQuery(t *testing.T) {
 	bs.KafkaConnection("kafka_connection")
 	bs.Topic("events")
 	bs.Format("TEXT")
-	r.Equal(`CREATE SOURCE database.schema.source FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT TEXT WITH (SIZE = 'xsmall');`, bs.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT TEXT WITH (SIZE = 'xsmall');`, bs.Create())
 
 	bc := newSourceKafkaBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.KafkaConnection("kafka_connection")
 	bc.Topic("events")
 	bc.Format("TEXT")
-	r.Equal(`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT TEXT;`, bc.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT TEXT;`, bc.Create())
 }
 
 func TestResourceSourceKafkaCreateParamsQuery(t *testing.T) {
@@ -145,7 +145,7 @@ func TestResourceSourceKafkaCreateParamsQuery(t *testing.T) {
 	b.IncludeTimestamp("TIMESTAMP")
 	b.SchemaRegistryConnection("csr_connection")
 	b.Envelope("UPSERT")
-	r.Equal(`CREATE SOURCE database.schema.source FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection INCLUDE KEY, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM KAFKA CONNECTION kafka_connection (TOPIC 'events') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection INCLUDE KEY, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestResourceSourceKafkaReadIdQuery(t *testing.T) {
@@ -171,19 +171,19 @@ func TestResourceSourceKafkaReadIdQuery(t *testing.T) {
 func TestResourceSourceKafkaRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourceKafkaBuilder("source", "schema", "database")
-	r.Equal(`ALTER SOURCE database.schema.source RENAME TO database.schema.new_source;`, b.Rename("new_source"))
+	r.Equal(`ALTER SOURCE "database"."schema"."source" RENAME TO "database"."schema"."new_source";`, b.Rename("new_source"))
 }
 
 func TestResourceSourceKafkaResizeQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourceKafkaBuilder("source", "schema", "database")
-	r.Equal(`ALTER SOURCE database.schema.source SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
+	r.Equal(`ALTER SOURCE "database"."schema"."source" SET (SIZE = 'xlarge');`, b.UpdateSize("xlarge"))
 }
 
 func TestResourceSourceKafkaDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSourceKafkaBuilder("source", "schema", "database")
-	r.Equal(`DROP SOURCE database.schema.source;`, b.Drop())
+	r.Equal(`DROP SOURCE "database"."schema"."source";`, b.Drop())
 }
 
 func TestResourceSourceKafkaReadParamsQuery(t *testing.T) {

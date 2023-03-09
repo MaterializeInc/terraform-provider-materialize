@@ -23,6 +23,11 @@ var schemaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Default:     "materialize",
 	},
+	"qualified_name": {
+		Description: "The fully qualified name of the schema.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 }
 
 func Schema() *schema.Resource {
@@ -46,6 +51,10 @@ type SchemaBuilder struct {
 	databaseName string
 }
 
+func (b *SchemaBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName)
+}
+
 func newSchemaBuilder(schemaName, databaseName string) *SchemaBuilder {
 	return &SchemaBuilder{
 		schemaName:   schemaName,
@@ -54,11 +63,11 @@ func newSchemaBuilder(schemaName, databaseName string) *SchemaBuilder {
 }
 
 func (b *SchemaBuilder) Create() string {
-	return fmt.Sprintf(`CREATE SCHEMA %s.%s;`, b.databaseName, b.schemaName)
+	return fmt.Sprintf(`CREATE SCHEMA %s;`, b.qualifiedName())
 }
 
 func (b *SchemaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SCHEMA %s.%s;`, b.databaseName, b.schemaName)
+	return fmt.Sprintf(`DROP SCHEMA %s;`, b.qualifiedName())
 }
 
 func (b *SchemaBuilder) ReadId() string {
@@ -98,6 +107,11 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	if err := d.Set("database_name", database_name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	qn := QualifiedName(database_name, name)
+	if err := d.Set("qualified_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -82,6 +82,10 @@ type ConnectionSshTunnelBuilder struct {
 	sshPort        int
 }
 
+func (b *ConnectionSshTunnelBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
+}
+
 func newConnectionSshTunnelBuilder(connectionName, schemaName, databaseName string) *ConnectionSshTunnelBuilder {
 	return &ConnectionSshTunnelBuilder{
 		connectionName: connectionName,
@@ -107,7 +111,7 @@ func (b *ConnectionSshTunnelBuilder) SSHPort(sshPort int) *ConnectionSshTunnelBu
 
 func (b *ConnectionSshTunnelBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s TO SSH TUNNEL (`, b.databaseName, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.qualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`HOST '%s', `, b.sshHost))
 	q.WriteString(fmt.Sprintf(`USER '%s', `, b.sshUser))
@@ -118,11 +122,12 @@ func (b *ConnectionSshTunnelBuilder) Create() string {
 }
 
 func (b *ConnectionSshTunnelBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
+	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *ConnectionSshTunnelBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
 }
 
 func (b *ConnectionSshTunnelBuilder) ReadId() string {

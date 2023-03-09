@@ -28,7 +28,7 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION database.schema.conn TO SSH TUNNEL \(HOST 'localhost', USER 'user', PORT 123\);`,
+			`CREATE CONNECTION "database"."schema"."conn" TO SSH TUNNEL \(HOST 'localhost', USER 'user', PORT 123\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -79,7 +79,7 @@ func TestResourceSshTunnelDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION database.schema.conn;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := connectionSshTunnelDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -107,13 +107,13 @@ func TestConnectionSshTunnelReadIdQuery(t *testing.T) {
 func TestConnectionSshTunnelRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionSshTunnelBuilder("connection", "schema", "database")
-	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
+	r.Equal(`ALTER CONNECTION "database"."schema"."connection" RENAME TO "database"."schema"."new_connection";`, b.Rename("new_connection"))
 }
 
 func TestConnectionSshTunnelDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionSshTunnelBuilder("connection", "schema", "database")
-	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
+	r.Equal(`DROP CONNECTION "database"."schema"."connection";`, b.Drop())
 }
 
 func TestConnectionSshTunnelReadParamsQuery(t *testing.T) {
@@ -140,6 +140,6 @@ func TestConnectionSshTunnelCreateQuery(t *testing.T) {
 	b.SSHHost("localhost")
 	b.SSHPort(123)
 	b.SSHUser("user")
-	r.Equal(`CREATE CONNECTION database.schema.ssh_conn TO SSH TUNNEL (HOST 'localhost', USER 'user', PORT 123);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."ssh_conn" TO SSH TUNNEL (HOST 'localhost', USER 'user', PORT 123);`, b.Create())
 
 }

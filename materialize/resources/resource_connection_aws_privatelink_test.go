@@ -26,7 +26,7 @@ func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION database.schema.conn TO AWS PRIVATELINK \(SERVICE NAME 'service',AVAILABILITY ZONES \('use1-az1', 'use1-az2'\)\)`,
+			`CREATE CONNECTION "database"."schema"."conn" TO AWS PRIVATELINK \(SERVICE NAME 'service',AVAILABILITY ZONES \('use1-az1', 'use1-az2'\)\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -77,7 +77,7 @@ func TestResourceAwsPrivatelinkDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION database.schema.conn;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := connectionAwsPrivatelinkDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -105,13 +105,13 @@ func TestConnectionAwsPrivatelinkReadIdQuery(t *testing.T) {
 func TestConnectionAwsPrivatelinkRenameQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionAwsPrivatelinkBuilder("connection", "schema", "database")
-	r.Equal(`ALTER CONNECTION database.schema.connection RENAME TO database.schema.new_connection;`, b.Rename("new_connection"))
+	r.Equal(`ALTER CONNECTION "database"."schema"."connection" RENAME TO "database"."schema"."new_connection";`, b.Rename("new_connection"))
 }
 
 func TestConnectionAwsPrivatelinkDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionAwsPrivatelinkBuilder("connection", "schema", "database")
-	r.Equal(`DROP CONNECTION database.schema.connection;`, b.Drop())
+	r.Equal(`DROP CONNECTION "database"."schema"."connection";`, b.Drop())
 }
 
 func TestConnectionAwsPrivatelinkReadParamsQuery(t *testing.T) {
@@ -137,5 +137,5 @@ func TestConnectionCreateAwsPrivateLinkQuery(t *testing.T) {
 	b := newConnectionAwsPrivatelinkBuilder("privatelink_conn", "schema", "database")
 	b.PrivateLinkServiceName("com.amazonaws.us-east-1.materialize.example")
 	b.PrivateLinkAvailabilityZones([]string{"use1-az1", "use1-az2"})
-	r.Equal(`CREATE CONNECTION database.schema.privatelink_conn TO AWS PRIVATELINK (SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES ('use1-az1', 'use1-az2'));`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."privatelink_conn" TO AWS PRIVATELINK (SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES ('use1-az1', 'use1-az2'));`, b.Create())
 }

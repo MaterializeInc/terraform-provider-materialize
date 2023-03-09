@@ -114,6 +114,10 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	confluentSchemaRegistryAWSPrivateLink string
 }
 
+func (b *ConnectionConfluentSchemaRegistryBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
+}
+
 func newConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName string) *ConnectionConfluentSchemaRegistryBuilder {
 	return &ConnectionConfluentSchemaRegistryBuilder{
 		connectionName: connectionName,
@@ -164,7 +168,7 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryAWSPri
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s TO CONFLUENT SCHEMA REGISTRY (`, b.databaseName, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.qualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
 	if b.confluentSchemaRegistryUsername != "" {
@@ -194,16 +198,16 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
+	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) ReadId() string {
 	return readConnectionId(b.connectionName, b.schemaName, b.databaseName)
-
 }
 
 func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

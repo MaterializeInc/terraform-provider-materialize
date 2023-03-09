@@ -132,6 +132,10 @@ type ConnectionPostgresBuilder struct {
 	postgresAWSPrivateLink string
 }
 
+func (b *ConnectionPostgresBuilder) qualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
+}
+
 func newConnectionPostgresBuilder(connectionName, schemaName, databaseName string) *ConnectionPostgresBuilder {
 	return &ConnectionPostgresBuilder{
 		connectionName: connectionName,
@@ -202,7 +206,7 @@ func (b *ConnectionPostgresBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLin
 
 func (b *ConnectionPostgresBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s.%s.%s TO POSTGRES (`, b.databaseName, b.schemaName, b.connectionName))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.qualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`HOST '%s'`, b.postgresHost))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
@@ -236,11 +240,12 @@ func (b *ConnectionPostgresBuilder) Create() string {
 }
 
 func (b *ConnectionPostgresBuilder) Rename(newConnectionName string) string {
-	return fmt.Sprintf(`ALTER CONNECTION %s.%s.%s RENAME TO %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName, b.databaseName, b.schemaName, newConnectionName)
+	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *ConnectionPostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s.%s.%s;`, b.databaseName, b.schemaName, b.connectionName)
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
 }
 
 func (b *ConnectionPostgresBuilder) ReadId() string {
