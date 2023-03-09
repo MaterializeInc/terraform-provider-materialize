@@ -19,11 +19,11 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 		"database_name":       "database",
 		"cluster_name":        "cluster",
 		"size":                "small",
-		"load_generator_type": "COUNTER",
+		"load_generator_type": "TPCH",
 		"tick_interval":       "1s",
 		"scale_factor":        0.5,
 		"max_cardinality":     true,
-		// "tables":              []interface{}{},
+		"tables":              []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
 	}
 	d := schema.TestResourceDataRaw(t, SourceLoadgen().Schema, in)
 	r.NotNil(d)
@@ -31,7 +31,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM LOAD GENERATOR COUNTER \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE database.schema.source IN CLUSTER cluster FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -124,7 +124,17 @@ func TestSourceLoadgenCreateParamsQuery(t *testing.T) {
 	b.LoadGeneratorType("TPCH")
 	b.TickInterval("1s")
 	b.ScaleFactor(0.01)
-	r.Equal(`CREATE SOURCE database.schema.source FROM LOAD GENERATOR TPCH (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR ALL TABLES WITH (SIZE = 'xsmall');`, b.Create())
+	b.Tables([]TableLoadgen{
+		{
+			name:  "schema1.table_1",
+			alias: "s1_table_1",
+		},
+		{
+			name:  "schema2.table_1",
+			alias: "s2_table_1",
+		},
+	})
+	r.Equal(`CREATE SOURCE database.schema.source FROM LOAD GENERATOR TPCH (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestSourceLoadgenReadIdQuery(t *testing.T) {

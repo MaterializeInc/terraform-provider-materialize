@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -81,11 +80,25 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"tables": {
-		Description: "Creates subsources for specific tables in the load generator.",
-		Type:        schema.TypeMap,
-		Elem:        &schema.Schema{Type: schema.TypeString},
-		Optional:    true,
-		ForceNew:    true,
+		Description: "Creates subsources for specific tables.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"name": {
+					Description: "The name of the table.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"alias": {
+					Description: "The alias of the table.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+			},
+		},
+		Optional: true,
+		MinItems: 1,
+		ForceNew: true,
 	},
 }
 
@@ -106,6 +119,11 @@ func SourceLoadgen() *schema.Resource {
 	}
 }
 
+type TableLoadgen struct {
+	name  string
+	alias string
+}
+
 type SourceLoadgenBuilder struct {
 	sourceName        string
 	schemaName        string
@@ -116,7 +134,7 @@ type SourceLoadgenBuilder struct {
 	tickInterval      string
 	scaleFactor       float64
 	maxCardinality    bool
-	tables            map[string]string
+	tables            []TableLoadgen
 }
 
 func newSourceLoadgenBuilder(sourceName, schemaName, databaseName string) *SourceLoadgenBuilder {
@@ -157,7 +175,7 @@ func (b *SourceLoadgenBuilder) MaxCardinality(m bool) *SourceLoadgenBuilder {
 	return b
 }
 
-func (b *SourceLoadgenBuilder) Tables(t map[string]string) *SourceLoadgenBuilder {
+func (b *SourceLoadgenBuilder) Tables(t []TableLoadgen) *SourceLoadgenBuilder {
 	b.tables = t
 	return b
 }
@@ -194,22 +212,19 @@ func (b *SourceLoadgenBuilder) Create() string {
 		}
 	}
 
-	var o []string
 	if b.loadGeneratorType == "COUNTER" {
-
+		// Tables do not apply to COUNTER
 	} else if len(b.tables) > 0 {
-		// Need to sort tables to ensure order for tests
-		var keys []string
-		for k := range b.tables {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
 
-		for _, k := range keys {
-			s := fmt.Sprintf(`%s AS %s`, k, b.tables[k])
-			o = append(o, s)
+		var tables []string
+		for _, t := range b.tables {
+			if t.alias == "" {
+				t.alias = t.name
+			}
+			s := fmt.Sprintf(`%s AS %s`, t.name, t.alias)
+			tables = append(tables, s)
 		}
-		o := strings.Join(o[:], ", ")
+		o := strings.Join(tables[:], ", ")
 		q.WriteString(fmt.Sprintf(` FOR TABLES (%s)`, o))
 	} else {
 		q.WriteString(` FOR ALL TABLES`)
@@ -273,7 +288,15 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	}
 
 	if v, ok := d.GetOk("tables"); ok {
-		builder.Tables(v.(map[string]string))
+		var tables []TableLoadgen
+		for _, table := range v.([]interface{}) {
+			t := table.(map[string]interface{})
+			tables = append(tables, TableLoadgen{
+				name:  t["name"].(string),
+				alias: t["alias"].(string),
+			})
+		}
+		builder.Tables(tables)
 	}
 
 	qc := builder.Create()
