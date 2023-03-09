@@ -13,7 +13,7 @@ var databaseSchema = map[string]*schema.Schema{
 	"name": {
 		Description: "The identifier for the database.",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 		ForceNew:    true,
 	},
 }
