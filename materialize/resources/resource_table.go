@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -15,7 +16,6 @@ var tableSchema = map[string]*schema.Schema{
 		Description: "The identifier for the table.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    true,
 	},
 	"schema_name": {
 		Description: "The identifier for the table schema.",
@@ -76,6 +76,7 @@ func Table() *schema.Resource {
 
 		CreateContext: tableCreate,
 		ReadContext:   tableRead,
+		UpdateContext: tableUpdate,
 		DeleteContext: tableDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -147,6 +148,11 @@ func (b *TableBuilder) Create() string {
 	p := strings.Join(columns[:], ", ")
 	q.WriteString(fmt.Sprintf(` (%s);`, p))
 	return q.String()
+}
+
+func (b *TableBuilder) Rename(newName string) string {
+	n := QualifiedName(b.databaseName, b.schemaName, newName)
+	return fmt.Sprintf(`ALTER TABLE %s RENAME TO %s;`, b.qualifiedName(), n)
 }
 
 func (b *TableBuilder) Drop() string {
@@ -240,6 +246,26 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if err := createResource(conn, d, qc, qr, "table"); err != nil {
 		return diag.FromErr(err)
 	}
+	return tableRead(ctx, d, meta)
+}
+
+func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	tableName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	if d.HasChange("name") {
+		_, newName := d.GetChange("name")
+
+		q := newSecretBuilder(tableName, schemaName, databaseName).Rename(newName.(string))
+
+		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not rename table: %s", q)
+			return diag.FromErr(err)
+		}
+	}
+
 	return tableRead(ctx, d, meta)
 }
 

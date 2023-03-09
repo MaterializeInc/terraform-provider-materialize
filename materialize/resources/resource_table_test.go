@@ -102,6 +102,12 @@ func TestTableCreateQuery(t *testing.T) {
 	r.Equal(`CREATE TEMPORARY TABLE "database"."schema"."table" (column_1 int, column_2 text NOT NULL);`, b.Create())
 }
 
+func TestTableRenameQuery(t *testing.T) {
+	r := require.New(t)
+	b := newSourceKafkaBuilder("table", "schema", "database")
+	r.Equal(`ALTER SOURCE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`, b.Rename("new_table"))
+}
+
 func TestTableDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newTableBuilder("table", "schema", "database")
