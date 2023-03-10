@@ -66,7 +66,7 @@ var viewSchema = map[string]*schema.Schema{
 
 func View() *schema.Resource {
 	return &schema.Resource{
-		Description: "A view persists in durable storage and can be written to, updated and seamlessly joined with other views, views or sources.",
+		Description: "A non-materialized view, provides an alias for the embedded SELECT statement.",
 
 		CreateContext: viewCreate,
 		ReadContext:   viewRead,
