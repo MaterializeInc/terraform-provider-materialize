@@ -45,6 +45,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Description: "The SQL statement to create the materialized view.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 }
 
