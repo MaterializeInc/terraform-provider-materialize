@@ -33,6 +33,7 @@ resource "materialize_schema" "example_schema" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `qualified_name` (String) The fully qualified name of the schema.
 
 ## Import
 

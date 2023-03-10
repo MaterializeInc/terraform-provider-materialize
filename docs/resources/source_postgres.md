@@ -46,13 +46,14 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `database_name` (String) The identifier for the source database.
 - `schema_name` (String) The identifier for the source schema.
 - `size` (String) The size of the source.
-- `tables` (Block List) Creates subsources for specific tables in the load generator. (see [below for nested schema](#nestedblock--tables))
+- `tables` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--tables))
 - `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the source.
+- `source_type` (String) The type of source.
 
 <a id="nestedblock--tables"></a>
 ### Nested Schema for `tables`

@@ -44,13 +44,25 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `scale_factor` (Number) The scale factor for the TPCH generator. Defaults to 0.01 (~ 10MB).
 - `schema_name` (String) The identifier for the source schema.
 - `size` (String) The size of the source.
-- `tables` (Map of String) Creates subsources for specific tables in the load generator.
+- `tables` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--tables))
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the source.
+- `source_type` (String) The type of source.
+
+<a id="nestedblock--tables"></a>
+### Nested Schema for `tables`
+
+Required:
+
+- `name` (String) The name of the table.
+
+Optional:
+
+- `alias` (String) The alias of the table.
 
 ## Import
 
