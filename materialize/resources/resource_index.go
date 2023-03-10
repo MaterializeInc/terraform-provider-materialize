@@ -19,6 +19,21 @@ var indexSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ExactlyOneOf: []string{"name", "default"},
 	},
+	"schema_name": {
+		Description: "The identifier for the index schema.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
+	"database_name": {
+		Description: "The identifier for the index database.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
+	"qualified_name": {
+		Description: "The fully qualified name of the index.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"default": {
 		Description:  "Creates a default index using a set of columns that uniquely identify each row. If this set of columns can’t be inferred, all columns are used.",
 		Type:         schema.TypeBool,
@@ -98,6 +113,10 @@ type IndexBuilder struct {
 	colExpr      []IndexColumn
 }
 
+func (b *IndexBuilder) qualifiedName(databaseName, schemaName string) string {
+	return QualifiedName(databaseName, schemaName, b.indexName)
+}
+
 func newIndexBuilder(indexName string) *IndexBuilder {
 	return &IndexBuilder{
 		indexName: indexName,
@@ -162,8 +181,8 @@ func (b *IndexBuilder) Create() string {
 	return q.String()
 }
 
-func (b *IndexBuilder) Drop() string {
-	return fmt.Sprintf(`DROP INDEX %s;`, b.indexName)
+func (b *IndexBuilder) Drop(databaseName, schemaName string) string {
+	return fmt.Sprintf(`DROP INDEX %s RESTRICT;`, b.qualifiedName(databaseName, schemaName))
 }
 
 func (b *IndexBuilder) ReadId() string {
@@ -171,7 +190,19 @@ func (b *IndexBuilder) ReadId() string {
 }
 
 func readIndexParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_indexes WHERE id = '%s';", id)
+	return fmt.Sprintf(`
+		SELECT 
+			mz_indexes.name,
+			mz_schemas.name,
+			mz_databases.name
+		FROM mz_indexes
+		JOIN mz_sources
+			ON mz_indexes.on_id = mz_sources.id
+		JOIN mz_schemas
+			ON mz_sources.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		WHERE mz_indexes.id = '%s';`, id)
 }
 
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -179,14 +210,27 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	i := d.Id()
 	q := readIndexParams(i)
 
-	var name string
-	if err := conn.QueryRowx(q).Scan(&name); err != nil {
+	var name, schema, database string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
 	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", schema); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	qn := QualifiedName(database, schema, name)
+	if err := d.Set("qualified_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -239,8 +283,10 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	indexName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
 
-	q := newIndexBuilder(indexName).Drop()
+	q := newIndexBuilder(indexName).Drop(databaseName, schemaName)
 
 	if err := dropResource(conn, d, q, "index"); err != nil {
 		return diag.FromErr(err)

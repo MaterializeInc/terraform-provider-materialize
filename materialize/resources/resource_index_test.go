@@ -18,5 +18,5 @@ func TestIndexCreateQuery(t *testing.T) {
 func TestIndexDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newIndexBuilder("index")
-	r.Equal(`DROP INDEX index;`, b.Drop())
+	r.Equal(`DROP INDEX "database"."schema"."index" RESTRICT;`, b.Drop("database", "schema"))
 }
