@@ -17,7 +17,6 @@ func TestResourceViewCreate(t *testing.T) {
 		"name":          "view",
 		"schema_name":   "schema",
 		"database_name": "database",
-		"temporary":     true,
 		"select_stmt":   "SELECT 1 FROM 1",
 	}
 	d := schema.TestResourceDataRaw(t, View().Schema, in)
@@ -25,7 +24,7 @@ func TestResourceViewCreate(t *testing.T) {
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE TEMPORARY VIEW "database"."schema"."view" AS SELECT 1 FROM 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE VIEW "database"."schema"."view" AS SELECT 1 FROM 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
@@ -87,17 +86,8 @@ func TestResourceViewDelete(t *testing.T) {
 func TestViewCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newViewBuilder("view", "schema", "database")
-	b.OrReplace()
 	b.SelectStmt("SELECT 1 FROM t1")
-	r.Equal(`CREATE OR REPLACE VIEW "database"."schema"."view" AS SELECT 1 FROM t1;`, b.Create())
-}
-
-func TestViewCreateQueryIfNotExist(t *testing.T) {
-	r := require.New(t)
-	b := newViewBuilder("view", "schema", "database")
-	b.IfNotExists()
-	b.SelectStmt("SELECT 1 FROM t1")
-	r.Equal(`CREATE VIEW IF NOT EXISTS "database"."schema"."view" AS SELECT 1 FROM t1;`, b.Create())
+	r.Equal(`CREATE VIEW "database"."schema"."view" AS SELECT 1 FROM t1;`, b.Create())
 }
 
 func TestViewRenameQuery(t *testing.T) {

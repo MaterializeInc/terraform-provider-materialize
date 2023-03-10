@@ -10,9 +10,6 @@ FROM
     ${materialize_table.simple_table.qualified_name}
 SQL
 
-  temporary = true
-  if_not_exists = true
-
   depends_on = [materialize_table.simple_table]
 }
 
@@ -22,6 +19,4 @@ resource "materialize_view" "simple_view" {
   database_name = materialize_database.database.name
 
   select_stmt = "SELECT * FROM materialize.public.simple_table"
-
-  or_replace = true
 }

@@ -8,5 +8,4 @@ SELECT
     1 AS id
 SQL
 
-  or_replace = true
 }

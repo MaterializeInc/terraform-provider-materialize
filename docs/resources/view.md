@@ -3,12 +3,12 @@
 page_title: "materialize_view Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A view persists in durable storage and can be written to, updated and seamlessly joined with other views, views or sources.
+  A non-materialized view, provides an alias for the embedded SELECT statement.
 ---
 
 # materialize_view (Resource)
 
-A view persists in durable storage and can be written to, updated and seamlessly joined with other views, views or sources.
+A non-materialized view, provides an alias for the embedded SELECT statement.
 
 ## Example Usage
 
@@ -25,9 +25,6 @@ FROM
     ${materialize_table.simple_table.qualified_name}
 SQL
 
-  temporary = true
-  if_not_exists = true
-
   depends_on = [materialize_table.simple_table]
 }
 
@@ -37,8 +34,6 @@ resource "materialize_view" "simple_view" {
   database_name = materialize_database.database.name
 
   select_stmt = "SELECT * FROM materialize.public.simple_table"
-
-  or_replace = true
 }
 ```
 
@@ -53,10 +48,7 @@ resource "materialize_view" "simple_view" {
 ### Optional
 
 - `database_name` (String) The identifier for the view database.
-- `if_not_exists` (Boolean) If specified, do not generate an error if a view of the same name already exists.
-- `or_replace` (Boolean) If specified, replace the view if it already exists.
 - `schema_name` (String) The identifier for the view schema.
-- `temporary` (Boolean) Mark the view as temporary.
 
 ### Read-Only
 

@@ -36,31 +36,11 @@ var viewSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
-	"temporary": {
-		Description:   "Mark the view as temporary.",
-		Type:          schema.TypeBool,
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"or_replace"},
-	},
-	"if_not_exists": {
-		Description:   "If specified, do not generate an error if a view of the same name already exists.",
-		Type:          schema.TypeBool,
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"or_replace"},
-	},
-	"or_replace": {
-		Description:   "If specified, replace the view if it already exists.",
-		Type:          schema.TypeBool,
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"if_not_exists", "temporary"},
-	},
 	"select_stmt": {
 		Description: "The SQL statement to create the view.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 }
 
@@ -85,9 +65,6 @@ type ViewBuilder struct {
 	viewName     string
 	schemaName   string
 	databaseName string
-	temporary    bool
-	ifNotExists  bool
-	orReplace    bool
 	selectStmt   string
 }
 
@@ -103,21 +80,6 @@ func newViewBuilder(viewName, schemaName, databaseName string) *ViewBuilder {
 	}
 }
 
-func (b *ViewBuilder) Temporary() *ViewBuilder {
-	b.temporary = true
-	return b
-}
-
-func (b *ViewBuilder) IfNotExists() *ViewBuilder {
-	b.ifNotExists = true
-	return b
-}
-
-func (b *ViewBuilder) OrReplace() *ViewBuilder {
-	b.orReplace = true
-	return b
-}
-
 func (b *ViewBuilder) SelectStmt(selectStmt string) *ViewBuilder {
 	b.selectStmt = selectStmt
 	return b
@@ -127,21 +89,7 @@ func (b *ViewBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(`CREATE`)
 
-	if b.orReplace {
-		q.WriteString(` OR REPLACE`)
-	}
-
-	if b.temporary {
-		q.WriteString(` TEMPORARY`)
-	}
-
-	q.WriteString(` VIEW `)
-
-	if b.ifNotExists {
-		q.WriteString(`IF NOT EXISTS `)
-	}
-
-	q.WriteString(b.qualifiedName())
+	q.WriteString(fmt.Sprintf(` VIEW %s`, b.qualifiedName()))
 
 	q.WriteString(` AS `)
 
@@ -224,18 +172,6 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	databaseName := d.Get("database_name").(string)
 
 	builder := newViewBuilder(viewName, schemaName, databaseName)
-
-	if v, ok := d.GetOk("temporary"); ok && v.(bool) {
-		builder.Temporary()
-	}
-
-	if v, ok := d.GetOk("if_not_exists"); ok && v.(bool) {
-		builder.IfNotExists()
-	}
-
-	if v, ok := d.GetOk("or_replace"); ok && v.(bool) {
-		builder.OrReplace()
-	}
 
 	if v, ok := d.GetOk("select_stmt"); ok && v.(string) != "" {
 		builder.SelectStmt(v.(string))
