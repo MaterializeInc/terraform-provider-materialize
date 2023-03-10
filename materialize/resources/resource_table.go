@@ -36,12 +36,6 @@ var tableSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
-	"temporary": {
-		Description: "Mark the table as temporary.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
-	},
 	"columns": {
 		Description: "Columns of the table.",
 		Type:        schema.TypeList,
@@ -59,8 +53,8 @@ var tableSchema = map[string]*schema.Schema{
 				},
 				"not_null": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:        schema.TypeBool,
-					Optional:    true,
+					Type:     schema.TypeBool,
+					Optional: true,
 				},
 			},
 		},
@@ -97,7 +91,6 @@ type TableBuilder struct {
 	tableName    string
 	schemaName   string
 	databaseName string
-	temporary    bool
 	columns      []TableColumn
 }
 
@@ -113,11 +106,6 @@ func newTableBuilder(tableName, schemaName, databaseName string) *TableBuilder {
 	}
 }
 
-func (b *TableBuilder) Temporary() *TableBuilder {
-	b.temporary = true
-	return b
-}
-
 func (b *TableBuilder) Columns(c []TableColumn) *TableBuilder {
 	b.columns = c
 	return b
@@ -126,10 +114,6 @@ func (b *TableBuilder) Columns(c []TableColumn) *TableBuilder {
 func (b *TableBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(`CREATE`)
-
-	if b.temporary {
-		q.WriteString(` TEMPORARY`)
-	}
 
 	q.WriteString(fmt.Sprintf(` TABLE %s`, b.qualifiedName()))
 
@@ -222,10 +206,6 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	databaseName := d.Get("database_name").(string)
 
 	builder := newTableBuilder(tableName, schemaName, databaseName)
-
-	if v, ok := d.GetOk("temporary"); ok && v.(bool) {
-		builder.Temporary()
-	}
 
 	if v, ok := d.GetOk("columns"); ok {
 		var columns []TableColumn
