@@ -64,6 +64,7 @@ func Provider() *schema.Provider {
 			"materialize_connection_postgres":                  resources.ConnectionPostgres(),
 			"materialize_connection_ssh_tunnel":                resources.ConnectionSshTunnel(),
 			"materialize_database":                             resources.Database(),
+			"materialize_index":                                resources.Index(),
 			"materialize_schema":                               resources.Schema(),
 			"materialize_secret":                               resources.Secret(),
 			"materialize_sink_kafka":                           resources.SinkKafka(),
