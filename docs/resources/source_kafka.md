@@ -64,6 +64,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the source.
+- `source_type` (String) The type of source.
 
 ## Import
 

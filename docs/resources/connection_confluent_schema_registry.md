@@ -50,6 +50,7 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 
 ### Read-Only
 
+- `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the connection.
 

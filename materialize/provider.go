@@ -71,6 +71,7 @@ func Provider() *schema.Provider {
 			"materialize_source_load_generator":                resources.SourceLoadgen(),
 			"materialize_source_postgres":                      resources.SourcePostgres(),
 			"materialize_table":                                resources.Table(),
+			"materialize_view":                                 resources.View(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":          datasources.Cluster(),
@@ -84,6 +85,7 @@ func Provider() *schema.Provider {
 			"materialize_sink":             datasources.Sink(),
 			"materialize_source":           datasources.Source(),
 			"materialize_table":            datasources.Table(),
+			"materialize_view":             datasources.View(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

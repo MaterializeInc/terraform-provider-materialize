@@ -61,6 +61,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the sink.
+- `sink_type` (String) The type of sink.
 
 ## Import
 
