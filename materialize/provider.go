@@ -70,6 +70,7 @@ func Provider() *schema.Provider {
 			"materialize_source_kafka":                         resources.SourceKafka(),
 			"materialize_source_load_generator":                resources.SourceLoadgen(),
 			"materialize_source_postgres":                      resources.SourcePostgres(),
+			"materialize_table":                                resources.Table(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":          datasources.Cluster(),
@@ -82,6 +83,7 @@ func Provider() *schema.Provider {
 			"materialize_secret":           datasources.Secret(),
 			"materialize_sink":             datasources.Sink(),
 			"materialize_source":           datasources.Source(),
+			"materialize_table":            datasources.Table(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
