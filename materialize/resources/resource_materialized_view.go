@@ -37,7 +37,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"in_cluster": {
-		Description: "The cluster to maintain this materialized view.",
+		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
@@ -98,21 +98,14 @@ func (b *MaterializedViewBuilder) SelectStmt(selectStmt string) *MaterializedVie
 
 func (b *MaterializedViewBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(`CREATE`)
 
-	q.WriteString(fmt.Sprintf(` MATERIALIZED VIEW %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE MATERIALIZED VIEW %s`, b.qualifiedName()))
 
 	if b.inCluster != "" {
-		q.WriteString(` IN CLUSTER `)
-		q.WriteString(b.inCluster)
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.inCluster))
 	}
 
-	q.WriteString(` AS `)
-
-	q.WriteString(b.selectStmt)
-
-	q.WriteString(`;`)
-
+	q.WriteString(fmt.Sprintf(` AS %s;`, b.selectStmt))
 	return q.String()
 }
 
