@@ -41,7 +41,7 @@ func TestMaterializedViewDatabaseQuery(t *testing.T) {
 		WHERE mz_databases.name = 'database';`, b)
 }
 
-func TestViewSchemaDatabaseQuery(t *testing.T) {
+func TestMaterializedViewSchemaDatabaseQuery(t *testing.T) {
 	r := require.New(t)
 	b := materializedViewQuery("database", "schema")
 	r.Equal(`
