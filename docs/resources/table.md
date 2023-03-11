@@ -24,7 +24,6 @@ A table persists in durable storage and can be written to, updated and seamlessl
 - `columns` (Block List) Columns of the table. (see [below for nested schema](#nestedblock--columns))
 - `database_name` (String) The identifier for the table database.
 - `schema_name` (String) The identifier for the table schema.
-- `temporary` (Boolean) Mark the table as temporary.
 
 ### Read-Only
 

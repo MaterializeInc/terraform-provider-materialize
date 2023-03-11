@@ -17,7 +17,6 @@ func TestResourceTableCreate(t *testing.T) {
 		"name":          "table",
 		"schema_name":   "schema",
 		"database_name": "database",
-		"temporary":     true,
 		"columns":       []interface{}{map[string]interface{}{"col_name": "column", "col_type": "text", "not_null": true}},
 	}
 	d := schema.TestResourceDataRaw(t, Table().Schema, in)
@@ -25,7 +24,7 @@ func TestResourceTableCreate(t *testing.T) {
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE TEMPORARY TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
@@ -87,7 +86,6 @@ func TestResourceTableDelete(t *testing.T) {
 func TestTableCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newTableBuilder("table", "schema", "database")
-	b.Temporary()
 	b.Columns([]TableColumn{
 		{
 			colName: "column_1",
@@ -99,7 +97,7 @@ func TestTableCreateQuery(t *testing.T) {
 			notNull: true,
 		},
 	})
-	r.Equal(`CREATE TEMPORARY TABLE "database"."schema"."table" (column_1 int, column_2 text NOT NULL);`, b.Create())
+	r.Equal(`CREATE TABLE "database"."schema"."table" (column_1 int, column_2 text NOT NULL);`, b.Create())
 }
 
 func TestTableRenameQuery(t *testing.T) {
