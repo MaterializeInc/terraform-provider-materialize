@@ -79,8 +79,7 @@ func newSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilde
 }
 
 func (b *SecretBuilder) Create(value string) string {
-	escapedValue := QuoteString(value)
-	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.qualifiedName(), escapedValue)
+	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.qualifiedName(), QuoteString(value))
 }
 
 func (b *SecretBuilder) Rename(newName string) string {
@@ -89,8 +88,7 @@ func (b *SecretBuilder) Rename(newName string) string {
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
-	escapedValue := QuoteString(newValue)
-	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.qualifiedName(), escapedValue)
+	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.qualifiedName(), QuoteString(newValue))
 }
 
 func (b *SecretBuilder) Drop() string {

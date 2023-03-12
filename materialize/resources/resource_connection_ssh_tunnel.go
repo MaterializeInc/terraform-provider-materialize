@@ -113,8 +113,8 @@ func (b *ConnectionSshTunnelBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.qualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`HOST '%s', `, b.sshHost))
-	q.WriteString(fmt.Sprintf(`USER '%s', `, b.sshUser))
+	q.WriteString(fmt.Sprintf(`HOST %s, `, QuoteString(b.sshHost)))
+	q.WriteString(fmt.Sprintf(`USER %s, `, QuoteString(b.sshUser)))
 	q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
 
 	q.WriteString(`);`)

@@ -69,7 +69,7 @@ func QuoteIdentifier(input string) (output string) {
 func QualifiedName(fields ...string) string {
 	var o []string
 	for _, f := range fields {
-		c := fmt.Sprintf(`"%v"`, f)
+		c := fmt.Sprintf(`%v`, QuoteIdentifier(f))
 		o = append(o, c)
 	}
 

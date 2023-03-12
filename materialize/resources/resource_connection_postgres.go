@@ -208,17 +208,17 @@ func (b *ConnectionPostgresBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.qualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`HOST '%s'`, b.postgresHost))
+	q.WriteString(fmt.Sprintf(`HOST %s`, QuoteString(b.postgresHost)))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
-	q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser))
+	q.WriteString(fmt.Sprintf(`, USER %s`, QuoteString(b.postgresUser)))
 	if b.postgresPassword != "" {
 		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
 	}
 	if b.postgresSSLMode != "" {
-		q.WriteString(fmt.Sprintf(`, SSL MODE '%s'`, b.postgresSSLMode))
+		q.WriteString(fmt.Sprintf(`, SSL MODE %s`, QuoteString(b.postgresSSLMode)))
 	}
 	if b.postgresSSHTunnel != "" {
-		q.WriteString(fmt.Sprintf(`, SSH TUNNEL '%s'`, b.postgresSSHTunnel))
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QuoteString(b.postgresSSHTunnel)))
 	}
 	if b.postgresSSLCa != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa))
@@ -233,7 +233,7 @@ func (b *ConnectionPostgresBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.postgresAWSPrivateLink))
 	}
 
-	q.WriteString(fmt.Sprintf(`, DATABASE '%s'`, b.postgresDatabase))
+	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.postgresDatabase)))
 
 	q.WriteString(`);`)
 	return q.String()

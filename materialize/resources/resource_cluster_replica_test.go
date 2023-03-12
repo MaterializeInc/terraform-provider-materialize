@@ -28,7 +28,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CLUSTER REPLICA cluster.replica SIZE = 'small', AVAILABILITY ZONE = 'use1-az1', INTROSPECTION INTERVAL = '10s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 100;`,
+			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'small', AVAILABILITY ZONE = 'use1-az1', INTROSPECTION INTERVAL = '10s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 100;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -74,7 +74,7 @@ func TestResourceClusterReplicaDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CLUSTER REPLICA cluster.replica;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CLUSTER REPLICA "cluster"."replica";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := clusterReplicaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -86,28 +86,28 @@ func TestResourceClusterReplicaDelete(t *testing.T) {
 func TestClusterReplicaCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newClusterReplicaBuilder("replica", "cluster")
-	r.Equal(`CREATE CLUSTER REPLICA cluster.replica;`, b.Create())
+	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica";`, b.Create())
 
 	b.Size("xsmall")
-	r.Equal(`CREATE CLUSTER REPLICA cluster.replica SIZE = 'xsmall';`, b.Create())
+	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall';`, b.Create())
 
 	b.AvailabilityZone("us-east-1")
-	r.Equal(`CREATE CLUSTER REPLICA cluster.replica SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1';`, b.Create())
+	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1';`, b.Create())
 
 	b.IntrospectionInterval("1s")
-	r.Equal(`CREATE CLUSTER REPLICA cluster.replica SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s';`, b.Create())
+	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s';`, b.Create())
 
 	b.IntrospectionDebugging()
-	r.Equal(`CREATE CLUSTER REPLICA cluster.replica SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE;`, b.Create())
+	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE;`, b.Create())
 
 	b.IdleArrangementMergeEffort(1)
-	r.Equal(`CREATE CLUSTER REPLICA cluster.replica SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`, b.Create())
+	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`, b.Create())
 }
 
 func TestClusterReplicaDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newClusterReplicaBuilder("replica", "cluster")
-	r.Equal(`DROP CLUSTER REPLICA cluster.replica;`, b.Drop())
+	r.Equal(`DROP CLUSTER REPLICA "cluster"."replica";`, b.Drop())
 }
 
 func TestClusterReplicaReadQuery(t *testing.T) {
