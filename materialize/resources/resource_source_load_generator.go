@@ -198,7 +198,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 	if b.tickInterval != "" || b.scaleFactor != 0 || b.maxCardinality {
 		var p []string
 		if b.tickInterval != "" {
-			t := fmt.Sprintf(`TICK INTERVAL '%s'`, b.tickInterval)
+			t := fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(b.tickInterval))
 			p = append(p, t)
 		}
 
@@ -236,7 +236,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 	}
 
 	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = '%s')`, b.size))
+		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
 	}
 
 	q.WriteString(`;`)
@@ -249,7 +249,7 @@ func (b *SourceLoadgenBuilder) Rename(newName string) string {
 }
 
 func (b *SourceLoadgenBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourceLoadgenBuilder) Drop() string {

@@ -250,7 +250,7 @@ func (b *SinkKafkaBuilder) Create() string {
 	}
 
 	if b.topic != "" {
-		q.WriteString(fmt.Sprintf(` (TOPIC '%s')`, b.topic))
+		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
 	}
 
 	if b.format != "" {
@@ -275,7 +275,7 @@ func (b *SinkKafkaBuilder) Create() string {
 		w := strings.Builder{}
 
 		if b.size != "" {
-			w.WriteString(fmt.Sprintf(` SIZE = '%s'`, b.size))
+			w.WriteString(fmt.Sprintf(` SIZE = %s`, QuoteString(b.size)))
 		}
 
 		if !b.snapshot {
@@ -295,7 +295,7 @@ func (b *SinkKafkaBuilder) Rename(newName string) string {
 }
 
 func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
+	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
 }
 
 func (b *SinkKafkaBuilder) Drop() string {

@@ -120,21 +120,21 @@ func (b *ClusterReplicaBuilder) IdleArrangementMergeEffort(e int) *ClusterReplic
 
 func (b *ClusterReplicaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s.%s`, b.clusterName, b.replicaName))
+	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s.%s`, QuoteIdentifier(b.clusterName), QuoteIdentifier(b.replicaName)))
 
 	var p []string
 	if b.size != "" {
-		s := fmt.Sprintf(` SIZE = '%s'`, b.size)
+		s := fmt.Sprintf(` SIZE = %s`, QuoteString(b.size))
 		p = append(p, s)
 	}
 
 	if b.availabilityZone != "" {
-		a := fmt.Sprintf(` AVAILABILITY ZONE = '%s'`, b.availabilityZone)
+		a := fmt.Sprintf(` AVAILABILITY ZONE = %s`, QuoteString(b.availabilityZone))
 		p = append(p, a)
 	}
 
 	if b.introspectionInterval != "" {
-		i := fmt.Sprintf(` INTROSPECTION INTERVAL = '%s'`, b.introspectionInterval)
+		i := fmt.Sprintf(` INTROSPECTION INTERVAL = %s`, QuoteString(b.introspectionInterval))
 		p = append(p, i)
 	}
 
@@ -157,7 +157,7 @@ func (b *ClusterReplicaBuilder) Create() string {
 }
 
 func (b *ClusterReplicaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
+	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, QuoteIdentifier(b.clusterName), QuoteIdentifier(b.replicaName))
 }
 
 func (b *ClusterReplicaBuilder) ReadId() string {

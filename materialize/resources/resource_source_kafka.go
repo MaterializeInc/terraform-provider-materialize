@@ -310,7 +310,7 @@ func (b *SourceKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC '%s')`, b.kafkaConnection, b.topic))
+	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC %s)`, b.kafkaConnection, QuoteString(b.topic)))
 
 	// Format
 	if b.keyFormat != "" {
@@ -381,7 +381,7 @@ func (b *SourceKafkaBuilder) Create() string {
 	}
 
 	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = '%s')`, b.size))
+		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
 	}
 
 	q.WriteString(`;`)
@@ -394,7 +394,7 @@ func (b *SourceKafkaBuilder) Rename(newName string) string {
 }
 
 func (b *SourceKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourceKafkaBuilder) Drop() string {

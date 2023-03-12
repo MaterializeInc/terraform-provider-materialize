@@ -46,19 +46,19 @@ func newClusterBuilder(clusterName string) *ClusterBuilder {
 
 func (b *ClusterBuilder) Create() string {
 	// Only create empty clusters, manage replicas with separate resource
-	return fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, b.clusterName)
+	return fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, QuoteIdentifier(b.clusterName))
 }
 
 func (b *ClusterBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER %s;`, b.clusterName)
+	return fmt.Sprintf(`DROP CLUSTER %s;`, QuoteIdentifier(b.clusterName))
 }
 
 func (b *ClusterBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_clusters WHERE name = '%s';`, b.clusterName)
+	return fmt.Sprintf(`SELECT id FROM mz_clusters WHERE name = %s;`, QuoteString(b.clusterName))
 }
 
 func readClusterParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_clusters WHERE id = '%s';", id)
+	return fmt.Sprintf("SELECT name FROM mz_clusters WHERE id = %s;", QuoteString(id))
 }
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

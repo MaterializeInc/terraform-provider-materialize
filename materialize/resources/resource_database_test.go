@@ -22,7 +22,7 @@ func TestResourceDatabaseCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE DATABASE database;`,
+			`CREATE DATABASE "database";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -51,7 +51,7 @@ func TestResourceDatabaseDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP DATABASE database;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP DATABASE "database";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := databaseDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -69,13 +69,13 @@ func TestDatabaseReadIdQuery(t *testing.T) {
 func TestDatabaseCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newDatabaseBuilder("database")
-	r.Equal(`CREATE DATABASE database;`, b.Create())
+	r.Equal(`CREATE DATABASE "database";`, b.Create())
 }
 
 func TestDatabaseDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newDatabaseBuilder("database")
-	r.Equal(`DROP DATABASE database;`, b.Drop())
+	r.Equal(`DROP DATABASE "database";`, b.Drop())
 }
 
 func TestDatabaseReadParamsQuery(t *testing.T) {

@@ -157,16 +157,23 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.qualifiedName()))
 
+<<<<<<< HEAD
 	q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
 	if b.confluentSchemaRegistryUsername.Text != "" {
 		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername.Text)))
 	}
 	if b.confluentSchemaRegistryUsername.Secret != "" {
 		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, b.confluentSchemaRegistryUsername.Secret))
+=======
+	q.WriteString(fmt.Sprintf(`URL %s`, QuoteString(b.confluentSchemaRegistryUrl)))
+	if b.confluentSchemaRegistryUsername != "" {
+		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername)))
+>>>>>>> 3255e2c (Escape all identifiers and values)
 	}
 	if b.confluentSchemaRegistryPassword != "" {
 		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword))
 	}
+<<<<<<< HEAD
 	if b.confluentSchemaRegistrySSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa.Text)))
 	}
@@ -181,6 +188,16 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	}
 	if b.confluentSchemaRegistrySSLKey != "" {
 		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.confluentSchemaRegistrySSLKey))
+=======
+	if b.confluentSchemaRegistrySSLCa != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa)))
+	}
+	if b.confluentSchemaRegistrySSLCert != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.confluentSchemaRegistrySSLCert)))
+	}
+	if b.confluentSchemaRegistrySSLKey != "" {
+		q.WriteString(fmt.Sprintf(`, SSL KEY = %s`, QuoteString(b.confluentSchemaRegistrySSLKey)))
+>>>>>>> 3255e2c (Escape all identifiers and values)
 	}
 	if b.confluentSchemaRegistryAWSPrivateLink != "" {
 		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.confluentSchemaRegistryAWSPrivateLink))
