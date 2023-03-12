@@ -170,21 +170,21 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.qualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
+	q.WriteString(fmt.Sprintf(`URL %s`, QuoteString(b.confluentSchemaRegistryUrl)))
 	if b.confluentSchemaRegistryUsername != "" {
-		q.WriteString(fmt.Sprintf(`, USERNAME = '%s'`, b.confluentSchemaRegistryUsername))
+		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername)))
 	}
 	if b.confluentSchemaRegistryPassword != "" {
 		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword))
 	}
 	if b.confluentSchemaRegistrySSLCa != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, b.confluentSchemaRegistrySSLCa))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa)))
 	}
 	if b.confluentSchemaRegistrySSLCert != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, b.confluentSchemaRegistrySSLCert))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.confluentSchemaRegistrySSLCert)))
 	}
 	if b.confluentSchemaRegistrySSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = %s`, b.confluentSchemaRegistrySSLKey))
+		q.WriteString(fmt.Sprintf(`, SSL KEY = %s`, QuoteString(b.confluentSchemaRegistrySSLKey)))
 	}
 	if b.confluentSchemaRegistryAWSPrivateLink != "" {
 		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.confluentSchemaRegistryAWSPrivateLink))

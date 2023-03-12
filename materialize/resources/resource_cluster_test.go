@@ -19,7 +19,7 @@ func TestResourceClusterCreate(t *testing.T) {
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE CLUSTER cluster REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
@@ -46,7 +46,7 @@ func TestResourceClusterDelete(t *testing.T) {
 	r.NotNil(d)
 
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CLUSTER cluster;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CLUSTER "cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := clusterDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -58,13 +58,13 @@ func TestResourceClusterDelete(t *testing.T) {
 func TestClusterCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := newClusterBuilder("cluster")
-	r.Equal(`CREATE CLUSTER cluster REPLICAS ();`, b.Create())
+	r.Equal(`CREATE CLUSTER "cluster" REPLICAS ();`, b.Create())
 }
 
 func TestClusterDropQuery(t *testing.T) {
 	r := require.New(t)
 	b := newClusterBuilder("cluster")
-	r.Equal(`DROP CLUSTER cluster;`, b.Drop())
+	r.Equal(`DROP CLUSTER "cluster";`, b.Drop())
 }
 
 func TestClusterReadIdQuery(t *testing.T) {

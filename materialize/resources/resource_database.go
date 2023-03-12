@@ -45,19 +45,19 @@ func newDatabaseBuilder(databaseName string) *DatabaseBuilder {
 }
 
 func (b *DatabaseBuilder) Create() string {
-	return fmt.Sprintf(`CREATE DATABASE %s;`, b.databaseName)
+	return fmt.Sprintf(`CREATE DATABASE %s;`, QuoteIdentifier(b.databaseName))
 }
 
 func (b *DatabaseBuilder) Drop() string {
-	return fmt.Sprintf(`DROP DATABASE %s;`, b.databaseName)
+	return fmt.Sprintf(`DROP DATABASE %s;`, QuoteIdentifier(b.databaseName))
 }
 
 func (b *DatabaseBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_databases WHERE name = '%s';`, b.databaseName)
+	return fmt.Sprintf(`SELECT id FROM mz_databases WHERE name = %s;`, QuoteString(b.databaseName))
 }
 
 func readDatabaseParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_databases WHERE id = '%s';", id)
+	return fmt.Sprintf("SELECT name FROM mz_databases WHERE id = %s;", QuoteString(id))
 }
 
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

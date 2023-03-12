@@ -183,7 +183,7 @@ func (b *SourcePostgresBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, b.postgresConnection))
 
 	// Publication
-	p := fmt.Sprintf(`PUBLICATION '%s'`, b.publication)
+	p := fmt.Sprintf(`PUBLICATION %s`, QuoteString(b.publication))
 
 	if len(b.textColumns) > 0 {
 		s := strings.Join(b.textColumns, ", ")
@@ -209,7 +209,7 @@ func (b *SourcePostgresBuilder) Create() string {
 	}
 
 	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = '%s')`, b.size))
+		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
 	}
 
 	q.WriteString(`;`)
@@ -222,7 +222,7 @@ func (b *SourcePostgresBuilder) Rename(newName string) string {
 }
 
 func (b *SourcePostgresBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourcePostgresBuilder) Drop() string {

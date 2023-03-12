@@ -219,7 +219,7 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	if b.kafkaSSHTunnel != "" {
 		q.WriteString(`BROKERS (`)
 		for i, broker := range b.kafkaBrokers {
-			q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
+			q.WriteString(fmt.Sprintf(`%s USING SSH TUNNEL %s`, QuoteString(broker.Broker), b.kafkaSSHTunnel))
 			if i < len(b.kafkaBrokers)-1 {
 				q.WriteString(`,`)
 			}
@@ -229,12 +229,12 @@ func (b *ConnectionKafkaBuilder) Create() string {
 		q.WriteString(`BROKERS (`)
 		for i, broker := range b.kafkaBrokers {
 			if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
-				q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
+				q.WriteString(fmt.Sprintf(`%s USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE %s)`, QuoteString(broker.Broker), broker.PrivateLinkConnection, broker.TargetGroupPort, QuoteString(broker.AvailabilityZone)))
 				if i < len(b.kafkaBrokers)-1 {
 					q.WriteString(`, `)
 				}
 			} else {
-				q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
+				q.WriteString(fmt.Sprintf(`%s`, QuoteString(broker.Broker)))
 				if i < len(b.kafkaBrokers)-1 {
 					q.WriteString(`, `)
 				}
@@ -244,7 +244,7 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	}
 
 	if b.kafkaProgressTopic != "" {
-		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
+		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC %s`, QuoteString(b.kafkaProgressTopic)))
 	}
 	if b.kafkaSSLCa != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa))
@@ -256,10 +256,10 @@ func (b *ConnectionKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.kafkaSSLKey))
 	}
 	if b.kafkaSASLMechanisms != "" {
-		q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = '%s'`, b.kafkaSASLMechanisms))
+		q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = %s`, QuoteString(b.kafkaSASLMechanisms)))
 	}
 	if b.kafkaSASLUsername != "" {
-		q.WriteString(fmt.Sprintf(`, SASL USERNAME = '%s'`, b.kafkaSASLUsername))
+		q.WriteString(fmt.Sprintf(`, SASL USERNAME = %s`, QuoteString(b.kafkaSASLUsername)))
 	}
 	if b.kafkaSASLPassword != "" {
 		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword))
