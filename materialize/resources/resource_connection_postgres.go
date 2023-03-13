@@ -56,9 +56,16 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Default:     5432,
 	},
 	"user": {
-		Description: "The Postgres database username.",
-		Type:        schema.TypeString,
-		Required:    true,
+		Description:   "The Postgres database username.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"user_secret"},
+	},
+	"user_secret": {
+		Description:   "The Postgres database username secret.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"user"},
 	},
 	"password": {
 		Description: "The Postgres database password.",
@@ -123,6 +130,7 @@ type ConnectionPostgresBuilder struct {
 	postgresHost           string
 	postgresPort           int
 	postgresUser           string
+	postgresUserSecret     string
 	postgresPassword       string
 	postgresSSHTunnel      string
 	postgresSSLCa          string
@@ -169,6 +177,11 @@ func (b *ConnectionPostgresBuilder) PostgresUser(postgresUser string) *Connectio
 	return b
 }
 
+func (b *ConnectionPostgresBuilder) PostgresUserSecret(postgresUserSecret string) *ConnectionPostgresBuilder {
+	b.postgresUserSecret = postgresUserSecret
+	return b
+}
+
 func (b *ConnectionPostgresBuilder) PostgresPassword(postgresPassword string) *ConnectionPostgresBuilder {
 	b.postgresPassword = postgresPassword
 	return b
@@ -210,7 +223,12 @@ func (b *ConnectionPostgresBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(`HOST '%s'`, b.postgresHost))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
-	q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser))
+	if b.postgresUser != "" {
+		q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser))
+	}
+	if b.postgresUserSecret != "" {
+		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, b.postgresUserSecret))
+	}
 	if b.postgresPassword != "" {
 		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
 	}
@@ -276,6 +294,10 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	if v, ok := d.GetOk("user"); ok {
 		builder.PostgresUser(v.(string))
+	}
+
+	if v, ok := d.GetOk("user_secret"); ok {
+		builder.PostgresUserSecret(v.(string))
 	}
 
 	if v, ok := d.GetOk("password"); ok {
