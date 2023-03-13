@@ -21,7 +21,7 @@ func TestResourceKafkaCreate(t *testing.T) {
 		"kafka_broker":              []interface{}{map[string]interface{}{"broker": "b-1.hostname-1:9096", "target_group_port": 9001, "availability_zone": "use1-az1", "privatelink_conn": "privatelink_conn"}},
 		"progress_topic":            "topic",
 		"ssl_certificate_authority": "key",
-		"ssl_certificate":           "cert",
+		"ssl_certificate_secret":    "cert",
 		"ssl_key":                   "key",
 		"sasl_mechanisms":           "PLAIN",
 		"sasl_username":             "username",
@@ -34,7 +34,7 @@ func TestResourceKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING SSH TUNNEL tunnel\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET key, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key, SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'username', SASL PASSWORD = SECRET password\);`,
+			`CREATE CONNECTION "database"."schema"."conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING SSH TUNNEL tunnel\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = 'key', SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key, SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'username', SASL PASSWORD = SECRET password\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -235,8 +235,8 @@ func TestConnectionCreateKafkaSslQuery(t *testing.T) {
 	})
 	b.KafkaProgressTopic("topic")
 	b.KafkaSSLKey("key")
-	b.KafkaSSLCert("cert")
-	b.KafkaSSLCa("ca")
+	b.KafkaSSLCertSecret("cert")
+	b.KafkaSSLCaSecret("ca")
 	r.Equal(`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA (BROKERS ('localhost:9092'), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET ca, SSL CERTIFICATE = SECRET cert, SSL KEY = SECRET key);`, b.Create())
 }
 
