@@ -56,16 +56,27 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Default:     5432,
 	},
 	"user": {
-		Description:   "The Postgres database username.",
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"user_secret"},
-	},
-	"user_secret": {
-		Description:   "The Postgres database username secret.",
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"user"},
+		Description: "The Postgres database username.",
+		Type:        schema.TypeList,
+		Required:    true,
+		MaxItems:    1,
+		MinItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"text": {
+					Description:   "The Postgres database username.",
+					Type:          schema.TypeString,
+					Optional:      true,
+					ConflictsWith: []string{"user.0.secret"},
+				},
+				"secret": {
+					Description:   "The Postgres database username secret.",
+					Type:          schema.TypeString,
+					Optional:      true,
+					ConflictsWith: []string{"user.0.text"},
+				},
+			},
+		},
 	},
 	"password": {
 		Description: "The Postgres database password.",
@@ -129,8 +140,7 @@ type ConnectionPostgresBuilder struct {
 	postgresDatabase       string
 	postgresHost           string
 	postgresPort           int
-	postgresUser           string
-	postgresUserSecret     string
+	postgresUser           ValueSecretStruct
 	postgresPassword       string
 	postgresSSHTunnel      string
 	postgresSSLCa          string
@@ -172,13 +182,8 @@ func (b *ConnectionPostgresBuilder) PostgresPort(postgresPort int) *ConnectionPo
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresUser(postgresUser string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresUser(postgresUser ValueSecretStruct) *ConnectionPostgresBuilder {
 	b.postgresUser = postgresUser
-	return b
-}
-
-func (b *ConnectionPostgresBuilder) PostgresUserSecret(postgresUserSecret string) *ConnectionPostgresBuilder {
-	b.postgresUserSecret = postgresUserSecret
 	return b
 }
 
@@ -223,11 +228,11 @@ func (b *ConnectionPostgresBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(`HOST '%s'`, b.postgresHost))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
-	if b.postgresUser != "" {
-		q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser))
+	if b.postgresUser.Text != "" {
+		q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser.Text))
 	}
-	if b.postgresUserSecret != "" {
-		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, b.postgresUserSecret))
+	if b.postgresUser.Secret != "" {
+		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, b.postgresUser.Secret))
 	}
 	if b.postgresPassword != "" {
 		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
@@ -293,11 +298,15 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if v, ok := d.GetOk("user"); ok {
-		builder.PostgresUser(v.(string))
-	}
-
-	if v, ok := d.GetOk("user_secret"); ok {
-		builder.PostgresUserSecret(v.(string))
+		var user ValueSecretStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["text"]; ok {
+			user.Text = v.(string)
+		}
+		if v, ok := u["secret"]; ok {
+			user.Secret = v.(string)
+		}
+		builder.PostgresUser(user)
 	}
 
 	if v, ok := d.GetOk("password"); ok {

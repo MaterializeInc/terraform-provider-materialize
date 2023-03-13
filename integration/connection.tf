@@ -33,10 +33,23 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
-  name     = "postgres_connection"
-  host     = "postgres"
-  port     = 5432
-  user     = "postgres"
+  name = "postgres_connection"
+  host = "postgres"
+  port = 5432
+  user {
+    text = "postgres"
+  }
+  password = materialize_secret.postgres_password.qualified_name
+  database = "postgres"
+}
+
+resource "materialize_connection_postgres" "postgres_connection_with_secret" {
+  name = "postgres_connection_with_secret"
+  host = "postgres"
+  port = 5432
+  user {
+    secret = materialize_secret.postgres_password.qualified_name
+  }
   password = materialize_secret.postgres_password.qualified_name
   database = "postgres"
 }

@@ -73,3 +73,8 @@ func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	return nil
 }
+
+type ValueSecretStruct struct {
+	Text   string
+	Secret string
+}
