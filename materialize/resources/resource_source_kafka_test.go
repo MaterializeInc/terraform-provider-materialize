@@ -34,7 +34,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		"value_strategy":             "avro_key_fullname",
 		// "primary_key":                []interface{}{"key_1", "key_2", "key_3"},
 		// "start_offset":               []interface{}{1, 2, 3},
-		"start_timestamp": 100,
+		"start_timestamp": -1000,
 	}
 	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, in)
 	r.NotNil(d)
@@ -42,7 +42,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) KEY FORMAT AVRO VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn START TIMESTAMP 100 VALUE STRATEGY avro_key_fullname INCLUDE key, HEADERS, parition, offset, timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) KEY FORMAT AVRO VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn START TIMESTAMP -1000 VALUE STRATEGY avro_key_fullname INCLUDE key, HEADERS, parition, offset, timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
