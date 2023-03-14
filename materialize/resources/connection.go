@@ -79,7 +79,7 @@ type ValueSecretStruct struct {
 	Secret string
 }
 
-func secretStringSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
+func ValueSecretSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{

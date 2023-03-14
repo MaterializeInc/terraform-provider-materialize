@@ -18,7 +18,9 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
   name     = "example_csr_connection"
   url      = "https://rp-f00000bar.data.vectorized.cloud:30993"
   password = "example"
-  username = "example"
+  username {
+    text = "example"
+  }
 }
 
 # CREATE CONNECTION example_csr_connection TO CONFLUENT SCHEMA REGISTRY (
@@ -43,16 +45,42 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 - `password` (String) The password for the Confluent Schema Registry.
 - `schema_name` (String) The identifier for the connection schema.
 - `ssh_tunnel` (String) The SSH tunnel configuration for the Confluent Schema Registry.
-- `ssl_certificate` (String) The client certificate for the Confluent Schema Registry.
-- `ssl_certificate_authority` (String) The CA certificate for the Confluent Schema Registry.
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (String) The client key for the Confluent Schema Registry.
-- `username` (String) The username for the Confluent Schema Registry.
+- `username` (Block List, Max: 1) The username for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--username))
 
 ### Read-Only
 
 - `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the connection.
+
+<a id="nestedblock--ssl_certificate"></a>
+### Nested Schema for `ssl_certificate`
+
+Optional:
+
+- `secret` (String) The ssl_certificate text value.
+- `text` (String) The ssl_certificate text value.
+
+
+<a id="nestedblock--ssl_certificate_authority"></a>
+### Nested Schema for `ssl_certificate_authority`
+
+Optional:
+
+- `secret` (String) The ssl_certificate_authority text value.
+- `text` (String) The ssl_certificate_authority text value.
+
+
+<a id="nestedblock--username"></a>
+### Nested Schema for `username`
+
+Optional:
+
+- `secret` (String) The username text value.
+- `text` (String) The username text value.
 
 ## Import
 

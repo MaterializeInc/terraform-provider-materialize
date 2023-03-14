@@ -20,7 +20,9 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
     broker = "b-1.hostname-1:9096"
   }
   sasl_username   = "example"
-  sasl_password   = "kafka_password"
+  sasl_password   {
+    text = "kafka_password"
+  }
   sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic  = "example"
 }
@@ -71,11 +73,11 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
 - `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
 - `sasl_password` (String) The SASL password for the Kafka broker.
-- `sasl_username` (String) The SASL username for the Kafka broker.
+- `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_username))
 - `schema_name` (String) The identifier for the connection schema.
 - `ssh_tunnel` (String) The SSH tunnel configuration for the Kafka broker.
-- `ssl_certificate` (String) The client certificate for the Kafka broker.
-- `ssl_certificate_authority` (String) The CA certificate for the Kafka broker.
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (String) The client key for the Kafka broker.
 
 ### Read-Only
@@ -96,6 +98,33 @@ Optional:
 - `availability_zone` (String) The availability zone of the Kafka broker.
 - `privatelink_connection` (String) The AWS PrivateLink connection name in Materialize.
 - `target_group_port` (Number) The port of the target group associated with the Kafka broker.
+
+
+<a id="nestedblock--sasl_username"></a>
+### Nested Schema for `sasl_username`
+
+Optional:
+
+- `secret` (String) The sasl_username text value.
+- `text` (String) The sasl_username text value.
+
+
+<a id="nestedblock--ssl_certificate"></a>
+### Nested Schema for `ssl_certificate`
+
+Optional:
+
+- `secret` (String) The ssl_certificate text value.
+- `text` (String) The ssl_certificate text value.
+
+
+<a id="nestedblock--ssl_certificate_authority"></a>
+### Nested Schema for `ssl_certificate_authority`
+
+Optional:
+
+- `secret` (String) The ssl_certificate_authority text value.
+- `text` (String) The ssl_certificate_authority text value.
 
 ## Import
 

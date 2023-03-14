@@ -55,7 +55,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     5432,
 	},
-	"user": secretStringSchema("user", "The Postgres database username.", true, false),
+	"user": ValueSecretSchema("user", "The Postgres database username.", true, false),
 	"password": {
 		Description: "The Postgres database password.",
 		Type:        schema.TypeString,
@@ -66,8 +66,8 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_certificate_authority": secretStringSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false, true),
-	"ssl_certificate":           secretStringSchema("ssl_certificate", "The client certificate for the Postgres database.", false, true),
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false, true),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Postgres database.", false, true),
 	"ssl_key": {
 		Description: "The client key for the Postgres database.",
 		Type:        schema.TypeString,

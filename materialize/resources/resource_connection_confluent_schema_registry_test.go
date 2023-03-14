@@ -14,18 +14,18 @@ func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"name":                             "conn",
-		"schema_name":                      "schema",
-		"database_name":                    "database",
-		"service_name":                     "service",
-		"url":                              "http://localhost:8081",
-		"ssl_certificate_authority_secret": "ssl",
-		"ssl_certificate_secret":           "ssl",
-		"ssl_key":                          "ssl",
-		"password":                         "password",
-		"username":                         "user",
-		"ssh_tunnel":                       "tunnel",
-		"aws_privatelink":                  "privatelink",
+		"name":                      "conn",
+		"schema_name":               "schema",
+		"database_name":             "database",
+		"service_name":              "service",
+		"url":                       "http://localhost:8081",
+		"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": "ssl"}},
+		"ssl_certificate":           []interface{}{map[string]interface{}{"secret": "ssl"}},
+		"ssl_key":                   "ssl",
+		"password":                  "password",
+		"username":                  []interface{}{map[string]interface{}{"text": "user"}},
+		"ssh_tunnel":                "tunnel",
+		"aws_privatelink":           "privatelink",
 	}
 	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, in)
 	r.NotNil(d)
@@ -142,7 +142,7 @@ func TestConnectionCreateConfluentSchemaRegistryQuery(t *testing.T) {
 	r := require.New(t)
 	b := newConnectionConfluentSchemaRegistryBuilder("csr_conn", "schema", "database")
 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
-	b.ConfluentSchemaRegistryUsername("user")
+	b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Text: "user"})
 	b.ConfluentSchemaRegistryPassword("password")
 	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
 }
@@ -151,7 +151,7 @@ func TestConnectionCreateConfluentSchemaRegistryQueryUsernameSecret(t *testing.T
 	r := require.New(t)
 	b := newConnectionConfluentSchemaRegistryBuilder("csr_conn", "schema", "database")
 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
-	b.ConfluentSchemaRegistryUsernameSecret("user")
+	b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Secret: "user"})
 	b.ConfluentSchemaRegistryPassword("password")
 	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = SECRET user, PASSWORD = SECRET password);`, b.Create())
 }

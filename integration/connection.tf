@@ -26,7 +26,9 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   kafka_broker {
     broker = "kafka2:9092"
   }
-  sasl_username   = "sasl_user"
+  sasl_username {
+    text = "sasl_user"
+  }
   sasl_password   = materialize_secret.kafka_password.qualified_name
   sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic  = "progress_topic"
