@@ -178,10 +178,10 @@ func (b *SourcePostgresBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, b.postgresConnection))
+	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, QuoteIdentifier(b.postgresConnection)))
 
 	// Publication
 	p := fmt.Sprintf(`PUBLICATION %s`, QuoteString(b.publication))

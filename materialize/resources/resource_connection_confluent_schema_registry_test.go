@@ -33,11 +33,7 @@ func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-<<<<<<< HEAD
-			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password, SSL CERTIFICATE AUTHORITY = SECRET ssl, SSL CERTIFICATE = SECRET ssl, SSL KEY = SECRET ssl, AWS PRIVATELINK privatelink, SSH TUNNEL tunnel\)`,
-=======
-			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password, SSL CERTIFICATE AUTHORITY = 'ssl', SSL CERTIFICATE = 'ssl', SSL KEY = 'ssl', AWS PRIVATELINK privatelink, SSH TUNNEL tunnel\)`,
->>>>>>> 3255e2c (Escape all identifiers and values)
+			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "password", SSL CERTIFICATE AUTHORITY = SECRET "ssl", SSL CERTIFICATE = SECRET "ssl", SSL KEY = SECRET "ssl", AWS PRIVATELINK "privatelink", SSH TUNNEL "tunnel"\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -148,7 +144,7 @@ func TestConnectionCreateConfluentSchemaRegistryQuery(t *testing.T) {
 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
 	b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Text: "user"})
 	b.ConfluentSchemaRegistryPassword("password")
-	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "password");`, b.Create())
 }
 
 func TestConnectionCreateConfluentSchemaRegistryQueryUsernameSecret(t *testing.T) {
@@ -157,5 +153,5 @@ func TestConnectionCreateConfluentSchemaRegistryQueryUsernameSecret(t *testing.T
 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
 	b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Secret: "user"})
 	b.ConfluentSchemaRegistryPassword("password")
-	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = SECRET user, PASSWORD = SECRET password);`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = SECRET "user", PASSWORD = SECRET "password");`, b.Create())
 }

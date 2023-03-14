@@ -307,10 +307,10 @@ func (b *SourceKafkaBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC %s)`, b.kafkaConnection, QuoteString(b.topic)))
+	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC %s)`, QuoteIdentifier(b.kafkaConnection), QuoteString(b.topic)))
 
 	// Format
 	if b.keyFormat != "" {
@@ -320,7 +320,7 @@ func (b *SourceKafkaBuilder) Create() string {
 	}
 
 	if b.schemaRegistryConnection != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection))
+		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteIdentifier(b.schemaRegistryConnection)))
 	}
 
 	// Key Constraint

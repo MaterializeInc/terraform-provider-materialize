@@ -157,53 +157,36 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.qualifiedName()))
 
-<<<<<<< HEAD
 	q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
 	if b.confluentSchemaRegistryUsername.Text != "" {
 		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername.Text)))
 	}
 	if b.confluentSchemaRegistryUsername.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, b.confluentSchemaRegistryUsername.Secret))
-=======
-	q.WriteString(fmt.Sprintf(`URL %s`, QuoteString(b.confluentSchemaRegistryUrl)))
-	if b.confluentSchemaRegistryUsername != "" {
-		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername)))
->>>>>>> 3255e2c (Escape all identifiers and values)
+		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, QuoteIdentifier(b.confluentSchemaRegistryUsername.Secret)))
 	}
 	if b.confluentSchemaRegistryPassword != "" {
-		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword))
+		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, QuoteIdentifier(b.confluentSchemaRegistryPassword)))
 	}
-<<<<<<< HEAD
 	if b.confluentSchemaRegistrySSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa.Text)))
 	}
 	if b.confluentSchemaRegistrySSLCa.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.confluentSchemaRegistrySSLCa.Secret))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, QuoteIdentifier(b.confluentSchemaRegistrySSLCa.Secret)))
 	}
 	if b.confluentSchemaRegistrySSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.confluentSchemaRegistrySSLCert.Text)))
 	}
 	if b.confluentSchemaRegistrySSLCert.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.confluentSchemaRegistrySSLCert.Secret))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, QuoteIdentifier(b.confluentSchemaRegistrySSLCert.Secret)))
 	}
 	if b.confluentSchemaRegistrySSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.confluentSchemaRegistrySSLKey))
-=======
-	if b.confluentSchemaRegistrySSLCa != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa)))
-	}
-	if b.confluentSchemaRegistrySSLCert != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.confluentSchemaRegistrySSLCert)))
-	}
-	if b.confluentSchemaRegistrySSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = %s`, QuoteString(b.confluentSchemaRegistrySSLKey)))
->>>>>>> 3255e2c (Escape all identifiers and values)
+		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, QuoteIdentifier(b.confluentSchemaRegistrySSLKey)))
 	}
 	if b.confluentSchemaRegistryAWSPrivateLink != "" {
-		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.confluentSchemaRegistryAWSPrivateLink))
+		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, QuoteIdentifier(b.confluentSchemaRegistryAWSPrivateLink)))
 	}
 	if b.confluentSchemaRegistrySSHTunnel != "" {
-		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, b.confluentSchemaRegistrySSHTunnel))
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QuoteIdentifier(b.confluentSchemaRegistrySSHTunnel)))
 	}
 
 	q.WriteString(`);`)

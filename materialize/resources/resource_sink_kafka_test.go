@@ -20,7 +20,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		"cluster_name":     "cluster",
 		"size":             "small",
 		"item_name":        "item",
-		"kafka_connection": "kafka_conn",
+		"kafka_connection": "public.kafka_conn",
 		"topic":            "topic",
 		// "key":                        []interface{}{"key_1", "key_2"},
 		"format":                     "AVRO",
@@ -36,7 +36,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SINK "database"."schema"."sink" IN CLUSTER cluster FROM item INTO KAFKA CONNECTION kafka_conn \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_conn WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
+			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "item" INTO KAFKA CONNECTION "public"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "csr_conn" WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -114,13 +114,13 @@ func TestSinkKafkaCreateQuery(t *testing.T) {
 	bs := newSinkKafkaBuilder("sink", "schema", "database")
 	bs.Size("xsmall")
 	bs.ItemName("schema.table")
-	r.Equal(`CREATE SINK "database"."schema"."sink" FROM schema.table WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "schema"."table" WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
 
 	bc := newSinkKafkaBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.ItemName("schema.table")
 	bc.Snapshot(true)
-	r.Equal(`CREATE SINK "database"."schema"."sink" IN CLUSTER cluster FROM schema.table;`, bc.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "schema"."table";`, bc.Create())
 }
 
 func TestSinkKafkaCreateParamsQuery(t *testing.T) {
@@ -135,7 +135,7 @@ func TestSinkKafkaCreateParamsQuery(t *testing.T) {
 	b.SchemaRegistryConnection("csr_connection")
 	b.Envelope("UPSERT")
 	b.Snapshot(false)
-	r.Equal(`CREATE SINK "database"."schema"."sink" FROM schema.table INTO KAFKA CONNECTION kafka_connection KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "schema"."table" INTO KAFKA CONNECTION "kafka_connection" KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "csr_connection" ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
 }
 
 func TestSinkKafkaReadIdQuery(t *testing.T) {

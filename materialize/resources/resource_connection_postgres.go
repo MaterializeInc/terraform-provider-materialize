@@ -198,42 +198,38 @@ func (b *ConnectionPostgresBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(`HOST %s`, QuoteString(b.postgresHost)))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
-<<<<<<< HEAD
 	if b.postgresUser.Text != "" {
-		q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser.Text))
+		q.WriteString(fmt.Sprintf(`, USER %s`, QuoteString(b.postgresUser.Text)))
 	}
 	if b.postgresUser.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, b.postgresUser.Secret))
+		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, QuoteIdentifier(b.postgresUser.Secret)))
 	}
-=======
-	q.WriteString(fmt.Sprintf(`, USER %s`, QuoteString(b.postgresUser)))
->>>>>>> 3255e2c (Escape all identifiers and values)
 	if b.postgresPassword != "" {
-		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
+		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, QuoteIdentifier(b.postgresPassword)))
 	}
 	if b.postgresSSLMode != "" {
 		q.WriteString(fmt.Sprintf(`, SSL MODE %s`, QuoteString(b.postgresSSLMode)))
 	}
 	if b.postgresSSHTunnel != "" {
-		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QuoteString(b.postgresSSHTunnel)))
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QuoteIdentifier(b.postgresSSHTunnel)))
 	}
 	if b.postgresSSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY %s`, QuoteString(b.postgresSSLCa.Text)))
 	}
 	if b.postgresSSLCa.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa.Secret))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, QuoteIdentifier(b.postgresSSLCa.Secret)))
 	}
 	if b.postgresSSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE  %s`, QuoteString(b.postgresSSLCert.Text)))
 	}
 	if b.postgresSSLCert.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.postgresSSLCert.Secret))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, QuoteIdentifier(b.postgresSSLCert.Secret)))
 	}
 	if b.postgresSSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.postgresSSLKey))
+		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, QuoteIdentifier(b.postgresSSLKey)))
 	}
 	if b.postgresAWSPrivateLink != "" {
-		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.postgresAWSPrivateLink))
+		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, QuoteIdentifier(b.postgresAWSPrivateLink)))
 	}
 
 	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.postgresDatabase)))

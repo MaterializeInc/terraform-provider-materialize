@@ -190,7 +190,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
 	q.WriteString(fmt.Sprintf(` FROM LOAD GENERATOR %s`, b.loadGeneratorType))

@@ -76,7 +76,7 @@ func (b *SchemaBuilder) ReadId() string {
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';	
+		AND mz_databases.name = '%s';
 	`, b.schemaName, b.databaseName)
 }
 

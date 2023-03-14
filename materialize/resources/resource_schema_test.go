@@ -83,7 +83,7 @@ func TestSchemaReadIdQuery(t *testing.T) {
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_schemas.name = 'schema'
-		AND mz_databases.name = 'database';	
+		AND mz_databases.name = 'database';
 	`, b.ReadId())
 }
 

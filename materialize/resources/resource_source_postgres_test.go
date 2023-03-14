@@ -30,7 +30,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection \(PUBLICATION 'mz_source'\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "pg_connection" \(PUBLICATION 'mz_source'\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -109,13 +109,13 @@ func TestSourcePostgresCreateQuery(t *testing.T) {
 	bs.Size("xsmall")
 	bs.PostgresConnection("pg_connection")
 	bs.Publication("mz_source")
-	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES WITH (SIZE = 'xsmall');`, bs.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION "pg_connection" (PUBLICATION 'mz_source') FOR ALL TABLES WITH (SIZE = 'xsmall');`, bs.Create())
 
 	bc := newSourcePostgresBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.PostgresConnection("pg_connection")
 	bc.Publication("mz_source")
-	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source') FOR ALL TABLES;`, bc.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "pg_connection" (PUBLICATION 'mz_source') FOR ALL TABLES;`, bc.Create())
 }
 
 func TestSourcePostgresCreateParamsQuery(t *testing.T) {
@@ -135,7 +135,7 @@ func TestSourcePostgresCreateParamsQuery(t *testing.T) {
 			alias: "s2_table_1",
 		},
 	})
-	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION pg_connection (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION "pg_connection" (PUBLICATION 'mz_source', TEXT COLUMNS (table.unsupported_type_1, table.unsupported_type_2)) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestSourcePostgresReadIdQuery(t *testing.T) {

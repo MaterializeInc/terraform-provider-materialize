@@ -35,7 +35,7 @@ func TestResourcePostgresCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER SECRET user, PASSWORD SECRET password, SSL MODE 'verify-full', SSH TUNNEL 'ssh_conn', SSL CERTIFICATE AUTHORITY SECRET root, SSL CERTIFICATE SECRET cert, SSL KEY SECRET key, AWS PRIVATELINK link, DATABASE 'default'\);`,
+			`CREATE CONNECTION "database"."schema"."conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER SECRET "user", PASSWORD SECRET "password", SSL MODE 'verify-full', SSH TUNNEL "ssh_conn", SSL CERTIFICATE AUTHORITY SECRET "root", SSL CERTIFICATE SECRET "cert", SSL KEY SECRET "key", AWS PRIVATELINK "link", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -148,7 +148,7 @@ func TestConnectionPostgresCreateQuery(t *testing.T) {
 	b.PostgresUser(ValueSecretStruct{Text: "user"})
 	b.PostgresPassword("password")
 	b.PostgresDatabase("default")
-	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET password, DATABASE 'default');`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "password", DATABASE 'default');`, b.Create())
 }
 
 func TestConnectionPostgresCreateSshQuery(t *testing.T) {
@@ -160,7 +160,7 @@ func TestConnectionPostgresCreateSshQuery(t *testing.T) {
 	b.PostgresPassword("password")
 	b.PostgresDatabase("default")
 	b.PostgresSSHTunnel("ssh_conn")
-	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET password, SSH TUNNEL 'ssh_conn', DATABASE 'default');`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "password", SSH TUNNEL "ssh_conn", DATABASE 'default');`, b.Create())
 }
 
 func TestConnectionPostgresCreatePrivateLinkQuery(t *testing.T) {
@@ -172,7 +172,7 @@ func TestConnectionPostgresCreatePrivateLinkQuery(t *testing.T) {
 	b.PostgresPassword("password")
 	b.PostgresDatabase("default")
 	b.PostgresAWSPrivateLink("private_link")
-	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET password, AWS PRIVATELINK private_link, DATABASE 'default');`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "password", AWS PRIVATELINK "private_link", DATABASE 'default');`, b.Create())
 }
 
 func TestConnectionPostgresCreateSslQuery(t *testing.T) {
@@ -187,5 +187,5 @@ func TestConnectionPostgresCreateSslQuery(t *testing.T) {
 	b.PostgresSSLCa(ValueSecretStruct{Secret: "root"})
 	b.PostgresSSLCert(ValueSecretStruct{Secret: "cert"})
 	b.PostgresSSLKey("key")
-	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER SECRET user, PASSWORD SECRET password, SSL MODE 'verify-full', SSL CERTIFICATE AUTHORITY SECRET root, SSL CERTIFICATE SECRET cert, SSL KEY SECRET key, DATABASE 'default');`, b.Create())
+	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER SECRET "user", PASSWORD SECRET "password", SSL MODE 'verify-full', SSL CERTIFICATE AUTHORITY SECRET "root", SSL CERTIFICATE SECRET "cert", SSL KEY SECRET "key", DATABASE 'default');`, b.Create())
 }

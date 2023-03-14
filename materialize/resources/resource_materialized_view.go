@@ -102,7 +102,7 @@ func (b *MaterializedViewBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`CREATE MATERIALIZED VIEW %s`, b.qualifiedName()))
 
 	if b.inCluster != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.inCluster))
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.inCluster)))
 	}
 
 	q.WriteString(fmt.Sprintf(` AS %s;`, b.selectStmt))

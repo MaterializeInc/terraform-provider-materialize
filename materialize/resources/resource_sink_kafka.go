@@ -234,14 +234,14 @@ func (b *SinkKafkaBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM %s`, b.itemName))
+	q.WriteString(fmt.Sprintf(` FROM %s`, QuoteIdentifier(b.itemName)))
 
 	// Broker
 	if b.kafkaConnection != "" {
-		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection))
+		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, QuoteIdentifier(b.kafkaConnection)))
 	}
 
 	if len(b.key) > 0 {
@@ -259,7 +259,7 @@ func (b *SinkKafkaBuilder) Create() string {
 
 	// CSR Options
 	if b.schemaRegistryConnection != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection))
+		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteIdentifier(b.schemaRegistryConnection)))
 	}
 
 	if b.avroKeyFullname != "" && b.avroValueFullname != "" {
