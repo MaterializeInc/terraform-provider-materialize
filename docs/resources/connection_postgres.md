@@ -18,7 +18,9 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
   name     = "example_postgres_connection"
   host     = "instance.foo000.us-west-1.rds.amazonaws.com"
   port     = 5432
-  user     = "example"
+  user {
+    text = "example"
+  }
   password = "example"
   database = "example"
 }
@@ -40,7 +42,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 - `database` (String) The target Postgres database.
 - `host` (String) The Postgres database hostname.
 - `name` (String) The name of the connection.
-- `user` (String) The Postgres database username.
+- `user` (Block List, Min: 1, Max: 1) The Postgres database username. (see [below for nested schema](#nestedblock--user))
 
 ### Optional
 
@@ -50,8 +52,8 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 - `port` (Number) The Postgres database port.
 - `schema_name` (String) The identifier for the connection schema.
 - `ssh_tunnel` (String) The SSH tunnel configuration for the Postgres database.
-- `ssl_certificate` (String) The client certificate for the Postgres database.
-- `ssl_certificate_authority` (String) The CA certificate for the Postgres database.
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Postgres database. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Postgres database. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (String) The client key for the Postgres database.
 - `ssl_mode` (String) The SSL mode for the Postgres database.
 
@@ -60,6 +62,32 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 - `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the connection.
+
+<a id="nestedblock--user"></a>
+### Nested Schema for `user`
+
+Optional:
+
+- `secret` (String) The user secret value.
+- `text` (String) The user text value.
+
+
+<a id="nestedblock--ssl_certificate"></a>
+### Nested Schema for `ssl_certificate`
+
+Optional:
+
+- `secret` (String) The ssl_certificate secret value.
+- `text` (String) The ssl_certificate text value.
+
+
+<a id="nestedblock--ssl_certificate_authority"></a>
+### Nested Schema for `ssl_certificate_authority`
+
+Optional:
+
+- `secret` (String) The ssl_certificate_authority secret value.
+- `text` (String) The ssl_certificate_authority text value.
 
 ## Import
 

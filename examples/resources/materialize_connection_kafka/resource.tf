@@ -5,7 +5,9 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
     broker = "b-1.hostname-1:9096"
   }
   sasl_username   = "example"
-  sasl_password   = "kafka_password"
+  sasl_password   {
+    text = "kafka_password"
+  }
   sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic  = "example"
 }

@@ -96,10 +96,12 @@ resource "materialize_connection_kafka" "example_kafka_privatelink_conn" {
 
 # Create a Postgres Connection
 resource "materialize_connection_postgres" "example_postgres_connection" {
-  name     = "example_postgres_connection"
-  host     = "instance.foo000.us-west-1.rds.amazonaws.com"
-  port     = 5432
-  user     = "example"
+  name = "example_postgres_connection"
+  host = "instance.foo000.us-west-1.rds.amazonaws.com"
+  port = 5432
+  user {
+    text = "example"
+  }
   password = "example"
   database = "example"
 }
@@ -113,17 +115,21 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
   kafka_broker {
     broker = "b-2.hostname-2:9096"
   }
-  sasl_username   = "example"
+  sasl_username {
+    text = "example"
+  }
   sasl_password   = "kafka_password"
   sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic  = "example"
 }
 
 # Create a Confluent Schema Registry Connection
-resource "materialize_connection" "example_confluent_schema_registry_connection" {
-  name                               = "example_confluent_schema_registry_connection"
-  connection_type                    = "CONFLUENT SCHEMA REGISTRY"
-  confluent_schema_registry_url      = "https://example.com"
-  confluent_schema_registry_password = "example"
-  confluent_schema_registry_username = "example"
+resource "materialize_connection_confluent_schema_registry" "example_confluent_schema_registry_connection" {
+  name            = "example_confluent_schema_registry_connection"
+  connection_type = "CONFLUENT SCHEMA REGISTRY"
+  url             = "https://example.com"
+  password        = "example"
+  username {
+    text = "example"
+  }
 }

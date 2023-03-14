@@ -75,16 +75,8 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_certificate_authority": {
-		Description: "The CA certificate for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"ssl_certificate": {
-		Description: "The client certificate for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, true),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, true),
 	"ssl_key": {
 		Description: "The client key for the Kafka broker.",
 		Type:        schema.TypeString,
@@ -97,12 +89,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		ValidateFunc: validation.StringInSlice(saslMechanisms, true),
 		RequiredWith: []string{"sasl_username", "sasl_password"},
 	},
-	"sasl_username": {
-		Description:  "The SASL username for the Kafka broker.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"sasl_password", "sasl_mechanisms"},
-	},
+	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, true),
 	"sasl_password": {
 		Description:  "The SASL password for the Kafka broker.",
 		Type:         schema.TypeString,
@@ -146,11 +133,11 @@ type ConnectionKafkaBuilder struct {
 	databaseName        string
 	kafkaBrokers        []KafkaBroker
 	kafkaProgressTopic  string
-	kafkaSSLCa          string
-	kafkaSSLCert        string
+	kafkaSSLCa          ValueSecretStruct
+	kafkaSSLCert        ValueSecretStruct
 	kafkaSSLKey         string
 	kafkaSASLMechanisms string
-	kafkaSASLUsername   string
+	kafkaSASLUsername   ValueSecretStruct
 	kafkaSASLPassword   string
 	kafkaSSHTunnel      string
 }
@@ -177,12 +164,12 @@ func (b *ConnectionKafkaBuilder) KafkaProgressTopic(kafkaProgressTopic string) *
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) KafkaSSLCa(kafkaSSLCa string) *ConnectionKafkaBuilder {
+func (b *ConnectionKafkaBuilder) KafkaSSLCa(kafkaSSLCa ValueSecretStruct) *ConnectionKafkaBuilder {
 	b.kafkaSSLCa = kafkaSSLCa
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) KafkaSSLCert(kafkaSSLCert string) *ConnectionKafkaBuilder {
+func (b *ConnectionKafkaBuilder) KafkaSSLCert(kafkaSSLCert ValueSecretStruct) *ConnectionKafkaBuilder {
 	b.kafkaSSLCert = kafkaSSLCert
 	return b
 }
@@ -197,7 +184,7 @@ func (b *ConnectionKafkaBuilder) KafkaSASLMechanisms(kafkaSASLMechanisms string)
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) KafkaSASLUsername(kafkaSASLUsername string) *ConnectionKafkaBuilder {
+func (b *ConnectionKafkaBuilder) KafkaSASLUsername(kafkaSASLUsername ValueSecretStruct) *ConnectionKafkaBuilder {
 	b.kafkaSASLUsername = kafkaSASLUsername
 	return b
 }
@@ -246,11 +233,17 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	if b.kafkaProgressTopic != "" {
 		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
 	}
-	if b.kafkaSSLCa != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa))
+	if b.kafkaSSLCa.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.kafkaSSLCa.Text)))
 	}
-	if b.kafkaSSLCert != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.kafkaSSLCert))
+	if b.kafkaSSLCa.Secret != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa.Secret))
+	}
+	if b.kafkaSSLCert.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, b.kafkaSSLCert.Text))
+	}
+	if b.kafkaSSLCert.Secret != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.kafkaSSLCert.Secret))
 	}
 	if b.kafkaSSLKey != "" {
 		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.kafkaSSLKey))
@@ -258,8 +251,11 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	if b.kafkaSASLMechanisms != "" {
 		q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = '%s'`, b.kafkaSASLMechanisms))
 	}
-	if b.kafkaSASLUsername != "" {
-		q.WriteString(fmt.Sprintf(`, SASL USERNAME = '%s'`, b.kafkaSASLUsername))
+	if b.kafkaSASLUsername.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SASL USERNAME = '%s'`, b.kafkaSASLUsername.Text))
+	}
+	if b.kafkaSASLUsername.Secret != "" {
+		q.WriteString(fmt.Sprintf(`, SASL USERNAME = SECRET %s`, b.kafkaSASLUsername.Secret))
 	}
 	if b.kafkaSASLPassword != "" {
 		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword))
@@ -310,11 +306,27 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		builder.KafkaSSLCa(v.(string))
+		var ssl_ca ValueSecretStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["text"]; ok {
+			ssl_ca.Text = v.(string)
+		}
+		if v, ok := u["secret"]; ok {
+			ssl_ca.Secret = v.(string)
+		}
+		builder.KafkaSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		builder.KafkaSSLCert(v.(string))
+		var ssl_cert ValueSecretStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["text"]; ok {
+			ssl_cert.Text = v.(string)
+		}
+		if v, ok := u["secret"]; ok {
+			ssl_cert.Secret = v.(string)
+		}
+		builder.KafkaSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
@@ -326,7 +338,15 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := d.GetOk("sasl_username"); ok {
-		builder.KafkaSASLUsername(v.(string))
+		var sasl_username ValueSecretStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["text"]; ok {
+			sasl_username.Text = v.(string)
+		}
+		if v, ok := u["secret"]; ok {
+			sasl_username.Secret = v.(string)
+		}
+		builder.KafkaSASLUsername(sasl_username)
 	}
 
 	if v, ok := d.GetOk("sasl_password"); ok {
