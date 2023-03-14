@@ -55,29 +55,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     5432,
 	},
-	"user": {
-		Description: "The Postgres database username.",
-		Type:        schema.TypeList,
-		Required:    true,
-		MaxItems:    1,
-		MinItems:    1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"text": {
-					Description:   "The Postgres database username.",
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{"user.0.secret"},
-				},
-				"secret": {
-					Description:   "The Postgres database username secret.",
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{"user.0.text"},
-				},
-			},
-		},
-	},
+	"user": secretStringSchema("user", "The Postgres database username.", true, false),
 	"password": {
 		Description: "The Postgres database password.",
 		Type:        schema.TypeString,
@@ -88,16 +66,8 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_certificate_authority": {
-		Description: "The CA certificate for the Postgres database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"ssl_certificate": {
-		Description: "The client certificate for the Postgres database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"ssl_certificate_authority": secretStringSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false, true),
+	"ssl_certificate":           secretStringSchema("ssl_certificate", "The client certificate for the Postgres database.", false, true),
 	"ssl_key": {
 		Description: "The client key for the Postgres database.",
 		Type:        schema.TypeString,
@@ -143,8 +113,8 @@ type ConnectionPostgresBuilder struct {
 	postgresUser           ValueSecretStruct
 	postgresPassword       string
 	postgresSSHTunnel      string
-	postgresSSLCa          string
-	postgresSSLCert        string
+	postgresSSLCa          ValueSecretStruct
+	postgresSSLCert        ValueSecretStruct
 	postgresSSLKey         string
 	postgresSSLMode        string
 	postgresAWSPrivateLink string
@@ -197,12 +167,12 @@ func (b *ConnectionPostgresBuilder) PostgresSSHTunnel(postgresSSHTunnel string) 
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresSSLCa(postgresSSLCa string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresSSLCa(postgresSSLCa ValueSecretStruct) *ConnectionPostgresBuilder {
 	b.postgresSSLCa = postgresSSLCa
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresSSLCert(postgresSSLCert string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresSSLCert(postgresSSLCert ValueSecretStruct) *ConnectionPostgresBuilder {
 	b.postgresSSLCert = postgresSSLCert
 	return b
 }
@@ -243,11 +213,17 @@ func (b *ConnectionPostgresBuilder) Create() string {
 	if b.postgresSSHTunnel != "" {
 		q.WriteString(fmt.Sprintf(`, SSH TUNNEL '%s'`, b.postgresSSHTunnel))
 	}
-	if b.postgresSSLCa != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa))
+	if b.postgresSSLCa.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY %s`, QuoteString(b.postgresSSLCa.Text)))
 	}
-	if b.postgresSSLCert != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.postgresSSLCert))
+	if b.postgresSSLCa.Secret != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa.Secret))
+	}
+	if b.postgresSSLCert.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE  %s`, QuoteString(b.postgresSSLCert.Text)))
+	}
+	if b.postgresSSLCert.Secret != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.postgresSSLCert.Secret))
 	}
 	if b.postgresSSLKey != "" {
 		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.postgresSSLKey))
@@ -322,11 +298,27 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		builder.PostgresSSLCa(v.(string))
+		var ssl_ca ValueSecretStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["text"]; ok {
+			ssl_ca.Text = v.(string)
+		}
+		if v, ok := u["secret"]; ok {
+			ssl_ca.Secret = v.(string)
+		}
+		builder.PostgresSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		builder.PostgresSSLCert(v.(string))
+		var ssl_cert ValueSecretStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["text"]; ok {
+			ssl_cert.Text = v.(string)
+		}
+		if v, ok := u["secret"]; ok {
+			ssl_cert.Secret = v.(string)
+		}
+		builder.PostgresSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {

@@ -78,3 +78,31 @@ type ValueSecretStruct struct {
 	Text   string
 	Secret string
 }
+
+func secretStringSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"text": {
+					Description:   fmt.Sprintf("The %s text value.", elem),
+					Type:          schema.TypeString,
+					Optional:      true,
+					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
+				},
+				"secret": {
+					Description:   fmt.Sprintf("The %s text value.", elem),
+					Type:          schema.TypeString,
+					Optional:      true,
+					ConflictsWith: []string{fmt.Sprintf("%s.0.text", elem)},
+				},
+			},
+		},
+		Required:    isRequired,
+		Optional:    isOptional,
+		MinItems:    1,
+		MaxItems:    1,
+		ForceNew:    true,
+		Description: description,
+	}
+}

@@ -23,8 +23,8 @@ func TestResourcePostgresCreate(t *testing.T) {
 		"user":                      []interface{}{map[string]interface{}{"secret": "user"}},
 		"password":                  "password",
 		"ssh_tunnel":                "ssh_conn",
-		"ssl_certificate_authority": "root",
-		"ssl_certificate":           "cert",
+		"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": "root"}},
+		"ssl_certificate":           []interface{}{map[string]interface{}{"secret": "cert"}},
 		"ssl_key":                   "key",
 		"ssl_mode":                  "verify-full",
 		"aws_privatelink":           "link",
@@ -184,8 +184,8 @@ func TestConnectionPostgresCreateSslQuery(t *testing.T) {
 	b.PostgresPassword("password")
 	b.PostgresDatabase("default")
 	b.PostgresSSLMode("verify-full")
-	b.PostgresSSLCa("root")
-	b.PostgresSSLCert("cert")
+	b.PostgresSSLCa(ValueSecretStruct{Secret: "root"})
+	b.PostgresSSLCert(ValueSecretStruct{Secret: "cert"})
 	b.PostgresSSLKey("key")
 	r.Equal(`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES (HOST 'postgres_host', PORT 5432, USER SECRET user, PASSWORD SECRET password, SSL MODE 'verify-full', SSL CERTIFICATE AUTHORITY SECRET root, SSL CERTIFICATE SECRET cert, SSL KEY SECRET key, DATABASE 'default');`, b.Create())
 }

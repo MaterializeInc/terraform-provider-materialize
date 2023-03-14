@@ -3,7 +3,9 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
   name     = "example_postgres_connection"
   host     = "instance.foo000.us-west-1.rds.amazonaws.com"
   port     = 5432
-  user     = "example"
+  user {
+    text = "example"
+  }
   password = "example"
   database = "example"
 }
