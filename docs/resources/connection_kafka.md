@@ -105,7 +105,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The sasl_username text value.
+- `secret` (String) The sasl_username secret value.
 - `text` (String) The sasl_username text value.
 
 
@@ -114,7 +114,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The ssl_certificate text value.
+- `secret` (String) The ssl_certificate secret value.
 - `text` (String) The ssl_certificate text value.
 
 
@@ -123,7 +123,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The ssl_certificate_authority text value.
+- `secret` (String) The ssl_certificate_authority secret value.
 - `text` (String) The ssl_certificate_authority text value.
 
 ## Import

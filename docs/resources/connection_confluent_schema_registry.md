@@ -61,7 +61,7 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 
 Optional:
 
-- `secret` (String) The ssl_certificate text value.
+- `secret` (String) The ssl_certificate secret value.
 - `text` (String) The ssl_certificate text value.
 
 
@@ -70,7 +70,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The ssl_certificate_authority text value.
+- `secret` (String) The ssl_certificate_authority secret value.
 - `text` (String) The ssl_certificate_authority text value.
 
 
@@ -79,7 +79,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The username text value.
+- `secret` (String) The username secret value.
 - `text` (String) The username text value.
 
 ## Import

@@ -68,7 +68,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 Optional:
 
-- `secret` (String) The user text value.
+- `secret` (String) The user secret value.
 - `text` (String) The user text value.
 
 
@@ -77,7 +77,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The ssl_certificate text value.
+- `secret` (String) The ssl_certificate secret value.
 - `text` (String) The ssl_certificate text value.
 
 
@@ -86,7 +86,7 @@ Optional:
 
 Optional:
 
-- `secret` (String) The ssl_certificate_authority text value.
+- `secret` (String) The ssl_certificate_authority secret value.
 - `text` (String) The ssl_certificate_authority text value.
 
 ## Import

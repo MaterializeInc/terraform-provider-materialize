@@ -91,7 +91,7 @@ func ValueSecretSchema(elem string, description string, isRequired bool, isOptio
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
 				"secret": {
-					Description:   fmt.Sprintf("The %s text value.", elem),
+					Description:   fmt.Sprintf("The %s secret value.", elem),
 					Type:          schema.TypeString,
 					Optional:      true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.text", elem)},
