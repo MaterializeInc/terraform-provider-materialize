@@ -195,7 +195,7 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
 
-		q := newSecretBuilder(viewName, schemaName, databaseName).Rename(newName.(string))
+		q := newViewBuilder(viewName, schemaName, databaseName).Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename view: %s", q)

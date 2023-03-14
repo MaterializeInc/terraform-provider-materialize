@@ -53,8 +53,8 @@ var tableSchema = map[string]*schema.Schema{
 				},
 				"not_null": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:     schema.TypeBool,
-					Optional: true,
+					Type:        schema.TypeBool,
+					Optional:    true,
 				},
 			},
 		},
@@ -238,7 +238,7 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
 
-		q := newSecretBuilder(tableName, schemaName, databaseName).Rename(newName.(string))
+		q := newTableBuilder(tableName, schemaName, databaseName).Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename table: %s", q)

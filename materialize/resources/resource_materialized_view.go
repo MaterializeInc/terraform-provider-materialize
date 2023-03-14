@@ -208,7 +208,7 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
 
-		q := newSecretBuilder(materializedViewName, schemaName, databaseName).Rename(newName.(string))
+		q := newMaterializedViewBuilder(materializedViewName, schemaName, databaseName).Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename materialized view: %s", q)
