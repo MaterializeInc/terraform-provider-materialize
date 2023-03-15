@@ -55,12 +55,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"postgres_connection": {
-		Description: "The name of the PostgreSQL connection to use in the source.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true, false),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
 		Type:        schema.TypeString,
@@ -125,7 +120,7 @@ type SourcePostgresBuilder struct {
 	databaseName       string
 	clusterName        string
 	size               string
-	postgresConnection string
+	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
 	tables             []TablePostgres
@@ -153,7 +148,7 @@ func (b *SourcePostgresBuilder) Size(s string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) PostgresConnection(p string) *SourcePostgresBuilder {
+func (b *SourcePostgresBuilder) PostgresConnection(p IdentifierSchemaStruct) *SourcePostgresBuilder {
 	b.postgresConnection = p
 	return b
 }
@@ -181,7 +176,7 @@ func (b *SourcePostgresBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, QuoteIdentifier(b.postgresConnection)))
+	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, QualifiedName(b.postgresConnection.DatabaseName, b.postgresConnection.SchemaName, b.postgresConnection.Name)))
 
 	// Publication
 	p := fmt.Sprintf(`PUBLICATION %s`, QuoteString(b.publication))
@@ -252,7 +247,8 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("postgres_connection"); ok {
-		builder.PostgresConnection(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.PostgresConnection(conn)
 	}
 
 	if v, ok := d.GetOk("publication"); ok {

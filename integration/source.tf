@@ -21,7 +21,11 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
 resource "materialize_source_postgres" "example_source_postgres" {
   name                = "source_postgres"
   size                = "2"
-  postgres_connection = materialize_connection_postgres.postgres_connection.qualified_name
+  postgres_connection {
+    name = materialize_connection_postgres.postgres_connection.name
+    schema_name = materialize_connection_postgres.postgres_connection.schema_name
+    database_name = materialize_connection_postgres.postgres_connection.database_name
+  }
   publication         = "mz_source"
   tables {
     name  = "table1"
