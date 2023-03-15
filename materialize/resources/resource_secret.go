@@ -103,9 +103,9 @@ func (b *SecretBuilder) ReadId() string {
 			ON mz_secrets.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';`, b.secretName, b.schemaName, b.databaseName)
+		WHERE mz_secrets.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;`, QuoteString(b.secretName), QuoteString(b.schemaName), QuoteString(b.databaseName))
 }
 
 func readSecretParams(id string) string {
@@ -119,7 +119,7 @@ func readSecretParams(id string) string {
 			ON mz_secrets.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.id = '%s';`, id)
+		WHERE mz_secrets.id = %s;`, QuoteString(id))
 }
 
 func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

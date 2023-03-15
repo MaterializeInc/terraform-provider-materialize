@@ -75,9 +75,9 @@ func (b *SchemaBuilder) ReadId() string {
 		SELECT mz_schemas.id
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.schemaName, b.databaseName)
+		WHERE mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(b.schemaName), QuoteString(b.databaseName))
 }
 
 func readSchemaParams(id string) string {
@@ -87,7 +87,7 @@ func readSchemaParams(id string) string {
 			mz_databases.name
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_schemas.id = '%s';`, id)
+		WHERE mz_schemas.id = %s;`, QuoteString(id))
 }
 
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

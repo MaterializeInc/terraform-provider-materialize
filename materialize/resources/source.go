@@ -21,10 +21,10 @@ func readSourceId(name, schema, database string) string {
 			ON mz_sources.connection_id = mz_connections.id
 		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
-		WHERE mz_sources.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, name, schema, database)
+		WHERE mz_sources.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(name), QuoteString(schema), QuoteString(database))
 }
 
 func readSourceParams(id string) string {
@@ -46,7 +46,7 @@ func readSourceParams(id string) string {
 			ON mz_sources.connection_id = mz_connections.id
 		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
-		WHERE mz_sources.id = '%s';`, id)
+		WHERE mz_sources.id = %s;`, QuoteString(id))
 }
 
 func SourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

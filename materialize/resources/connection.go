@@ -17,10 +17,10 @@ func readConnectionId(name, schema, database string) string {
 			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, name, schema, database)
+		WHERE mz_connections.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(name), QuoteString(schema), QuoteString(database))
 }
 
 func readConnectionParams(id string) string {
@@ -35,7 +35,7 @@ func readConnectionParams(id string) string {
 			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.id = '%s';`, id)
+		WHERE mz_connections.id = %s;`, QuoteString(id))
 }
 
 func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

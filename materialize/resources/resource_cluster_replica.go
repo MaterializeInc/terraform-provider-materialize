@@ -166,8 +166,8 @@ func (b *ClusterReplicaBuilder) ReadId() string {
 		FROM mz_cluster_replicas
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.name = '%s'
-		AND mz_clusters.name = '%s';`, b.replicaName, b.clusterName)
+		WHERE mz_cluster_replicas.name = %s
+		AND mz_clusters.name = %s;`, QuoteString(b.replicaName), QuoteString(b.clusterName))
 }
 
 func readClusterReplicaParams(id string) string {
@@ -180,7 +180,7 @@ func readClusterReplicaParams(id string) string {
 		FROM mz_cluster_replicas
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.id = '%s';`, id)
+		WHERE mz_cluster_replicas.id = %s;`, QuoteString(id))
 }
 
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

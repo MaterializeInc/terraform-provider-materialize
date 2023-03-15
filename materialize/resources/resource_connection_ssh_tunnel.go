@@ -138,10 +138,10 @@ func (b *ConnectionSshTunnelBuilder) ReadId() string {
 			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.connectionName, b.schemaName, b.databaseName)
+		WHERE mz_connections.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(b.connectionName), QuoteString(b.schemaName), QuoteString(b.databaseName))
 }
 
 func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

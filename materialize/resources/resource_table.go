@@ -151,10 +151,10 @@ func (b *TableBuilder) ReadId() string {
 			ON mz_tables.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_tables.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.tableName, b.schemaName, b.databaseName)
+		WHERE mz_tables.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(b.tableName), QuoteString(b.schemaName), QuoteString(b.databaseName))
 }
 
 func readTableParams(id string) string {
@@ -168,7 +168,7 @@ func readTableParams(id string) string {
 			ON mz_tables.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_tables.id = '%s';`, id)
+		WHERE mz_tables.id = %s;`, QuoteString(id))
 }
 
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
