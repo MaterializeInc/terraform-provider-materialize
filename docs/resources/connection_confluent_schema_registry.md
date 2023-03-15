@@ -17,7 +17,11 @@ The connection resource allows you to manage connections in Materialize.
 resource "materialize_connection_confluent_schema_registry" "example_confluent_schema_registry_connection" {
   name     = "example_csr_connection"
   url      = "https://rp-f00000bar.data.vectorized.cloud:30993"
-  password = "example"
+  password {
+    name          = "example"
+    database_name = "database"
+    schema_name   = "schema"
+  }
   username {
     text = "example"
   }
@@ -26,7 +30,7 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 # CREATE CONNECTION example_csr_connection TO CONFLUENT SCHEMA REGISTRY (
 #     URL 'https://rp-f00000bar.data.vectorized.cloud:30993',
 #     USERNAME = 'example',
-#     PASSWORD = SECRET example
+#     PASSWORD = SECRET "database"."schema"."example"
 # );
 ```
 
