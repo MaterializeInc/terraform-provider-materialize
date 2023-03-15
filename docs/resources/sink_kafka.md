@@ -17,11 +17,17 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
   name                       = "sink_kafka"
   schema_name                = "schema"
   size                       = "3xsmall"
-  item_name                  = "schema.table"
-  kafka_connection           = "kafka_connection"
+  item_name {
+    name = "table"
+  }
   topic                      = "test_avro_topic"
   format                     = "AVRO"
-  schema_registry_connection = "csr_connection"
+  kafka_connection {
+    name = "kafka_connection"
+  }
+  schema_registry_connection {
+    name = "csr_connection"
+  }
   envelope                   = "UPSERT"
 }
 
@@ -38,8 +44,8 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 ### Required
 
-- `item_name` (String) The name of the source, table or materialized view you want to send to the sink.
-- `kafka_connection` (String) The name of the Kafka connection to use in the source.
+- `item_name` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--item_name))
+- `kafka_connection` (Block List, Min: 1, Max: 1) The name of the Kafka connection to use in the sink. (see [below for nested schema](#nestedblock--kafka_connection))
 - `name` (String) The identifier for the sink.
 - `topic` (String) The Kafka topic you want to subscribe to.
 
@@ -53,7 +59,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `format` (String) How to decode raw bytes from different formats into data structures it can understand at runtime.
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
 - `schema_name` (String) The identifier for the sink schema.
-- `schema_registry_connection` (String) The name of the connection to use for the shcema registry.
+- `schema_registry_connection` (Block List, Max: 1) The name of the connection to use for the shcema registry. (see [below for nested schema](#nestedblock--schema_registry_connection))
 - `size` (String) The size of the sink.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
 
@@ -62,6 +68,44 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the sink.
 - `sink_type` (String) The type of sink.
+
+<a id="nestedblock--item_name"></a>
+### Nested Schema for `item_name`
+
+Required:
+
+- `name` (String) The item_name name.
+
+Optional:
+
+- `database_name` (String) The item_name database name.
+- `schema_name` (String) The item_name schema name.
+
+
+<a id="nestedblock--kafka_connection"></a>
+### Nested Schema for `kafka_connection`
+
+Required:
+
+- `name` (String) The kafka_connection name.
+
+Optional:
+
+- `database_name` (String) The kafka_connection database name.
+- `schema_name` (String) The kafka_connection schema name.
+
+
+<a id="nestedblock--schema_registry_connection"></a>
+### Nested Schema for `schema_registry_connection`
+
+Required:
+
+- `name` (String) The schema_registry_connection name.
+
+Optional:
+
+- `database_name` (String) The schema_registry_connection database name.
+- `schema_name` (String) The schema_registry_connection schema name.
 
 ## Import
 

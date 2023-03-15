@@ -36,7 +36,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 ### Required
 
 - `format` (String) How to decode raw bytes from different formats into data structures Materialize can understand at runtime.
-- `kafka_connection` (String) The name of the Kafka connection to use in the source.
+- `kafka_connection` (Block List, Min: 1, Max: 1) The Kafka connection to use in the source. (see [below for nested schema](#nestedblock--kafka_connection))
 - `name` (String) The identifier for the source.
 - `topic` (String) The Kafka topic you want to subscribe to.
 
@@ -54,7 +54,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `key_strategy` (String) How Materialize will define the Avro schema reader key strategy.
 - `primary_key` (List of String) Declare a set of columns as a primary key.
 - `schema_name` (String) The identifier for the source schema.
-- `schema_registry_connection` (String) The name of a schema registry connection.
+- `schema_registry_connection` (Block List, Max: 1) The name of a schema registry connection. (see [below for nested schema](#nestedblock--schema_registry_connection))
 - `size` (String) The size of the source.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set "START OFFSET" based on the Kafka timestamp.
@@ -65,6 +65,31 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `id` (String) The ID of this resource.
 - `qualified_name` (String) The fully qualified name of the source.
 - `source_type` (String) The type of source.
+
+<a id="nestedblock--kafka_connection"></a>
+### Nested Schema for `kafka_connection`
+
+Required:
+
+- `name` (String) The kafka_connection name.
+
+Optional:
+
+- `database_name` (String) The kafka_connection database name.
+- `schema_name` (String) The kafka_connection schema name.
+
+
+<a id="nestedblock--schema_registry_connection"></a>
+### Nested Schema for `schema_registry_connection`
+
+Required:
+
+- `name` (String) The schema_registry_connection name.
+
+Optional:
+
+- `database_name` (String) The schema_registry_connection database name.
+- `schema_name` (String) The schema_registry_connection schema name.
 
 ## Import
 

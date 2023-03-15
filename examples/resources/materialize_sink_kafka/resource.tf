@@ -2,7 +2,9 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
   name                       = "sink_kafka"
   schema_name                = "schema"
   size                       = "3xsmall"
-  item_name                  = "schema.table"
+  item_name {
+    name = "table"
+  }
   topic                      = "test_avro_topic"
   format                     = "AVRO"
   kafka_connection {

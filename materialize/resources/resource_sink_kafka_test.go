@@ -19,13 +19,13 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		"database_name":    "database",
 		"cluster_name":     "cluster",
 		"size":             "small",
-		"item_name":        "item",
-		"kafka_connection": "public.kafka_conn",
+		"item_name":        []interface{}{map[string]interface{}{"name": "item", "schema_name": "public", "database_name": "database"}},
+		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 		"topic":            "topic",
 		// "key":                        []interface{}{"key_1", "key_2"},
 		"format":                     "AVRO",
 		"envelope":                   "UPSERT",
-		"schema_registry_connection": "csr_conn",
+		"schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn"}},
 		"avro_key_fullname":          "avro_key_fullname",
 		"avro_value_fullname":        "avro_value_fullname",
 		"snapshot":                   false,
@@ -36,7 +36,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "item" INTO KAFKA CONNECTION "public"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "csr_conn" WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
+			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."public"."item" INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -113,29 +113,29 @@ func TestSinkKafkaCreateQuery(t *testing.T) {
 
 	bs := newSinkKafkaBuilder("sink", "schema", "database")
 	bs.Size("xsmall")
-	bs.ItemName("schema.table")
-	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "schema"."table" WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
+	bs.ItemName(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
+	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "database"."schema"."table" WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
 
 	bc := newSinkKafkaBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
-	bc.ItemName("schema.table")
+	bc.ItemName(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
 	bc.Snapshot(true)
-	r.Equal(`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "schema"."table";`, bc.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."schema"."table";`, bc.Create())
 }
 
 func TestSinkKafkaCreateParamsQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSinkKafkaBuilder("sink", "schema", "database")
 	b.Size("xsmall")
-	b.ItemName("schema.table")
-	b.KafkaConnection("kafka_connection")
+	b.ItemName(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
+	b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", SchemaName: "schema", DatabaseName: "database"})
 	b.Topic("test_avro_topic")
 	b.Key([]string{"key_1", "key_2"})
 	b.Format("AVRO")
-	b.SchemaRegistryConnection("csr_connection")
+	b.SchemaRegistryConnection(IdentifierSchemaStruct{Name: "csr_connection", SchemaName: "public", DatabaseName: "database"})
 	b.Envelope("UPSERT")
 	b.Snapshot(false)
-	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "schema"."table" INTO KAFKA CONNECTION "kafka_connection" KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "csr_connection" ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
+	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "database"."schema"."table" INTO KAFKA CONNECTION "database"."schema"."kafka_connection" KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."public"."csr_connection" ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
 }
 
 func TestSinkKafkaReadIdQuery(t *testing.T) {
