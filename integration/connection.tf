@@ -29,7 +29,11 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   sasl_username {
     text = "sasl_user"
   }
-  sasl_password   = materialize_secret.kafka_password.qualified_name
+  sasl_password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
   sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic  = "progress_topic"
 }
@@ -41,7 +45,11 @@ resource "materialize_connection_postgres" "postgres_connection" {
   user {
     text = "postgres"
   }
-  password = materialize_secret.postgres_password.qualified_name
+  password {
+    name          = materialize_secret.postgres_password.name
+    database_name = materialize_secret.postgres_password.database_name
+    schema_name   = materialize_secret.postgres_password.schema_name
+  }
   database = "postgres"
 }
 
@@ -50,9 +58,17 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
   host = "postgres"
   port = 5432
   user {
-    secret = materialize_secret.postgres_password.qualified_name
+    secret {
+      name          = materialize_secret.postgres_password.name
+      database_name = materialize_secret.postgres_password.database_name
+      schema_name   = materialize_secret.postgres_password.schema_name
+    }
   }
-  password = materialize_secret.postgres_password.qualified_name
+  password {
+    name          = materialize_secret.postgres_password.name
+    database_name = materialize_secret.postgres_password.database_name
+    schema_name   = materialize_secret.postgres_password.schema_name
+  }
   database = "postgres"
 }
 

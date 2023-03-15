@@ -76,7 +76,7 @@ func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 type ValueSecretStruct struct {
 	Text   string
-	Secret string
+	Secret IdentifierSchemaStruct
 }
 
 func ValueSecretSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
@@ -90,12 +90,7 @@ func ValueSecretSchema(elem string, description string, isRequired bool, isOptio
 					Optional:      true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
-				"secret": {
-					Description:   fmt.Sprintf("The %s secret value.", elem),
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{fmt.Sprintf("%s.0.text", elem)},
-				},
+				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false, true),
 			},
 		},
 		Required:    isRequired,
