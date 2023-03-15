@@ -40,7 +40,11 @@ resource "materialize_source_postgres" "example_source_postgres" {
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name             = "source_kafka_text"
   size             = "2"
-  kafka_connection = materialize_connection_kafka.kafka_connection.qualified_name
+  kafka_connection {
+    name = materialize_connection_kafka.kafka_connection.name
+    schema_name = materialize_connection_kafka.kafka_connection.schema_name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+  }
   format           = "TEXT"
   topic            = "topic1"
   key_format       = "TEXT"
@@ -49,10 +53,18 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   name                       = "source_kafka_avro"
   size                       = "2"
-  kafka_connection           = materialize_connection_kafka.kafka_connection.qualified_name
+  kafka_connection {
+    name = materialize_connection_kafka.kafka_connection.name
+    schema_name = materialize_connection_kafka.kafka_connection.schema_name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+  }
   format                     = "AVRO"
   topic                      = "topic1"
-  schema_registry_connection = materialize_connection_confluent_schema_registry.schema_registry.qualified_name
+  schema_registry_connection {
+    name = materialize_connection_confluent_schema_registry.schema_registry.name
+    schema_name = materialize_connection_confluent_schema_registry.schema_registry.schema_name
+    database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
+  }
   depends_on                 = [materialize_sink_kafka.sink_kafka]
 }
 

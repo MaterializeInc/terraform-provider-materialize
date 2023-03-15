@@ -55,12 +55,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"kafka_connection": {
-		Description: "The name of the Kafka connection to use in the source.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"kafka_connection": IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true, false),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -117,12 +112,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(envelopes, true),
 	},
-	"schema_registry_connection": {
-		Description: "The name of a schema registry connection.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", false, true),
 	"key_strategy": {
 		Description:  "How Materialize will define the Avro schema reader key strategy.",
 		Type:         schema.TypeString,
@@ -182,7 +172,7 @@ type SourceKafkaBuilder struct {
 	databaseName             string
 	clusterName              string
 	size                     string
-	kafkaConnection          string
+	kafkaConnection          IdentifierSchemaStruct
 	topic                    string
 	includeKey               string
 	includeHeaders           bool
@@ -192,7 +182,7 @@ type SourceKafkaBuilder struct {
 	format                   string
 	keyFormat                string
 	envelope                 string
-	schemaRegistryConnection string
+	schemaRegistryConnection IdentifierSchemaStruct
 	keyStrategy              string
 	valueStrategy            string
 	primaryKey               []string
@@ -222,7 +212,7 @@ func (b *SourceKafkaBuilder) Size(s string) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) KafkaConnection(k string) *SourceKafkaBuilder {
+func (b *SourceKafkaBuilder) KafkaConnection(k IdentifierSchemaStruct) *SourceKafkaBuilder {
 	b.kafkaConnection = k
 	return b
 }
@@ -267,7 +257,7 @@ func (b *SourceKafkaBuilder) Envelope(e string) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) SchemaRegistryConnection(s string) *SourceKafkaBuilder {
+func (b *SourceKafkaBuilder) SchemaRegistryConnection(s IdentifierSchemaStruct) *SourceKafkaBuilder {
 	b.schemaRegistryConnection = s
 	return b
 }
@@ -310,7 +300,7 @@ func (b *SourceKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC %s)`, QuoteIdentifier(b.kafkaConnection), QuoteString(b.topic)))
+	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC %s)`, QualifiedName(b.kafkaConnection.DatabaseName, b.kafkaConnection.SchemaName, b.kafkaConnection.Name), QuoteString(b.topic)))
 
 	// Format
 	if b.keyFormat != "" {
@@ -319,8 +309,8 @@ func (b *SourceKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` FORMAT %s`, b.format))
 	}
 
-	if b.schemaRegistryConnection != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteIdentifier(b.schemaRegistryConnection)))
+	if b.schemaRegistryConnection.Name != "" {
+		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.schemaRegistryConnection.DatabaseName, b.schemaRegistryConnection.SchemaName, b.schemaRegistryConnection.Name)))
 	}
 
 	// Key Constraint
@@ -423,7 +413,8 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {
-		builder.KafkaConnection(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.KafkaConnection(conn)
 	}
 
 	if v, ok := d.GetOk("topic"); ok {
@@ -463,7 +454,8 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("schema_registry_connection"); ok {
-		builder.SchemaRegistryConnection(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.SchemaRegistryConnection(conn)
 	}
 
 	if v, ok := d.GetOk("key_strategy"); ok {
