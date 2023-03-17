@@ -55,7 +55,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"item_name":        IdentifierSchema("item_name", "The name of the source, table or materialized view you want to send to the sink.", true, false),
+	"from":             IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true, false),
 	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true, false),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
@@ -130,7 +130,7 @@ type SinkKafkaBuilder struct {
 	databaseName             string
 	clusterName              string
 	size                     string
-	itemName                 IdentifierSchemaStruct
+	from                     IdentifierSchemaStruct
 	kafkaConnection          IdentifierSchemaStruct
 	topic                    string
 	key                      []string
@@ -164,8 +164,8 @@ func (b *SinkKafkaBuilder) Size(s string) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) ItemName(i IdentifierSchemaStruct) *SinkKafkaBuilder {
-	b.itemName = i
+func (b *SinkKafkaBuilder) From(i IdentifierSchemaStruct) *SinkKafkaBuilder {
+	b.from = i
 	return b
 }
 
@@ -222,7 +222,7 @@ func (b *SinkKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM %s`, QualifiedName(b.itemName.DatabaseName, b.itemName.SchemaName, b.itemName.Name)))
+	q.WriteString(fmt.Sprintf(` FROM %s`, QualifiedName(b.from.DatabaseName, b.from.SchemaName, b.from.Name)))
 
 	// Broker
 	if b.kafkaConnection.Name != "" {
@@ -308,9 +308,9 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		builder.Size(v.(string))
 	}
 
-	if v, ok := d.GetOk("item_name"); ok {
-		itemName := GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.ItemName(itemName)
+	if v, ok := d.GetOk("from"); ok {
+		from := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.From(from)
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {

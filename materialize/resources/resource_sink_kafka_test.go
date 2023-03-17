@@ -19,7 +19,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		"database_name":    "database",
 		"cluster_name":     "cluster",
 		"size":             "small",
-		"item_name":        []interface{}{map[string]interface{}{"name": "item", "schema_name": "public", "database_name": "database"}},
+		"from":             []interface{}{map[string]interface{}{"name": "item", "schema_name": "public", "database_name": "database"}},
 		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 		"topic":            "topic",
 		// "key":                        []interface{}{"key_1", "key_2"},
@@ -113,12 +113,12 @@ func TestSinkKafkaCreateQuery(t *testing.T) {
 
 	bs := newSinkKafkaBuilder("sink", "schema", "database")
 	bs.Size("xsmall")
-	bs.ItemName(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
+	bs.From(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
 	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "database"."schema"."table" WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, bs.Create())
 
 	bc := newSinkKafkaBuilder("sink", "schema", "database")
 	bc.ClusterName("cluster")
-	bc.ItemName(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
+	bc.From(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
 	bc.Snapshot(true)
 	r.Equal(`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."schema"."table";`, bc.Create())
 }
@@ -127,7 +127,7 @@ func TestSinkKafkaCreateParamsQuery(t *testing.T) {
 	r := require.New(t)
 	b := newSinkKafkaBuilder("sink", "schema", "database")
 	b.Size("xsmall")
-	b.ItemName(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
+	b.From(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})
 	b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", SchemaName: "schema", DatabaseName: "database"})
 	b.Topic("test_avro_topic")
 	b.Key([]string{"key_1", "key_2"})

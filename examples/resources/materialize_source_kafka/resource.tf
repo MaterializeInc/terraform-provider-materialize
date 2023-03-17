@@ -1,8 +1,8 @@
 resource "materialize_source_kafka" "example_source_kafka" {
-  name                       = "source_kafka"
-  schema_name                = "schema"
-  size                       = "3xsmall"
-  kafka_connection           {
+  name        = "source_kafka"
+  schema_name = "schema"
+  size        = "3xsmall"
+  kafka_connection {
     name          = "kafka_connection"
     database_name = "database"
     schema_name   = "schema"
@@ -12,8 +12,8 @@ resource "materialize_source_kafka" "example_source_kafka" {
     database_name = "database"
     schema_name   = "schema"
   }
-  format                     = "AVRO"
-  envelope                   = "data"
+  format   = "AVRO"
+  envelope = "data"
 }
 
 # CREATE SOURCE kafka_metadata
