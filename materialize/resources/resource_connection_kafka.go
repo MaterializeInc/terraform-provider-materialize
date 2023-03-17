@@ -62,11 +62,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 				},
-				"privatelink_connection": {
-					Description: "The AWS PrivateLink connection name in Materialize.",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
+				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", false, true),
 			},
 		},
 	},
@@ -77,11 +73,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, true),
-	"ssl_key": {
-		Description: "The client key for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Kafka broker.", false, true),
 	"sasl_mechanisms": {
 		Description:  "The SASL mechanism for the Kafka broker.",
 		Type:         schema.TypeString,
@@ -90,17 +82,8 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		RequiredWith: []string{"sasl_username", "sasl_password"},
 	},
 	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, true),
-	"sasl_password": {
-		Description:  "The SASL password for the Kafka broker.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"sasl_username", "sasl_mechanisms"},
-	},
-	"ssh_tunnel": {
-		Description: "The SSH tunnel configuration for the Kafka broker.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"sasl_password": IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false, true),
+	"ssh_tunnel":    IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false, true),
 }
 
 func ConnectionKafka() *schema.Resource {
@@ -124,7 +107,7 @@ type KafkaBroker struct {
 	Broker                string
 	TargetGroupPort       int
 	AvailabilityZone      string
-	PrivateLinkConnection string
+	PrivateLinkConnection IdentifierSchemaStruct
 }
 
 type ConnectionKafkaBuilder struct {
@@ -135,11 +118,11 @@ type ConnectionKafkaBuilder struct {
 	kafkaProgressTopic  string
 	kafkaSSLCa          ValueSecretStruct
 	kafkaSSLCert        ValueSecretStruct
-	kafkaSSLKey         string
+	kafkaSSLKey         IdentifierSchemaStruct
 	kafkaSASLMechanisms string
 	kafkaSASLUsername   ValueSecretStruct
-	kafkaSASLPassword   string
-	kafkaSSHTunnel      string
+	kafkaSASLPassword   IdentifierSchemaStruct
+	kafkaSSHTunnel      IdentifierSchemaStruct
 }
 
 func newConnectionKafkaBuilder(connectionName, schemaName, databaseName string) *ConnectionKafkaBuilder {
@@ -174,7 +157,7 @@ func (b *ConnectionKafkaBuilder) KafkaSSLCert(kafkaSSLCert ValueSecretStruct) *C
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) KafkaSSLKey(kafkaSSLKey string) *ConnectionKafkaBuilder {
+func (b *ConnectionKafkaBuilder) KafkaSSLKey(kafkaSSLKey IdentifierSchemaStruct) *ConnectionKafkaBuilder {
 	b.kafkaSSLKey = kafkaSSLKey
 	return b
 }
@@ -189,12 +172,12 @@ func (b *ConnectionKafkaBuilder) KafkaSASLUsername(kafkaSASLUsername ValueSecret
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) KafkaSASLPassword(kafkaSASLPassword string) *ConnectionKafkaBuilder {
+func (b *ConnectionKafkaBuilder) KafkaSASLPassword(kafkaSASLPassword IdentifierSchemaStruct) *ConnectionKafkaBuilder {
 	b.kafkaSASLPassword = kafkaSASLPassword
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) KafkaSSHTunnel(kafkaSSHTunnel string) *ConnectionKafkaBuilder {
+func (b *ConnectionKafkaBuilder) KafkaSSHTunnel(kafkaSSHTunnel IdentifierSchemaStruct) *ConnectionKafkaBuilder {
 	b.kafkaSSHTunnel = kafkaSSHTunnel
 	return b
 }
@@ -203,10 +186,10 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.qualifiedName()))
 
-	if b.kafkaSSHTunnel != "" {
+	if b.kafkaSSHTunnel.Name != "" {
 		q.WriteString(`BROKERS (`)
 		for i, broker := range b.kafkaBrokers {
-			q.WriteString(fmt.Sprintf(`'%s' USING SSH TUNNEL %s`, broker.Broker, b.kafkaSSHTunnel))
+			q.WriteString(fmt.Sprintf(`%s USING SSH TUNNEL %s`, QuoteString(broker.Broker), QualifiedName(b.kafkaSSHTunnel.DatabaseName, b.kafkaSSHTunnel.SchemaName, b.kafkaSSHTunnel.Name)))
 			if i < len(b.kafkaBrokers)-1 {
 				q.WriteString(`,`)
 			}
@@ -215,13 +198,14 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	} else {
 		q.WriteString(`BROKERS (`)
 		for i, broker := range b.kafkaBrokers {
-			if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection != "" {
-				q.WriteString(fmt.Sprintf(`'%s' USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE '%s')`, broker.Broker, broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
+			if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection.Name != "" {
+				q.WriteString(fmt.Sprintf(`%s USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE %s)`, QuoteString(broker.Broker),
+					QualifiedName(broker.PrivateLinkConnection.DatabaseName, broker.PrivateLinkConnection.SchemaName, broker.PrivateLinkConnection.Name), broker.TargetGroupPort, QuoteString(broker.AvailabilityZone)))
 				if i < len(b.kafkaBrokers)-1 {
 					q.WriteString(`, `)
 				}
 			} else {
-				q.WriteString(fmt.Sprintf(`'%s'`, broker.Broker))
+				q.WriteString(fmt.Sprintf(`%s`, QuoteString(broker.Broker)))
 				if i < len(b.kafkaBrokers)-1 {
 					q.WriteString(`, `)
 				}
@@ -231,34 +215,34 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	}
 
 	if b.kafkaProgressTopic != "" {
-		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC '%s'`, b.kafkaProgressTopic))
+		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC %s`, QuoteString(b.kafkaProgressTopic)))
 	}
 	if b.kafkaSSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.kafkaSSLCa.Text)))
 	}
-	if b.kafkaSSLCa.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa.Secret))
+	if b.kafkaSSLCa.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, QualifiedName(b.kafkaSSLCa.Secret.DatabaseName, b.kafkaSSLCa.Secret.SchemaName, b.kafkaSSLCa.Secret.Name)))
 	}
 	if b.kafkaSSLCert.Text != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, b.kafkaSSLCert.Text))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.kafkaSSLCert.Text)))
 	}
-	if b.kafkaSSLCert.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.kafkaSSLCert.Secret))
+	if b.kafkaSSLCert.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, QualifiedName(b.kafkaSSLCert.Secret.DatabaseName, b.kafkaSSLCert.Secret.SchemaName, b.kafkaSSLCert.Secret.Name)))
 	}
-	if b.kafkaSSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.kafkaSSLKey))
+	if b.kafkaSSLKey.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, QualifiedName(b.kafkaSSLKey.DatabaseName, b.kafkaSSLKey.SchemaName, b.kafkaSSLKey.Name)))
 	}
 	if b.kafkaSASLMechanisms != "" {
-		q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = '%s'`, b.kafkaSASLMechanisms))
+		q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = %s`, QuoteString(b.kafkaSASLMechanisms)))
 	}
 	if b.kafkaSASLUsername.Text != "" {
-		q.WriteString(fmt.Sprintf(`, SASL USERNAME = '%s'`, b.kafkaSASLUsername.Text))
+		q.WriteString(fmt.Sprintf(`, SASL USERNAME = %s`, QuoteString(b.kafkaSASLUsername.Text)))
 	}
-	if b.kafkaSASLUsername.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SASL USERNAME = SECRET %s`, b.kafkaSASLUsername.Secret))
+	if b.kafkaSASLUsername.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SASL USERNAME = SECRET %s`, QualifiedName(b.kafkaSASLUsername.Secret.DatabaseName, b.kafkaSASLUsername.Secret.SchemaName, b.kafkaSASLUsername.Secret.Name)))
 	}
-	if b.kafkaSASLPassword != "" {
-		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword))
+	if b.kafkaSASLPassword.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, QualifiedName(b.kafkaSASLPassword.DatabaseName, b.kafkaSASLPassword.SchemaName, b.kafkaSASLPassword.Name)))
 	}
 
 	q.WriteString(`);`)
@@ -291,11 +275,15 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		var brokers []KafkaBroker
 		for _, broker := range v.([]interface{}) {
 			b := broker.(map[string]interface{})
+			privateLinkConn := IdentifierSchemaStruct{}
+			if b["private_link_connection"] != nil {
+				privateLinkConn = GetIdentifierSchemaStruct(databaseName, schemaName, b["private_link_connection"].([]interface{}))
+			}
 			brokers = append(brokers, KafkaBroker{
 				Broker:                b["broker"].(string),
 				TargetGroupPort:       b["target_group_port"].(int),
 				AvailabilityZone:      b["availability_zone"].(string),
-				PrivateLinkConnection: b["privatelink_connection"].(string),
+				PrivateLinkConnection: privateLinkConn,
 			})
 		}
 		builder.KafkaBrokers(brokers)
@@ -311,8 +299,8 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		if v, ok := u["text"]; ok {
 			ssl_ca.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			ssl_ca.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			ssl_ca.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.KafkaSSLCa(ssl_ca)
 	}
@@ -323,14 +311,15 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		if v, ok := u["text"]; ok {
 			ssl_cert.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			ssl_cert.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			ssl_cert.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.KafkaSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
-		builder.KafkaSSLKey(v.(string))
+		key := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.KafkaSSLKey(key)
 	}
 
 	if v, ok := d.GetOk("sasl_mechanisms"); ok {
@@ -343,18 +332,20 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		if v, ok := u["text"]; ok {
 			sasl_username.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			sasl_username.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			sasl_username.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.KafkaSASLUsername(sasl_username)
 	}
 
 	if v, ok := d.GetOk("sasl_password"); ok {
-		builder.KafkaSASLPassword(v.(string))
+		pass := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.KafkaSASLPassword(pass)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
-		builder.KafkaSSHTunnel(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.KafkaSSHTunnel(conn)
 	}
 
 	qc := builder.Create()

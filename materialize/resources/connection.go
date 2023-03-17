@@ -17,10 +17,10 @@ func readConnectionId(name, schema, database string) string {
 			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, name, schema, database)
+		WHERE mz_connections.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(name), QuoteString(schema), QuoteString(database))
 }
 
 func readConnectionParams(id string) string {
@@ -35,7 +35,7 @@ func readConnectionParams(id string) string {
 			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.id = '%s';`, id)
+		WHERE mz_connections.id = %s;`, QuoteString(id))
 }
 
 func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -66,7 +66,7 @@ func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	qn := QualifiedName(*database, *schema, *name)
+	qn := fmt.Sprintf("%s.%s.%s", *database, *schema, *name)
 	if err := d.Set("qualified_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,7 +76,7 @@ func ConnectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 type ValueSecretStruct struct {
 	Text   string
-	Secret string
+	Secret IdentifierSchemaStruct
 }
 
 func ValueSecretSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
@@ -90,12 +90,7 @@ func ValueSecretSchema(elem string, description string, isRequired bool, isOptio
 					Optional:      true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
-				"secret": {
-					Description:   fmt.Sprintf("The %s secret value.", elem),
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{fmt.Sprintf("%s.0.text", elem)},
-				},
+				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false, true),
 			},
 		},
 		Required:    isRequired,

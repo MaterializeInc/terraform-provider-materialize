@@ -79,8 +79,7 @@ func newSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilde
 }
 
 func (b *SecretBuilder) Create(value string) string {
-	escapedValue := QuoteString(value)
-	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.qualifiedName(), escapedValue)
+	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.qualifiedName(), QuoteString(value))
 }
 
 func (b *SecretBuilder) Rename(newName string) string {
@@ -89,8 +88,7 @@ func (b *SecretBuilder) Rename(newName string) string {
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
-	escapedValue := QuoteString(newValue)
-	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.qualifiedName(), escapedValue)
+	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.qualifiedName(), QuoteString(newValue))
 }
 
 func (b *SecretBuilder) Drop() string {
@@ -105,9 +103,9 @@ func (b *SecretBuilder) ReadId() string {
 			ON mz_secrets.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';`, b.secretName, b.schemaName, b.databaseName)
+		WHERE mz_secrets.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;`, QuoteString(b.secretName), QuoteString(b.schemaName), QuoteString(b.databaseName))
 }
 
 func readSecretParams(id string) string {
@@ -121,7 +119,7 @@ func readSecretParams(id string) string {
 			ON mz_secrets.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.id = '%s';`, id)
+		WHERE mz_secrets.id = %s;`, QuoteString(id))
 }
 
 func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -148,7 +146,7 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	qn := QualifiedName(database, schema, name)
+	qn := fmt.Sprintf("%s.%s.%s", database, schema, name)
 	if err := d.Set("qualified_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

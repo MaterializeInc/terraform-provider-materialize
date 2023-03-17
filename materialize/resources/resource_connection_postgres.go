@@ -55,34 +55,18 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     5432,
 	},
-	"user": ValueSecretSchema("user", "The Postgres database username.", true, false),
-	"password": {
-		Description: "The Postgres database password.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"ssh_tunnel": {
-		Description: "The SSH tunnel configuration for the Postgres database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"user":                      ValueSecretSchema("user", "The Postgres database username.", true, false),
+	"password":                  IdentifierSchema("password", "The Postgres database password.", false, true),
+	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Postgres database.", false, true),
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Postgres database.", false, true),
-	"ssl_key": {
-		Description: "The client key for the Postgres database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Postgres database.", false, true),
 	"ssl_mode": {
 		Description: "The SSL mode for the Postgres database.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"aws_privatelink": {
-		Description: "The AWS PrivateLink configuration for the Postgres database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false, true),
 }
 
 func ConnectionPostgres() *schema.Resource {
@@ -111,13 +95,13 @@ type ConnectionPostgresBuilder struct {
 	postgresHost           string
 	postgresPort           int
 	postgresUser           ValueSecretStruct
-	postgresPassword       string
-	postgresSSHTunnel      string
+	postgresPassword       IdentifierSchemaStruct
+	postgresSSHTunnel      IdentifierSchemaStruct
 	postgresSSLCa          ValueSecretStruct
 	postgresSSLCert        ValueSecretStruct
-	postgresSSLKey         string
+	postgresSSLKey         IdentifierSchemaStruct
 	postgresSSLMode        string
-	postgresAWSPrivateLink string
+	postgresAWSPrivateLink IdentifierSchemaStruct
 }
 
 func (b *ConnectionPostgresBuilder) qualifiedName() string {
@@ -157,12 +141,12 @@ func (b *ConnectionPostgresBuilder) PostgresUser(postgresUser ValueSecretStruct)
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresPassword(postgresPassword string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresPassword(postgresPassword IdentifierSchemaStruct) *ConnectionPostgresBuilder {
 	b.postgresPassword = postgresPassword
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresSSHTunnel(postgresSSHTunnel string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresSSHTunnel(postgresSSHTunnel IdentifierSchemaStruct) *ConnectionPostgresBuilder {
 	b.postgresSSHTunnel = postgresSSHTunnel
 	return b
 }
@@ -177,7 +161,7 @@ func (b *ConnectionPostgresBuilder) PostgresSSLCert(postgresSSLCert ValueSecretS
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresSSLKey(postgresSSLKey string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresSSLKey(postgresSSLKey IdentifierSchemaStruct) *ConnectionPostgresBuilder {
 	b.postgresSSLKey = postgresSSLKey
 	return b
 }
@@ -187,7 +171,7 @@ func (b *ConnectionPostgresBuilder) PostgresSSLMode(postgresSSLMode string) *Con
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink string) *ConnectionPostgresBuilder {
+func (b *ConnectionPostgresBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLink IdentifierSchemaStruct) *ConnectionPostgresBuilder {
 	b.postgresAWSPrivateLink = postgresAWSPrivateLink
 	return b
 }
@@ -196,43 +180,43 @@ func (b *ConnectionPostgresBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.qualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`HOST '%s'`, b.postgresHost))
+	q.WriteString(fmt.Sprintf(`HOST %s`, QuoteString(b.postgresHost)))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
 	if b.postgresUser.Text != "" {
-		q.WriteString(fmt.Sprintf(`, USER '%s'`, b.postgresUser.Text))
+		q.WriteString(fmt.Sprintf(`, USER %s`, QuoteString(b.postgresUser.Text)))
 	}
-	if b.postgresUser.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, b.postgresUser.Secret))
+	if b.postgresUser.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, QualifiedName(b.postgresUser.Secret.DatabaseName, b.postgresUser.Secret.SchemaName, b.postgresUser.Secret.Name)))
 	}
-	if b.postgresPassword != "" {
-		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword))
+	if b.postgresPassword.Name != "" {
+		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, QualifiedName(b.postgresPassword.DatabaseName, b.postgresPassword.SchemaName, b.postgresPassword.Name)))
 	}
 	if b.postgresSSLMode != "" {
-		q.WriteString(fmt.Sprintf(`, SSL MODE '%s'`, b.postgresSSLMode))
+		q.WriteString(fmt.Sprintf(`, SSL MODE %s`, QuoteString(b.postgresSSLMode)))
 	}
-	if b.postgresSSHTunnel != "" {
-		q.WriteString(fmt.Sprintf(`, SSH TUNNEL '%s'`, b.postgresSSHTunnel))
+	if b.postgresSSHTunnel.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QualifiedName(b.postgresSSHTunnel.DatabaseName, b.postgresSSHTunnel.SchemaName, b.postgresSSHTunnel.Name)))
 	}
 	if b.postgresSSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY %s`, QuoteString(b.postgresSSLCa.Text)))
 	}
-	if b.postgresSSLCa.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa.Secret))
+	if b.postgresSSLCa.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, QualifiedName(b.postgresSSLCa.Secret.DatabaseName, b.postgresSSLCa.Secret.SchemaName, b.postgresSSLCa.Secret.Name)))
 	}
 	if b.postgresSSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE  %s`, QuoteString(b.postgresSSLCert.Text)))
 	}
-	if b.postgresSSLCert.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.postgresSSLCert.Secret))
+	if b.postgresSSLCert.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, QualifiedName(b.postgresSSLCert.Secret.DatabaseName, b.postgresSSLCert.Secret.SchemaName, b.postgresSSLCert.Secret.Name)))
 	}
-	if b.postgresSSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.postgresSSLKey))
+	if b.postgresSSLKey.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, QualifiedName(b.postgresSSLKey.DatabaseName, b.postgresSSLKey.SchemaName, b.postgresSSLKey.Name)))
 	}
-	if b.postgresAWSPrivateLink != "" {
-		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.postgresAWSPrivateLink))
+	if b.postgresAWSPrivateLink.Name != "" {
+		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, QualifiedName(b.postgresAWSPrivateLink.DatabaseName, b.postgresAWSPrivateLink.SchemaName, b.postgresAWSPrivateLink.Name)))
 	}
 
-	q.WriteString(fmt.Sprintf(`, DATABASE '%s'`, b.postgresDatabase))
+	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.postgresDatabase)))
 
 	q.WriteString(`);`)
 	return q.String()
@@ -279,14 +263,15 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		if v, ok := u["text"]; ok {
 			user.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			user.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			user.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.PostgresUser(user)
 	}
 
 	if v, ok := d.GetOk("password"); ok {
-		builder.PostgresPassword(v.(string))
+		pass := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.PostgresPassword(pass)
 	}
 
 	if v, ok := d.GetOk("database"); ok {
@@ -303,8 +288,8 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		if v, ok := u["text"]; ok {
 			ssl_ca.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			ssl_ca.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			ssl_ca.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.PostgresSSLCa(ssl_ca)
 	}
@@ -315,22 +300,25 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		if v, ok := u["text"]; ok {
 			ssl_cert.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			ssl_cert.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			ssl_cert.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.PostgresSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
-		builder.PostgresSSLKey(v.(string))
+		k := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.PostgresSSLKey(k)
 	}
 
 	if v, ok := d.GetOk("aws_privatelink"); ok {
-		builder.PostgresAWSPrivateLink(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.PostgresAWSPrivateLink(conn)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
-		builder.PostgresSSHTunnel(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.PostgresSSHTunnel(conn)
 	}
 
 	qc := builder.Create()

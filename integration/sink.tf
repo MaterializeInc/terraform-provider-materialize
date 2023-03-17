@@ -1,14 +1,26 @@
 resource "materialize_sink_kafka" "sink_kafka" {
-  name                       = "sink_kafka"
-  schema_name                = materialize_schema.schema.name
-  database_name              = materialize_database.database.name
-  size                       = "1"
-  item_name                  = "example.example.load_gen"
-  kafka_connection           = materialize_connection_kafka.kafka_connection.name
-  topic                      = "topic1"
-  format                     = "AVRO"
-  schema_registry_connection = materialize_connection_confluent_schema_registry.schema_registry.name
-  envelope                   = "DEBEZIUM"
+  name          = "sink_kafka"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  size          = "1"
+  item_name {
+    name          = "load_gen"
+    database_name = "example"
+    schema_name   = "example"
+  }
+  topic  = "topic1"
+  format = "AVRO"
+  kafka_connection {
+    name          = materialize_connection_kafka.kafka_connection.name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+    schema_name   = materialize_connection_kafka.kafka_connection.schema_name
+  }
+  schema_registry_connection {
+    name          = materialize_connection_confluent_schema_registry.schema_registry.name
+    database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
+    schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
+  }
+  envelope = "DEBEZIUM"
 
   depends_on = [
     materialize_source_load_generator.load_generator

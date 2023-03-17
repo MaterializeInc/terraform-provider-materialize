@@ -46,28 +46,11 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Confluent Schema Registry.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Confluent Schema Registry.", false, true),
-	"ssl_key": {
-		Description: "The client key for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"password": {
-		Description:  "The password for the Confluent Schema Registry.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		RequiredWith: []string{"username"},
-	},
-	"username": ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false, true),
-	"ssh_tunnel": {
-		Description: "The SSH tunnel configuration for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
-	"aws_privatelink": {
-		Description: "The AWS PrivateLink configuration for the Confluent Schema Registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-	},
+	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Confluent Schema Registry.", false, true),
+	"password":                  IdentifierSchema("password", "The password for the Confluent Schema Registry.", false, true),
+	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false, true),
+	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false, true),
+	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false, true),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {
@@ -94,11 +77,11 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	confluentSchemaRegistryUrl            string
 	confluentSchemaRegistrySSLCa          ValueSecretStruct
 	confluentSchemaRegistrySSLCert        ValueSecretStruct
-	confluentSchemaRegistrySSLKey         string
+	confluentSchemaRegistrySSLKey         IdentifierSchemaStruct
 	confluentSchemaRegistryUsername       ValueSecretStruct
-	confluentSchemaRegistryPassword       string
-	confluentSchemaRegistrySSHTunnel      string
-	confluentSchemaRegistryAWSPrivateLink string
+	confluentSchemaRegistryPassword       IdentifierSchemaStruct
+	confluentSchemaRegistrySSHTunnel      IdentifierSchemaStruct
+	confluentSchemaRegistryAWSPrivateLink IdentifierSchemaStruct
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) qualifiedName() string {
@@ -123,7 +106,7 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryUserna
 	return b
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryPassword(confluentSchemaRegistryPassword string) *ConnectionConfluentSchemaRegistryBuilder {
+func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryPassword(confluentSchemaRegistryPassword IdentifierSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
 	b.confluentSchemaRegistryPassword = confluentSchemaRegistryPassword
 	return b
 }
@@ -138,17 +121,17 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistrySSLCer
 	return b
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistrySSLKey(confluentSchemaRegistrySSLKey string) *ConnectionConfluentSchemaRegistryBuilder {
+func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistrySSLKey(confluentSchemaRegistrySSLKey IdentifierSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
 	b.confluentSchemaRegistrySSLKey = confluentSchemaRegistrySSLKey
 	return b
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistrySSHTunnel(confluentSchemaRegistrySSHTunnel string) *ConnectionConfluentSchemaRegistryBuilder {
+func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistrySSHTunnel(confluentSchemaRegistrySSHTunnel IdentifierSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
 	b.confluentSchemaRegistrySSHTunnel = confluentSchemaRegistrySSHTunnel
 	return b
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryAWSPrivateLink(confluentSchemaRegistryAWSPrivateLink string) *ConnectionConfluentSchemaRegistryBuilder {
+func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryAWSPrivateLink(confluentSchemaRegistryAWSPrivateLink IdentifierSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
 	b.confluentSchemaRegistryAWSPrivateLink = confluentSchemaRegistryAWSPrivateLink
 	return b
 }
@@ -157,36 +140,36 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.qualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`URL '%s'`, b.confluentSchemaRegistryUrl))
+	q.WriteString(fmt.Sprintf(`URL %s`, QuoteString(b.confluentSchemaRegistryUrl)))
 	if b.confluentSchemaRegistryUsername.Text != "" {
 		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername.Text)))
 	}
-	if b.confluentSchemaRegistryUsername.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, b.confluentSchemaRegistryUsername.Secret))
+	if b.confluentSchemaRegistryUsername.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, QualifiedName(b.confluentSchemaRegistryUsername.Secret.DatabaseName, b.confluentSchemaRegistryUsername.Secret.SchemaName, b.confluentSchemaRegistryUsername.Secret.Name)))
 	}
-	if b.confluentSchemaRegistryPassword != "" {
-		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword))
+	if b.confluentSchemaRegistryPassword.Name != "" {
+		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, QualifiedName(b.confluentSchemaRegistryPassword.DatabaseName, b.confluentSchemaRegistryPassword.SchemaName, b.confluentSchemaRegistryPassword.Name)))
 	}
 	if b.confluentSchemaRegistrySSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa.Text)))
 	}
-	if b.confluentSchemaRegistrySSLCa.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.confluentSchemaRegistrySSLCa.Secret))
+	if b.confluentSchemaRegistrySSLCa.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, QualifiedName(b.confluentSchemaRegistrySSLCa.Secret.DatabaseName, b.confluentSchemaRegistrySSLCa.Secret.SchemaName, b.confluentSchemaRegistrySSLCa.Secret.Name)))
 	}
 	if b.confluentSchemaRegistrySSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.confluentSchemaRegistrySSLCert.Text)))
 	}
-	if b.confluentSchemaRegistrySSLCert.Secret != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.confluentSchemaRegistrySSLCert.Secret))
+	if b.confluentSchemaRegistrySSLCert.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, QualifiedName(b.confluentSchemaRegistrySSLCert.Secret.DatabaseName, b.confluentSchemaRegistrySSLCert.Secret.SchemaName, b.confluentSchemaRegistrySSLCert.Secret.Name)))
 	}
-	if b.confluentSchemaRegistrySSLKey != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.confluentSchemaRegistrySSLKey))
+	if b.confluentSchemaRegistrySSLKey.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, QualifiedName(b.confluentSchemaRegistrySSLKey.DatabaseName, b.confluentSchemaRegistrySSLKey.SchemaName, b.confluentSchemaRegistrySSLKey.Name)))
 	}
-	if b.confluentSchemaRegistryAWSPrivateLink != "" {
-		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.confluentSchemaRegistryAWSPrivateLink))
+	if b.confluentSchemaRegistryAWSPrivateLink.Name != "" {
+		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, QualifiedName(b.confluentSchemaRegistryAWSPrivateLink.DatabaseName, b.confluentSchemaRegistryAWSPrivateLink.SchemaName, b.confluentSchemaRegistryAWSPrivateLink.Name)))
 	}
-	if b.confluentSchemaRegistrySSHTunnel != "" {
-		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, b.confluentSchemaRegistrySSHTunnel))
+	if b.confluentSchemaRegistrySSHTunnel.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QualifiedName(b.confluentSchemaRegistrySSHTunnel.DatabaseName, b.confluentSchemaRegistrySSHTunnel.SchemaName, b.confluentSchemaRegistrySSHTunnel.Name)))
 	}
 
 	q.WriteString(`);`)
@@ -225,8 +208,8 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		if v, ok := u["text"]; ok {
 			ssl_ca.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			ssl_ca.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			ssl_ca.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.ConfluentSchemaRegistrySSLCa(ssl_ca)
 	}
@@ -237,38 +220,43 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		if v, ok := u["text"]; ok {
 			ssl_cert.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			ssl_cert.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			ssl_cert.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.ConfluentSchemaRegistrySSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
-		builder.ConfluentSchemaRegistrySSLKey(v.(string))
+		key := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.ConfluentSchemaRegistrySSLKey(key)
 	}
 
 	if v, ok := d.GetOk("username"); ok {
 		var user ValueSecretStruct
+		// Print the v value which is a []interface{}
 		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
+		if v, ok := u["text"]; ok && v != nil {
 			user.Text = v.(string)
 		}
-		if v, ok := u["secret"]; ok {
-			user.Secret = v.(string)
+		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
+			user.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		}
 		builder.ConfluentSchemaRegistryUsername(user)
 	}
 
 	if v, ok := d.GetOk("password"); ok {
-		builder.ConfluentSchemaRegistryPassword(v.(string))
+		pass := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.ConfluentSchemaRegistryPassword(pass)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
-		builder.ConfluentSchemaRegistrySSHTunnel(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.ConfluentSchemaRegistrySSHTunnel(conn)
 	}
 
 	if v, ok := d.GetOk("aws_privatelink"); ok {
-		builder.ConfluentSchemaRegistryAWSPrivateLink(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.ConfluentSchemaRegistryAWSPrivateLink(conn)
 	}
 
 	qc := builder.Create()

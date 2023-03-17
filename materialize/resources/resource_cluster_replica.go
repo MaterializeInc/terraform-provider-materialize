@@ -120,21 +120,21 @@ func (b *ClusterReplicaBuilder) IdleArrangementMergeEffort(e int) *ClusterReplic
 
 func (b *ClusterReplicaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s.%s`, b.clusterName, b.replicaName))
+	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s.%s`, QuoteIdentifier(b.clusterName), QuoteIdentifier(b.replicaName)))
 
 	var p []string
 	if b.size != "" {
-		s := fmt.Sprintf(` SIZE = '%s'`, b.size)
+		s := fmt.Sprintf(` SIZE = %s`, QuoteString(b.size))
 		p = append(p, s)
 	}
 
 	if b.availabilityZone != "" {
-		a := fmt.Sprintf(` AVAILABILITY ZONE = '%s'`, b.availabilityZone)
+		a := fmt.Sprintf(` AVAILABILITY ZONE = %s`, QuoteString(b.availabilityZone))
 		p = append(p, a)
 	}
 
 	if b.introspectionInterval != "" {
-		i := fmt.Sprintf(` INTROSPECTION INTERVAL = '%s'`, b.introspectionInterval)
+		i := fmt.Sprintf(` INTROSPECTION INTERVAL = %s`, QuoteString(b.introspectionInterval))
 		p = append(p, i)
 	}
 
@@ -157,7 +157,7 @@ func (b *ClusterReplicaBuilder) Create() string {
 }
 
 func (b *ClusterReplicaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, b.clusterName, b.replicaName)
+	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, QuoteIdentifier(b.clusterName), QuoteIdentifier(b.replicaName))
 }
 
 func (b *ClusterReplicaBuilder) ReadId() string {
@@ -166,8 +166,8 @@ func (b *ClusterReplicaBuilder) ReadId() string {
 		FROM mz_cluster_replicas
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.name = '%s'
-		AND mz_clusters.name = '%s';`, b.replicaName, b.clusterName)
+		WHERE mz_cluster_replicas.name = %s
+		AND mz_clusters.name = %s;`, QuoteString(b.replicaName), QuoteString(b.clusterName))
 }
 
 func readClusterReplicaParams(id string) string {
@@ -180,7 +180,7 @@ func readClusterReplicaParams(id string) string {
 		FROM mz_cluster_replicas
 		JOIN mz_clusters
 			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.id = '%s';`, id)
+		WHERE mz_cluster_replicas.id = %s;`, QuoteString(id))
 }
 
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

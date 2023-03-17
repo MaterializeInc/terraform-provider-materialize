@@ -55,18 +55,8 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"item_name": {
-		Description: "The name of the source, table or materialized view you want to send to the sink.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"kafka_connection": {
-		Description: "The name of the Kafka connection to use in the source.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"item_name":        IdentifierSchema("item_name", "The name of the source, table or materialized view you want to send to the sink.", true, false),
+	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true, false),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -93,12 +83,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(envelopes, true),
 	},
-	"schema_registry_connection": {
-		Description: "The name of the connection to use for the shcema registry.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of the connection to use for the shcema registry.", false, true),
 	"avro_key_fullname": {
 		Description:  "ets the Avro fullname on the generated key schema, if a KEY is specified. When used, a value must be specified for AVRO VALUE FULLNAME.",
 		Type:         schema.TypeString,
@@ -145,13 +130,13 @@ type SinkKafkaBuilder struct {
 	databaseName             string
 	clusterName              string
 	size                     string
-	itemName                 string
-	kafkaConnection          string
+	itemName                 IdentifierSchemaStruct
+	kafkaConnection          IdentifierSchemaStruct
 	topic                    string
 	key                      []string
 	format                   string
 	envelope                 string
-	schemaRegistryConnection string
+	schemaRegistryConnection IdentifierSchemaStruct
 	avroKeyFullname          string
 	avroValueFullname        string
 	snapshot                 bool
@@ -179,12 +164,12 @@ func (b *SinkKafkaBuilder) Size(s string) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) ItemName(i string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) ItemName(i IdentifierSchemaStruct) *SinkKafkaBuilder {
 	b.itemName = i
 	return b
 }
 
-func (b *SinkKafkaBuilder) KafkaConnection(k string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) KafkaConnection(k IdentifierSchemaStruct) *SinkKafkaBuilder {
 	b.kafkaConnection = k
 	return b
 }
@@ -209,7 +194,7 @@ func (b *SinkKafkaBuilder) Envelope(e string) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) SchemaRegistryConnection(s string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) SchemaRegistryConnection(s IdentifierSchemaStruct) *SinkKafkaBuilder {
 	b.schemaRegistryConnection = s
 	return b
 }
@@ -234,14 +219,14 @@ func (b *SinkKafkaBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.qualifiedName()))
 
 	if b.clusterName != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM %s`, b.itemName))
+	q.WriteString(fmt.Sprintf(` FROM %s`, QualifiedName(b.itemName.DatabaseName, b.itemName.SchemaName, b.itemName.Name)))
 
 	// Broker
-	if b.kafkaConnection != "" {
-		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection))
+	if b.kafkaConnection.Name != "" {
+		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, QualifiedName(b.kafkaConnection.DatabaseName, b.kafkaConnection.SchemaName, b.kafkaConnection.Name)))
 	}
 
 	if len(b.key) > 0 {
@@ -250,7 +235,7 @@ func (b *SinkKafkaBuilder) Create() string {
 	}
 
 	if b.topic != "" {
-		q.WriteString(fmt.Sprintf(` (TOPIC '%s')`, b.topic))
+		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
 	}
 
 	if b.format != "" {
@@ -258,8 +243,8 @@ func (b *SinkKafkaBuilder) Create() string {
 	}
 
 	// CSR Options
-	if b.schemaRegistryConnection != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection))
+	if b.schemaRegistryConnection.Name != "" {
+		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.schemaRegistryConnection.DatabaseName, b.schemaRegistryConnection.SchemaName, b.schemaRegistryConnection.Name)))
 	}
 
 	if b.avroKeyFullname != "" && b.avroValueFullname != "" {
@@ -275,7 +260,7 @@ func (b *SinkKafkaBuilder) Create() string {
 		w := strings.Builder{}
 
 		if b.size != "" {
-			w.WriteString(fmt.Sprintf(` SIZE = '%s'`, b.size))
+			w.WriteString(fmt.Sprintf(` SIZE = %s`, QuoteString(b.size)))
 		}
 
 		if !b.snapshot {
@@ -295,7 +280,7 @@ func (b *SinkKafkaBuilder) Rename(newName string) string {
 }
 
 func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = '%s');`, b.qualifiedName(), newSize)
+	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
 }
 
 func (b *SinkKafkaBuilder) Drop() string {
@@ -324,11 +309,13 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("item_name"); ok {
-		builder.ItemName(v.(string))
+		itemName := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.ItemName(itemName)
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {
-		builder.KafkaConnection(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.KafkaConnection(conn)
 	}
 
 	if v, ok := d.GetOk("topic"); ok {
@@ -348,7 +335,8 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("schema_registry_connection"); ok {
-		builder.SchemaRegistryConnection(v.(string))
+		conn := GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		builder.SchemaRegistryConnection(conn)
 	}
 
 	if v, ok := d.GetOk("avro_key_fullname"); ok {

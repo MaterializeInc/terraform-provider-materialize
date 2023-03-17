@@ -31,7 +31,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 	WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -114,7 +114,7 @@ func TestSourceLoadgenCreateQuery(t *testing.T) {
 	bc := newSourceLoadgenBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.LoadGeneratorType("COUNTER")
-	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER cluster FROM LOAD GENERATOR COUNTER;`, bc.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM LOAD GENERATOR COUNTER;`, bc.Create())
 }
 
 func TestSourceLoadgenCreateParamsQuery(t *testing.T) {

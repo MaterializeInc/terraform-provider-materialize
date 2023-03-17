@@ -117,10 +117,10 @@ func (b *ViewBuilder) ReadId() string {
 			ON mz_views.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_views.name = '%s'
-		AND mz_schemas.name = '%s'
-		AND mz_databases.name = '%s';
-	`, b.viewName, b.schemaName, b.databaseName)
+		WHERE mz_views.name = %s
+		AND mz_schemas.name = %s
+		AND mz_databases.name = %s;
+	`, QuoteString(b.viewName), QuoteString(b.schemaName), QuoteString(b.databaseName))
 }
 
 func readViewParams(id string) string {
@@ -134,7 +134,7 @@ func readViewParams(id string) string {
 			ON mz_views.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_views.id = '%s';`, id)
+		WHERE mz_views.id = %s;`, QuoteString(id))
 }
 
 func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
