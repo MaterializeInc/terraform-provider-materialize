@@ -14,21 +14,21 @@ A sink describes an external system you want Materialize to write data to, and p
 
 ```terraform
 resource "materialize_sink_kafka" "example_sink_kafka" {
-  name                       = "sink_kafka"
-  schema_name                = "schema"
-  size                       = "3xsmall"
-  item_name {
+  name        = "sink_kafka"
+  schema_name = "schema"
+  size        = "3xsmall"
+  from {
     name = "table"
   }
-  topic                      = "test_avro_topic"
-  format                     = "AVRO"
+  topic  = "test_avro_topic"
+  format = "AVRO"
   kafka_connection {
     name = "kafka_connection"
   }
   schema_registry_connection {
     name = "csr_connection"
   }
-  envelope                   = "UPSERT"
+  envelope = "UPSERT"
 }
 
 # CREATE SINK schema.sink_kafka
@@ -44,7 +44,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 ### Required
 
-- `item_name` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--item_name))
+- `from` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--from))
 - `kafka_connection` (Block List, Min: 1, Max: 1) The name of the Kafka connection to use in the sink. (see [below for nested schema](#nestedblock--kafka_connection))
 - `name` (String) The identifier for the sink.
 - `topic` (String) The Kafka topic you want to subscribe to.
@@ -69,17 +69,17 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `qualified_name` (String) The fully qualified name of the sink.
 - `sink_type` (String) The type of sink.
 
-<a id="nestedblock--item_name"></a>
-### Nested Schema for `item_name`
+<a id="nestedblock--from"></a>
+### Nested Schema for `from`
 
 Required:
 
-- `name` (String) The item_name name.
+- `name` (String) The from name.
 
 Optional:
 
-- `database_name` (String) The item_name database name.
-- `schema_name` (String) The item_name schema name.
+- `database_name` (String) The from database name.
+- `schema_name` (String) The from schema name.
 
 
 <a id="nestedblock--kafka_connection"></a>

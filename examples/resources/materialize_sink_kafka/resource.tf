@@ -1,19 +1,19 @@
 resource "materialize_sink_kafka" "example_sink_kafka" {
-  name                       = "sink_kafka"
-  schema_name                = "schema"
-  size                       = "3xsmall"
-  item_name {
+  name        = "sink_kafka"
+  schema_name = "schema"
+  size        = "3xsmall"
+  from {
     name = "table"
   }
-  topic                      = "test_avro_topic"
-  format                     = "AVRO"
+  topic  = "test_avro_topic"
+  format = "AVRO"
   kafka_connection {
     name = "kafka_connection"
   }
   schema_registry_connection {
     name = "csr_connection"
   }
-  envelope                   = "UPSERT"
+  envelope = "UPSERT"
 }
 
 # CREATE SINK schema.sink_kafka

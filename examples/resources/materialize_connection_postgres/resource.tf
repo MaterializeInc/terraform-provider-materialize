@@ -1,19 +1,19 @@
 # Create a Postgres Connection
 resource "materialize_connection_postgres" "example_postgres_connection" {
-  name     = "example_postgres_connection"
-  host     = "instance.foo000.us-west-1.rds.amazonaws.com"
-  port     = 5432
+  name = "example_postgres_connection"
+  host = "instance.foo000.us-west-1.rds.amazonaws.com"
+  port = 5432
   user {
     secret {
-      name = "example"
+      name          = "example"
       database_name = "database"
-      schema_name = "schema"
+      schema_name   = "schema"
     }
   }
   password {
-    name = "example"
+    name          = "example"
     database_name = "database"
-    schema_name = "schema"
+    schema_name   = "schema"
   }
   database = "example"
 }

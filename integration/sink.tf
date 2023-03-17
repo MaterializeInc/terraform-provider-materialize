@@ -3,7 +3,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
   size          = "1"
-  item_name {
+  from {
     name          = "load_gen"
     database_name = "example"
     schema_name   = "example"

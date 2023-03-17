@@ -4,8 +4,8 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
-  sasl_username   = "example"
-  sasl_password   {
+  sasl_username = "example"
+  sasl_password {
     name          = "kafka_password"
     database_name = "materialize"
     schema_name   = "public"
@@ -25,23 +25,23 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
 resource "materialize_connection_kafka" "example_kafka_connection_multiple_brokers" {
   name = "example_kafka_connection_multiple_brokers"
   kafka_broker {
-    broker                 = "b-1.hostname-1:9096"
-    target_group_port      = "9001"
-    availability_zone      = "use1-az1"
+    broker            = "b-1.hostname-1:9096"
+    target_group_port = "9001"
+    availability_zone = "use1-az1"
     privatelink_connection {
-      name = "example_aws_privatelink_conn"
+      name          = "example_aws_privatelink_conn"
       database_name = "materialize"
-      schema_name = "public"
+      schema_name   = "public"
     }
   }
   kafka_broker {
-    broker                 = "b-2.hostname-2:9096"
-    target_group_port      = "9002"
-    availability_zone      = "use1-az2"
+    broker            = "b-2.hostname-2:9096"
+    target_group_port = "9002"
+    availability_zone = "use1-az2"
     privatelink_connection {
-      name = "example_aws_privatelink_conn"
+      name          = "example_aws_privatelink_conn"
       database_name = "materialize"
-      schema_name = "public"
+      schema_name   = "public"
     }
   }
 }
