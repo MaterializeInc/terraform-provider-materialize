@@ -7,6 +7,11 @@ import (
 	provider "terraform-materialize/materialize"
 )
 
+var (
+	// This value is injected by goreleaser during a release.
+	version string = "dev"
+)
+
 func main() {
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() *schema.Provider {
