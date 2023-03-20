@@ -1,17 +1,8 @@
 package materialize
 
 import (
-	"fmt"
 	"strings"
 )
-
-type SQLError struct {
-	Err error
-}
-
-func (e *SQLError) Error() string {
-	return fmt.Sprintf("Unable to execute SQL: %v", e.Err)
-}
 
 func QuoteString(input string) (output string) {
 	output = "'" + strings.Replace(input, "'", "''", -1) + "'"

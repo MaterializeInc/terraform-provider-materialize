@@ -30,8 +30,7 @@ func TestClusterReplicaDatasource(t *testing.T) {
 				mz_cluster_replicas.availability_zone
 			FROM mz_cluster_replicas
 			JOIN mz_clusters
-				ON mz_cluster_replicas.cluster_id = mz_clusters.id;
-		`).WillReturnRows(ir)
+				ON mz_cluster_replicas.cluster_id = mz_clusters.id;`).WillReturnRows(ir)
 
 		if err := clusterReplicaRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

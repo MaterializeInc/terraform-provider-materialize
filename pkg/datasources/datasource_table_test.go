@@ -34,7 +34,8 @@ func TestTableDatasource(t *testing.T) {
 			JOIN mz_schemas
 				ON mz_tables.schema_id = mz_schemas.id
 			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id`).WillReturnRows(ir)
+				ON mz_schemas.database_id = mz_databases.id
+			WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`).WillReturnRows(ir)
 
 		if err := tableRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

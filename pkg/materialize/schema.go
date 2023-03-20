@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"fmt"
+	"strings"
 )
 
 type SchemaBuilder struct {
@@ -46,4 +47,23 @@ func ReadSchemaParams(id string) string {
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_schemas.id = %s;`, QuoteString(id))
+}
+
+func ReadSchemaDatasource(databaseName string) string {
+	q := strings.Builder{}
+	q.WriteString(`
+		SELECT
+			mz_schemas.id,
+			mz_schemas.name,
+			mz_databases.name
+		FROM mz_schemas JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+	`)
+
+	if databaseName != "" {
+		q.WriteString(fmt.Sprintf(`WHERE mz_databases.name = '%s'`, databaseName))
+	}
+
+	q.WriteString(`;`)
+	return q.String()
 }

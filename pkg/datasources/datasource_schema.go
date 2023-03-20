@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
+	"terraform-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -47,32 +47,13 @@ func Schema() *schema.Resource {
 	}
 }
 
-func schemaQuery(databaseName string) string {
-	q := strings.Builder{}
-	q.WriteString(`
-		SELECT
-			mz_schemas.id,
-			mz_schemas.name,
-			mz_databases.name
-		FROM mz_schemas JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-	`)
-
-	if databaseName != "" {
-		q.WriteString(fmt.Sprintf(`WHERE mz_databases.name = '%s'`, databaseName))
-	}
-
-	q.WriteString(`;`)
-	return q.String()
-}
-
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*sqlx.DB)
 
 	databaseName := d.Get("database_name").(string)
-	q := schemaQuery(databaseName)
+	q := materialize.ReadSchemaDatasource(databaseName)
 
 	rows, err := conn.Query(q)
 	if errors.Is(err, sql.ErrNoRows) {

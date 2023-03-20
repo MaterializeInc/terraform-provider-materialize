@@ -43,7 +43,8 @@ func TestSourceDatasource(t *testing.T) {
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
 		LEFT JOIN mz_clusters
-			ON mz_sources.cluster_id = mz_clusters.id`).WillReturnRows(ir)
+			ON mz_sources.cluster_id = mz_clusters.id
+		WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`).WillReturnRows(ir)
 
 		if err := sourceRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

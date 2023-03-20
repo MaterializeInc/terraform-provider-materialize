@@ -108,7 +108,7 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		sinkMap["name"] = name
 		sinkMap["schema_name"] = schema_name
 		sinkMap["database_name"] = database_name
-		sinkMap["sink_type"] = sink_type
+		sinkMap["type"] = sink_type
 		sinkMap["size"] = size
 		sinkMap["envelope_type"] = envelope_type
 		sinkMap["connection_name"] = connection_name
