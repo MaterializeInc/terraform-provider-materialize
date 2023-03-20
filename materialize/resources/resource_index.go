@@ -17,7 +17,7 @@ var indexSchema = map[string]*schema.Schema{
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,
-		ExactlyOneOf: []string{"name", "default"},
+		ExactlyOneOf: []string{"name", "default", "col_expr"},
 	},
 	"schema_name": {
 		Description: "The identifier for the index schema.",
@@ -39,7 +39,7 @@ var indexSchema = map[string]*schema.Schema{
 		Type:         schema.TypeBool,
 		Optional:     true,
 		ForceNew:     true,
-		ExactlyOneOf: []string{"name", "default"},
+		ExactlyOneOf: []string{"name", "default", "col_expr"},
 	},
 	"obj_name": {
 		Description: "The name of the source, view, or materialized view on which you want to create an index..",
@@ -78,8 +78,9 @@ var indexSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Optional: true,
-		ForceNew: true,
+		Optional:     true,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"name", "default", "col_expr"},
 	},
 }
 
