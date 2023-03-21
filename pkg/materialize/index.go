@@ -13,7 +13,7 @@ type IndexColumn struct {
 type IndexBuilder struct {
 	indexName    string
 	indexDefault bool
-	objName      string
+	objName      IdentifierSchemaStruct
 	clusterName  string
 	method       string
 	colExpr      []IndexColumn
@@ -34,7 +34,7 @@ func (b *IndexBuilder) IndexDefault() *IndexBuilder {
 	return b
 }
 
-func (b *IndexBuilder) ObjName(o string) *IndexBuilder {
+func (b *IndexBuilder) ObjName(o IdentifierSchemaStruct) *IndexBuilder {
 	b.objName = o
 	return b
 }
@@ -64,7 +64,7 @@ func (b *IndexBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` INDEX %s`, b.indexName))
 	}
 
-	q.WriteString(fmt.Sprintf(` IN CLUSTER %s ON %s USING %s`, b.clusterName, b.objName, b.method))
+	q.WriteString(fmt.Sprintf(` IN CLUSTER %s ON %s.%s.%s USING %s`, b.clusterName, b.objName.DatabaseName, b.objName.SchemaName, b.objName.Name, b.method))
 
 	if len(b.colExpr) > 0 {
 		var columns []string

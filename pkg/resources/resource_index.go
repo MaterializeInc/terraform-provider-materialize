@@ -41,12 +41,7 @@ var indexSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ExactlyOneOf: []string{"name", "default", "col_expr"},
 	},
-	"obj_name": {
-		Description: "The name of the source, view, or materialized view on which you want to create an index..",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"obj_name": IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true, false),
 	"cluster_name": {
 		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
 		Type:        schema.TypeString,
@@ -143,7 +138,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 
 	if v, ok := d.GetOk("obj_name"); ok {
-		builder.ObjName(v.(string))
+		builder.ObjName(v.(materialize.IdentifierSchemaStruct))
 	}
 
 	if v, ok := d.GetOk("cluster_name"); ok {

@@ -9,7 +9,7 @@ import (
 func TestIndexCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := NewIndexBuilder("index")
-	b.ObjName("database.schema.source")
+	b.ObjName(IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
 	b.ClusterName("cluster")
 	b.Method("ARRANGEMENT")
 	r.Equal(`CREATE INDEX index IN CLUSTER cluster ON database.schema.source USING ARRANGEMENT ();`, b.Create())
