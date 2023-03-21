@@ -62,12 +62,6 @@ resource "materialize_connection_kafka" "kafka_connection" {
 }
 ```
 
-Then, run apply the changes:
-
-```bash
-terraform apply
-```
-
 ### Data sources
 
 You can use data sources to retrieve information about existing resources. For example, to retrieve information about the existing sinks in your Materialize instance, add the following data source definition to your Terraform project:
@@ -81,15 +75,11 @@ output name {
 }
 ```
 
-Then, check the Terraform plan:
-
-```bash
-terraform plan
-```
-
 ### Importing existing resources
 
-You can import existing resources into your Terraform state using the `terraform import` command. For example, to import an existing connection named `kafka_connection`, first add the resource definition to your Terraform project:
+You can import existing resources into your Terraform state using the `terraform import` command followed by the ID of the resource from the [`mz_catalogue`](https://materialize.com/docs/sql/system-catalog/mz_catalog/).
+
+For example, to import an existing connection named `kafka_connection`, first add the resource definition to your Terraform project:
 
 ```hcl
 # main.tf
