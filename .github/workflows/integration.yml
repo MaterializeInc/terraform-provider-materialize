@@ -21,6 +21,10 @@ jobs:
         run: |
           docker exec provider terraform apply -auto-approve -compact-warnings
 
+      - name: Terraform Plan
+        run: |
+          docker exec provider terraform plan -detailed-exitcode
+  
       - name: Terraform Destroy
         run: |
           docker exec provider terraform destroy -auto-approve -compact-warnings
