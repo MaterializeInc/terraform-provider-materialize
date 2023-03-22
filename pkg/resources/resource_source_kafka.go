@@ -70,39 +70,15 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format": {
-		Description: "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"key_format": {
-		Description: "Set the key and value encodings explicitly.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false, true),
+	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false, true),
+	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false, true),
 	"envelope": {
 		Description:  "How Materialize should interpret records (e.g. append-only, upsert).",
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(envelopes, true),
-	},
-	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", false),
-	"key_strategy": {
-		Description:  "How Materialize will define the Avro schema reader key strategy.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(strategy, true),
-	},
-	"value_strategy": {
-		Description:  "How Materialize will define the Avro schema reader value strategy.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(strategy, true),
 	},
 	"primary_key": {
 		Description: "Declare a set of columns as a primary key.",
@@ -190,28 +166,22 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("format"); ok {
-		builder.Format(v.(string))
+		format := materialize.GetFormatSpecStruc(v)
+		builder.Format(format)
 	}
 
 	if v, ok := d.GetOk("key_format"); ok {
-		builder.KeyFormat(v.(string))
+		format := materialize.GetFormatSpecStruc(v)
+		builder.KeyFormat(format)
+	}
+
+	if v, ok := d.GetOk("value_format"); ok {
+		format := materialize.GetFormatSpecStruc(v)
+		builder.ValueFormat(format)
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
 		builder.Envelope(v.(string))
-	}
-
-	if v, ok := d.GetOk("schema_registry_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.SchemaRegistryConnection(conn)
-	}
-
-	if v, ok := d.GetOk("key_strategy"); ok {
-		builder.KeyStrategy(v.(string))
-	}
-
-	if v, ok := d.GetOk("value_strategy"); ok {
-		builder.ValueStrategy(v.(string))
 	}
 
 	if v, ok := d.GetOk("primary_key"); ok {

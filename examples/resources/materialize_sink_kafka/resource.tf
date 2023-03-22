@@ -6,7 +6,13 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
     name = "table"
   }
   topic  = "test_avro_topic"
-  format = "AVRO"
+  format {
+    avro {
+      schema_registry_connection {
+        name = "csr_connection"
+      }
+    }
+  }
   kafka_connection {
     name = "kafka_connection"
   }
