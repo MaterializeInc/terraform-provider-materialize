@@ -9,16 +9,19 @@ resource "materialize_sink_kafka" "sink_kafka" {
     schema_name   = "example"
   }
   topic  = "topic1"
-  format = "AVRO"
+  format {
+    avro {
+        schema_registry_connection {
+        name          = materialize_connection_confluent_schema_registry.schema_registry.name
+        database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
+        schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
+      }
+    }
+  }
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     database_name = materialize_connection_kafka.kafka_connection.database_name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
-  }
-  schema_registry_connection {
-    name          = materialize_connection_confluent_schema_registry.schema_registry.name
-    database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
-    schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
   }
   envelope = "DEBEZIUM"
 

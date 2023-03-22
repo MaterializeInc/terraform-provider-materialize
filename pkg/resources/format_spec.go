@@ -106,3 +106,49 @@ func FormatSpecSchema(elem string, description string, isRequired bool, isOption
 		Description: description,
 	}
 }
+
+func SinkFormatSpecSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"avro": {
+					Description: "Avro format.",
+					Type:        schema.TypeList,
+					Optional:    true,
+					ForceNew:    true,
+					MaxItems:    1,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, false),
+							"avro_key_fullname": {
+								Description: "The full name of the Avro key schema.",
+								Type:        schema.TypeString,
+								Optional:    true,
+								ForceNew:    true,
+							},
+							"avro_value_fullname": {
+								Description: "The full name of the Avro value schema.",
+								Type:        schema.TypeString,
+								Optional:    true,
+								ForceNew:    true,
+							},
+						},
+					},
+				},
+				"json": {
+					Description: "JSON format.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+					ForceNew:    true,
+				},
+			},
+		},
+		Required:    isRequired,
+		Optional:    isOptional,
+		MinItems:    1,
+		MaxItems:    1,
+		ForceNew:    true,
+		Description: description,
+	}
+}

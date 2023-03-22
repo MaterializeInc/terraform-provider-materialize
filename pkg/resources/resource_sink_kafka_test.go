@@ -24,12 +24,9 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 		"topic":            "topic",
 		// "key":                        []interface{}{"key_1", "key_2"},
-		"format":                     "AVRO",
-		"envelope":                   "UPSERT",
-		"schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn"}},
-		"avro_key_fullname":          "avro_key_fullname",
-		"avro_value_fullname":        "avro_value_fullname",
-		"snapshot":                   false,
+		"format":   []interface{}{map[string]interface{}{"avro": []interface{}{map[string]interface{}{"avro_key_fullname": "avro_key_fullname", "avro_value_fullname": "avro_value_fullname", "schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn", "database_name": "database", "schema_name": "schema"}}}}}},
+		"envelope": "UPSERT",
+		"snapshot": false,
 	}
 	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, in)
 	r.NotNil(d)
@@ -37,7 +34,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."public"."item" INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
+			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."public"."item" INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" WITH \(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname'\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

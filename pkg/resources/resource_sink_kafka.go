@@ -47,33 +47,13 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format": {
-		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"format": SinkFormatSpecSchema("format", "How to decode raw bytes from different formats into data structures it can understand at runtime.", false, true),
 	"envelope": {
 		Description:  "How to interpret records (e.g. Append Only, Upsert).",
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(envelopes, true),
-	},
-	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of the connection to use for the shcema registry.", false),
-	"avro_key_fullname": {
-		Description:  "ets the Avro fullname on the generated key schema, if a KEY is specified. When used, a value must be specified for AVRO VALUE FULLNAME.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
-	},
-	"avro_value_fullname": {
-		Description:  "Sets the Avro fullname on the generated value schema. When KEY is specified, AVRO KEY FULLNAME must additionally be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
 	},
 	"snapshot": {
 		Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
@@ -137,24 +117,12 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("format"); ok {
-		builder.Format(v.(string))
+		format := materialize.GetSinkFormatSpecStruc(v)
+		builder.Format(format)
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
 		builder.Envelope(v.(string))
-	}
-
-	if v, ok := d.GetOk("schema_registry_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.SchemaRegistryConnection(conn)
-	}
-
-	if v, ok := d.GetOk("avro_key_fullname"); ok {
-		builder.AvroKeyFullname(v.(string))
-	}
-
-	if v, ok := d.GetOk("avro_value_fullname"); ok {
-		builder.AvroValueFullname(v.(string))
 	}
 
 	if v, ok := d.GetOk("snapshot"); ok {
