@@ -35,25 +35,25 @@ var tableSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
-	"columns": {
-		Description: "Columns of the table.",
+	"column": {
+		Description: "Column of the table.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"col_name": {
+				"name": {
 					Description: "The name of the column to be created in the table.",
 					Type:        schema.TypeString,
 					Required:    true,
 				},
-				"col_type": {
-					Description: "The data type of the column indicated by col_name.",
+				"type": {
+					Description: "The data type of the column indicated by name.",
 					Type:        schema.TypeString,
 					Required:    true,
 				},
-				"not_null": {
+				"nullable": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:        schema.TypeBool,
-					Optional:    true,
+					Type:     schema.TypeBool,
+					Optional: true,
 				},
 			},
 		},
@@ -116,17 +116,17 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	builder := materialize.NewTableBuilder(tableName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("columns"); ok {
+	if v, ok := d.GetOk("column"); ok {
 		var columns []materialize.TableColumn
 		for _, column := range v.([]interface{}) {
 			c := column.(map[string]interface{})
 			columns = append(columns, materialize.TableColumn{
-				ColName: c["col_name"].(string),
-				ColType: c["col_type"].(string),
-				NotNull: c["not_null"].(bool),
+				ColName: c["name"].(string),
+				ColType: c["type"].(string),
+				NotNull: c["nullable"].(bool),
 			})
 		}
-		builder.Columns(columns)
+		builder.Column(columns)
 	}
 
 	qc := builder.Create()

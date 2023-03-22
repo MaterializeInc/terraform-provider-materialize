@@ -18,7 +18,7 @@ func TestResourceTableCreate(t *testing.T) {
 		"name":          "table",
 		"schema_name":   "schema",
 		"database_name": "database",
-		"columns":       []interface{}{map[string]interface{}{"col_name": "column", "col_type": "text", "not_null": true}},
+		"column":        []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true}},
 	}
 	d := schema.TestResourceDataRaw(t, Table().Schema, in)
 	r.NotNil(d)

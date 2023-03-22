@@ -15,7 +15,7 @@ type TableBuilder struct {
 	tableName    string
 	schemaName   string
 	databaseName string
-	columns      []TableColumn
+	column       []TableColumn
 }
 
 func (b *TableBuilder) qualifiedName() string {
@@ -30,8 +30,8 @@ func NewTableBuilder(tableName, schemaName, databaseName string) *TableBuilder {
 	}
 }
 
-func (b *TableBuilder) Columns(c []TableColumn) *TableBuilder {
-	b.columns = c
+func (b *TableBuilder) Column(c []TableColumn) *TableBuilder {
+	b.column = c
 	return b
 }
 
@@ -41,8 +41,8 @@ func (b *TableBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` TABLE %s`, b.qualifiedName()))
 
-	var columns []string
-	for _, c := range b.columns {
+	var column []string
+	for _, c := range b.column {
 		s := strings.Builder{}
 
 		s.WriteString(fmt.Sprintf(`%s %s`, c.ColName, c.ColType))
@@ -50,10 +50,10 @@ func (b *TableBuilder) Create() string {
 			s.WriteString(` NOT NULL`)
 		}
 		o := s.String()
-		columns = append(columns, o)
+		column = append(column, o)
 
 	}
-	p := strings.Join(columns[:], ", ")
+	p := strings.Join(column[:], ", ")
 	q.WriteString(fmt.Sprintf(` (%s);`, p))
 	return q.String()
 }
