@@ -13,33 +13,11 @@ import (
 )
 
 var sourceLoadgenSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the source.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the source schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the source database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"source_type": {
-		Description: "The type of source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("source", true, false),
+	"schema_name":    SchemaResourceSchemaName("source", false),
+	"database_name":  SchemaResourceDatabaseName("source", false),
+	"qualified_name": SchemaResourceQualifiedName("source"),
+	"source_type":    SchemaResourceSourceType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,

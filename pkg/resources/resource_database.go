@@ -10,12 +10,7 @@ import (
 )
 
 var databaseSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"name": SchemaResourceName("database", true, true),
 }
 
 func Database() *schema.Resource {

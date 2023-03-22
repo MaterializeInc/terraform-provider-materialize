@@ -11,24 +11,9 @@ import (
 )
 
 var schemaSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The name of the schema.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The name of the database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the schema.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("schema", true, true),
+	"database_name":  SchemaResourceDatabaseName("schema", false),
+	"qualified_name": SchemaResourceQualifiedName("schema"),
 }
 
 func Schema() *schema.Resource {

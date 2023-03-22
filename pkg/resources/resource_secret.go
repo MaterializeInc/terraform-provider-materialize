@@ -12,30 +12,10 @@ import (
 )
 
 var secretSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the secret.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The schema of the secret.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The database of the secret.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the secret.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("secret", true, false),
+	"schema_name":    SchemaResourceSchemaName("secret", false),
+	"database_name":  SchemaResourceDatabaseName("secret", false),
+	"qualified_name": SchemaResourceQualifiedName("secret"),
 	"value": {
 		Description: "The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.",
 		Type:        schema.TypeString,

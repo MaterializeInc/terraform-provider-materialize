@@ -10,12 +10,7 @@ import (
 )
 
 var clusterSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "A name for the cluster.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"name": SchemaResourceName("cluster", true, true),
 }
 
 func Cluster() *schema.Resource {

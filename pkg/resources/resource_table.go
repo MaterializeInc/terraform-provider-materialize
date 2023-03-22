@@ -11,30 +11,10 @@ import (
 )
 
 var tableSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the table.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the table schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The identifier for the table database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the table.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("table", true, false),
+	"schema_name":    SchemaResourceSchemaName("table", false),
+	"database_name":  SchemaResourceDatabaseName("table", false),
+	"qualified_name": SchemaResourceQualifiedName("table"),
 	"columns": {
 		Description: "Columns of the table.",
 		Type:        schema.TypeList,
