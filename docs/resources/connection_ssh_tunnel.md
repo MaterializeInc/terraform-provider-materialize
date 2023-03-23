@@ -35,7 +35,7 @@ resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
 ### Required
 
 - `host` (String) The host of the SSH tunnel.
-- `name` (String) The name of the connection.
+- `name` (String) The identifier for the connection.
 - `port` (Number) The port of the SSH tunnel.
 - `user` (String) The user of the SSH tunnel.
 

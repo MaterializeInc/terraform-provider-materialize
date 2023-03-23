@@ -26,7 +26,7 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 ### Required
 
 - `cluster_name` (String) The cluster whose resources you want to create an additional computation of.
-- `name` (String) A name for this replica.
+- `name` (String) The identifier for the replica.
 - `size` (String) The size of the replica.
 
 ### Optional

@@ -47,7 +47,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format": SinkFormatSpecSchema("format", "How to decode raw bytes from different formats into data structures it can understand at runtime.", false, true),
+	"format": SinkFormatSpecSchema("format", "How to decode raw bytes from different formats into data structures it can understand at runtime.", false),
 	"envelope": {
 		Description:  "How to interpret records (e.g. Append Only, Upsert).",
 		Type:         schema.TypeString,

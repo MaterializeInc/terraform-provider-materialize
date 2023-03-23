@@ -21,20 +21,25 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
     name = "table"
   }
   topic  = "test_avro_topic"
-  format = "AVRO"
+  format {
+    avro {
+      schema_registry_connection {
+        name = "csr_connection"
+        database_name = "database"
+        schema_name   = "schema"
+      }
+    }
+  }
   kafka_connection {
     name = "kafka_connection"
-  }
-  schema_registry_connection {
-    name = "csr_connection"
   }
   envelope = "UPSERT"
 }
 
 # CREATE SINK schema.sink_kafka
 #   FROM schema.table
-#   INTO KAFKA CONNECTION kafka_connection (TOPIC 'test_avro_topic')
-#   FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION csr_connection
+#   INTO KAFKA CONNECTION "kafka_connection" (TOPIC 'test_avro_topic')
+#   FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_connection"
 #   ENVELOPE UPSERT
 #   WITH (SIZE = '3xsmall');
 ```
@@ -51,15 +56,12 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 ### Optional
 
-- `avro_key_fullname` (String) ets the Avro fullname on the generated key schema, if a KEY is specified. When used, a value must be specified for AVRO VALUE FULLNAME.
-- `avro_value_fullname` (String) Sets the Avro fullname on the generated value schema. When KEY is specified, AVRO KEY FULLNAME must additionally be specified.
 - `cluster_name` (String) The cluster to maintain this sink. If not specified, the size option must be specified.
 - `database_name` (String) The identifier for the sink database.
 - `envelope` (String) How to interpret records (e.g. Append Only, Upsert).
-- `format` (String) How to decode raw bytes from different formats into data structures it can understand at runtime.
+- `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
 - `schema_name` (String) The identifier for the sink schema.
-- `schema_registry_connection` (Block List, Max: 1) The name of the connection to use for the shcema registry. (see [below for nested schema](#nestedblock--schema_registry_connection))
 - `size` (String) The size of the sink.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
 
@@ -95,8 +97,28 @@ Optional:
 - `schema_name` (String) The kafka_connection schema name.
 
 
-<a id="nestedblock--schema_registry_connection"></a>
-### Nested Schema for `schema_registry_connection`
+<a id="nestedblock--format"></a>
+### Nested Schema for `format`
+
+Optional:
+
+- `avro` (Block List, Max: 1) Avro format. (see [below for nested schema](#nestedblock--format--avro))
+- `json` (Boolean) JSON format.
+
+<a id="nestedblock--format--avro"></a>
+### Nested Schema for `format.avro`
+
+Required:
+
+- `schema_registry_connection` (Block List, Min: 1, Max: 1) The name of a schema registry connection. (see [below for nested schema](#nestedblock--format--avro--schema_registry_connection))
+
+Optional:
+
+- `avro_key_fullname` (String) The full name of the Avro key schema.
+- `avro_value_fullname` (String) The full name of the Avro value schema.
+
+<a id="nestedblock--format--avro--schema_registry_connection"></a>
+### Nested Schema for `format.avro.schema_registry_connection`
 
 Required:
 

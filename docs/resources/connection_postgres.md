@@ -49,7 +49,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 - `database` (String) The target Postgres database.
 - `host` (String) The Postgres database hostname.
-- `name` (String) The name of the connection.
+- `name` (String) The identifier for the connection.
 - `user` (Block List, Min: 1, Max: 1) The Postgres database username. (see [below for nested schema](#nestedblock--user))
 
 ### Optional

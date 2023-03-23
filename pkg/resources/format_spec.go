@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func FormatSpecSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
+func FormatSpecSchema(elem string, description string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -18,7 +18,7 @@ func FormatSpecSchema(elem string, description string, isRequired bool, isOption
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, false),
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
 							"key_strategy": {
 								Description:  "How Materialize will define the Avro schema reader key strategy.",
 								Type:         schema.TypeString,
@@ -44,7 +44,7 @@ func FormatSpecSchema(elem string, description string, isRequired bool, isOption
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, false),
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
 							"message": {
 								Description: "The name of the Protobuf message to use for the source.",
 								Type:        schema.TypeString,
@@ -98,8 +98,8 @@ func FormatSpecSchema(elem string, description string, isRequired bool, isOption
 				},
 			},
 		},
-		Required:    isRequired,
-		Optional:    isOptional,
+		Required:    required,
+		Optional:    !required,
 		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,
@@ -107,7 +107,7 @@ func FormatSpecSchema(elem string, description string, isRequired bool, isOption
 	}
 }
 
-func SinkFormatSpecSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
+func SinkFormatSpecSchema(elem string, description string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -120,7 +120,7 @@ func SinkFormatSpecSchema(elem string, description string, isRequired bool, isOp
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, false),
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
 							"avro_key_fullname": {
 								Description: "The full name of the Avro key schema.",
 								Type:        schema.TypeString,
@@ -144,8 +144,8 @@ func SinkFormatSpecSchema(elem string, description string, isRequired bool, isOp
 				},
 			},
 		},
-		Required:    isRequired,
-		Optional:    isOptional,
+		Required:    required,
+		Optional:    !required,
 		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,

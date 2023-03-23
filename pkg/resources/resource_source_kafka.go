@@ -70,9 +70,9 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false, true),
-	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false, true),
-	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false, true),
+	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
+	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
+	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
 	"envelope": {
 		Description:  "How Materialize should interpret records (e.g. append-only, upsert).",
 		Type:         schema.TypeString,

@@ -35,7 +35,7 @@ resource "materialize_connection_aws_privatelink" "example_privatelink_connectio
 ### Required
 
 - `availability_zones` (List of String) The availability zones of the AWS PrivateLink service.
-- `name` (String) The name of the connection.
+- `name` (String) The identifier for the connection.
 - `service_name` (String) The name of the AWS PrivateLink service.
 
 ### Optional
