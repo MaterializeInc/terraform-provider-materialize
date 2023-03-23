@@ -11,30 +11,10 @@ import (
 )
 
 var materializedViewSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the materialized view.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the materialized view schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The identifier for the materialized view database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the materialized view.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("materialized view", true, false),
+	"schema_name":    SchemaResourceSchemaName("materialized view", false),
+	"database_name":  SchemaResourceDatabaseName("materialized view", false),
+	"qualified_name": SchemaResourceQualifiedName("materialized view"),
 	"in_cluster": {
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,

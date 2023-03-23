@@ -11,30 +11,10 @@ import (
 )
 
 var viewSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the view.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the view schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The identifier for the view database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the view.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("view", true, false),
+	"schema_name":    SchemaResourceSchemaName("view", false),
+	"database_name":  SchemaResourceDatabaseName("view", false),
+	"qualified_name": SchemaResourceQualifiedName("view"),
 	"select_stmt": {
 		Description: "The SQL statement to create the view.",
 		Type:        schema.TypeString,

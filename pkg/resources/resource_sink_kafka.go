@@ -12,33 +12,11 @@ import (
 )
 
 var sinkKafkaSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the sink.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the sink schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the sink database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the sink.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"sink_type": {
-		Description: "The type of sink.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("sink", true, false),
+	"schema_name":    SchemaResourceSchemaName("sink", false),
+	"database_name":  SchemaResourceDatabaseName("sink", false),
+	"qualified_name": SchemaResourceQualifiedName("sink"),
+	"sink_type":      SchemaResourceSinkType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -54,8 +32,8 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"from":             IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true, false),
-	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true, false),
+	"from":             IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
+	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -82,7 +60,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(envelopes, true),
 	},
-	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of the connection to use for the shcema registry.", false, true),
+	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of the connection to use for the shcema registry.", false),
 	"avro_key_fullname": {
 		Description:  "ets the Avro fullname on the generated key schema, if a KEY is specified. When used, a value must be specified for AVRO VALUE FULLNAME.",
 		Type:         schema.TypeString,

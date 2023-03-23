@@ -57,7 +57,7 @@ func ValueSecretSchema(elem string, description string, isRequired bool, isOptio
 					Optional:      true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
-				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false, true),
+				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false),
 			},
 		},
 		Required:    isRequired,

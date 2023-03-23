@@ -11,25 +11,14 @@ import (
 )
 
 var clusterReplicaSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "A name for this replica.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"name": SchemaResourceName("replica", true, true),
 	"cluster_name": {
 		Description: "The cluster whose resources you want to create an additional computation of.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
 	},
-	"size": {
-		Description:  "The size of the replica.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
-	},
+	"size": SchemaSize("replica"),
 	"availability_zone": {
 		Description:  "If you want the replica to reside in a specific availability zone.",
 		Type:         schema.TypeString,

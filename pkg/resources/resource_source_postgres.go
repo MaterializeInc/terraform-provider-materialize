@@ -12,33 +12,11 @@ import (
 )
 
 var sourcePostgresSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the source.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the source schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the source database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"source_type": {
-		Description: "The type of source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":           SchemaResourceName("source", true, false),
+	"schema_name":    SchemaResourceSchemaName("source", false),
+	"database_name":  SchemaResourceDatabaseName("source", false),
+	"qualified_name": SchemaResourceQualifiedName("source"),
+	"source_type":    SchemaResourceSourceType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -54,7 +32,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true, false),
+	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
 		Type:        schema.TypeString,
