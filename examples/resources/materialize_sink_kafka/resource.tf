@@ -18,7 +18,9 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
   kafka_connection {
     name = "kafka_connection"
   }
-  envelope = "UPSERT"
+  envelope {
+    upsert = true
+  }
 }
 
 # CREATE SINK schema.sink_kafka

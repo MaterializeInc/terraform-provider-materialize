@@ -71,6 +71,9 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
       }
     }
   }
+  envelope {
+    none = true
+  }
   topic  = "topic1"
   depends_on = [materialize_sink_kafka.sink_kafka]
 }

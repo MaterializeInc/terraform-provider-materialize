@@ -25,7 +25,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		"topic":            "topic",
 		// "key":                        []interface{}{"key_1", "key_2"},
 		"format":   []interface{}{map[string]interface{}{"avro": []interface{}{map[string]interface{}{"avro_key_fullname": "avro_key_fullname", "avro_value_fullname": "avro_value_fullname", "schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn", "database_name": "database", "schema_name": "schema"}}}}}},
-		"envelope": "UPSERT",
+		"envelope": []interface{}{map[string]interface{}{"upsert": true}},
 		"snapshot": false,
 	}
 	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, in)

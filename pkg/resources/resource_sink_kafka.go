@@ -49,11 +49,29 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	},
 	"format": SinkFormatSpecSchema("format", "How to decode raw bytes from different formats into data structures it can understand at runtime.", false),
 	"envelope": {
-		Description:  "How to interpret records (e.g. Append Only, Upsert).",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(envelopes, true),
+		Description: "How to interpret records (e.g. Debezium, Upsert).",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"upsert": {
+					Description:   "The sink emits data with upsert semantics: updates and inserts for the given key are expressed as a value, and deletes are expressed as a null value payload in Kafka.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.debezium"},
+				},
+				"debezium": {
+					Description:   "The generated schemas have a Debezium-style diff envelope to capture changes in the input view or source.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert"},
+				},
+			},
+		},
+		Optional: true,
+		ForceNew: true,
 	},
 	"snapshot": {
 		Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
@@ -122,7 +140,14 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		builder.Envelope(v.(string))
+		var envelope materialize.SinkEnvelopeStruct
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
+			envelope.Upsert = v.(bool)
+		}
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
+			envelope.Debezium = v.(bool)
+		}
+		builder.Envelope(envelope)
 	}
 
 	if v, ok := d.GetOk("snapshot"); ok {

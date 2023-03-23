@@ -16,7 +16,9 @@ resource "materialize_source_kafka" "example_source_kafka" {
       }
     }
   }
-  envelope = "data"
+  envelope {
+    none = true
+  }
 }
 
 # CREATE SOURCE kafka_metadata

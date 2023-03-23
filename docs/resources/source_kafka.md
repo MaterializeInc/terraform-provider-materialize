@@ -31,7 +31,9 @@ resource "materialize_source_kafka" "example_source_kafka" {
       }
     }
   }
-  envelope = "data"
+  envelope {
+    none = true
+  }
 }
 
 # CREATE SOURCE kafka_metadata
@@ -54,7 +56,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
 - `database_name` (String) The identifier for the source database.
-- `envelope` (String) How Materialize should interpret records (e.g. append-only, upsert).
+- `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
 - `include_key` (String) Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named "key".
@@ -86,6 +88,16 @@ Optional:
 
 - `database_name` (String) The kafka_connection database name.
 - `schema_name` (String) The kafka_connection schema name.
+
+
+<a id="nestedblock--envelope"></a>
+### Nested Schema for `envelope`
+
+Optional:
+
+- `debezium` (Boolean) Use the Debezium envelope, which uses a diff envelope to handle CRUD operations.
+- `none` (Boolean) Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.
+- `upsert` (Boolean) Use the upsert envelope, which uses message keys to handle CRUD operations.
 
 
 <a id="nestedblock--format"></a>

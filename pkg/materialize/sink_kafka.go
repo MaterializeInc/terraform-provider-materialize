@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+type SinkEnvelopeStruct struct {
+	Upsert   bool
+	Debezium bool
+}
+
 type SinkKafkaBuilder struct {
 	sinkName        string
 	schemaName      string
@@ -16,7 +21,7 @@ type SinkKafkaBuilder struct {
 	topic           string
 	key             []string
 	format          SinkFormatSpecStruct
-	envelope        string
+	envelope        SinkEnvelopeStruct
 	snapshot        bool
 }
 
@@ -67,7 +72,7 @@ func (b *SinkKafkaBuilder) Format(f SinkFormatSpecStruct) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) Envelope(e string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) Envelope(e SinkEnvelopeStruct) *SinkKafkaBuilder {
 	b.envelope = e
 	return b
 }
@@ -114,8 +119,12 @@ func (b *SinkKafkaBuilder) Create() string {
 		}
 	}
 
-	if b.envelope != "" {
-		q.WriteString(fmt.Sprintf(` ENVELOPE %s`, b.envelope))
+	if b.envelope.Debezium {
+		q.WriteString(` ENVELOPE DEBEZIUM`)
+	}
+
+	if b.envelope.Upsert {
+		q.WriteString(` ENVELOPE UPSERT`)
 	}
 
 	// With Options

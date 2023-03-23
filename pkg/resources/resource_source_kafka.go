@@ -74,11 +74,36 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
 	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
 	"envelope": {
-		Description:  "How Materialize should interpret records (e.g. append-only, upsert).",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(envelopes, true),
+		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"upsert": {
+					Description:   "Use the upsert envelope, which uses message keys to handle CRUD operations.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.debezium", "envelope.0.none"},
+				},
+				"debezium": {
+					Description:   "Use the Debezium envelope, which uses a diff envelope to handle CRUD operations.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.none"},
+				},
+				"none": {
+					Description:   "Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.debezium"},
+				},
+			},
+		},
+		Optional: true,
+		ForceNew: true,
 	},
 	"primary_key": {
 		Description: "Declare a set of columns as a primary key.",
@@ -181,7 +206,17 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		builder.Envelope(v.(string))
+		var envelope materialize.KafkaSourceEnvelopeStruct
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
+			envelope.Upsert = v.(bool)
+		}
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
+			envelope.Debezium = v.(bool)
+		}
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["none"]; ok {
+			envelope.None = v.(bool)
+		}
+		builder.Envelope(envelope)
 	}
 
 	if v, ok := d.GetOk("primary_key"); ok {

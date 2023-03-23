@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+type KafkaSourceEnvelopeStruct struct {
+	Debezium bool
+	None     bool
+	Upsert   bool
+}
+
 type SourceKafkaBuilder struct {
 	sourceName       string
 	schemaName       string
@@ -21,7 +27,7 @@ type SourceKafkaBuilder struct {
 	format           FormatSpecStruct
 	keyFormat        FormatSpecStruct
 	valueFormat      FormatSpecStruct
-	envelope         string
+	envelope         KafkaSourceEnvelopeStruct
 	primaryKey       []string
 	startOffset      []int
 	startTimestamp   int
@@ -89,7 +95,7 @@ func (b *SourceKafkaBuilder) Format(f FormatSpecStruct) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) Envelope(e string) *SourceKafkaBuilder {
+func (b *SourceKafkaBuilder) Envelope(e KafkaSourceEnvelopeStruct) *SourceKafkaBuilder {
 	b.envelope = e
 	return b
 }
@@ -308,8 +314,16 @@ func (b *SourceKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` INCLUDE %s`, o))
 	}
 
-	if b.envelope != "" {
-		q.WriteString(fmt.Sprintf(` ENVELOPE %s`, b.envelope))
+	if b.envelope.Debezium {
+		q.WriteString(` ENVELOPE DEBEZIUM`)
+	}
+
+	if b.envelope.Upsert {
+		q.WriteString(` ENVELOPE UPSERT`)
+	}
+
+	if b.envelope.None {
+		q.WriteString(` ENVELOPE NONE`)
 	}
 
 	if b.size != "" {

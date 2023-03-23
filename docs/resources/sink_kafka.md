@@ -33,7 +33,9 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
   kafka_connection {
     name = "kafka_connection"
   }
-  envelope = "UPSERT"
+  envelope {
+    upsert = true
+  }
 }
 
 # CREATE SINK schema.sink_kafka
@@ -58,7 +60,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 - `cluster_name` (String) The cluster to maintain this sink. If not specified, the size option must be specified.
 - `database_name` (String) The identifier for the sink database.
-- `envelope` (String) How to interpret records (e.g. Append Only, Upsert).
+- `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
 - `schema_name` (String) The identifier for the sink schema.
@@ -95,6 +97,15 @@ Optional:
 
 - `database_name` (String) The kafka_connection database name.
 - `schema_name` (String) The kafka_connection schema name.
+
+
+<a id="nestedblock--envelope"></a>
+### Nested Schema for `envelope`
+
+Optional:
+
+- `debezium` (Boolean) The generated schemas have a Debezium-style diff envelope to capture changes in the input view or source.
+- `upsert` (Boolean) The sink emits data with upsert semantics: updates and inserts for the given key are expressed as a value, and deletes are expressed as a null value payload in Kafka.
 
 
 <a id="nestedblock--format"></a>

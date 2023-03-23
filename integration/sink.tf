@@ -23,7 +23,9 @@ resource "materialize_sink_kafka" "sink_kafka" {
     database_name = materialize_connection_kafka.kafka_connection.database_name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
   }
-  envelope = "DEBEZIUM"
+  envelope {
+    debezium = true
+  }
 
   depends_on = [
     materialize_source_load_generator.load_generator

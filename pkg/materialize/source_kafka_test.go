@@ -35,7 +35,7 @@ func TestResourceSourceKafkaCreateParamsQuery(t *testing.T) {
 	b.IncludePartition("PARTITION")
 	b.IncludeOffset("OFFSET")
 	b.IncludeTimestamp("TIMESTAMP")
-	b.Envelope("UPSERT")
+	b.Envelope(KafkaSourceEnvelopeStruct{Upsert: true})
 	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM KAFKA CONNECTION "database"."schema"."kafka_connection" (TOPIC 'events') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_connection" INCLUDE KEY, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
 }
 

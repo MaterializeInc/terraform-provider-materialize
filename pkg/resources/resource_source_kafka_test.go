@@ -29,7 +29,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		"include_offset":    "offset",
 		"include_timestamp": "timestamp",
 		"format":            []interface{}{map[string]interface{}{"avro": []interface{}{map[string]interface{}{"value_strategy": "avro_key_fullname", "schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn", "database_name": "database", "schema_name": "schema"}}}}}},
-		"envelope":          "UPSERT",
+		"envelope":          []interface{}{map[string]interface{}{"upsert": true}},
 		// "primary_key":                []interface{}{"key_1", "key_2", "key_3"},
 		// "start_offset":               []interface{}{1, 2, 3},
 		"start_timestamp": 100,
