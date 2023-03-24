@@ -11,10 +11,10 @@ import (
 )
 
 var viewSchema = map[string]*schema.Schema{
-	"name":           SchemaResourceName("view", true, false),
-	"schema_name":    SchemaResourceSchemaName("view", false),
-	"database_name":  SchemaResourceDatabaseName("view", false),
-	"qualified_name": SchemaResourceQualifiedName("view"),
+	"name":               SchemaResourceName("view", true, false),
+	"schema_name":        SchemaResourceSchemaName("view", false),
+	"database_name":      SchemaResourceDatabaseName("view", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("view"),
 	"select_stmt": {
 		Description: "The SQL statement to create the view.",
 		Type:        schema.TypeString,
@@ -61,6 +61,11 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	}
 
 	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewViewBuilder(*database, *schema, *name)
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
 

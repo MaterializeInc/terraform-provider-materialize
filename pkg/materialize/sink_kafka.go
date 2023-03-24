@@ -6,9 +6,7 @@ import (
 )
 
 type SinkKafkaBuilder struct {
-	sinkName                 string
-	schemaName               string
-	databaseName             string
+	Sink
 	clusterName              string
 	size                     string
 	from                     IdentifierSchemaStruct
@@ -23,15 +21,9 @@ type SinkKafkaBuilder struct {
 	snapshot                 bool
 }
 
-func (b *SinkKafkaBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sinkName)
-}
-
 func NewSinkKafkaBuilder(sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
 	return &SinkKafkaBuilder{
-		sinkName:     sinkName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Sink: Sink{sinkName, schemaName, databaseName},
 	}
 }
 
@@ -97,17 +89,17 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 
 func (b *SinkKafkaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM %s`, QualifiedName(b.from.DatabaseName, b.from.SchemaName, b.from.Name)))
+	q.WriteString(fmt.Sprintf(` FROM %s`, b.from.QualifiedName()))
 
 	// Broker
 	if b.kafkaConnection.Name != "" {
-		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, QualifiedName(b.kafkaConnection.DatabaseName, b.kafkaConnection.SchemaName, b.kafkaConnection.Name)))
+		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
 	}
 
 	if len(b.key) > 0 {
@@ -125,7 +117,7 @@ func (b *SinkKafkaBuilder) Create() string {
 
 	// CSR Options
 	if b.schemaRegistryConnection.Name != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.schemaRegistryConnection.DatabaseName, b.schemaRegistryConnection.SchemaName, b.schemaRegistryConnection.Name)))
+		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection.QualifiedName()))
 	}
 
 	if b.avroKeyFullname != "" && b.avroValueFullname != "" {
@@ -156,18 +148,18 @@ func (b *SinkKafkaBuilder) Create() string {
 }
 
 func (b *SinkKafkaBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SinkKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SINK %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SINK %s;`, b.QualifiedName())
 }
 
 func (b *SinkKafkaBuilder) ReadId() string {
-	return ReadSinkId(b.sinkName, b.schemaName, b.databaseName)
+	return ReadSinkId(b.SinkName, b.SchemaName, b.DatabaseName)
 }

@@ -11,10 +11,10 @@ import (
 )
 
 var materializedViewSchema = map[string]*schema.Schema{
-	"name":           SchemaResourceName("materialized view", true, false),
-	"schema_name":    SchemaResourceSchemaName("materialized view", false),
-	"database_name":  SchemaResourceDatabaseName("materialized view", false),
-	"qualified_name": SchemaResourceQualifiedName("materialized view"),
+	"name":               SchemaResourceName("materialized view", true, false),
+	"schema_name":        SchemaResourceSchemaName("materialized view", false),
+	"database_name":      SchemaResourceDatabaseName("materialized view", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("materialized view"),
 	"in_cluster": {
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
@@ -66,6 +66,11 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	qn := materialize.QualifiedName(*database, *schema, *name)
+	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 

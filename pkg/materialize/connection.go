@@ -10,6 +10,16 @@ type ValueSecretStruct struct {
 	Secret IdentifierSchemaStruct
 }
 
+type Connection struct {
+	ConnectionName string
+	SchemaName     string
+	DatabaseName   string
+}
+
+func (c *Connection) QualifiedName() string {
+	return QualifiedName(c.DatabaseName, c.SchemaName, c.ConnectionName)
+}
+
 func ReadConnectionId(name, schema, database string) string {
 	return fmt.Sprintf(`
 		SELECT mz_connections.id
@@ -56,10 +66,10 @@ func ReadConnectionDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

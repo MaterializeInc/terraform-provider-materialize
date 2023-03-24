@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+type Source struct {
+	SourceName   string
+	SchemaName   string
+	DatabaseName string
+}
+
+func (s *Source) QualifiedName() string {
+	return QualifiedName(s.DatabaseName, s.SchemaName, s.SourceName)
+}
+
 func ReadSourceId(name, schema, database string) string {
 	return fmt.Sprintf(`
 		SELECT mz_sources.id
@@ -70,10 +80,10 @@ func ReadSourceDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

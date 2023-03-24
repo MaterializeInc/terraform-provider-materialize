@@ -18,7 +18,7 @@ type TableBuilder struct {
 	column       []TableColumn
 }
 
-func (b *TableBuilder) qualifiedName() string {
+func (b *TableBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName, b.tableName)
 }
 
@@ -37,9 +37,7 @@ func (b *TableBuilder) Column(c []TableColumn) *TableBuilder {
 
 func (b *TableBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(`CREATE`)
-
-	q.WriteString(fmt.Sprintf(` TABLE %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE TABLE %s`, b.QualifiedName()))
 
 	var column []string
 	for _, c := range b.column {
@@ -60,11 +58,11 @@ func (b *TableBuilder) Create() string {
 
 func (b *TableBuilder) Rename(newName string) string {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER TABLE %s RENAME TO %s;`, b.qualifiedName(), n)
+	return fmt.Sprintf(`ALTER TABLE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *TableBuilder) Drop() string {
-	return fmt.Sprintf(`DROP TABLE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP TABLE %s;`, b.QualifiedName())
 }
 
 func (b *TableBuilder) ReadId() string {
@@ -111,10 +109,10 @@ func ReadTableDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

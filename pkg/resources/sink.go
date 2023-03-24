@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,8 +45,8 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	qn := fmt.Sprintf("%s.%s.%s", *database, *schema, *name)
-	if err := d.Set("qualified_name", qn); err != nil {
+	b := materialize.Sink{SinkName: *name, SchemaName: *schema, DatabaseName: *database}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
 

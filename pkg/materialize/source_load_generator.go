@@ -11,9 +11,7 @@ type TableLoadgen struct {
 }
 
 type SourceLoadgenBuilder struct {
-	sourceName        string
-	schemaName        string
-	databaseName      string
+	Source
 	clusterName       string
 	size              string
 	loadGeneratorType string
@@ -23,15 +21,9 @@ type SourceLoadgenBuilder struct {
 	tables            []TableLoadgen
 }
 
-func (b *SourceLoadgenBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sourceName)
-}
-
 func NewSourceLoadgenBuilder(sourceName, schemaName, databaseName string) *SourceLoadgenBuilder {
 	return &SourceLoadgenBuilder{
-		sourceName:   sourceName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Source: Source{sourceName, schemaName, databaseName},
 	}
 }
 
@@ -72,7 +64,7 @@ func (b *SourceLoadgenBuilder) Tables(t []TableLoadgen) *SourceLoadgenBuilder {
 
 func (b *SourceLoadgenBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
@@ -129,18 +121,18 @@ func (b *SourceLoadgenBuilder) Create() string {
 }
 
 func (b *SourceLoadgenBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SourceLoadgenBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourceLoadgenBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
 }
 
 func (b *SourceLoadgenBuilder) ReadId() string {
-	return ReadSourceId(b.sourceName, b.schemaName, b.databaseName)
+	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
 }

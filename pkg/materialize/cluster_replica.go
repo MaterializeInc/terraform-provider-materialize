@@ -22,6 +22,10 @@ func NewClusterReplicaBuilder(replicaName, clusterName string) *ClusterReplicaBu
 	}
 }
 
+func (b *ClusterReplicaBuilder) QualifiedName() string {
+	return QualifiedName(b.clusterName, b.replicaName)
+}
+
 func (b *ClusterReplicaBuilder) Size(s string) *ClusterReplicaBuilder {
 	b.size = s
 	return b
@@ -49,7 +53,7 @@ func (b *ClusterReplicaBuilder) IdleArrangementMergeEffort(e int) *ClusterReplic
 
 func (b *ClusterReplicaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s.%s`, QuoteIdentifier(b.clusterName), QuoteIdentifier(b.replicaName)))
+	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s`, b.QualifiedName()))
 
 	var p []string
 	if b.size != "" {
@@ -86,7 +90,7 @@ func (b *ClusterReplicaBuilder) Create() string {
 }
 
 func (b *ClusterReplicaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER REPLICA %s.%s;`, QuoteIdentifier(b.clusterName), QuoteIdentifier(b.replicaName))
+	return fmt.Sprintf(`DROP CLUSTER REPLICA %s;`, b.QualifiedName())
 }
 
 func (b *ClusterReplicaBuilder) ReadId() string {
