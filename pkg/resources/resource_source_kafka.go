@@ -70,39 +70,40 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format": {
-		Description: "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"key_format": {
-		Description: "Set the key and value encodings explicitly.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
+	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
+	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
 	"envelope": {
-		Description:  "How Materialize should interpret records (e.g. append-only, upsert).",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(envelopes, true),
-	},
-	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", false),
-	"key_strategy": {
-		Description:  "How Materialize will define the Avro schema reader key strategy.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(strategy, true),
-	},
-	"value_strategy": {
-		Description:  "How Materialize will define the Avro schema reader value strategy.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(strategy, true),
+		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"upsert": {
+					Description:   "Use the upsert envelope, which uses message keys to handle CRUD operations.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.debezium", "envelope.0.none"},
+				},
+				"debezium": {
+					Description:   "Use the Debezium envelope, which uses a diff envelope to handle CRUD operations.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.none"},
+				},
+				"none": {
+					Description:   "Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.debezium"},
+				},
+			},
+		},
+		Optional: true,
+		ForceNew: true,
 	},
 	"primary_key": {
 		Description: "Declare a set of columns as a primary key.",
@@ -190,28 +191,32 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("format"); ok {
-		builder.Format(v.(string))
+		format := materialize.GetFormatSpecStruc(v)
+		builder.Format(format)
 	}
 
 	if v, ok := d.GetOk("key_format"); ok {
-		builder.KeyFormat(v.(string))
+		format := materialize.GetFormatSpecStruc(v)
+		builder.KeyFormat(format)
+	}
+
+	if v, ok := d.GetOk("value_format"); ok {
+		format := materialize.GetFormatSpecStruc(v)
+		builder.ValueFormat(format)
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		builder.Envelope(v.(string))
-	}
-
-	if v, ok := d.GetOk("schema_registry_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.SchemaRegistryConnection(conn)
-	}
-
-	if v, ok := d.GetOk("key_strategy"); ok {
-		builder.KeyStrategy(v.(string))
-	}
-
-	if v, ok := d.GetOk("value_strategy"); ok {
-		builder.ValueStrategy(v.(string))
+		var envelope materialize.KafkaSourceEnvelopeStruct
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
+			envelope.Upsert = v.(bool)
+		}
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
+			envelope.Debezium = v.(bool)
+		}
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["none"]; ok {
+			envelope.None = v.(bool)
+		}
+		builder.Envelope(envelope)
 	}
 
 	if v, ok := d.GetOk("primary_key"); ok {

@@ -15,24 +15,21 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"name":                       "source",
-		"schema_name":                "schema",
-		"database_name":              "database",
-		"cluster_name":               "cluster",
-		"size":                       "small",
-		"item_name":                  "item",
-		"kafka_connection":           []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-		"topic":                      "topic",
-		"include_key":                "key",
-		"include_headers":            true,
-		"include_partition":          "parition",
-		"include_offset":             "offset",
-		"include_timestamp":          "timestamp",
-		"format":                     "AVRO",
-		"key_format":                 "AVRO",
-		"envelope":                   "UPSERT",
-		"schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn"}},
-		"value_strategy":             "avro_key_fullname",
+		"name":              "source",
+		"schema_name":       "schema",
+		"database_name":     "database",
+		"cluster_name":      "cluster",
+		"size":              "small",
+		"item_name":         "item",
+		"kafka_connection":  []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":             "topic",
+		"include_key":       "key",
+		"include_headers":   true,
+		"include_partition": "parition",
+		"include_offset":    "offset",
+		"include_timestamp": "timestamp",
+		"format":            []interface{}{map[string]interface{}{"avro": []interface{}{map[string]interface{}{"value_strategy": "avro_key_fullname", "schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn", "database_name": "database", "schema_name": "schema"}}}}}},
+		"envelope":          []interface{}{map[string]interface{}{"upsert": true}},
 		// "primary_key":                []interface{}{"key_1", "key_2", "key_3"},
 		// "start_offset":               []interface{}{1, 2, 3},
 		"start_timestamp": 100,
@@ -43,7 +40,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\) KEY FORMAT AVRO VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" START TIMESTAMP 100 VALUE STRATEGY avro_key_fullname INCLUDE key, HEADERS, parition, offset, timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic', START TIMESTAMP 100\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" VALUE STRATEGY avro_key_fullname INCLUDE key, HEADERS, parition, offset, timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
