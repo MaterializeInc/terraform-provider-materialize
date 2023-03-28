@@ -72,10 +72,6 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	builder := materialize.NewConnectionPostgresBuilder(connectionName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("connection_type"); ok {
-		builder.ConnectionType(v.(string))
-	}
-
 	if v, ok := d.GetOk("host"); ok {
 		builder.PostgresHost(v.(string))
 	}

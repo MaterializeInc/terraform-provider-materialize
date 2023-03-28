@@ -15,7 +15,7 @@ var viewSchema = map[string]*schema.Schema{
 	"schema_name":    SchemaResourceSchemaName("view", false),
 	"database_name":  SchemaResourceDatabaseName("view", false),
 	"qualified_name": SchemaResourceQualifiedName("view"),
-	"select_stmt": {
+	"statement": {
 		Description: "The SQL statement to create the view.",
 		Type:        schema.TypeString,
 		Required:    true,
@@ -76,7 +76,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	builder := materialize.NewViewBuilder(viewName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("select_stmt"); ok && v.(string) != "" {
+	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
 		builder.SelectStmt(v.(string))
 	}
 

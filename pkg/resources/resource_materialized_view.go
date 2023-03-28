@@ -20,7 +20,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"select_stmt": {
+	"statement": {
 		Description: "The SQL statement to create the materialized view.",
 		Type:        schema.TypeString,
 		Required:    true,
@@ -85,7 +85,7 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 		builder.InCluster(v.(string))
 	}
 
-	if v, ok := d.GetOk("select_stmt"); ok && v.(string) != "" {
+	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
 		builder.SelectStmt(v.(string))
 	}
 

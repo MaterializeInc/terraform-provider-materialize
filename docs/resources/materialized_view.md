@@ -18,7 +18,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
 
-  select_stmt = <<SQL
+  statement = <<SQL
 SELECT
     *
 FROM
@@ -33,7 +33,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
 
-  select_stmt = "SELECT * FROM materialize.public.simple_table"
+  statement = "SELECT * FROM materialize.public.simple_table"
 }
 ```
 
@@ -43,7 +43,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 ### Required
 
 - `name` (String) The identifier for the materialized view.
-- `select_stmt` (String) The SQL statement to create the materialized view.
+- `statement` (String) The SQL statement to create the materialized view.
 
 ### Optional
 
