@@ -47,8 +47,8 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 
 ### Optional
 
+- `cluster_name` (String) The cluster to maintain the materialized view. If not specified, defaults to the default cluster.
 - `database_name` (String) The identifier for the materialized view database.
-- `in_cluster` (String) The cluster to maintain the materialized view. If not specified, defaults to the default cluster.
 - `schema_name` (String) The identifier for the materialized view schema.
 
 ### Read-Only

@@ -58,7 +58,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"tables": {
+	"table": {
 		Description: "Creates subsources for specific tables.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
@@ -131,7 +131,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 		builder.MaxCardinality(v.(bool))
 	}
 
-	if v, ok := d.GetOk("tables"); ok {
+	if v, ok := d.GetOk("table"); ok {
 		var tables []materialize.TableLoadgen
 		for _, table := range v.([]interface{}) {
 			t := table.(map[string]interface{})
@@ -140,7 +140,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 				Alias: t["alias"].(string),
 			})
 		}
-		builder.Tables(tables)
+		builder.Table(tables)
 	}
 
 	qc := builder.Create()

@@ -9,7 +9,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
     # schema_name = "public"
   }
   publication = "mz_source"
-  tables = {
+  table = {
     "schema1.table_1" = "s1_table_1"
     "schema2_table_1" = "s2_table_1"
   }

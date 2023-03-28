@@ -20,7 +20,7 @@ type SourceLoadgenBuilder struct {
 	tickInterval      string
 	scaleFactor       float64
 	maxCardinality    bool
-	tables            []TableLoadgen
+	table             []TableLoadgen
 }
 
 func (b *SourceLoadgenBuilder) qualifiedName() string {
@@ -65,8 +65,8 @@ func (b *SourceLoadgenBuilder) MaxCardinality(m bool) *SourceLoadgenBuilder {
 	return b
 }
 
-func (b *SourceLoadgenBuilder) Tables(t []TableLoadgen) *SourceLoadgenBuilder {
-	b.tables = t
+func (b *SourceLoadgenBuilder) Table(t []TableLoadgen) *SourceLoadgenBuilder {
+	b.table = t
 	return b
 }
 
@@ -104,10 +104,10 @@ func (b *SourceLoadgenBuilder) Create() string {
 
 	if b.loadGeneratorType == "COUNTER" {
 		// Tables do not apply to COUNTER
-	} else if len(b.tables) > 0 {
+	} else if len(b.table) > 0 {
 
 		var tables []string
-		for _, t := range b.tables {
+		for _, t := range b.table {
 			if t.Alias == "" {
 				t.Alias = t.Name
 			}

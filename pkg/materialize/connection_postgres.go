@@ -9,7 +9,6 @@ type ConnectionPostgresBuilder struct {
 	connectionName         string
 	schemaName             string
 	databaseName           string
-	connectionType         string
 	postgresDatabase       string
 	postgresHost           string
 	postgresPort           int
@@ -33,11 +32,6 @@ func NewConnectionPostgresBuilder(connectionName, schemaName, databaseName strin
 		schemaName:     schemaName,
 		databaseName:   databaseName,
 	}
-}
-
-func (b *ConnectionPostgresBuilder) ConnectionType(connectionType string) *ConnectionPostgresBuilder {
-	b.connectionType = connectionType
-	return b
 }
 
 func (b *ConnectionPostgresBuilder) PostgresDatabase(postgresDatabase string) *ConnectionPostgresBuilder {

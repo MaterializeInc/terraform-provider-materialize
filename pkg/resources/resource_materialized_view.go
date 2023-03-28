@@ -15,7 +15,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 	"schema_name":    SchemaResourceSchemaName("materialized view", false),
 	"database_name":  SchemaResourceDatabaseName("materialized view", false),
 	"qualified_name": SchemaResourceQualifiedName("materialized view"),
-	"in_cluster": {
+	"cluster_name": {
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -82,7 +82,7 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 	builder := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("in_cluster"); ok && v.(string) != "" {
-		builder.InCluster(v.(string))
+		builder.ClusterName(v.(string))
 	}
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
