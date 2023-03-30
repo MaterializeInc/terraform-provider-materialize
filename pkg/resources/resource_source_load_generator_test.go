@@ -24,7 +24,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 		"tick_interval":       "1s",
 		"scale_factor":        0.5,
 		"max_cardinality":     true,
-		"tables":              []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+		"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
 	}
 	d := schema.TestResourceDataRaw(t, SourceLoadgen().Schema, in)
 	r.NotNil(d)

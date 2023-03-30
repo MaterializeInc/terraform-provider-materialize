@@ -9,7 +9,7 @@ type MaterializedViewBuilder struct {
 	materializedViewName string
 	schemaName           string
 	databaseName         string
-	inCluster            string
+	clusterName          string
 	selectStmt           string
 }
 
@@ -25,8 +25,8 @@ func NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName s
 	}
 }
 
-func (b *MaterializedViewBuilder) InCluster(inCluster string) *MaterializedViewBuilder {
-	b.inCluster = inCluster
+func (b *MaterializedViewBuilder) ClusterName(clusterName string) *MaterializedViewBuilder {
+	b.clusterName = clusterName
 	return b
 }
 
@@ -40,8 +40,8 @@ func (b *MaterializedViewBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(`CREATE MATERIALIZED VIEW %s`, b.qualifiedName()))
 
-	if b.inCluster != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.inCluster)))
+	if b.clusterName != "" {
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
 	q.WriteString(fmt.Sprintf(` AS %s;`, b.selectStmt))

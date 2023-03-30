@@ -27,11 +27,11 @@ resource "materialize_source_postgres" "example_source_postgres" {
     database_name = materialize_connection_postgres.postgres_connection.database_name
   }
   publication = "mz_source"
-  tables {
+  table {
     name  = "table1"
     alias = "s1_table1"
   }
-  tables {
+  table {
     name  = "table2"
     alias = "s2_table1"
   }

@@ -30,7 +30,7 @@ resource "materialize_secret" "example_secret" {
 
 - `database_name` (String) The identifier for the secret database.
 - `schema_name` (String) The identifier for the secret schema.
-- `value` (String, Sensitive) The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.
+- `value` (String, Sensitive) The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.
 
 ### Read-Only
 
