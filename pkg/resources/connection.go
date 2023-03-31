@@ -15,8 +15,8 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	i := d.Id()
 	q := materialize.ReadConnectionParams(i)
 
-	var name, schema, database, connection_type *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &connection_type); err != nil {
+	var name, schema, database *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -31,10 +31,6 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	if err := d.Set("database_name", database); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("connection_type", connection_type); err != nil {
 		return diag.FromErr(err)
 	}
 

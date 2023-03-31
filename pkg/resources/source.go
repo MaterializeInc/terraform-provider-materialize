@@ -14,8 +14,8 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	i := d.Id()
 	q := materialize.ReadSourceParams(i)
 
-	var name, schema, database, source_type, size, connection_name, cluster_name *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &source_type, &size, &connection_name, &cluster_name); err != nil {
+	var name, schema, database, size, connection_name, cluster_name *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &size, &connection_name, &cluster_name); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -30,10 +30,6 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	if err := d.Set("database_name", database); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("source_type", source_type); err != nil {
 		return diag.FromErr(err)
 	}
 
