@@ -12,9 +12,7 @@ type KafkaSourceEnvelopeStruct struct {
 }
 
 type SourceKafkaBuilder struct {
-	sourceName       string
-	schemaName       string
-	databaseName     string
+	Source
 	clusterName      string
 	size             string
 	kafkaConnection  IdentifierSchemaStruct
@@ -33,15 +31,9 @@ type SourceKafkaBuilder struct {
 	startTimestamp   int
 }
 
-func (b *SourceKafkaBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sourceName)
-}
-
 func NewSourceKafkaBuilder(sourceName, schemaName, databaseName string) *SourceKafkaBuilder {
 	return &SourceKafkaBuilder{
-		sourceName:   sourceName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Source: Source{sourceName, schemaName, databaseName},
 	}
 }
 
@@ -127,13 +119,14 @@ func (b *SourceKafkaBuilder) StartTimestamp(s int) *SourceKafkaBuilder {
 
 func (b *SourceKafkaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s (TOPIC %s`, QualifiedName(b.kafkaConnection.DatabaseName, b.kafkaConnection.SchemaName, b.kafkaConnection.Name), QuoteString(b.topic)))
+	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
+	q.WriteString(fmt.Sprintf(` (TOPIC %s`, QuoteString(b.topic)))
 
 	if b.startTimestamp != 0 {
 		q.WriteString(fmt.Sprintf(`, START TIMESTAMP %d`, b.startTimestamp))
@@ -335,18 +328,18 @@ func (b *SourceKafkaBuilder) Create() string {
 }
 
 func (b *SourceKafkaBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SourceKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourceKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
 }
 
 func (b *SourceKafkaBuilder) ReadId() string {
-	return ReadSourceId(b.sourceName, b.schemaName, b.databaseName)
+	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
 }

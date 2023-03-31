@@ -6,23 +6,15 @@ import (
 )
 
 type ConnectionSshTunnelBuilder struct {
-	connectionName string
-	schemaName     string
-	databaseName   string
-	sshHost        string
-	sshUser        string
-	sshPort        int
-}
-
-func (b *ConnectionSshTunnelBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
+	Connection
+	sshHost string
+	sshUser string
+	sshPort int
 }
 
 func NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName string) *ConnectionSshTunnelBuilder {
 	return &ConnectionSshTunnelBuilder{
-		connectionName: connectionName,
-		schemaName:     schemaName,
-		databaseName:   databaseName,
+		Connection: Connection{connectionName, schemaName, databaseName},
 	}
 }
 
@@ -43,7 +35,7 @@ func (b *ConnectionSshTunnelBuilder) SSHPort(sshPort int) *ConnectionSshTunnelBu
 
 func (b *ConnectionSshTunnelBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.QualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`HOST %s, `, QuoteString(b.sshHost)))
 	q.WriteString(fmt.Sprintf(`USER %s, `, QuoteString(b.sshUser)))
@@ -54,12 +46,12 @@ func (b *ConnectionSshTunnelBuilder) Create() string {
 }
 
 func (b *ConnectionSshTunnelBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *ConnectionSshTunnelBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
 }
 
 func (b *ConnectionSshTunnelBuilder) ReadId() string {
@@ -73,5 +65,5 @@ func (b *ConnectionSshTunnelBuilder) ReadId() string {
 		WHERE mz_connections.name = %s
 		AND mz_schemas.name = %s
 		AND mz_databases.name = %s;
-	`, QuoteString(b.connectionName), QuoteString(b.schemaName), QuoteString(b.databaseName))
+	`, QuoteString(b.ConnectionName), QuoteString(b.SchemaName), QuoteString(b.DatabaseName))
 }

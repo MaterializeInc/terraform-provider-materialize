@@ -6,22 +6,14 @@ import (
 )
 
 type ConnectionAwsPrivatelinkBuilder struct {
-	connectionName               string
-	schemaName                   string
-	databaseName                 string
+	Connection
 	privateLinkServiceName       string
 	privateLinkAvailabilityZones []string
 }
 
-func (b *ConnectionAwsPrivatelinkBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
-}
-
 func NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName string) *ConnectionAwsPrivatelinkBuilder {
 	return &ConnectionAwsPrivatelinkBuilder{
-		connectionName: connectionName,
-		schemaName:     schemaName,
-		databaseName:   databaseName,
+		Connection: Connection{connectionName, schemaName, databaseName},
 	}
 }
 
@@ -37,7 +29,7 @@ func (b *ConnectionAwsPrivatelinkBuilder) PrivateLinkAvailabilityZones(privateLi
 
 func (b *ConnectionAwsPrivatelinkBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO AWS PRIVATELINK (`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO AWS PRIVATELINK (`, b.QualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`SERVICE NAME %s,`, QuoteString(b.privateLinkServiceName)))
 	q.WriteString(`AVAILABILITY ZONES (`)
@@ -53,14 +45,14 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() string {
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) ReadId() string {
-	return ReadConnectionId(b.connectionName, b.schemaName, b.databaseName)
+	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
 }

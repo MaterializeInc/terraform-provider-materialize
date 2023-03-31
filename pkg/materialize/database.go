@@ -14,12 +14,16 @@ func NewDatabaseBuilder(databaseName string) *DatabaseBuilder {
 	}
 }
 
+func (b *DatabaseBuilder) QualifiedName() string {
+	return QualifiedName(b.databaseName)
+}
+
 func (b *DatabaseBuilder) Create() string {
-	return fmt.Sprintf(`CREATE DATABASE %s;`, QuoteIdentifier(b.databaseName))
+	return fmt.Sprintf(`CREATE DATABASE %s;`, b.QualifiedName())
 }
 
 func (b *DatabaseBuilder) Drop() string {
-	return fmt.Sprintf(`DROP DATABASE %s;`, QuoteIdentifier(b.databaseName))
+	return fmt.Sprintf(`DROP DATABASE %s;`, b.QualifiedName())
 }
 
 func (b *DatabaseBuilder) ReadId() string {

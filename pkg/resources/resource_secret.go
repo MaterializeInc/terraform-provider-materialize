@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"terraform-materialize/pkg/materialize"
 
@@ -12,10 +11,10 @@ import (
 )
 
 var secretSchema = map[string]*schema.Schema{
-	"name":           SchemaResourceName("secret", true, false),
-	"schema_name":    SchemaResourceSchemaName("secret", false),
-	"database_name":  SchemaResourceDatabaseName("secret", false),
-	"qualified_name": SchemaResourceQualifiedName("secret"),
+	"name":               SchemaResourceName("secret", true, false),
+	"schema_name":        SchemaResourceSchemaName("secret", false),
+	"database_name":      SchemaResourceDatabaseName("secret", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("secret"),
 	"value": {
 		Description: "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.",
 		Type:        schema.TypeString,
@@ -65,8 +64,8 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	qn := fmt.Sprintf("%s.%s.%s", database, schema, name)
-	if err := d.Set("qualified_name", qn); err != nil {
+	qn := materialize.QualifiedName(database, schema, name)
+	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 

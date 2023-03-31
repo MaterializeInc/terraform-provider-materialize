@@ -11,10 +11,10 @@ import (
 )
 
 var tableSchema = map[string]*schema.Schema{
-	"name":           SchemaResourceName("table", true, false),
-	"schema_name":    SchemaResourceSchemaName("table", false),
-	"database_name":  SchemaResourceDatabaseName("table", false),
-	"qualified_name": SchemaResourceQualifiedName("table"),
+	"name":               SchemaResourceName("table", true, false),
+	"schema_name":        SchemaResourceSchemaName("table", false),
+	"database_name":      SchemaResourceDatabaseName("table", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("table"),
 	"column": {
 		Description: "Column of the table.",
 		Type:        schema.TypeList,
@@ -32,8 +32,8 @@ var tableSchema = map[string]*schema.Schema{
 				},
 				"nullable": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:     schema.TypeBool,
-					Optional: true,
+					Type:        schema.TypeBool,
+					Optional:    true,
 				},
 			},
 		},
@@ -81,6 +81,11 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewTableBuilder(*name, *schema, *database)
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
 

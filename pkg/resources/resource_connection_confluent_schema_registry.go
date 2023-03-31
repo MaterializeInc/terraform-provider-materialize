@@ -11,11 +11,11 @@ import (
 )
 
 var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
-	"name":            SchemaResourceName("connection", true, false),
-	"schema_name":     SchemaResourceSchemaName("connection", false),
-	"database_name":   SchemaResourceDatabaseName("connection", false),
-	"qualified_name":  SchemaResourceQualifiedName("connection"),
-	"connection_type": SchemaResourceConnectionName(),
+	"name":               SchemaResourceName("connection", true, false),
+	"schema_name":        SchemaResourceSchemaName("connection", false),
+	"database_name":      SchemaResourceDatabaseName("connection", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
+	"connection_type":    SchemaResourceConnectionName(),
 	"url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,

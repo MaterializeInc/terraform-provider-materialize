@@ -11,9 +11,7 @@ type TablePostgres struct {
 }
 
 type SourcePostgresBuilder struct {
-	sourceName         string
-	schemaName         string
-	databaseName       string
+	Source
 	clusterName        string
 	size               string
 	postgresConnection IdentifierSchemaStruct
@@ -22,15 +20,9 @@ type SourcePostgresBuilder struct {
 	table              []TablePostgres
 }
 
-func (b *SourcePostgresBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sourceName)
-}
-
 func NewSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
 	return &SourcePostgresBuilder{
-		sourceName:   sourceName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Source: Source{sourceName, schemaName, databaseName},
 	}
 }
 
@@ -66,13 +58,13 @@ func (b *SourcePostgresBuilder) Table(t []TablePostgres) *SourcePostgresBuilder 
 
 func (b *SourcePostgresBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, QualifiedName(b.postgresConnection.DatabaseName, b.postgresConnection.SchemaName, b.postgresConnection.Name)))
+	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, b.postgresConnection.QualifiedName()))
 
 	// Publication
 	p := fmt.Sprintf(`PUBLICATION %s`, QuoteString(b.publication))
@@ -109,18 +101,18 @@ func (b *SourcePostgresBuilder) Create() string {
 }
 
 func (b *SourcePostgresBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SourcePostgresBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourcePostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
 }
 
 func (b *SourcePostgresBuilder) ReadId() string {
-	return ReadSourceId(b.sourceName, b.schemaName, b.databaseName)
+	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
 }

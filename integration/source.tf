@@ -79,5 +79,5 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
 }
 
 output "qualified_load_generator" {
-  value = materialize_source_load_generator.load_generator.qualified_name
+  value = materialize_source_load_generator.load_generator.qualified_sql_name
 }
