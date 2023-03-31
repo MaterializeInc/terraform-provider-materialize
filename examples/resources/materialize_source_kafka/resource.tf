@@ -7,13 +7,18 @@ resource "materialize_source_kafka" "example_source_kafka" {
     database_name = "database"
     schema_name   = "schema"
   }
-  schema_registry_connection {
-    name          = "csr_connection"
-    database_name = "database"
-    schema_name   = "schema"
+  format {
+    avro {
+      schema_registry_connection {
+        name          = "csr_connection"
+        database_name = "database"
+        schema_name   = "schema"
+      }
+    }
   }
-  format   = "AVRO"
-  envelope = "data"
+  envelope {
+    none = true
+  }
 }
 
 # CREATE SOURCE kafka_metadata

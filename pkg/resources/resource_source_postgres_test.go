@@ -23,7 +23,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
 		"publication":         "mz_source",
 		"text_columns":        []interface{}{"table.unsupported_type_1"},
-		"tables":              []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+		"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
 	}
 	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, in)
 	r.NotNil(d)

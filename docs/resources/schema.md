@@ -24,11 +24,11 @@ resource "materialize_schema" "example_schema" {
 
 ### Required
 
-- `name` (String) The name of the schema.
+- `name` (String) The identifier for the schema.
 
 ### Optional
 
-- `database_name` (String) The name of the database.
+- `database_name` (String) The identifier for the schema database.
 
 ### Read-Only
 

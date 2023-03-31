@@ -24,7 +24,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
     # schema_name = "public"
   }
   publication = "mz_source"
-  tables = {
+  table = {
     "schema1.table_1" = "s1_table_1"
     "schema2_table_1" = "s2_table_1"
   }
@@ -51,7 +51,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `database_name` (String) The identifier for the source database.
 - `schema_name` (String) The identifier for the source schema.
 - `size` (String) The size of the source.
-- `tables` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--tables))
+- `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.
 
 ### Read-Only
@@ -73,8 +73,8 @@ Optional:
 - `schema_name` (String) The posgres_connection schema name.
 
 
-<a id="nestedblock--tables"></a>
-### Nested Schema for `tables`
+<a id="nestedblock--table"></a>
+### Nested Schema for `table`
 
 Required:
 

@@ -39,7 +39,7 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 
 ### Required
 
-- `name` (String) The name of the connection.
+- `name` (String) The identifier for the connection.
 - `url` (String) The URL of the Confluent Schema Registry.
 
 ### Optional

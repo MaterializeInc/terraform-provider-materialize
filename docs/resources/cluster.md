@@ -23,7 +23,7 @@ resource "materialize_cluster" "example_cluster" {
 
 ### Required
 
-- `name` (String) A name for the cluster.
+- `name` (String) The identifier for the cluster.
 
 ### Read-Only
 

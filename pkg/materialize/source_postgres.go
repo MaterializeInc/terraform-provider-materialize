@@ -17,7 +17,7 @@ type SourcePostgresBuilder struct {
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
-	tables             []TablePostgres
+	table              []TablePostgres
 }
 
 func NewSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
@@ -51,8 +51,8 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Tables(t []TablePostgres) *SourcePostgresBuilder {
-	b.tables = t
+func (b *SourcePostgresBuilder) Table(t []TablePostgres) *SourcePostgresBuilder {
+	b.table = t
 	return b
 }
 
@@ -76,14 +76,14 @@ func (b *SourcePostgresBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
-	if len(b.tables) > 0 {
+	if len(b.table) > 0 {
 		q.WriteString(` FOR TABLES (`)
-		for i, t := range b.tables {
+		for i, t := range b.table {
 			if t.Alias == "" {
 				t.Alias = t.Name
 			}
 			q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
-			if i < len(b.tables)-1 {
+			if i < len(b.table)-1 {
 				q.WriteString(`, `)
 			}
 		}

@@ -5,20 +5,22 @@ import (
 	"strings"
 )
 
+type SinkEnvelopeStruct struct {
+	Upsert   bool
+	Debezium bool
+}
+
 type SinkKafkaBuilder struct {
 	Sink
-	clusterName              string
-	size                     string
-	from                     IdentifierSchemaStruct
-	kafkaConnection          IdentifierSchemaStruct
-	topic                    string
-	key                      []string
-	format                   string
-	envelope                 string
-	schemaRegistryConnection IdentifierSchemaStruct
-	avroKeyFullname          string
-	avroValueFullname        string
-	snapshot                 bool
+	clusterName     string
+	size            string
+	from            IdentifierSchemaStruct
+	kafkaConnection IdentifierSchemaStruct
+	topic           string
+	key             []string
+	format          SinkFormatSpecStruct
+	envelope        SinkEnvelopeStruct
+	snapshot        bool
 }
 
 func NewSinkKafkaBuilder(sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
@@ -57,28 +59,13 @@ func (b *SinkKafkaBuilder) Key(k []string) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) Format(f string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) Format(f SinkFormatSpecStruct) *SinkKafkaBuilder {
 	b.format = f
 	return b
 }
 
-func (b *SinkKafkaBuilder) Envelope(e string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) Envelope(e SinkEnvelopeStruct) *SinkKafkaBuilder {
 	b.envelope = e
-	return b
-}
-
-func (b *SinkKafkaBuilder) SchemaRegistryConnection(s IdentifierSchemaStruct) *SinkKafkaBuilder {
-	b.schemaRegistryConnection = s
-	return b
-}
-
-func (b *SinkKafkaBuilder) AvroKeyFullname(a string) *SinkKafkaBuilder {
-	b.avroKeyFullname = a
-	return b
-}
-
-func (b *SinkKafkaBuilder) AvroValueFullname(a string) *SinkKafkaBuilder {
-	b.avroValueFullname = a
 	return b
 }
 
@@ -111,21 +98,25 @@ func (b *SinkKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
 	}
 
-	if b.format != "" {
-		q.WriteString(fmt.Sprintf(` FORMAT %s`, b.format))
+	if b.format.Json {
+		q.WriteString(` FORMAT JSON`)
 	}
 
-	// CSR Options
-	if b.schemaRegistryConnection.Name != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.schemaRegistryConnection.QualifiedName()))
+	if b.format.Avro != nil {
+		if b.format.Avro.SchemaRegistryConnection.Name != "" {
+			q.WriteString(fmt.Sprintf(` FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.format.Avro.SchemaRegistryConnection.QualifiedName()))
+		}
+		if b.format.Avro.AvroValueFullname != "" && b.format.Avro.AvroKeyFullname != "" {
+			q.WriteString(fmt.Sprintf(` WITH (AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s)`, QuoteString(b.format.Avro.AvroKeyFullname), QuoteString(b.format.Avro.AvroValueFullname)))
+		}
 	}
 
-	if b.avroKeyFullname != "" && b.avroValueFullname != "" {
-		q.WriteString(fmt.Sprintf(` WITH (AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s)`, b.avroKeyFullname, b.avroValueFullname))
+	if b.envelope.Debezium {
+		q.WriteString(` ENVELOPE DEBEZIUM`)
 	}
 
-	if b.envelope != "" {
-		q.WriteString(fmt.Sprintf(` ENVELOPE %s`, b.envelope))
+	if b.envelope.Upsert {
+		q.WriteString(` ENVELOPE UPSERT`)
 	}
 
 	// With Options

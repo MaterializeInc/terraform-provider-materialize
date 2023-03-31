@@ -16,7 +16,7 @@ var secretSchema = map[string]*schema.Schema{
 	"database_name":      SchemaResourceDatabaseName("secret", false),
 	"qualified_sql_name": SchemaResourceQualifiedName("secret"),
 	"value": {
-		Description: "The value for the secret. The value expression may not reference any relations, and must be implicitly castable to bytea.",
+		Description: "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		Sensitive:   true,

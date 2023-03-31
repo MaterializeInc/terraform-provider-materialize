@@ -27,7 +27,7 @@ func TestSourceLoadgenCreateParamsQuery(t *testing.T) {
 	b.LoadGeneratorType("TPCH")
 	b.TickInterval("1s")
 	b.ScaleFactor(0.01)
-	b.Tables([]TableLoadgen{
+	b.Table([]TableLoadgen{
 		{
 			Name:  "schema1.table_1",
 			Alias: "s1_table_1",

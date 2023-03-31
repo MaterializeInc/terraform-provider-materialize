@@ -46,7 +46,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"tables": {
+	"table": {
 		Description: "Creates subsources for specific tables.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
@@ -112,7 +112,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder.Publication(v.(string))
 	}
 
-	if v, ok := d.GetOk("tables"); ok {
+	if v, ok := d.GetOk("table"); ok {
 		var tables []materialize.TablePostgres
 		for _, table := range v.([]interface{}) {
 			t := table.(map[string]interface{})
@@ -121,7 +121,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 				Alias: t["alias"].(string),
 			})
 		}
-		builder.Tables(tables)
+		builder.Table(tables)
 	}
 
 	if v, ok := d.GetOk("textColumns"); ok {
