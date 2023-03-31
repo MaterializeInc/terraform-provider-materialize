@@ -46,14 +46,13 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "connection_type"}).
-			AddRow("conn", "schema", "database", "connection_type")
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
+			AddRow("conn", "schema", "database")
 		mock.ExpectQuery(`
 			SELECT
 				mz_connections.name,
 				mz_schemas.name,
-				mz_databases.name,
-				mz_connections.type
+				mz_databases.name
 			FROM mz_connections
 			JOIN mz_schemas
 				ON mz_connections.schema_id = mz_schemas.id

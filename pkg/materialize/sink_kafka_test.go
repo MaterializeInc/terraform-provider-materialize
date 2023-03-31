@@ -81,7 +81,6 @@ func TestSinkKafkaReadParamsQuery(t *testing.T) {
 			mz_sinks.name,
 			mz_schemas.name,
 			mz_databases.name,
-			mz_sinks.type,
 			mz_sinks.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name

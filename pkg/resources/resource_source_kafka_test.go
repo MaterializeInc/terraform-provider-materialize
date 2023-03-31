@@ -62,14 +62,13 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "source_type", "size", "connection_name", "cluster_name"}).
-			AddRow("conn", "schema", "database", "source_type", "small", "conn", "cluster")
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
+			AddRow("conn", "schema", "database", "small", "conn", "cluster")
 		mock.ExpectQuery(`
 			SELECT
 				mz_sources.name,
 				mz_schemas.name,
 				mz_databases.name,
-				mz_sources.type,
 				mz_sources.size,
 				mz_connections.name as connection_name,
 				mz_clusters.name as cluster_name

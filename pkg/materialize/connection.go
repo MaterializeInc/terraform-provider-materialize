@@ -39,8 +39,7 @@ func ReadConnectionParams(id string) string {
 		SELECT
 			mz_connections.name,
 			mz_schemas.name,
-			mz_databases.name,
-			mz_connections.type
+			mz_databases.name
 		FROM mz_connections
 		JOIN mz_schemas
 			ON mz_connections.schema_id = mz_schemas.id

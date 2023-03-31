@@ -39,7 +39,6 @@ func ReadSourceParams(id string) string {
 			mz_sources.name,
 			mz_schemas.name,
 			mz_databases.name,
-			mz_sources.type,
 			mz_sources.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name
