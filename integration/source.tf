@@ -4,8 +4,10 @@ resource "materialize_source_load_generator" "load_generator" {
   database_name       = materialize_database.database.name
   size                = "1"
   load_generator_type = "COUNTER"
-  tick_interval       = "500ms"
-  scale_factor        = 0.01
+
+  counter_options {
+    tick_interval = "500ms"
+  }
 }
 
 resource "materialize_source_load_generator" "load_generator_cluster" {
@@ -14,8 +16,10 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
   load_generator_type = "COUNTER"
-  tick_interval       = "500ms"
-  scale_factor        = 0.01
+
+  counter_options {
+    tick_interval = "500ms"
+  }
 }
 
 resource "materialize_source_postgres" "example_source_postgres" {
@@ -45,7 +49,7 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
-  topic      = "topic1"
+  topic = "topic1"
   key_format {
     text = true
   }
@@ -74,7 +78,7 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   envelope {
     none = true
   }
-  topic  = "topic1"
+  topic      = "topic1"
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 

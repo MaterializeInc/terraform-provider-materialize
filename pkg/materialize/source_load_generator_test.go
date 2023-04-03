@@ -20,21 +20,47 @@ func TestSourceLoadgenCreateQuery(t *testing.T) {
 	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM LOAD GENERATOR COUNTER;`, bc.Create())
 }
 
-func TestSourceLoadgenCreateParamsQuery(t *testing.T) {
+func TestSourceLoadgenCreateCounterParamsQuery(t *testing.T) {
+	r := require.New(t)
+	b := NewSourceLoadgenBuilder("source", "schema", "database")
+	b.Size("xsmall")
+	b.LoadGeneratorType("COUNTER")
+	b.CounterOptions(CounterOptions{
+		TickInterval:   "1s",
+		MaxCardinality: true,
+	})
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER (TICK INTERVAL '1s', MAX CARDINALITY) WITH (SIZE = 'xsmall');`, b.Create())
+}
+
+func TestSourceLoadgenCreateAuctionParamsQuery(t *testing.T) {
+	r := require.New(t)
+	b := NewSourceLoadgenBuilder("source", "schema", "database")
+	b.Size("xsmall")
+	b.LoadGeneratorType("AUCTION")
+	b.AuctionOptions(AuctionOptions{
+		TickInterval: "1s",
+		ScaleFactor:  0.01,
+	})
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR AUCTION (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR ALL TABLES WITH (SIZE = 'xsmall');`, b.Create())
+}
+
+func TestSourceLoadgenCreateTPCHParamsQuery(t *testing.T) {
 	r := require.New(t)
 	b := NewSourceLoadgenBuilder("source", "schema", "database")
 	b.Size("xsmall")
 	b.LoadGeneratorType("TPCH")
-	b.TickInterval("1s")
-	b.ScaleFactor(0.01)
-	b.Table([]TableLoadgen{
-		{
-			Name:  "schema1.table_1",
-			Alias: "s1_table_1",
-		},
-		{
-			Name:  "schema2.table_1",
-			Alias: "s2_table_1",
+	b.TPCHOptions(TPCHOptions{
+		TickInterval: "1s",
+		ScaleFactor:  0.01,
+		Table: []TableLoadgen{
+			{
+				Name:  "schema1.table_1",
+				Alias: "s1_table_1",
+			},
+			{
+				Name:  "schema2.table_1",
+				Alias: "s2_table_1",
+			},
 		},
 	})
 	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`, b.Create())

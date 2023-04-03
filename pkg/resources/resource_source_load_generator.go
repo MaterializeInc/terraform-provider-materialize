@@ -12,6 +12,43 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var tick_interval = &schema.Schema{
+	Description: "The interval at which the next datum should be emitted. Defaults to one second.",
+	Type:        schema.TypeString,
+	Optional:    true,
+	ForceNew:    true,
+}
+
+var scale_factor = &schema.Schema{
+	Description: "The scale factor for the generator. Defaults to 0.01 (~ 10MB).",
+	Type:        schema.TypeFloat,
+	Optional:    true,
+	Default:     0.01,
+	ForceNew:    true,
+}
+
+var table = &schema.Schema{
+	Description: "Creates subsources for specific tables.",
+	Type:        schema.TypeList,
+	Elem: &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Description: "The name of the table.",
+				Type:        schema.TypeString,
+				Required:    true,
+			},
+			"alias": {
+				Description: "The alias of the table.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+		},
+	},
+	Optional: true,
+	MinItems: 1,
+	ForceNew: true,
+}
+
 var sourceLoadgenSchema = map[string]*schema.Schema{
 	"name":               SchemaResourceName("source", true, false),
 	"schema_name":        SchemaResourceSchemaName("source", false),
@@ -39,45 +76,54 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Required:     true,
 		ValidateFunc: validation.StringInSlice(loadGeneratorTypes, true),
 	},
-	"tick_interval": {
-		Description: "The interval at which the next datum should be emitted. Defaults to one second.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"scale_factor": {
-		Description: "The scale factor for the TPCH generator. Defaults to 0.01 (~ 10MB).",
-		Type:        schema.TypeFloat,
-		Optional:    true,
-		Default:     0.01,
-		ForceNew:    true,
-	},
-	"max_cardinality": {
-		Description: "Valid for the COUNTER generator. Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"table": {
-		Description: "Creates subsources for specific tables.",
+	"counter_options": {
+		Description: "Counter Options.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The name of the table.",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
-				"alias": {
-					Description: "The alias of the table.",
-					Type:        schema.TypeString,
+				"tick_interval": tick_interval,
+				"max_cardinality": {
+					Description: "Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.",
+					Type:        schema.TypeBool,
 					Optional:    true,
+					ForceNew:    true,
 				},
 			},
 		},
-		Optional: true,
-		MinItems: 1,
-		ForceNew: true,
+		Optional:     true,
+		MinItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"counter_options", "auction_options", "tpch_options"},
+	},
+	"auction_options": {
+		Description: "Auction Options.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"tick_interval": tick_interval,
+				"scale_factor":  scale_factor,
+				"table":         table,
+			},
+		},
+		Optional:     true,
+		MinItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"counter_options", "auction_options", "tpch_options"},
+	},
+	"tpch_options": {
+		Description: "TPCH Options.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"tick_interval": tick_interval,
+				"scale_factor":  scale_factor,
+				"table":         table,
+			},
+		},
+		Optional:     true,
+		MinItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"counter_options", "auction_options", "tpch_options"},
 	},
 }
 
@@ -119,28 +165,67 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 		builder.LoadGeneratorType(v.(string))
 	}
 
-	if v, ok := d.GetOk("tick_interval"); ok {
-		builder.TickInterval(v.(string))
-	}
-
-	if v, ok := d.GetOk("scale_factor"); ok {
-		builder.ScaleFactor(v.(float64))
-	}
-
-	if v, ok := d.GetOk("max_cardinality"); ok {
-		builder.MaxCardinality(v.(bool))
-	}
-
-	if v, ok := d.GetOk("table"); ok {
-		var tables []materialize.TableLoadgen
-		for _, table := range v.([]interface{}) {
-			t := table.(map[string]interface{})
-			tables = append(tables, materialize.TableLoadgen{
-				Name:  t["name"].(string),
-				Alias: t["alias"].(string),
-			})
+	if v, ok := d.GetOk("counter_options"); ok {
+		var o materialize.CounterOptions
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["tick_interval"]; ok {
+			o.TickInterval = v.(string)
 		}
-		builder.Table(tables)
+
+		if v, ok := u["max_cardinality"]; ok {
+			o.MaxCardinality = v.(bool)
+		}
+		builder.CounterOptions(o)
+	}
+
+	if v, ok := d.GetOk("auction_options"); ok {
+		var o materialize.AuctionOptions
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["tick_interval"]; ok {
+			o.TickInterval = v.(string)
+		}
+
+		if v, ok := u["scale_factor"]; ok {
+			o.ScaleFactor = v.(float64)
+		}
+
+		if v, ok := u["table"]; ok {
+			var tables []materialize.TableLoadgen
+			for _, table := range v.([]interface{}) {
+				t := table.(map[string]interface{})
+				tables = append(tables, materialize.TableLoadgen{
+					Name:  t["name"].(string),
+					Alias: t["alias"].(string),
+				})
+			}
+			o.Table = tables
+		}
+		builder.AuctionOptions(o)
+	}
+
+	if v, ok := d.GetOk("tpch_options"); ok {
+		var o materialize.TPCHOptions
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["tick_interval"]; ok {
+			o.TickInterval = v.(string)
+		}
+
+		if v, ok := u["scale_factor"]; ok {
+			o.ScaleFactor = v.(float64)
+		}
+
+		if v, ok := u["table"]; ok {
+			var tables []materialize.TableLoadgen
+			for _, table := range v.([]interface{}) {
+				t := table.(map[string]interface{})
+				tables = append(tables, materialize.TableLoadgen{
+					Name:  t["name"].(string),
+					Alias: t["alias"].(string),
+				})
+			}
+			o.Table = tables
+		}
+		builder.TPCHOptions(o)
 	}
 
 	qc := builder.Create()

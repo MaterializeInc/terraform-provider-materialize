@@ -5,11 +5,11 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
   from {
     name = "table"
   }
-  topic  = "test_avro_topic"
+  topic = "test_avro_topic"
   format {
     avro {
       schema_registry_connection {
-        name = "csr_connection"
+        name          = "csr_connection"
         database_name = "database"
         schema_name   = "schema"
       }

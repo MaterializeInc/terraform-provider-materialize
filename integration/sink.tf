@@ -8,10 +8,10 @@ resource "materialize_sink_kafka" "sink_kafka" {
     database_name = materialize_source_load_generator.load_generator.database_name
     schema_name   = materialize_source_load_generator.load_generator.schema_name
   }
-  topic  = "topic1"
+  topic = "topic1"
   format {
     avro {
-        schema_registry_connection {
+      schema_registry_connection {
         name          = materialize_connection_confluent_schema_registry.schema_registry.name
         database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
         schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
