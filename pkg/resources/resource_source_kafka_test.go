@@ -24,7 +24,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		"kafka_connection":  []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 		"topic":             "topic",
 		"include_key":       "key",
-		"include_headers":   true,
+		"include_header":    true,
 		"include_partition": "parition",
 		"include_offset":    "offset",
 		"include_timestamp": "timestamp",
