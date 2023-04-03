@@ -45,7 +45,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"include_headers": {
+	"include_header": {
 		Description: "Include message headers.",
 		Type:        schema.TypeBool,
 		Optional:    true,
@@ -174,7 +174,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		builder.IncludeKey(v.(string))
 	}
 
-	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
+	if v, ok := d.GetOk("include_header"); ok && v.(bool) {
 		builder.IncludeHeaders()
 	}
 

@@ -51,7 +51,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, true),
 	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Kafka broker.", false),
-	"sasl_mechanisms": {
+	"sasl_mechanism": {
 		Description:  "The SASL mechanism for the Kafka broker.",
 		Type:         schema.TypeString,
 		Optional:     true,
@@ -140,7 +140,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		builder.KafkaSSLKey(key)
 	}
 
-	if v, ok := d.GetOk("sasl_mechanisms"); ok {
+	if v, ok := d.GetOk("sasl_mechanism"); ok {
 		builder.KafkaSASLMechanisms(v.(string))
 	}
 
