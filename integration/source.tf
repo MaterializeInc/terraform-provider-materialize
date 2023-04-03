@@ -21,7 +21,7 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
 resource "materialize_source_postgres" "example_source_postgres" {
   name = "source_postgres"
   size = "2"
-  postgres_connection {
+  connection {
     name          = materialize_connection_postgres.postgres_connection.name
     schema_name   = materialize_connection_postgres.postgres_connection.schema_name
     database_name = materialize_connection_postgres.postgres_connection.database_name
@@ -40,7 +40,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name = "source_kafka_text"
   size = "2"
-  kafka_connection {
+  connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
@@ -57,8 +57,8 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   name = "source_kafka_avro"
   size = "2"
-  kafka_connection {
-    name          = materialize_connection_kafka.kafka_connection.name
+  connection {
+    name          = materialize_connection_kafka.connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }

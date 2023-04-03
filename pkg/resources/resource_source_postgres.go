@@ -32,7 +32,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
+	"connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
 		Type:        schema.TypeString,
@@ -103,7 +103,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder.Size(v.(string))
 	}
 
-	if v, ok := d.GetOk("postgres_connection"); ok {
+	if v, ok := d.GetOk("connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		builder.PostgresConnection(conn)
 	}

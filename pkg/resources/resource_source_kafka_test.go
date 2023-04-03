@@ -21,7 +21,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		"cluster_name":      "cluster",
 		"size":              "small",
 		"item_name":         "item",
-		"kafka_connection":  []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"connection":        []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 		"topic":             "topic",
 		"include_key":       "key",
 		"include_headers":   true,

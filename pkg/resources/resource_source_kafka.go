@@ -32,7 +32,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"kafka_connection": IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true),
+	"connection": IdentifierSchema("connection", "The Kafka connection to use in the source.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -161,7 +161,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		builder.Size(v.(string))
 	}
 
-	if v, ok := d.GetOk("kafka_connection"); ok {
+	if v, ok := d.GetOk("connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		builder.KafkaConnection(conn)
 	}

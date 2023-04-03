@@ -15,15 +15,15 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"name":                "source",
-		"schema_name":         "schema",
-		"database_name":       "database",
-		"cluster_name":        "cluster",
-		"size":                "small",
-		"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
-		"publication":         "mz_source",
-		"text_columns":        []interface{}{"table.unsupported_type_1"},
-		"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+		"name":          "source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"size":          "small",
+		"connection":    []interface{}{map[string]interface{}{"name": "pg_connection"}},
+		"publication":   "mz_source",
+		"text_columns":  []interface{}{"table.unsupported_type_1"},
+		"table":         []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
 	}
 	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, in)
 	r.NotNil(d)
