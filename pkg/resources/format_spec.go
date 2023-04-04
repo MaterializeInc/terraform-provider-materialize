@@ -62,7 +62,7 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 					MaxItems:    2,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"columns": {
+							"column": {
 								Description: "The columns to use for the source.",
 								Type:        schema.TypeInt,
 								Optional:    true,

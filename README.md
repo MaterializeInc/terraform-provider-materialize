@@ -1,14 +1,17 @@
-# Terraform Provider Materialize
+# Terraform Provider: Materialize
+
+[![Slack Badge](https://img.shields.io/badge/Join%20us%20on%20Slack!-blueviolet?style=flat&logo=slack&link=https://materialize.com/s/chat)](https://materialize.com/s/chat)
+
+This repository contains a Terraform provider for managing resources in a [Materialize](https://materialize.com/) account.
 
 > **Warning**
-> The Terraform Provider for Materialize is under active development.
-
-This repository contains a Terraform provider for the [Materialize platform](https://cloud.materialize.com/).
+> The plugin is under active development.
 
 ## Requirements
 
+* Materialize >= 0.27
 * [Terraform](https://www.terraform.io/downloads.html) >= 1.0.3
-* [Go](https://golang.org/doc/install) >= 1.16
+* (Development) [Go](https://golang.org/doc/install) >= 1.16
 
 ## Installation
 
@@ -36,7 +39,7 @@ provider "materialize" {
 }
 ```
 
-Once you have configured the provider, you can start defining resources using Terraform. You can find examples of how to define resources in the [`examples`](./examples/) directory.
+Once you have configured the provider, you can start defining resources using Terraform. You can find examples on how to define resources in the [`examples`](./examples/) directory.
 
 ## Usage
 
@@ -64,7 +67,7 @@ resource "materialize_connection_kafka" "kafka_connection" {
 
 ### Data sources
 
-You can use data sources to retrieve information about existing resources. For example, to retrieve information about the existing sinks in your Materialize instance, add the following data source definition to your Terraform project:
+You can use data sources to retrieve information about existing resources. For example, to retrieve information about the existing sinks in your Materialize region, add the following data source definition to your Terraform project:
 
 ```hcl
 # main.tf
@@ -77,7 +80,7 @@ output name {
 
 ### Importing existing resources
 
-You can import existing resources into your Terraform state using the `terraform import` command followed by the ID of the resource from the [`mz_catalogue`](https://materialize.com/docs/sql/system-catalog/mz_catalog/).
+You can import existing resources into your Terraform state using the `terraform import` command. For this, you will need the `id` of the resource from the respective [`mz_catalog`](https://materialize.com/docs/sql/system-catalog/mz_catalog/) system table.
 
 For example, to import an existing connection named `kafka_connection`, first add the resource definition to your Terraform project:
 
@@ -91,13 +94,13 @@ resource "materialize_connection_kafka" "kafka_connection" {
 }
 ```
 
-Then, run the following command:
+Then, look up the `id` for the connection (`CONNECTION_ID`) in [`mz_connections`](https://materialize.com/docs/sql/system-catalog/mz_catalog/#mz_connections) and run:
 
 ```bash
 terraform import materialize_connection_kafka.kafka_connection CONNECTION_ID
 ```
 
-After the import, you can check the state of the resource by running the following command:
+After the import, you can check the state of the resource by running:
 
 ```bash
 terraform state show materialize_connection_kafka.kafka_connection
