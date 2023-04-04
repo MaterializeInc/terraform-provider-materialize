@@ -82,9 +82,10 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
+				"scale_factor":  scale_factor,
 				"max_cardinality": {
 					Description: "Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.",
-					Type:        schema.TypeBool,
+					Type:        schema.TypeInt,
 					Optional:    true,
 					ForceNew:    true,
 				},
@@ -172,8 +173,12 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 			o.TickInterval = v.(string)
 		}
 
+		if v, ok := u["scale_factor"]; ok {
+			o.ScaleFactor = v.(float64)
+		}
+
 		if v, ok := u["max_cardinality"]; ok {
-			o.MaxCardinality = v.(bool)
+			o.MaxCardinality = v.(int)
 		}
 		builder.CounterOptions(o)
 	}

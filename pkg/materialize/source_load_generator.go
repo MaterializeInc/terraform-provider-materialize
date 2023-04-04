@@ -12,7 +12,8 @@ type TableLoadgen struct {
 
 type CounterOptions struct {
 	TickInterval   string
-	MaxCardinality bool
+	ScaleFactor    float64
+	MaxCardinality int
 }
 
 type AuctionOptions struct {
@@ -92,8 +93,14 @@ func (b *SourceLoadgenBuilder) Create() string {
 			p = append(p, t)
 		}
 
-		if b.counterOptions.MaxCardinality {
-			p = append(p, `MAX CARDINALITY`)
+		if b.counterOptions.ScaleFactor != 0 {
+			s := fmt.Sprintf(`SCALE FACTOR %.2f`, b.counterOptions.ScaleFactor)
+			p = append(p, s)
+		}
+
+		if b.counterOptions.MaxCardinality != 0 {
+			s := fmt.Sprintf(`MAX CARDINALITY %d`, b.counterOptions.MaxCardinality)
+			p = append(p, s)
 		}
 	} else if b.loadGeneratorType == "AUCTION" {
 		if b.auctionOptions.TickInterval != "" {

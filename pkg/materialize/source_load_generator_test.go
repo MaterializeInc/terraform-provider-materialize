@@ -27,9 +27,9 @@ func TestSourceLoadgenCreateCounterParamsQuery(t *testing.T) {
 	b.LoadGeneratorType("COUNTER")
 	b.CounterOptions(CounterOptions{
 		TickInterval:   "1s",
-		MaxCardinality: true,
+		MaxCardinality: 8,
 	})
-	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER (TICK INTERVAL '1s', MAX CARDINALITY) WITH (SIZE = 'xsmall');`, b.Create())
+	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER (TICK INTERVAL '1s', MAX CARDINALITY 8) WITH (SIZE = 'xsmall');`, b.Create())
 }
 
 func TestSourceLoadgenCreateAuctionParamsQuery(t *testing.T) {
