@@ -8,3 +8,7 @@ resource "materialize_index" "loadgen_index" {
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
 }
+
+output "qualified_index" {
+  value = materialize_index.loadgen_index.qualified_sql_name
+}

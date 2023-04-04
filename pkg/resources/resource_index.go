@@ -95,8 +95,8 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	i := d.Id()
 	q := materialize.ReadIndexParams(i)
 
-	var name, schema, database string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
+	var name, obj, schema, database string
+	if err := conn.QueryRowx(q).Scan(&name, &obj, &schema, &database); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -115,7 +115,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	qn := materialize.QualifiedName(database, schema, name)
-	if err := d.Set("qualified_name", qn); err != nil {
+	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 
