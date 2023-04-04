@@ -41,7 +41,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	},
 	"include_key": {
 		Description: "Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named \"key\".",
-		Type:        schema.TypeString,
+		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
@@ -54,21 +54,24 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	},
 	"include_partition": {
 		Description: "Include a partition column containing the Kafka message partition",
-		Type:        schema.TypeString,
+		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
+		Default:     false,
 	},
 	"include_offset": {
 		Description: "Include an offset column containing the Kafka message offset.",
-		Type:        schema.TypeString,
+		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
+		Default:     false,
 	},
 	"include_timestamp": {
 		Description: "Include a timestamp column containing the Kafka message timestamp.",
-		Type:        schema.TypeString,
+		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
+		Default:     false,
 	},
 	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
 	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
@@ -170,24 +173,24 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		builder.Topic(v.(string))
 	}
 
-	if v, ok := d.GetOk("include_key"); ok {
-		builder.IncludeKey(v.(string))
+	if v, ok := d.GetOk("include_key"); ok && v.(bool) {
+		builder.IncludeKey()
 	}
 
 	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
 		builder.IncludeHeaders()
 	}
 
-	if v, ok := d.GetOk("include_partition"); ok {
-		builder.IncludePartition(v.(string))
+	if v, ok := d.GetOk("include_partition"); ok && v.(bool) {
+		builder.IncludePartition()
 	}
 
-	if v, ok := d.GetOk("include_offset"); ok {
-		builder.IncludeOffset(v.(string))
+	if v, ok := d.GetOk("include_offset"); ok && v.(bool) {
+		builder.IncludeOffset()
 	}
 
-	if v, ok := d.GetOk("include_timestamp"); ok {
-		builder.IncludeTimestamp(v.(string))
+	if v, ok := d.GetOk("include_timestamp"); ok && v.(bool) {
+		builder.IncludeTimestamp()
 	}
 
 	if v, ok := d.GetOk("format"); ok {

@@ -17,11 +17,11 @@ type SourceKafkaBuilder struct {
 	size             string
 	kafkaConnection  IdentifierSchemaStruct
 	topic            string
-	includeKey       string
+	includeKey       bool
 	includeHeaders   bool
-	includePartition string
-	includeOffset    string
-	includeTimestamp string
+	includePartition bool
+	includeOffset    bool
+	includeTimestamp bool
 	format           FormatSpecStruct
 	keyFormat        FormatSpecStruct
 	valueFormat      FormatSpecStruct
@@ -57,8 +57,8 @@ func (b *SourceKafkaBuilder) Topic(t string) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) IncludeKey(i string) *SourceKafkaBuilder {
-	b.includeKey = i
+func (b *SourceKafkaBuilder) IncludeKey() *SourceKafkaBuilder {
+	b.includeKey = true
 	return b
 }
 
@@ -67,18 +67,18 @@ func (b *SourceKafkaBuilder) IncludeHeaders() *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) IncludePartition(i string) *SourceKafkaBuilder {
-	b.includePartition = i
+func (b *SourceKafkaBuilder) IncludePartition() *SourceKafkaBuilder {
+	b.includePartition = true
 	return b
 }
 
-func (b *SourceKafkaBuilder) IncludeOffset(i string) *SourceKafkaBuilder {
-	b.includeOffset = i
+func (b *SourceKafkaBuilder) IncludeOffset() *SourceKafkaBuilder {
+	b.includeOffset = true
 	return b
 }
 
-func (b *SourceKafkaBuilder) IncludeTimestamp(i string) *SourceKafkaBuilder {
-	b.includeTimestamp = i
+func (b *SourceKafkaBuilder) IncludeTimestamp() *SourceKafkaBuilder {
+	b.includeTimestamp = true
 	return b
 }
 
@@ -282,24 +282,24 @@ func (b *SourceKafkaBuilder) Create() string {
 	// Metadata
 	var i []string
 
-	if b.includeKey != "" {
-		i = append(i, b.includeKey)
+	if b.includeKey {
+		i = append(i, "KEY")
 	}
 
 	if b.includeHeaders {
 		i = append(i, "HEADERS")
 	}
 
-	if b.includePartition != "" {
-		i = append(i, b.includePartition)
+	if b.includePartition {
+		i = append(i, "PARTITION")
 	}
 
-	if b.includeOffset != "" {
-		i = append(i, b.includeOffset)
+	if b.includeOffset {
+		i = append(i, "OFFSET")
 	}
 
-	if b.includeTimestamp != "" {
-		i = append(i, b.includeTimestamp)
+	if b.includeTimestamp {
+		i = append(i, "TIMESTAMP")
 	}
 
 	if len(i) > 0 {
