@@ -9,7 +9,7 @@ import (
 func TestTableCreateQuery(t *testing.T) {
 	r := require.New(t)
 	b := NewTableBuilder("table", "schema", "database")
-	b.Columns([]TableColumn{
+	b.Column([]TableColumn{
 		{
 			ColName: "column_1",
 			ColType: "int",

@@ -5,33 +5,27 @@ import (
 	"strings"
 )
 
-type SinkKafkaBuilder struct {
-	sinkName                 string
-	schemaName               string
-	databaseName             string
-	clusterName              string
-	size                     string
-	from                     IdentifierSchemaStruct
-	kafkaConnection          IdentifierSchemaStruct
-	topic                    string
-	key                      []string
-	format                   string
-	envelope                 string
-	schemaRegistryConnection IdentifierSchemaStruct
-	avroKeyFullname          string
-	avroValueFullname        string
-	snapshot                 bool
+type SinkEnvelopeStruct struct {
+	Upsert   bool
+	Debezium bool
 }
 
-func (b *SinkKafkaBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sinkName)
+type SinkKafkaBuilder struct {
+	Sink
+	clusterName     string
+	size            string
+	from            IdentifierSchemaStruct
+	kafkaConnection IdentifierSchemaStruct
+	topic           string
+	key             []string
+	format          SinkFormatSpecStruct
+	envelope        SinkEnvelopeStruct
+	snapshot        bool
 }
 
 func NewSinkKafkaBuilder(sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
 	return &SinkKafkaBuilder{
-		sinkName:     sinkName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Sink: Sink{sinkName, schemaName, databaseName},
 	}
 }
 
@@ -65,28 +59,13 @@ func (b *SinkKafkaBuilder) Key(k []string) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) Format(f string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) Format(f SinkFormatSpecStruct) *SinkKafkaBuilder {
 	b.format = f
 	return b
 }
 
-func (b *SinkKafkaBuilder) Envelope(e string) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) Envelope(e SinkEnvelopeStruct) *SinkKafkaBuilder {
 	b.envelope = e
-	return b
-}
-
-func (b *SinkKafkaBuilder) SchemaRegistryConnection(s IdentifierSchemaStruct) *SinkKafkaBuilder {
-	b.schemaRegistryConnection = s
-	return b
-}
-
-func (b *SinkKafkaBuilder) AvroKeyFullname(a string) *SinkKafkaBuilder {
-	b.avroKeyFullname = a
-	return b
-}
-
-func (b *SinkKafkaBuilder) AvroValueFullname(a string) *SinkKafkaBuilder {
-	b.avroValueFullname = a
 	return b
 }
 
@@ -97,17 +76,17 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 
 func (b *SinkKafkaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM %s`, QualifiedName(b.from.DatabaseName, b.from.SchemaName, b.from.Name)))
+	q.WriteString(fmt.Sprintf(` FROM %s`, b.from.QualifiedName()))
 
 	// Broker
 	if b.kafkaConnection.Name != "" {
-		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, QualifiedName(b.kafkaConnection.DatabaseName, b.kafkaConnection.SchemaName, b.kafkaConnection.Name)))
+		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
 	}
 
 	if len(b.key) > 0 {
@@ -119,21 +98,25 @@ func (b *SinkKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
 	}
 
-	if b.format != "" {
-		q.WriteString(fmt.Sprintf(` FORMAT %s`, b.format))
+	if b.format.Json {
+		q.WriteString(` FORMAT JSON`)
 	}
 
-	// CSR Options
-	if b.schemaRegistryConnection.Name != "" {
-		q.WriteString(fmt.Sprintf(` USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.schemaRegistryConnection.DatabaseName, b.schemaRegistryConnection.SchemaName, b.schemaRegistryConnection.Name)))
+	if b.format.Avro != nil {
+		if b.format.Avro.SchemaRegistryConnection.Name != "" {
+			q.WriteString(fmt.Sprintf(` FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.format.Avro.SchemaRegistryConnection.QualifiedName()))
+		}
+		if b.format.Avro.AvroValueFullname != "" && b.format.Avro.AvroKeyFullname != "" {
+			q.WriteString(fmt.Sprintf(` WITH (AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s)`, QuoteString(b.format.Avro.AvroKeyFullname), QuoteString(b.format.Avro.AvroValueFullname)))
+		}
 	}
 
-	if b.avroKeyFullname != "" && b.avroValueFullname != "" {
-		q.WriteString(fmt.Sprintf(` WITH (AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s)`, b.avroKeyFullname, b.avroValueFullname))
+	if b.envelope.Debezium {
+		q.WriteString(` ENVELOPE DEBEZIUM`)
 	}
 
-	if b.envelope != "" {
-		q.WriteString(fmt.Sprintf(` ENVELOPE %s`, b.envelope))
+	if b.envelope.Upsert {
+		q.WriteString(` ENVELOPE UPSERT`)
 	}
 
 	// With Options
@@ -156,18 +139,18 @@ func (b *SinkKafkaBuilder) Create() string {
 }
 
 func (b *SinkKafkaBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SinkKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SINK %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SINK %s;`, b.QualifiedName())
 }
 
 func (b *SinkKafkaBuilder) ReadId() string {
-	return ReadSinkId(b.sinkName, b.schemaName, b.databaseName)
+	return ReadSinkId(b.SinkName, b.SchemaName, b.DatabaseName)
 }

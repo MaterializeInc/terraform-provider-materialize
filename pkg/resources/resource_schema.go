@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,24 +10,9 @@ import (
 )
 
 var schemaSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The name of the schema.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The name of the database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the schema.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":               SchemaResourceName("schema", true, true),
+	"database_name":      SchemaResourceDatabaseName("schema", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("schema"),
 }
 
 func Schema() *schema.Resource {
@@ -67,8 +51,8 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	qn := fmt.Sprintf("%s.%s", database_name, name)
-	if err := d.Set("qualified_name", qn); err != nil {
+	qn := materialize.QualifiedName(database_name, name)
+	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 

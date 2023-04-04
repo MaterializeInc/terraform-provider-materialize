@@ -1,11 +1,5 @@
 package resources
 
-var envelopes = []string{
-	"DEBEZIUM",
-	"UPSERT",
-	"TPCH",
-}
-
 var loadGeneratorTypes = []string{
 	"AUCTION",
 	"COUNTER",

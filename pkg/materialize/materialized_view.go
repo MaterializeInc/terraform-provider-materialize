@@ -9,11 +9,11 @@ type MaterializedViewBuilder struct {
 	materializedViewName string
 	schemaName           string
 	databaseName         string
-	inCluster            string
+	clusterName          string
 	selectStmt           string
 }
 
-func (b *MaterializedViewBuilder) qualifiedName() string {
+func (b *MaterializedViewBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName, b.materializedViewName)
 }
 
@@ -25,8 +25,8 @@ func NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName s
 	}
 }
 
-func (b *MaterializedViewBuilder) InCluster(inCluster string) *MaterializedViewBuilder {
-	b.inCluster = inCluster
+func (b *MaterializedViewBuilder) ClusterName(clusterName string) *MaterializedViewBuilder {
+	b.clusterName = clusterName
 	return b
 }
 
@@ -38,10 +38,10 @@ func (b *MaterializedViewBuilder) SelectStmt(selectStmt string) *MaterializedVie
 func (b *MaterializedViewBuilder) Create() string {
 	q := strings.Builder{}
 
-	q.WriteString(fmt.Sprintf(`CREATE MATERIALIZED VIEW %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE MATERIALIZED VIEW %s`, b.QualifiedName()))
 
-	if b.inCluster != "" {
-		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.inCluster)))
+	if b.clusterName != "" {
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
 	q.WriteString(fmt.Sprintf(` AS %s;`, b.selectStmt))
@@ -50,11 +50,11 @@ func (b *MaterializedViewBuilder) Create() string {
 
 func (b *MaterializedViewBuilder) Rename(newName string) string {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER MATERIALIZED VIEW %s RENAME TO %s;`, b.qualifiedName(), n)
+	return fmt.Sprintf(`ALTER MATERIALIZED VIEW %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *MaterializedViewBuilder) Drop() string {
-	return fmt.Sprintf(`DROP MATERIALIZED VIEW %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP MATERIALIZED VIEW %s;`, b.QualifiedName())
 }
 
 func (b *MaterializedViewBuilder) ReadId() string {
@@ -102,10 +102,10 @@ func ReadMaterializedViewDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

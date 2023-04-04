@@ -75,7 +75,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 ### Required
 
 - `kafka_broker` (Block List, Min: 1) The Kafka brokers configuration. (see [below for nested schema](#nestedblock--kafka_broker))
-- `name` (String) The name of the connection.
+- `name` (String) The identifier for the connection.
 
 ### Optional
 

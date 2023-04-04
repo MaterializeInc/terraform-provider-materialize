@@ -24,12 +24,9 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 		"topic":            "topic",
 		// "key":                        []interface{}{"key_1", "key_2"},
-		"format":                     "AVRO",
-		"envelope":                   "UPSERT",
-		"schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn"}},
-		"avro_key_fullname":          "avro_key_fullname",
-		"avro_value_fullname":        "avro_value_fullname",
-		"snapshot":                   false,
+		"format":   []interface{}{map[string]interface{}{"avro": []interface{}{map[string]interface{}{"avro_key_fullname": "avro_key_fullname", "avro_value_fullname": "avro_value_fullname", "schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn", "database_name": "database", "schema_name": "schema"}}}}}},
+		"envelope": []interface{}{map[string]interface{}{"upsert": true}},
+		"snapshot": false,
 	}
 	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, in)
 	r.NotNil(d)
@@ -37,7 +34,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."public"."item" INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" WITH \(AVRO KEY FULLNAME avro_key_fullname AVRO VALUE FULLNAME avro_value_fullname\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
+			`CREATE SINK "database"."schema"."sink" IN CLUSTER "cluster" FROM "database"."public"."item" INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" WITH \(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname'\) ENVELOPE UPSERT WITH \( SIZE = 'small' SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -59,14 +56,13 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "sink_type", "size", "connection_name", "cluster_name"}).
-			AddRow("conn", "schema", "database", "sink_type", "small", "conn", "cluster")
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
+			AddRow("conn", "schema", "database", "small", "conn", "cluster")
 		mock.ExpectQuery(`
 			SELECT
 				mz_sinks.name,
 				mz_schemas.name,
 				mz_databases.name,
-				mz_sinks.type,
 				mz_sinks.size,
 				mz_connections.name as connection_name,
 				mz_clusters.name as cluster_name

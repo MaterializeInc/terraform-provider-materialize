@@ -11,7 +11,7 @@ type SecretBuilder struct {
 	databaseName string
 }
 
-func (b *SecretBuilder) qualifiedName() string {
+func (b *SecretBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName, b.secretName)
 }
 
@@ -24,20 +24,20 @@ func NewSecretBuilder(secretName, schemaName, databaseName string) *SecretBuilde
 }
 
 func (b *SecretBuilder) Create(value string) string {
-	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.qualifiedName(), QuoteString(value))
+	return fmt.Sprintf(`CREATE SECRET %s AS %s;`, b.QualifiedName(), QuoteString(value))
 }
 
 func (b *SecretBuilder) Rename(newName string) string {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SECRET %s RENAME TO %s;`, b.qualifiedName(), n)
+	return fmt.Sprintf(`ALTER SECRET %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) string {
-	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.qualifiedName(), QuoteString(newValue))
+	return fmt.Sprintf(`ALTER SECRET %s AS %s;`, b.QualifiedName(), QuoteString(newValue))
 }
 
 func (b *SecretBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SECRET %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SECRET %s;`, b.QualifiedName())
 }
 
 func (b *SecretBuilder) ReadId() string {
@@ -83,10 +83,10 @@ func ReadSecretDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

@@ -12,33 +12,11 @@ import (
 )
 
 var sinkKafkaSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the sink.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the sink schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the sink database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the sink.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"sink_type": {
-		Description: "The type of sink.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":               SchemaResourceName("sink", true, false),
+	"schema_name":        SchemaResourceSchemaName("sink", false),
+	"database_name":      SchemaResourceDatabaseName("sink", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("sink"),
+	"sink_type":          SchemaResourceSinkType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -54,8 +32,8 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"from":             IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true, false),
-	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true, false),
+	"from":             IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
+	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -69,33 +47,31 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format": {
-		Description: "How to decode raw bytes from different formats into data structures it can understand at runtime.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"format": SinkFormatSpecSchema("format", "How to decode raw bytes from different formats into data structures it can understand at runtime.", false),
 	"envelope": {
-		Description:  "How to interpret records (e.g. Append Only, Upsert).",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(envelopes, true),
-	},
-	"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of the connection to use for the shcema registry.", false, true),
-	"avro_key_fullname": {
-		Description:  "ets the Avro fullname on the generated key schema, if a KEY is specified. When used, a value must be specified for AVRO VALUE FULLNAME.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
-	},
-	"avro_value_fullname": {
-		Description:  "Sets the Avro fullname on the generated value schema. When KEY is specified, AVRO KEY FULLNAME must additionally be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"avro_key_fullname", "avro_value_fullname"},
+		Description: "How to interpret records (e.g. Debezium, Upsert).",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"upsert": {
+					Description:   "The sink emits data with upsert semantics: updates and inserts for the given key are expressed as a value, and deletes are expressed as a null value payload in Kafka.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.debezium"},
+				},
+				"debezium": {
+					Description:   "The generated schemas have a Debezium-style diff envelope to capture changes in the input view or source.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert"},
+				},
+			},
+		},
+		Optional: true,
+		ForceNew: true,
 	},
 	"snapshot": {
 		Description: "Whether to emit the consolidated results of the query before the sink was created at the start of the sink.",
@@ -159,24 +135,19 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("format"); ok {
-		builder.Format(v.(string))
+		format := materialize.GetSinkFormatSpecStruc(v)
+		builder.Format(format)
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		builder.Envelope(v.(string))
-	}
-
-	if v, ok := d.GetOk("schema_registry_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.SchemaRegistryConnection(conn)
-	}
-
-	if v, ok := d.GetOk("avro_key_fullname"); ok {
-		builder.AvroKeyFullname(v.(string))
-	}
-
-	if v, ok := d.GetOk("avro_value_fullname"); ok {
-		builder.AvroValueFullname(v.(string))
+		var envelope materialize.SinkEnvelopeStruct
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
+			envelope.Upsert = v.(bool)
+		}
+		if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
+			envelope.Debezium = v.(bool)
+		}
+		builder.Envelope(envelope)
 	}
 
 	if v, ok := d.GetOk("snapshot"); ok {

@@ -11,33 +11,11 @@ import (
 )
 
 var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The name of the connection.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the connection schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the connection database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the connection.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"connection_type": {
-		Description: "The type of connection.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":               SchemaResourceName("connection", true, false),
+	"schema_name":        SchemaResourceSchemaName("connection", false),
+	"database_name":      SchemaResourceDatabaseName("connection", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
+	"connection_type":    SchemaResourceConnectionName(),
 	"service_name": {
 		Description: "The name of the AWS PrivateLink service.",
 		Type:        schema.TypeString,

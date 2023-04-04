@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -17,7 +16,14 @@ var indexSchema = map[string]*schema.Schema{
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,
-		ExactlyOneOf: []string{"name", "default", "col_expr"},
+		ExactlyOneOf: []string{"name", "default"},
+	},
+	"default": {
+		Description:  "Creates a default index using all inferred columns are used.",
+		Type:         schema.TypeBool,
+		Optional:     true,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"name", "default"},
 	},
 	"schema_name": {
 		Description: "The identifier for the index schema.",
@@ -29,19 +35,8 @@ var indexSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
-	"qualified_name": {
-		Description: "The fully qualified name of the index.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"default": {
-		Description:  "Creates a default index using a set of columns that uniquely identify each row. If this set of columns can’t be inferred, all columns are used.",
-		Type:         schema.TypeBool,
-		Optional:     true,
-		ForceNew:     true,
-		ExactlyOneOf: []string{"name", "default", "col_expr"},
-	},
-	"obj_name": IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true, false),
+	"qualified_sql_name": SchemaResourceQualifiedName("view"),
+	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
 	"cluster_name": {
 		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
 		Type:        schema.TypeString,
@@ -119,7 +114,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	qn := fmt.Sprintf("%s.%s.%s", database, schema, name)
+	qn := materialize.QualifiedName(database, schema, name)
 	if err := d.Set("qualified_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,17 +124,17 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
-	indexName := d.Get("name").(string)
 
-	builder := materialize.NewIndexBuilder(indexName)
-
-	if v, ok := d.GetOk("default"); ok && v.(bool) {
-		builder.IndexDefault()
-	}
-
-	if v, ok := d.GetOk("obj_name"); ok {
-		builder.ObjName(v.(materialize.IdentifierSchemaStruct))
-	}
+	o := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
+	builder := materialize.NewIndexBuilder(
+		d.Get("name").(string),
+		d.Get("default").(bool),
+		materialize.IdentifierSchemaStruct{
+			Name:         o["name"].(string),
+			SchemaName:   o["schema_name"].(string),
+			DatabaseName: o["database_name"].(string),
+		},
+	)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		builder.ClusterName(v.(string))
@@ -172,11 +167,19 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
-	indexName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
 
-	q := materialize.NewIndexBuilder(indexName).Drop(databaseName, schemaName)
+	o := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
+	builder := materialize.NewIndexBuilder(
+		d.Get("name").(string),
+		d.Get("default").(bool),
+		materialize.IdentifierSchemaStruct{
+			Name:         o["name"].(string),
+			SchemaName:   o["schema_name"].(string),
+			DatabaseName: o["database_name"].(string),
+		},
+	)
+
+	q := builder.Drop()
 
 	if err := dropResource(conn, d, q, "index"); err != nil {
 		return diag.FromErr(err)

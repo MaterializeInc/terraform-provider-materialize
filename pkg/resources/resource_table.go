@@ -11,46 +11,26 @@ import (
 )
 
 var tableSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the table.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the table schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The identifier for the table database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the table.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"columns": {
-		Description: "Columns of the table.",
+	"name":               SchemaResourceName("table", true, false),
+	"schema_name":        SchemaResourceSchemaName("table", false),
+	"database_name":      SchemaResourceDatabaseName("table", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("table"),
+	"column": {
+		Description: "Column of the table.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"col_name": {
+				"name": {
 					Description: "The name of the column to be created in the table.",
 					Type:        schema.TypeString,
 					Required:    true,
 				},
-				"col_type": {
-					Description: "The data type of the column indicated by col_name.",
+				"type": {
+					Description: "The data type of the column indicated by name.",
 					Type:        schema.TypeString,
 					Required:    true,
 				},
-				"not_null": {
+				"nullable": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
 					Type:        schema.TypeBool,
 					Optional:    true,
@@ -104,6 +84,11 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
+	b := materialize.NewTableBuilder(*name, *schema, *database)
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -116,17 +101,17 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	builder := materialize.NewTableBuilder(tableName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("columns"); ok {
+	if v, ok := d.GetOk("column"); ok {
 		var columns []materialize.TableColumn
 		for _, column := range v.([]interface{}) {
 			c := column.(map[string]interface{})
 			columns = append(columns, materialize.TableColumn{
-				ColName: c["col_name"].(string),
-				ColType: c["col_type"].(string),
-				NotNull: c["not_null"].(bool),
+				ColName: c["name"].(string),
+				ColType: c["type"].(string),
+				NotNull: c["nullable"].(bool),
 			})
 		}
-		builder.Columns(columns)
+		builder.Column(columns)
 	}
 
 	qc := builder.Create()

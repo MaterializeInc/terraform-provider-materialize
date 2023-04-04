@@ -15,10 +15,10 @@ type TableBuilder struct {
 	tableName    string
 	schemaName   string
 	databaseName string
-	columns      []TableColumn
+	column       []TableColumn
 }
 
-func (b *TableBuilder) qualifiedName() string {
+func (b *TableBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName, b.tableName)
 }
 
@@ -30,19 +30,17 @@ func NewTableBuilder(tableName, schemaName, databaseName string) *TableBuilder {
 	}
 }
 
-func (b *TableBuilder) Columns(c []TableColumn) *TableBuilder {
-	b.columns = c
+func (b *TableBuilder) Column(c []TableColumn) *TableBuilder {
+	b.column = c
 	return b
 }
 
 func (b *TableBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(`CREATE`)
+	q.WriteString(fmt.Sprintf(`CREATE TABLE %s`, b.QualifiedName()))
 
-	q.WriteString(fmt.Sprintf(` TABLE %s`, b.qualifiedName()))
-
-	var columns []string
-	for _, c := range b.columns {
+	var column []string
+	for _, c := range b.column {
 		s := strings.Builder{}
 
 		s.WriteString(fmt.Sprintf(`%s %s`, c.ColName, c.ColType))
@@ -50,21 +48,21 @@ func (b *TableBuilder) Create() string {
 			s.WriteString(` NOT NULL`)
 		}
 		o := s.String()
-		columns = append(columns, o)
+		column = append(column, o)
 
 	}
-	p := strings.Join(columns[:], ", ")
+	p := strings.Join(column[:], ", ")
 	q.WriteString(fmt.Sprintf(` (%s);`, p))
 	return q.String()
 }
 
 func (b *TableBuilder) Rename(newName string) string {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER TABLE %s RENAME TO %s;`, b.qualifiedName(), n)
+	return fmt.Sprintf(`ALTER TABLE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *TableBuilder) Drop() string {
-	return fmt.Sprintf(`DROP TABLE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP TABLE %s;`, b.QualifiedName())
 }
 
 func (b *TableBuilder) ReadId() string {
@@ -111,10 +109,10 @@ func ReadTableDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

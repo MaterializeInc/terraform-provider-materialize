@@ -2,7 +2,7 @@
 Below are some of the patterns and standards we have decided on for the provider.
 
 ### Builder
-All the resources in the provider follow the [builder pattern](https://en.wikipedia.org/wiki/Builder_pattern). This makes it easy to accommodate the large number of parameters that can be set when defining resources. For consistency, even simple resources with few parameters follow the same pattern.
+All the SQL objects in the `materialize` package follow the [builder pattern](https://en.wikipedia.org/wiki/Builder_pattern). This makes it easy to accommodate the large number of parameters that can be set when defining resources. For consistency, even simple resources with few parameters follow the same pattern.
 
 After defining the struct for the resource:
 ```
@@ -47,3 +47,11 @@ Complex Materialize resources are separated out into more specific provider reso
 
 ### Naming Resources
 The names of resources should exactly match Materialize. For example the load generator source should be named `materialize_source_load_generator` to match the [SQL statement](https://materialize.com/docs/sql/create-source/load-generator/).
+
+### Testing
+Unit tests are spread across the packages:
+* `datasources` - Should use the `TestResourceDataRaw` to ensure the parameters are properly executed by the mock database for data sources.
+* `materialize` - Should ensure the builder properly generates SQL for all valid permutations of the object.
+* `resources` - Should use the `TestResourceDataRaw` to ensure the parameters are properly executed by the mock database for resources.
+
+Integration tests go in the `integration` directory. This will spin up a simple docker compose using the `materialized` and surrounding kafka and database dependencies. All resources are applied and destroyed as part of the same terraform project. Any new resources or permutations should be added to the integration tests.

@@ -18,7 +18,7 @@ func TestResourceViewCreate(t *testing.T) {
 		"name":          "view",
 		"schema_name":   "schema",
 		"database_name": "database",
-		"select_stmt":   "SELECT 1 FROM 1",
+		"statement":     "SELECT 1 FROM 1",
 	}
 	d := schema.TestResourceDataRaw(t, View().Schema, in)
 	r.NotNil(d)

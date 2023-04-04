@@ -11,31 +11,11 @@ import (
 )
 
 var viewSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the view.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the view schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The identifier for the view database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the view.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"select_stmt": {
+	"name":               SchemaResourceName("view", true, false),
+	"schema_name":        SchemaResourceSchemaName("view", false),
+	"database_name":      SchemaResourceDatabaseName("view", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("view"),
+	"statement": {
 		Description: "The SQL statement to create the view.",
 		Type:        schema.TypeString,
 		Required:    true,
@@ -84,6 +64,11 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	b := materialize.NewViewBuilder(*database, *schema, *name)
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -96,7 +81,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	builder := materialize.NewViewBuilder(viewName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("select_stmt"); ok && v.(string) != "" {
+	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
 		builder.SelectStmt(v.(string))
 	}
 

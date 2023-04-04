@@ -1,13 +1,13 @@
 resource "materialize_connection_kafka" "kafka_connection" {
   name = "kafka_connection"
   kafka_broker {
-    broker = "kafka:9092"
+    broker = "redpanda:9092"
   }
 }
 
 resource "materialize_connection_confluent_schema_registry" "schema_registry" {
   name = "schema_registry_connection"
-  url  = "http://schema-registry:8081"
+  url  = "http://redpanda:8081"
 }
 
 resource "materialize_connection_ssh_tunnel" "ssh_connection" {
@@ -21,10 +21,10 @@ resource "materialize_connection_ssh_tunnel" "ssh_connection" {
 resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   name = "kafka_conn_multiple_brokers"
   kafka_broker {
-    broker = "kafka:9092"
+    broker = "redpanda:9092"
   }
   kafka_broker {
-    broker = "kafka2:9092"
+    broker = "redpanda:9092"
   }
   sasl_username {
     text = "sasl_user"
@@ -73,5 +73,5 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
 }
 
 output "qualified_ssh_connection" {
-  value = materialize_connection_ssh_tunnel.ssh_connection.qualified_name
+  value = materialize_connection_ssh_tunnel.ssh_connection.qualified_sql_name
 }

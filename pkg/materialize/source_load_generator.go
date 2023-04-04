@@ -11,27 +11,19 @@ type TableLoadgen struct {
 }
 
 type SourceLoadgenBuilder struct {
-	sourceName        string
-	schemaName        string
-	databaseName      string
+	Source
 	clusterName       string
 	size              string
 	loadGeneratorType string
 	tickInterval      string
 	scaleFactor       float64
 	maxCardinality    bool
-	tables            []TableLoadgen
-}
-
-func (b *SourceLoadgenBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sourceName)
+	table             []TableLoadgen
 }
 
 func NewSourceLoadgenBuilder(sourceName, schemaName, databaseName string) *SourceLoadgenBuilder {
 	return &SourceLoadgenBuilder{
-		sourceName:   sourceName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Source: Source{sourceName, schemaName, databaseName},
 	}
 }
 
@@ -65,14 +57,14 @@ func (b *SourceLoadgenBuilder) MaxCardinality(m bool) *SourceLoadgenBuilder {
 	return b
 }
 
-func (b *SourceLoadgenBuilder) Tables(t []TableLoadgen) *SourceLoadgenBuilder {
-	b.tables = t
+func (b *SourceLoadgenBuilder) Table(t []TableLoadgen) *SourceLoadgenBuilder {
+	b.table = t
 	return b
 }
 
 func (b *SourceLoadgenBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
@@ -104,10 +96,10 @@ func (b *SourceLoadgenBuilder) Create() string {
 
 	if b.loadGeneratorType == "COUNTER" {
 		// Tables do not apply to COUNTER
-	} else if len(b.tables) > 0 {
+	} else if len(b.table) > 0 {
 
 		var tables []string
-		for _, t := range b.tables {
+		for _, t := range b.table {
 			if t.Alias == "" {
 				t.Alias = t.Name
 			}
@@ -129,18 +121,18 @@ func (b *SourceLoadgenBuilder) Create() string {
 }
 
 func (b *SourceLoadgenBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SourceLoadgenBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourceLoadgenBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
 }
 
 func (b *SourceLoadgenBuilder) ReadId() string {
-	return ReadSourceId(b.sourceName, b.schemaName, b.databaseName)
+	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
 }

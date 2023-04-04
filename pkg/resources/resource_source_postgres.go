@@ -12,33 +12,11 @@ import (
 )
 
 var sourcePostgresSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the source.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the source schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the source database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"source_type": {
-		Description: "The type of source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":               SchemaResourceName("source", true, false),
+	"schema_name":        SchemaResourceSchemaName("source", false),
+	"database_name":      SchemaResourceDatabaseName("source", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("source"),
+	"source_type":        SchemaResourceSourceType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -54,7 +32,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"cluster_name", "size"},
 		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
-	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true, false),
+	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
 		Type:        schema.TypeString,
@@ -68,7 +46,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"tables": {
+	"table": {
 		Description: "Creates subsources for specific tables.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
@@ -134,7 +112,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder.Publication(v.(string))
 	}
 
-	if v, ok := d.GetOk("tables"); ok {
+	if v, ok := d.GetOk("table"); ok {
 		var tables []materialize.TablePostgres
 		for _, table := range v.([]interface{}) {
 			t := table.(map[string]interface{})
@@ -143,7 +121,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 				Alias: t["alias"].(string),
 			})
 		}
-		builder.Tables(tables)
+		builder.Table(tables)
 	}
 
 	if v, ok := d.GetOk("textColumns"); ok {

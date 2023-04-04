@@ -13,9 +13,7 @@ type KafkaBroker struct {
 }
 
 type ConnectionKafkaBuilder struct {
-	connectionName      string
-	schemaName          string
-	databaseName        string
+	Connection
 	kafkaBrokers        []KafkaBroker
 	kafkaProgressTopic  string
 	kafkaSSLCa          ValueSecretStruct
@@ -29,14 +27,8 @@ type ConnectionKafkaBuilder struct {
 
 func NewConnectionKafkaBuilder(connectionName, schemaName, databaseName string) *ConnectionKafkaBuilder {
 	return &ConnectionKafkaBuilder{
-		connectionName: connectionName,
-		schemaName:     schemaName,
-		databaseName:   databaseName,
+		Connection: Connection{connectionName, schemaName, databaseName},
 	}
-}
-
-func (b *ConnectionKafkaBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
 }
 
 func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionKafkaBuilder {
@@ -86,7 +78,7 @@ func (b *ConnectionKafkaBuilder) KafkaSSHTunnel(kafkaSSHTunnel IdentifierSchemaS
 
 func (b *ConnectionKafkaBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.QualifiedName()))
 
 	if b.kafkaSSHTunnel.Name != "" {
 		q.WriteString(`BROKERS (`)
@@ -123,16 +115,16 @@ func (b *ConnectionKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.kafkaSSLCa.Text)))
 	}
 	if b.kafkaSSLCa.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, QualifiedName(b.kafkaSSLCa.Secret.DatabaseName, b.kafkaSSLCa.Secret.SchemaName, b.kafkaSSLCa.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.kafkaSSLCa.Secret.QualifiedName()))
 	}
 	if b.kafkaSSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.kafkaSSLCert.Text)))
 	}
 	if b.kafkaSSLCert.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, QualifiedName(b.kafkaSSLCert.Secret.DatabaseName, b.kafkaSSLCert.Secret.SchemaName, b.kafkaSSLCert.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.kafkaSSLCert.Secret.QualifiedName()))
 	}
 	if b.kafkaSSLKey.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, QualifiedName(b.kafkaSSLKey.DatabaseName, b.kafkaSSLKey.SchemaName, b.kafkaSSLKey.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.kafkaSSLKey.QualifiedName()))
 	}
 	if b.kafkaSASLMechanisms != "" {
 		q.WriteString(fmt.Sprintf(`, SASL MECHANISMS = %s`, QuoteString(b.kafkaSASLMechanisms)))
@@ -141,10 +133,10 @@ func (b *ConnectionKafkaBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`, SASL USERNAME = %s`, QuoteString(b.kafkaSASLUsername.Text)))
 	}
 	if b.kafkaSASLUsername.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SASL USERNAME = SECRET %s`, QualifiedName(b.kafkaSASLUsername.Secret.DatabaseName, b.kafkaSASLUsername.Secret.SchemaName, b.kafkaSASLUsername.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SASL USERNAME = SECRET %s`, b.kafkaSASLUsername.Secret.QualifiedName()))
 	}
 	if b.kafkaSASLPassword.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, QualifiedName(b.kafkaSASLPassword.DatabaseName, b.kafkaSASLPassword.SchemaName, b.kafkaSASLPassword.Name)))
+		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword.QualifiedName()))
 	}
 
 	q.WriteString(`);`)
@@ -152,14 +144,14 @@ func (b *ConnectionKafkaBuilder) Create() string {
 }
 
 func (b *ConnectionKafkaBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *ConnectionKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
 }
 
 func (b *ConnectionKafkaBuilder) ReadId() string {
-	return ReadConnectionId(b.connectionName, b.schemaName, b.databaseName)
+	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
 }

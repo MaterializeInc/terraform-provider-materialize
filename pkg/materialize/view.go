@@ -12,7 +12,7 @@ type ViewBuilder struct {
 	selectStmt   string
 }
 
-func (b *ViewBuilder) qualifiedName() string {
+func (b *ViewBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName, b.viewName)
 }
 
@@ -31,14 +31,8 @@ func (b *ViewBuilder) SelectStmt(selectStmt string) *ViewBuilder {
 
 func (b *ViewBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(`CREATE`)
-
-	q.WriteString(fmt.Sprintf(` VIEW %s`, b.qualifiedName()))
-
-	q.WriteString(` AS `)
-
+	q.WriteString(fmt.Sprintf(`CREATE VIEW %s AS `, b.QualifiedName()))
 	q.WriteString(b.selectStmt)
-
 	q.WriteString(`;`)
 
 	return q.String()
@@ -46,11 +40,11 @@ func (b *ViewBuilder) Create() string {
 
 func (b *ViewBuilder) Rename(newName string) string {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER VIEW %s RENAME TO %s;`, b.qualifiedName(), n)
+	return fmt.Sprintf(`ALTER VIEW %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *ViewBuilder) Drop() string {
-	return fmt.Sprintf(`DROP VIEW %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP VIEW %s;`, b.QualifiedName())
 }
 
 func (b *ViewBuilder) ReadId() string {
@@ -97,10 +91,10 @@ func ReadViewDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

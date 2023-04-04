@@ -15,9 +15,9 @@ func TestResourceIndexDelete(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"name":          "index",
-		"schema_name":   "schema",
-		"database_name": "database",
+		"name":     "index",
+		"default":  false,
+		"obj_name": []interface{}{map[string]interface{}{"name": "source", "schema_name": "schema", "database_name": "database"}},
 	}
 	d := schema.TestResourceDataRaw(t, Index().Schema, in)
 	r.NotNil(d)

@@ -11,36 +11,16 @@ import (
 )
 
 var materializedViewSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The identifier for the materialized view.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the materialized view schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The identifier for the materialized view database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-		ForceNew:    true,
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the materialized view.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"in_cluster": {
+	"name":               SchemaResourceName("materialized view", true, false),
+	"schema_name":        SchemaResourceSchemaName("materialized view", false),
+	"database_name":      SchemaResourceDatabaseName("materialized view", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("materialized view"),
+	"cluster_name": {
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"select_stmt": {
+	"statement": {
 		Description: "The SQL statement to create the materialized view.",
 		Type:        schema.TypeString,
 		Required:    true,
@@ -89,6 +69,11 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
+	qn := materialize.QualifiedName(*database, *schema, *name)
+	if err := d.Set("qualified_sql_name", qn); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -102,10 +87,10 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 	builder := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("in_cluster"); ok && v.(string) != "" {
-		builder.InCluster(v.(string))
+		builder.ClusterName(v.(string))
 	}
 
-	if v, ok := d.GetOk("select_stmt"); ok && v.(string) != "" {
+	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
 		builder.SelectStmt(v.(string))
 	}
 

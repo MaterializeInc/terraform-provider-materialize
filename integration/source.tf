@@ -27,11 +27,11 @@ resource "materialize_source_postgres" "example_source_postgres" {
     database_name = materialize_connection_postgres.postgres_connection.database_name
   }
   publication = "mz_source"
-  tables {
+  table {
     name  = "table1"
     alias = "s1_table1"
   }
-  tables {
+  table {
     name  = "table2"
     alias = "s2_table1"
   }
@@ -45,9 +45,13 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
-  format     = "TEXT"
-  topic      = "topic1"
-  key_format = "TEXT"
+  topic = "topic1"
+  key_format {
+    text = true
+  }
+  value_format {
+    text = true
+  }
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
@@ -58,16 +62,22 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
-  format = "AVRO"
-  topic  = "topic1"
-  schema_registry_connection {
-    name          = materialize_connection_confluent_schema_registry.schema_registry.name
-    schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
-    database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
+  format {
+    avro {
+      schema_registry_connection {
+        name          = materialize_connection_confluent_schema_registry.schema_registry.name
+        schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
+        database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
+      }
+    }
   }
+  envelope {
+    none = true
+  }
+  topic      = "topic1"
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
 output "qualified_load_generator" {
-  value = materialize_source_load_generator.load_generator.qualified_name
+  value = materialize_source_load_generator.load_generator.qualified_sql_name
 }

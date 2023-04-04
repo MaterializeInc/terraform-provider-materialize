@@ -17,10 +17,10 @@ resource "materialize_secret" "kafka_password" {
   value         = "c2VjcmV0Cg=="
 }
 
-output "qualified_password" {
-  value = materialize_secret.password.qualified_name
+output "qualified_sql_password" {
+  value = materialize_secret.password.qualified_sql_name
 }
 
 output "qualified_kafka_password" {
-  value = materialize_secret.kafka_password.qualified_name
+  value = materialize_secret.kafka_password.qualified_sql_name
 }

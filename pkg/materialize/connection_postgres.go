@@ -6,9 +6,7 @@ import (
 )
 
 type ConnectionPostgresBuilder struct {
-	connectionName         string
-	schemaName             string
-	databaseName           string
+	Connection
 	connectionType         string
 	postgresDatabase       string
 	postgresHost           string
@@ -23,15 +21,9 @@ type ConnectionPostgresBuilder struct {
 	postgresAWSPrivateLink IdentifierSchemaStruct
 }
 
-func (b *ConnectionPostgresBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
-}
-
 func NewConnectionPostgresBuilder(connectionName, schemaName, databaseName string) *ConnectionPostgresBuilder {
 	return &ConnectionPostgresBuilder{
-		connectionName: connectionName,
-		schemaName:     schemaName,
-		databaseName:   databaseName,
+		Connection: Connection{connectionName, schemaName, databaseName},
 	}
 }
 
@@ -97,7 +89,7 @@ func (b *ConnectionPostgresBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLin
 
 func (b *ConnectionPostgresBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.QualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`HOST %s`, QuoteString(b.postgresHost)))
 	q.WriteString(fmt.Sprintf(`, PORT %d`, b.postgresPort))
@@ -105,34 +97,34 @@ func (b *ConnectionPostgresBuilder) Create() string {
 		q.WriteString(fmt.Sprintf(`, USER %s`, QuoteString(b.postgresUser.Text)))
 	}
 	if b.postgresUser.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, QualifiedName(b.postgresUser.Secret.DatabaseName, b.postgresUser.Secret.SchemaName, b.postgresUser.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, USER SECRET %s`, b.postgresUser.Secret.QualifiedName()))
 	}
 	if b.postgresPassword.Name != "" {
-		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, QualifiedName(b.postgresPassword.DatabaseName, b.postgresPassword.SchemaName, b.postgresPassword.Name)))
+		q.WriteString(fmt.Sprintf(`, PASSWORD SECRET %s`, b.postgresPassword.QualifiedName()))
 	}
 	if b.postgresSSLMode != "" {
 		q.WriteString(fmt.Sprintf(`, SSL MODE %s`, QuoteString(b.postgresSSLMode)))
 	}
 	if b.postgresSSHTunnel.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QualifiedName(b.postgresSSHTunnel.DatabaseName, b.postgresSSHTunnel.SchemaName, b.postgresSSHTunnel.Name)))
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, b.postgresSSHTunnel.QualifiedName()))
 	}
 	if b.postgresSSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY %s`, QuoteString(b.postgresSSLCa.Text)))
 	}
 	if b.postgresSSLCa.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, QualifiedName(b.postgresSSLCa.Secret.DatabaseName, b.postgresSSLCa.Secret.SchemaName, b.postgresSSLCa.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.postgresSSLCa.Secret.QualifiedName()))
 	}
 	if b.postgresSSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE  %s`, QuoteString(b.postgresSSLCert.Text)))
 	}
 	if b.postgresSSLCert.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, QualifiedName(b.postgresSSLCert.Secret.DatabaseName, b.postgresSSLCert.Secret.SchemaName, b.postgresSSLCert.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.postgresSSLCert.Secret.QualifiedName()))
 	}
 	if b.postgresSSLKey.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, QualifiedName(b.postgresSSLKey.DatabaseName, b.postgresSSLKey.SchemaName, b.postgresSSLKey.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.postgresSSLKey.QualifiedName()))
 	}
 	if b.postgresAWSPrivateLink.Name != "" {
-		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, QualifiedName(b.postgresAWSPrivateLink.DatabaseName, b.postgresAWSPrivateLink.SchemaName, b.postgresAWSPrivateLink.Name)))
+		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.postgresAWSPrivateLink.QualifiedName()))
 	}
 
 	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.postgresDatabase)))
@@ -142,15 +134,15 @@ func (b *ConnectionPostgresBuilder) Create() string {
 }
 
 func (b *ConnectionPostgresBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *ConnectionPostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
 }
 
 func (b *ConnectionPostgresBuilder) ReadId() string {
-	return ReadConnectionId(b.connectionName, b.schemaName, b.databaseName)
+	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
 
 }

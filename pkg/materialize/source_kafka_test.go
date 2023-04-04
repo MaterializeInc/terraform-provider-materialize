@@ -13,14 +13,14 @@ func TestResourceSourceKafkaCreateQuery(t *testing.T) {
 	bs.Size("xsmall")
 	bs.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
 	bs.Topic("events")
-	bs.Format("TEXT")
+	bs.Format(FormatSpecStruct{Text: true})
 	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM KAFKA CONNECTION "database"."schema"."kafka_connection" (TOPIC 'events') FORMAT TEXT WITH (SIZE = 'xsmall');`, bs.Create())
 
 	bc := NewSourceKafkaBuilder("source", "schema", "database")
 	bc.ClusterName("cluster")
 	bc.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
 	bc.Topic("events")
-	bc.Format("TEXT")
+	bc.Format(FormatSpecStruct{Text: true})
 	r.Equal(`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM KAFKA CONNECTION "database"."schema"."kafka_connection" (TOPIC 'events') FORMAT TEXT;`, bc.Create())
 }
 
@@ -30,13 +30,12 @@ func TestResourceSourceKafkaCreateParamsQuery(t *testing.T) {
 	b.Size("xsmall")
 	b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
 	b.Topic("events")
-	b.Format("AVRO")
+	b.Format(FormatSpecStruct{Avro: &AvroFormatSpec{SchemaRegistryConnection: IdentifierSchemaStruct{Name: "csr_connection", DatabaseName: "database", SchemaName: "schema"}}})
 	b.IncludeKey("KEY")
 	b.IncludePartition("PARTITION")
 	b.IncludeOffset("OFFSET")
 	b.IncludeTimestamp("TIMESTAMP")
-	b.SchemaRegistryConnection(IdentifierSchemaStruct{Name: "csr_connection", DatabaseName: "database", SchemaName: "schema"})
-	b.Envelope("UPSERT")
+	b.Envelope(KafkaSourceEnvelopeStruct{Upsert: true})
 	r.Equal(`CREATE SOURCE "database"."schema"."source" FROM KAFKA CONNECTION "database"."schema"."kafka_connection" (TOPIC 'events') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_connection" INCLUDE KEY, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT WITH (SIZE = 'xsmall');`, b.Create())
 }
 
@@ -86,7 +85,6 @@ func TestResourceSourceKafkaReadParamsQuery(t *testing.T) {
 			mz_sources.name,
 			mz_schemas.name,
 			mz_databases.name,
-			mz_sources.type,
 			mz_sources.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name

@@ -11,26 +11,18 @@ type TablePostgres struct {
 }
 
 type SourcePostgresBuilder struct {
-	sourceName         string
-	schemaName         string
-	databaseName       string
+	Source
 	clusterName        string
 	size               string
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
-	tables             []TablePostgres
-}
-
-func (b *SourcePostgresBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.sourceName)
+	table              []TablePostgres
 }
 
 func NewSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
 	return &SourcePostgresBuilder{
-		sourceName:   sourceName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		Source: Source{sourceName, schemaName, databaseName},
 	}
 }
 
@@ -59,20 +51,20 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Tables(t []TablePostgres) *SourcePostgresBuilder {
-	b.tables = t
+func (b *SourcePostgresBuilder) Table(t []TablePostgres) *SourcePostgresBuilder {
+	b.table = t
 	return b
 }
 
 func (b *SourcePostgresBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	}
 
-	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, QualifiedName(b.postgresConnection.DatabaseName, b.postgresConnection.SchemaName, b.postgresConnection.Name)))
+	q.WriteString(fmt.Sprintf(` FROM POSTGRES CONNECTION %s`, b.postgresConnection.QualifiedName()))
 
 	// Publication
 	p := fmt.Sprintf(`PUBLICATION %s`, QuoteString(b.publication))
@@ -84,14 +76,14 @@ func (b *SourcePostgresBuilder) Create() string {
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
-	if len(b.tables) > 0 {
+	if len(b.table) > 0 {
 		q.WriteString(` FOR TABLES (`)
-		for i, t := range b.tables {
+		for i, t := range b.table {
 			if t.Alias == "" {
 				t.Alias = t.Name
 			}
 			q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
-			if i < len(b.tables)-1 {
+			if i < len(b.table)-1 {
 				q.WriteString(`, `)
 			}
 		}
@@ -109,18 +101,18 @@ func (b *SourcePostgresBuilder) Create() string {
 }
 
 func (b *SourcePostgresBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *SourcePostgresBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.qualifiedName(), QuoteString(newSize))
+	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
 }
 
 func (b *SourcePostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
 }
 
 func (b *SourcePostgresBuilder) ReadId() string {
-	return ReadSourceId(b.sourceName, b.schemaName, b.databaseName)
+	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
 }

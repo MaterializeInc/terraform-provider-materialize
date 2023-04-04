@@ -11,33 +11,11 @@ import (
 )
 
 var connectionPostgresSchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The name of the connection.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the connection schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the connection database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the connection.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"connection_type": {
-		Description: "The type of connection.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":               SchemaResourceName("connection", true, false),
+	"schema_name":        SchemaResourceSchemaName("connection", false),
+	"database_name":      SchemaResourceDatabaseName("connection", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
+	"connection_type":    SchemaResourceConnectionName(),
 	"database": {
 		Description: "The target Postgres database.",
 		Type:        schema.TypeString,
@@ -55,17 +33,17 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Default:     5432,
 	},
 	"user":                      ValueSecretSchema("user", "The Postgres database username.", true, false),
-	"password":                  IdentifierSchema("password", "The Postgres database password.", false, true),
-	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Postgres database.", false, true),
+	"password":                  IdentifierSchema("password", "The Postgres database password.", false),
+	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Postgres database.", false),
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Postgres database.", false, true),
-	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Postgres database.", false, true),
+	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Postgres database.", false),
 	"ssl_mode": {
 		Description: "The SSL mode for the Postgres database.",
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false, true),
+	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false),
 }
 
 func ConnectionPostgres() *schema.Resource {

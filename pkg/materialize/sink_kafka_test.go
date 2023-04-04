@@ -29,9 +29,8 @@ func TestSinkKafkaCreateParamsQuery(t *testing.T) {
 	b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", SchemaName: "schema", DatabaseName: "database"})
 	b.Topic("test_avro_topic")
 	b.Key([]string{"key_1", "key_2"})
-	b.Format("AVRO")
-	b.SchemaRegistryConnection(IdentifierSchemaStruct{Name: "csr_connection", SchemaName: "public", DatabaseName: "database"})
-	b.Envelope("UPSERT")
+	b.Format(SinkFormatSpecStruct{Avro: &SinkAvroFormatSpec{SchemaRegistryConnection: IdentifierSchemaStruct{Name: "csr_connection", DatabaseName: "database", SchemaName: "public"}}})
+	b.Envelope(SinkEnvelopeStruct{Upsert: true})
 	b.Snapshot(false)
 	r.Equal(`CREATE SINK "database"."schema"."sink" FROM "database"."schema"."table" INTO KAFKA CONNECTION "database"."schema"."kafka_connection" KEY (key_1, key_2) (TOPIC 'test_avro_topic') FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."public"."csr_connection" ENVELOPE UPSERT WITH ( SIZE = 'xsmall' SNAPSHOT = false);`, b.Create())
 }
@@ -82,7 +81,6 @@ func TestSinkKafkaReadParamsQuery(t *testing.T) {
 			mz_sinks.name,
 			mz_schemas.name,
 			mz_databases.name,
-			mz_sinks.type,
 			mz_sinks.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name

@@ -6,9 +6,7 @@ import (
 )
 
 type ConnectionConfluentSchemaRegistryBuilder struct {
-	connectionName                        string
-	schemaName                            string
-	databaseName                          string
+	Connection
 	confluentSchemaRegistryUrl            string
 	confluentSchemaRegistrySSLCa          ValueSecretStruct
 	confluentSchemaRegistrySSLCert        ValueSecretStruct
@@ -19,15 +17,9 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	confluentSchemaRegistryAWSPrivateLink IdentifierSchemaStruct
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) qualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.connectionName)
-}
-
 func NewConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName string) *ConnectionConfluentSchemaRegistryBuilder {
 	return &ConnectionConfluentSchemaRegistryBuilder{
-		connectionName: connectionName,
-		schemaName:     schemaName,
-		databaseName:   databaseName,
+		Connection: Connection{connectionName, schemaName, databaseName},
 	}
 }
 
@@ -73,32 +65,32 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryAWSPri
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.qualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.QualifiedName()))
 
 	q.WriteString(fmt.Sprintf(`URL %s`, QuoteString(b.confluentSchemaRegistryUrl)))
 	if b.confluentSchemaRegistryUsername.Text != "" {
 		q.WriteString(fmt.Sprintf(`, USERNAME = %s`, QuoteString(b.confluentSchemaRegistryUsername.Text)))
 	}
 	if b.confluentSchemaRegistryUsername.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, QualifiedName(b.confluentSchemaRegistryUsername.Secret.DatabaseName, b.confluentSchemaRegistryUsername.Secret.SchemaName, b.confluentSchemaRegistryUsername.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, USERNAME = SECRET %s`, b.confluentSchemaRegistryUsername.Secret.QualifiedName()))
 	}
 	if b.confluentSchemaRegistryPassword.Name != "" {
-		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, QualifiedName(b.confluentSchemaRegistryPassword.DatabaseName, b.confluentSchemaRegistryPassword.SchemaName, b.confluentSchemaRegistryPassword.Name)))
+		q.WriteString(fmt.Sprintf(`, PASSWORD = SECRET %s`, b.confluentSchemaRegistryPassword.QualifiedName()))
 	}
 	if b.confluentSchemaRegistrySSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.confluentSchemaRegistrySSLCa.Text)))
 	}
 	if b.confluentSchemaRegistrySSLCa.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, QualifiedName(b.confluentSchemaRegistrySSLCa.Secret.DatabaseName, b.confluentSchemaRegistrySSLCa.Secret.SchemaName, b.confluentSchemaRegistrySSLCa.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = SECRET %s`, b.confluentSchemaRegistrySSLCa.Secret.QualifiedName()))
 	}
 	if b.confluentSchemaRegistrySSLCert.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = %s`, QuoteString(b.confluentSchemaRegistrySSLCert.Text)))
 	}
 	if b.confluentSchemaRegistrySSLCert.Secret.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, QualifiedName(b.confluentSchemaRegistrySSLCert.Secret.DatabaseName, b.confluentSchemaRegistrySSLCert.Secret.SchemaName, b.confluentSchemaRegistrySSLCert.Secret.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE = SECRET %s`, b.confluentSchemaRegistrySSLCert.Secret.QualifiedName()))
 	}
 	if b.confluentSchemaRegistrySSLKey.Name != "" {
-		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, QualifiedName(b.confluentSchemaRegistrySSLKey.DatabaseName, b.confluentSchemaRegistrySSLKey.SchemaName, b.confluentSchemaRegistrySSLKey.Name)))
+		q.WriteString(fmt.Sprintf(`, SSL KEY = SECRET %s`, b.confluentSchemaRegistrySSLKey.QualifiedName()))
 	}
 	if b.confluentSchemaRegistryAWSPrivateLink.Name != "" {
 		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, QualifiedName(b.confluentSchemaRegistryAWSPrivateLink.DatabaseName, b.confluentSchemaRegistryAWSPrivateLink.SchemaName, b.confluentSchemaRegistryAWSPrivateLink.Name)))
@@ -112,14 +104,14 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.qualifiedName(), n)
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
 }
 
 func (b *ConnectionConfluentSchemaRegistryBuilder) ReadId() string {
-	return ReadConnectionId(b.connectionName, b.schemaName, b.databaseName)
+	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
 }

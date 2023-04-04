@@ -19,24 +19,16 @@ type IndexBuilder struct {
 	colExpr      []IndexColumn
 }
 
-func (b *IndexBuilder) qualifiedName(databaseName, schemaName string) string {
-	return QualifiedName(databaseName, schemaName, b.indexName)
+func (b *IndexBuilder) QualifiedName() string {
+	return QualifiedName(b.objName.DatabaseName, b.objName.SchemaName, b.indexName)
 }
 
-func NewIndexBuilder(indexName string) *IndexBuilder {
+func NewIndexBuilder(indexName string, indexDefault bool, objName IdentifierSchemaStruct) *IndexBuilder {
 	return &IndexBuilder{
-		indexName: indexName,
+		indexName:    indexName,
+		indexDefault: indexDefault,
+		objName:      objName,
 	}
-}
-
-func (b *IndexBuilder) IndexDefault() *IndexBuilder {
-	b.indexDefault = true
-	return b
-}
-
-func (b *IndexBuilder) ObjName(o IdentifierSchemaStruct) *IndexBuilder {
-	b.objName = o
-	return b
 }
 
 func (b *IndexBuilder) ClusterName(c string) *IndexBuilder {
@@ -59,14 +51,22 @@ func (b *IndexBuilder) Create() string {
 	q.WriteString(`CREATE`)
 
 	if b.indexDefault {
-		q.WriteString(` DEFAULT`)
+		q.WriteString(` DEFAULT INDEX`)
 	} else {
 		q.WriteString(fmt.Sprintf(` INDEX %s`, b.indexName))
 	}
 
-	q.WriteString(fmt.Sprintf(` IN CLUSTER %s ON %s.%s.%s USING %s`, b.clusterName, b.objName.DatabaseName, b.objName.SchemaName, b.objName.Name, b.method))
+	if b.clusterName != "" {
+		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, b.clusterName))
+	}
 
-	if len(b.colExpr) > 0 {
+	q.WriteString(fmt.Sprintf(` ON %s`, b.objName.QualifiedName()))
+
+	if b.method != "" {
+		q.WriteString(fmt.Sprintf(` USING %s`, b.method))
+	}
+
+	if len(b.colExpr) > 0 && !b.indexDefault {
 		var columns []string
 
 		for _, c := range b.colExpr {
@@ -87,12 +87,12 @@ func (b *IndexBuilder) Create() string {
 	return q.String()
 }
 
-func (b *IndexBuilder) Drop(databaseName, schemaName string) string {
-	return fmt.Sprintf(`DROP INDEX %s RESTRICT;`, b.qualifiedName(databaseName, schemaName))
+func (b *IndexBuilder) Drop() string {
+	return fmt.Sprintf(`DROP INDEX %s RESTRICT;`, b.QualifiedName())
 }
 
 func (b *IndexBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_indexes WHERE name = '%s';`, b.indexName)
+	return fmt.Sprintf(`SELECT id FROM mz_indexes WHERE name = %s;`, QuoteString(b.indexName))
 }
 
 func ReadIndexParams(id string) string {
@@ -142,5 +142,5 @@ func ReadIndexParams(id string) string {
 				ON mz_schemas.database_id = mz_databases.id
 		) mviews
 			ON mz_indexes.on_id = sources.id
-		WHERE mz_indexes.id = '%s';`, id)
+		WHERE mz_indexes.id = %s;`, QuoteString(id))
 }

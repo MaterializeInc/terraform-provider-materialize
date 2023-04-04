@@ -15,8 +15,8 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	i := d.Id()
 	q := materialize.ReadConnectionParams(i)
 
-	var name, schema, database, connection_type *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &connection_type); err != nil {
+	var name, schema, database *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -34,12 +34,8 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("connection_type", connection_type); err != nil {
-		return diag.FromErr(err)
-	}
-
-	qn := fmt.Sprintf("%s.%s.%s", *database, *schema, *name)
-	if err := d.Set("qualified_name", qn); err != nil {
+	b := materialize.Connection{ConnectionName: *name, SchemaName: *schema, DatabaseName: *database}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -57,7 +53,7 @@ func ValueSecretSchema(elem string, description string, isRequired bool, isOptio
 					Optional:      true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
-				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false, true),
+				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false),
 			},
 		},
 		Required:    isRequired,

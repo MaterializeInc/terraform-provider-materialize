@@ -11,33 +11,11 @@ import (
 )
 
 var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
-	"name": {
-		Description: "The name of the connection.",
-		Type:        schema.TypeString,
-		Required:    true,
-	},
-	"schema_name": {
-		Description: "The identifier for the connection schema.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "public",
-	},
-	"database_name": {
-		Description: "The identifier for the connection database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Default:     "materialize",
-	},
-	"qualified_name": {
-		Description: "The fully qualified name of the connection.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
-	"connection_type": {
-		Description: "The type of connection.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
+	"name":               SchemaResourceName("connection", true, false),
+	"schema_name":        SchemaResourceSchemaName("connection", false),
+	"database_name":      SchemaResourceDatabaseName("connection", false),
+	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
+	"connection_type":    SchemaResourceConnectionName(),
 	"url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,
@@ -45,11 +23,11 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Confluent Schema Registry.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Confluent Schema Registry.", false, true),
-	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Confluent Schema Registry.", false, true),
-	"password":                  IdentifierSchema("password", "The password for the Confluent Schema Registry.", false, true),
+	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Confluent Schema Registry.", false),
+	"password":                  IdentifierSchema("password", "The password for the Confluent Schema Registry.", false),
 	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false, true),
-	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false, true),
-	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false, true),
+	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false),
+	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -15,8 +14,8 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	i := d.Id()
 	q := materialize.ReadSinkParams(i)
 
-	var name, schema, database, sink_type, size, connection_name, cluster_name *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &sink_type, &size, &connection_name, &cluster_name); err != nil {
+	var name, schema, database, size, connection_name, cluster_name *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &size, &connection_name, &cluster_name); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -34,10 +33,6 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("sink_type", sink_type); err != nil {
-		return diag.FromErr(err)
-	}
-
 	if err := d.Set("size", size); err != nil {
 		return diag.FromErr(err)
 	}
@@ -46,8 +41,8 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	qn := fmt.Sprintf("%s.%s.%s", *database, *schema, *name)
-	if err := d.Set("qualified_name", qn); err != nil {
+	b := materialize.Sink{SinkName: *name, SchemaName: *schema, DatabaseName: *database}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
 

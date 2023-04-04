@@ -29,7 +29,7 @@ func TestSourcePostgresCreateParamsQuery(t *testing.T) {
 	b.PostgresConnection(IdentifierSchemaStruct{Name: "pg_connection", SchemaName: "schema", DatabaseName: "database"})
 	b.Publication("mz_source")
 	b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})
-	b.Tables([]TablePostgres{
+	b.Table([]TablePostgres{
 		{
 			Name:  "schema1.table_1",
 			Alias: "s1_table_1",
@@ -88,7 +88,6 @@ func TestSourcePostgresReadParamsQuery(t *testing.T) {
 			mz_sources.name,
 			mz_schemas.name,
 			mz_databases.name,
-			mz_sources.type,
 			mz_sources.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name

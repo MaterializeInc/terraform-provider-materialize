@@ -2,7 +2,7 @@ name: integration
 on:
   pull_request:
     paths:
-      - materialize/**
+      - pkg/**
 
 jobs:
   integration:
@@ -24,7 +24,7 @@ jobs:
       - name: Terraform Plan
         run: |
           docker exec provider terraform plan -detailed-exitcode
-  
+
       - name: Terraform Destroy
         run: |
           docker exec provider terraform destroy -auto-approve -compact-warnings

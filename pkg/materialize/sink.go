@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+type Sink struct {
+	SinkName     string
+	SchemaName   string
+	DatabaseName string
+}
+
+func (s *Sink) QualifiedName() string {
+	return QualifiedName(s.DatabaseName, s.SchemaName, s.SinkName)
+}
+
 func ReadSinkId(name, schema, database string) string {
 	return fmt.Sprintf(`
 		SELECT mz_sinks.id
@@ -29,7 +39,6 @@ func ReadSinkParams(id string) string {
 			mz_sinks.name,
 			mz_schemas.name,
 			mz_databases.name,
-			mz_sinks.type,
 			mz_sinks.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name
@@ -70,10 +79,10 @@ func ReadSinkDatasource(databaseName, schemaName string) string {
 
 	if databaseName != "" {
 		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = '%s'`, databaseName))
+		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 
 		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = '%s'`, schemaName))
+			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
 		}
 	}
 

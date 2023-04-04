@@ -10,7 +10,7 @@ type SchemaBuilder struct {
 	databaseName string
 }
 
-func (b *SchemaBuilder) qualifiedName() string {
+func (b *SchemaBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName)
 }
 
@@ -22,11 +22,11 @@ func NewSchemaBuilder(schemaName, databaseName string) *SchemaBuilder {
 }
 
 func (b *SchemaBuilder) Create() string {
-	return fmt.Sprintf(`CREATE SCHEMA %s;`, b.qualifiedName())
+	return fmt.Sprintf(`CREATE SCHEMA %s;`, b.QualifiedName())
 }
 
 func (b *SchemaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SCHEMA %s;`, b.qualifiedName())
+	return fmt.Sprintf(`DROP SCHEMA %s;`, b.QualifiedName())
 }
 
 func (b *SchemaBuilder) ReadId() string {
@@ -61,7 +61,7 @@ func ReadSchemaDatasource(databaseName string) string {
 	`)
 
 	if databaseName != "" {
-		q.WriteString(fmt.Sprintf(`WHERE mz_databases.name = '%s'`, databaseName))
+		q.WriteString(fmt.Sprintf(`WHERE mz_databases.name = %s`, QuoteString(databaseName)))
 	}
 
 	q.WriteString(`;`)

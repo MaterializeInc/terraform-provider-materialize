@@ -23,7 +23,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
 		"publication":         "mz_source",
 		"text_columns":        []interface{}{"table.unsupported_type_1"},
-		"tables":              []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+		"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
 	}
 	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, in)
 	r.NotNil(d)
@@ -53,14 +53,13 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "source_type", "size", "connection_name", "cluster_name"}).
-			AddRow("conn", "schema", "database", "source_type", "small", "conn", "cluster")
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
+			AddRow("conn", "schema", "database", "small", "conn", "cluster")
 		mock.ExpectQuery(`
 			SELECT
 				mz_sources.name,
 				mz_schemas.name,
 				mz_databases.name,
-				mz_sources.type,
 				mz_sources.size,
 				mz_connections.name as connection_name,
 				mz_clusters.name as cluster_name
