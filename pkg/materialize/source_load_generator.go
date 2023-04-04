@@ -87,43 +87,21 @@ func (b *SourceLoadgenBuilder) Create() string {
 	// Optional Parameters
 	var p []string
 
-	if b.loadGeneratorType == "COUNTER" {
-		if b.counterOptions.TickInterval != "" {
-			t := fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(b.counterOptions.TickInterval))
-			p = append(p, t)
+	for _, t := range []string{b.counterOptions.TickInterval, b.auctionOptions.TickInterval, b.tpchOptions.TickInterval} {
+		if t != "" {
+			p = append(p, fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(t)))
 		}
+	}
 
-		if b.counterOptions.ScaleFactor != 0 {
-			s := fmt.Sprintf(`SCALE FACTOR %.2f`, b.counterOptions.ScaleFactor)
-			p = append(p, s)
+	for _, t := range []float64{b.counterOptions.ScaleFactor, b.auctionOptions.ScaleFactor, b.tpchOptions.ScaleFactor} {
+		if t != 0 {
+			p = append(p, fmt.Sprintf(`SCALE FACTOR %.2f`, t))
 		}
+	}
 
-		if b.counterOptions.MaxCardinality != 0 {
-			s := fmt.Sprintf(`MAX CARDINALITY %d`, b.counterOptions.MaxCardinality)
-			p = append(p, s)
-		}
-	} else if b.loadGeneratorType == "AUCTION" {
-		if b.auctionOptions.TickInterval != "" {
-			t := fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(b.auctionOptions.TickInterval))
-			p = append(p, t)
-		}
-
-		if b.auctionOptions.ScaleFactor != 0 {
-			s := fmt.Sprintf(`SCALE FACTOR %.2f`, b.auctionOptions.ScaleFactor)
-			p = append(p, s)
-		}
-	} else if b.loadGeneratorType == "TPCH" {
-		if b.tpchOptions.TickInterval != "" {
-			t := fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(b.tpchOptions.TickInterval))
-			p = append(p, t)
-		}
-
-		if b.tpchOptions.ScaleFactor != 0 {
-			s := fmt.Sprintf(`SCALE FACTOR %.2f`, b.tpchOptions.ScaleFactor)
-			p = append(p, s)
-		}
-	} else {
-		panic("Not valid load generator type")
+	if b.counterOptions.MaxCardinality != 0 {
+		s := fmt.Sprintf(`MAX CARDINALITY %d`, b.counterOptions.MaxCardinality)
+		p = append(p, s)
 	}
 
 	if len(p) != 0 {
@@ -135,8 +113,16 @@ func (b *SourceLoadgenBuilder) Create() string {
 	if b.loadGeneratorType == "COUNTER" {
 		// Tables do not apply to COUNTER
 	} else if len(b.auctionOptions.Table) > 0 || len(b.tpchOptions.Table) > 0 {
+
+		var ot []TableLoadgen
+		if len(b.auctionOptions.Table) > 0 {
+			ot = b.auctionOptions.Table
+		} else {
+			ot = b.tpchOptions.Table
+		}
+
 		var tables []string
-		for _, t := range append(b.auctionOptions.Table, b.tpchOptions.Table...) {
+		for _, t := range ot {
 			if t.Alias == "" {
 				t.Alias = t.Name
 			}
