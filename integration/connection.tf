@@ -34,8 +34,8 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
     database_name = materialize_secret.kafka_password.database_name
     schema_name   = materialize_secret.kafka_password.schema_name
   }
-  sasl_mechanism = "SCRAM-SHA-256"
-  progress_topic = "progress_topic"
+  sasl_mechanisms = "SCRAM-SHA-256"
+  progress_topic  = "progress_topic"
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {

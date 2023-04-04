@@ -24,7 +24,7 @@ func TestResourceKafkaCreate(t *testing.T) {
 		"ssl_certificate_authority": []interface{}{map[string]interface{}{"text": "key"}},
 		"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
 		"ssl_key":                   []interface{}{map[string]interface{}{"name": "key"}},
-		"sasl_mechanism":            "PLAIN",
+		"sasl_mechanisms":           "PLAIN",
 		"sasl_username":             []interface{}{map[string]interface{}{"text": "username"}},
 		"sasl_password":             []interface{}{map[string]interface{}{"name": "password"}},
 		"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "tunnel"}},
