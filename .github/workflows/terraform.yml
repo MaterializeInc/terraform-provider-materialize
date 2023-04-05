@@ -4,7 +4,6 @@ on:
     paths:
       - examples/**
       - integration/**
-      - .github/**
 
 jobs:
   terraform:
@@ -15,5 +14,3 @@ jobs:
       - uses: hashicorp/setup-terraform@v2
 
       - run: terraform fmt -recursive -check -diff
-
-      - run: go generate ./...
