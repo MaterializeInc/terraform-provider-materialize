@@ -1,9 +1,8 @@
 name: test
 on:
   pull_request:
-    paths-ignore:
-      - README.md
-      - CHANGELOG.md
+    paths:
+      - pkg/**
 
 jobs:
   test:
