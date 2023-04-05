@@ -20,11 +20,11 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
   from {
     name = "table"
   }
-  topic  = "test_avro_topic"
+  topic = "test_avro_topic"
   format {
     avro {
       schema_registry_connection {
-        name = "csr_connection"
+        name          = "csr_connection"
         database_name = "database"
         schema_name   = "schema"
       }
@@ -70,7 +70,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the sink.
+- `qualified_sql_name` (String) The fully qualified name of the sink.
 - `sink_type` (String) The type of sink.
 
 <a id="nestedblock--from"></a>

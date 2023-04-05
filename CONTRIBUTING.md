@@ -28,8 +28,7 @@ make install
 The documentation is generated from the provider's schema. To generate the documentation, run:
 
 ```bash
-terraform fmt -recursive ./examples/
-go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+make docs
 ```
 
 ## Testing the Provider

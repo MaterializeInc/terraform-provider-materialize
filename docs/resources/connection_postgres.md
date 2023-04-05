@@ -69,7 +69,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 - `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the connection.
+- `qualified_sql_name` (String) The fully qualified name of the connection.
 
 <a id="nestedblock--user"></a>
 ### Nested Schema for `user`
