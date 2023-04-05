@@ -3,7 +3,7 @@ package resources
 var loadGeneratorTypes = []string{
 	"AUCTION",
 	"COUNTER",
-	"NONE",
+	"TPCH",
 }
 
 var localSizes = []string{

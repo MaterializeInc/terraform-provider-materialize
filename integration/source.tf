@@ -4,8 +4,10 @@ resource "materialize_source_load_generator" "load_generator" {
   database_name       = materialize_database.database.name
   size                = "1"
   load_generator_type = "COUNTER"
-  tick_interval       = "500ms"
-  scale_factor        = 0.01
+
+  counter_options {
+    tick_interval = "500ms"
+  }
 }
 
 resource "materialize_source_load_generator" "load_generator_cluster" {
@@ -14,8 +16,10 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
   load_generator_type = "COUNTER"
-  tick_interval       = "500ms"
-  scale_factor        = 0.01
+
+  counter_options {
+    tick_interval = "500ms"
+  }
 }
 
 resource "materialize_source_postgres" "example_source_postgres" {

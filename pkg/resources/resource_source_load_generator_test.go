@@ -21,10 +21,10 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 		"cluster_name":        "cluster",
 		"size":                "small",
 		"load_generator_type": "TPCH",
-		"tick_interval":       "1s",
-		"scale_factor":        0.5,
-		"max_cardinality":     true,
-		"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+		"tpch_options": []interface{}{map[string]interface{}{
+			"tick_interval": "1s",
+			"scale_factor":  0.5,
+			"table":         []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}}}},
 	}
 	d := schema.TestResourceDataRaw(t, SourceLoadgen().Schema, in)
 	r.NotNil(d)
@@ -32,7 +32,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50, MAX CARDINALITY\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
