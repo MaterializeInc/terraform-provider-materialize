@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - pkg/**
+      - integration/**
 
 jobs:
   test:
