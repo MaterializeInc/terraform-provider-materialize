@@ -28,4 +28,4 @@ testacc:
 
 .PHONY: docs
 docs:
-	go generate ./..
+	go generate ./...
