@@ -51,7 +51,7 @@ resource "materialize_table" "simple_table" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the table.
+- `qualified_sql_name` (String) The fully qualified name of the table.
 
 <a id="nestedblock--column"></a>
 ### Nested Schema for `column`

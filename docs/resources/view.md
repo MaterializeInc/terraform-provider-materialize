@@ -53,7 +53,7 @@ resource "materialize_view" "simple_view" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the view.
+- `qualified_sql_name` (String) The fully qualified name of the view.
 
 ## Import
 

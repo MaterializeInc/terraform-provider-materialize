@@ -47,7 +47,7 @@ resource "materialize_connection_aws_privatelink" "example_privatelink_connectio
 
 - `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the connection.
+- `qualified_sql_name` (String) The fully qualified name of the connection.
 
 ## Import
 

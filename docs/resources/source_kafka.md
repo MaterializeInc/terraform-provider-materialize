@@ -59,10 +59,10 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
-- `include_key` (String) Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named "key".
-- `include_offset` (String) Include an offset column containing the Kafka message offset.
-- `include_partition` (String) Include a partition column containing the Kafka message partition
-- `include_timestamp` (String) Include a timestamp column containing the Kafka message timestamp.
+- `include_key` (Boolean) Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named "key".
+- `include_offset` (Boolean) Include an offset column containing the Kafka message offset.
+- `include_partition` (Boolean) Include a partition column containing the Kafka message partition
+- `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `primary_key` (List of String) Declare a set of columns as a primary key.
 - `schema_name` (String) The identifier for the source schema.
@@ -74,7 +74,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the source.
+- `qualified_sql_name` (String) The fully qualified name of the source.
 - `source_type` (String) The type of source.
 
 <a id="nestedblock--kafka_connection"></a>
@@ -142,7 +142,7 @@ Optional:
 
 Optional:
 
-- `columns` (Number) The columns to use for the source.
+- `column` (Number) The columns to use for the source.
 - `delimited_by` (String) The delimiter to use for the source.
 - `header` (List of String) The number of columns and the name of each column using the header row.
 
@@ -212,7 +212,7 @@ Optional:
 
 Optional:
 
-- `columns` (Number) The columns to use for the source.
+- `column` (Number) The columns to use for the source.
 - `delimited_by` (String) The delimiter to use for the source.
 - `header` (List of String) The number of columns and the name of each column using the header row.
 
@@ -282,7 +282,7 @@ Optional:
 
 Optional:
 
-- `columns` (Number) The columns to use for the source.
+- `column` (Number) The columns to use for the source.
 - `delimited_by` (String) The delimiter to use for the source.
 - `header` (List of String) The number of columns and the name of each column using the header row.
 

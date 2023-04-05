@@ -48,7 +48,7 @@ resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
 
 - `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the connection.
+- `qualified_sql_name` (String) The fully qualified name of the connection.
 
 ## Import
 

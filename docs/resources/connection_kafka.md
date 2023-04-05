@@ -94,7 +94,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 - `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the connection.
+- `qualified_sql_name` (String) The fully qualified name of the connection.
 
 <a id="nestedblock--kafka_broker"></a>
 ### Nested Schema for `kafka_broker`

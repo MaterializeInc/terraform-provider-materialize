@@ -57,7 +57,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the source.
+- `qualified_sql_name` (String) The fully qualified name of the source.
 - `source_type` (String) The type of source.
 
 <a id="nestedblock--postgres_connection"></a>

@@ -35,7 +35,7 @@ resource "materialize_secret" "example_secret" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_name` (String) The fully qualified name of the secret.
+- `qualified_sql_name` (String) The fully qualified name of the secret.
 
 ## Import
 
