@@ -7,6 +7,10 @@ on:
 jobs:
   documentation:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -18,10 +22,8 @@ jobs:
 
       - run: go mod download
 
-      - run: |
-          go generate ./...
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -A
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto commit: Terraform docs"
-          git push
+      - run: go generate ./...
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Terraform Docs
