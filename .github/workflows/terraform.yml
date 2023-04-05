@@ -1,0 +1,19 @@
+name: terraform
+on:
+  pull_request:
+    paths:
+      - examples/**
+      - integration/**
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: hashicorp/setup-terraform@v2
+
+      - run: terraform fmt -check
+        continue-on-error: true
+
+      - run: go generate ./..

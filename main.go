@@ -7,6 +7,9 @@ import (
 	provider "terraform-materialize/pkg"
 )
 
+// Provider documentation generation.
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name terraform-provider-materialize
+
 var (
 	// This value is injected by goreleaser during a release.
 	version string = "dev"
