@@ -2,7 +2,7 @@ name: documentation
 on:
   pull_request:
     paths:
-      - .github/**
+      - pkg/**
 
 jobs:
   documentation:
