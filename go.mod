@@ -1,4 +1,4 @@
-module terraform-materialize
+module github.com/MaterializeInc/terraform-materialize-provider
 
 go 1.18
 

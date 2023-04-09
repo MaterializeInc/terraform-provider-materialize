@@ -2,8 +2,9 @@ package resources
 
 import (
 	"context"
-	"terraform-materialize/pkg/testhelpers"
 	"testing"
+
+	"github.com/MaterializeInc/terraform-materialize-provider/pkg/testhelpers"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
