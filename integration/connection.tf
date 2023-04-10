@@ -75,3 +75,5 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
 output "qualified_ssh_connection" {
   value = materialize_connection_ssh_tunnel.ssh_connection.qualified_sql_name
 }
+
+data "materialize_connection" "all" {}

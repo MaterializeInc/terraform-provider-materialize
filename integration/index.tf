@@ -12,3 +12,5 @@ resource "materialize_index" "loadgen_index" {
 output "qualified_index" {
   value = materialize_index.loadgen_index.qualified_sql_name
 }
+
+data "materialize_index" "all" {}

@@ -31,3 +31,5 @@ resource "materialize_sink_kafka" "sink_kafka" {
 output "qualified_sink_kafka" {
   value = materialize_sink_kafka.sink_kafka.qualified_sql_name
 }
+
+data "materialize_sink" "all" {}

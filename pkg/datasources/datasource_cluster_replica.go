@@ -78,8 +78,8 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 		clusterReplicaMap["id"] = id
 		clusterReplicaMap["name"] = name
 		clusterReplicaMap["cluster"] = cluster
-		clusterReplicaMap["size"] = name
-		clusterReplicaMap["availability_zone"] = name
+		clusterReplicaMap["size"] = size
+		clusterReplicaMap["availability_zone"] = availability_zone
 
 		clusterReplicaFormats = append(clusterReplicaFormats, clusterReplicaMap)
 	}

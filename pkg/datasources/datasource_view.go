@@ -82,14 +82,14 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		var id, name, schema_name, database_name string
 		rows.Scan(&id, &name, &schema_name, &database_name)
 
-		tableMap := map[string]interface{}{}
+		viewMap := map[string]interface{}{}
 
-		tableMap["id"] = id
-		tableMap["name"] = name
-		tableMap["schema_name"] = schema_name
-		tableMap["database_name"] = database_name
+		viewMap["id"] = id
+		viewMap["name"] = name
+		viewMap["schema_name"] = schema_name
+		viewMap["database_name"] = database_name
 
-		viewFormats = append(viewFormats, tableMap)
+		viewFormats = append(viewFormats, viewMap)
 	}
 
 	if err := d.Set("views", viewFormats); err != nil {

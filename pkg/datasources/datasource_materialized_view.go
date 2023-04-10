@@ -77,22 +77,22 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	viewFormats := []map[string]interface{}{}
+	materizliedViewFormats := []map[string]interface{}{}
 	for rows.Next() {
 		var id, name, schema_name, database_name string
 		rows.Scan(&id, &name, &schema_name, &database_name)
 
-		tableMap := map[string]interface{}{}
+		materizliedViewMap := map[string]interface{}{}
 
-		tableMap["id"] = id
-		tableMap["name"] = name
-		tableMap["schema_name"] = schema_name
-		tableMap["database_name"] = database_name
+		materizliedViewMap["id"] = id
+		materizliedViewMap["name"] = name
+		materizliedViewMap["schema_name"] = schema_name
+		materizliedViewMap["database_name"] = database_name
 
-		viewFormats = append(viewFormats, tableMap)
+		materizliedViewFormats = append(materizliedViewFormats, materizliedViewMap)
 	}
 
-	if err := d.Set("materialized_views", viewFormats); err != nil {
+	if err := d.Set("materialized_views", materizliedViewFormats); err != nil {
 		return diag.FromErr(err)
 	}
 

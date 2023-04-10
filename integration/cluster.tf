@@ -5,3 +5,5 @@ resource "materialize_cluster" "cluster" {
 resource "materialize_cluster" "cluster_source" {
   name = "cluster_sources"
 }
+
+data "materialize_cluster" "all" {}

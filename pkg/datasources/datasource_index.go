@@ -15,7 +15,7 @@ import (
 
 func Index() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: clusterReplicaRead,
+		ReadContext: indexRead,
 		Schema: map[string]*schema.Schema{
 			"database_name": {
 				Type:        schema.TypeString,
