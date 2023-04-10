@@ -92,8 +92,7 @@ func ReadMaterializedViewDatasource(databaseName, schemaName string) string {
 			mz_materialized_views.id,
 			mz_materialized_views.name,
 			mz_schemas.name,
-			mz_databases.name,
-		SELECT mz_materialized_views.id
+			mz_databases.name
 		FROM mz_materialized_views
 		JOIN mz_schemas
 			ON mz_materialized_views.schema_id = mz_schemas.id

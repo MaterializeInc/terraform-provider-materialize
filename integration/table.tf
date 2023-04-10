@@ -22,3 +22,5 @@ resource "materialize_table" "simple_table" {
 output "qualified_table" {
   value = materialize_table.simple_table.qualified_sql_name
 }
+
+data "materialize_table" "all" {}

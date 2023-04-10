@@ -20,3 +20,5 @@ resource "materialize_cluster_replica" "cluster_replica_source" {
   cluster_name = materialize_cluster.cluster_source.name
   size         = "8"
 }
+
+data "materialize_cluster_replica" "all" {}

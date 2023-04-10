@@ -24,3 +24,5 @@ output "qualified_sql_password" {
 output "qualified_kafka_password" {
   value = materialize_secret.kafka_password.qualified_sql_name
 }
+
+data "materialize_secret" "all" {}

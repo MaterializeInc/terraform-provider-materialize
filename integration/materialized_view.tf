@@ -12,3 +12,5 @@ SQL
 output "qualified_materialized_view" {
   value = materialize_materialized_view.simple_materialized_view.qualified_sql_name
 }
+
+data "materialize_materialized_view" "all" {}
