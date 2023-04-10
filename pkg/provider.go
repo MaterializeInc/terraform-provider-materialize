@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	datasources "github.com/MaterializeInc/terraform-materialize-provider/pkg/datasources"
-	resources "github.com/MaterializeInc/terraform-materialize-provider/pkg/resources"
+	datasources "github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
+	resources "github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

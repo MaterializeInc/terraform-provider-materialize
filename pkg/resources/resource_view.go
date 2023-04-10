@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/MaterializeInc/terraform-materialize-provider/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
