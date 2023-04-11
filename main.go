@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
-	provider "github.com/MaterializeInc/terraform-materialize-provider/pkg"
+	provider "github.com/MaterializeInc/terraform-provider-materialize/pkg"
 )
 
 // Provider documentation generation.
