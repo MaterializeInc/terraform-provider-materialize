@@ -4,6 +4,8 @@ on:
     paths:
       - pkg/**
       - integration/**
+  schedule:
+    - cron: 0 * * *
 
 jobs:
   integration:
