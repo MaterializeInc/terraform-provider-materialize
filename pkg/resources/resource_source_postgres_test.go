@@ -12,21 +12,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inSourcePostgres = map[string]interface{}{
+	"name":                "source",
+	"schema_name":         "schema",
+	"database_name":       "database",
+	"cluster_name":        "cluster",
+	"size":                "small",
+	"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
+	"publication":         "mz_source",
+	"text_columns":        []interface{}{"table.unsupported_type_1"},
+	"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+}
+
 func TestResourceSourcePostgresCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":                "source",
-		"schema_name":         "schema",
-		"database_name":       "database",
-		"cluster_name":        "cluster",
-		"size":                "small",
-		"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
-		"publication":         "mz_source",
-		"text_columns":        []interface{}{"table.unsupported_type_1"},
-		"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
-	}
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, in)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgres)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -56,26 +56,35 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
 			AddRow("conn", "schema", "database", "small", "conn", "cluster")
-		mock.ExpectQuery(`
-			SELECT
-				mz_sources.name,
-				mz_schemas.name,
-				mz_databases.name,
-				mz_sources.size,
-				mz_connections.name as connection_name,
-				mz_clusters.name as cluster_name
-			FROM mz_sources
-			JOIN mz_schemas
-				ON mz_sources.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			LEFT JOIN mz_connections
-				ON mz_sources.connection_id = mz_connections.id
-			JOIN mz_clusters
-				ON mz_sources.cluster_id = mz_clusters.id
-			WHERE mz_sources.id = 'u1';`).WillReturnRows(ip)
+		mock.ExpectQuery(readSource).WillReturnRows(ip)
 
 		if err := sourcePostgresCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceSourcePostgresUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgres)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_source")
+	d.Set("size", "medium")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" SET \(SIZE = 'small'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" RENAME TO "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
+			AddRow("conn", "schema", "database", "small", "conn", "cluster")
+		mock.ExpectQuery(readSource).WillReturnRows(ip)
+
+		if err := sourcePostgresUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

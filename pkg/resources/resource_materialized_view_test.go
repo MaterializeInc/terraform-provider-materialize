@@ -12,16 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inMaterializedView = map[string]interface{}{
+	"name":          "materialized_view",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"statement":     "SELECT 1 FROM 1",
+}
+
+var readMaterializedView string = `
+SELECT
+	mz_materialized_views.name,
+	mz_schemas.name,
+	mz_databases.name
+FROM mz_materialized_views
+JOIN mz_schemas
+	ON mz_materialized_views.schema_id = mz_schemas.id
+JOIN mz_databases
+	ON mz_schemas.database_id = mz_databases.id
+WHERE mz_materialized_views.id = 'u1';`
+
 func TestResourceMaterializedViewCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "materialized_view",
-		"schema_name":   "schema",
-		"database_name": "database",
-		"statement":     "SELECT 1 FROM 1",
-	}
-	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, in)
+	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -44,20 +56,32 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("materialized_view", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_materialized_views.name,
-				mz_schemas.name,
-				mz_databases.name
-			FROM mz_materialized_views
-			JOIN mz_schemas
-				ON mz_materialized_views.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_materialized_views.id = 'u1';
-		`).WillReturnRows(ip)
+		mock.ExpectQuery(readMaterializedView).WillReturnRows(ip)
 
 		if err := materializedViewCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceMaterializedViewUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, View().Schema, inMaterializedView)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_materialized_view")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER MATERIALIZED VIEW "database"."schema"."old_materialized_view" RENAME TO "database"."schema"."materialized_view";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("materialized_view", "schema", "database")
+		mock.ExpectQuery(readMaterializedView).WillReturnRows(ip)
+
+		if err := materializedViewUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

@@ -12,24 +12,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inConfluentSchemaRegistry = map[string]interface{}{
+	"name":                      "conn",
+	"schema_name":               "schema",
+	"database_name":             "database",
+	"service_name":              "service",
+	"url":                       "http://localhost:8081",
+	"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
+	"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
+	"ssl_key":                   []interface{}{map[string]interface{}{"name": "ssl"}},
+	"password":                  []interface{}{map[string]interface{}{"name": "password"}},
+	"username":                  []interface{}{map[string]interface{}{"text": "user"}},
+	"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "tunnel"}},
+	"aws_privatelink":           []interface{}{map[string]interface{}{"name": "privatelink"}},
+}
+
 func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":                      "conn",
-		"schema_name":               "schema",
-		"database_name":             "database",
-		"service_name":              "service",
-		"url":                       "http://localhost:8081",
-		"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
-		"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
-		"ssl_key":                   []interface{}{map[string]interface{}{"name": "ssl"}},
-		"password":                  []interface{}{map[string]interface{}{"name": "password"}},
-		"username":                  []interface{}{map[string]interface{}{"text": "user"}},
-		"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "tunnel"}},
-		"aws_privatelink":           []interface{}{map[string]interface{}{"name": "privatelink"}},
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, in)
+	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -54,17 +54,7 @@ func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
 			AddRow("conn", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_connections.name,
-				mz_schemas.name,
-				mz_databases.name
-			FROM mz_connections
-			JOIN mz_schemas
-				ON mz_connections.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_connections.id = 'u1';`).WillReturnRows(ip)
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
 		if err := connectionConfluentSchemaRegistryCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -73,7 +63,30 @@ func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 
 }
 
-func TestResourceConfluentSchemaRegistrykDelete(t *testing.T) {
+func TestResourceConfluentSchemaRegistryUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_conn")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+
+		if err := connectionConfluentSchemaRegistryUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceConfluentSchemaRegistryDelete(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{

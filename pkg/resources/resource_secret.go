@@ -96,17 +96,6 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := ExecResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename secret: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
 	if d.HasChange("value") {
 		_, newValue := d.GetChange("value")
 
@@ -116,6 +105,18 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			log.Printf("[ERROR] could not update value of secret: %s", q)
 			return diag.FromErr(err)
 		}
+	}
+
+	if d.HasChange("name") {
+		_, newName := d.GetChange("name")
+
+		q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).Rename(newName.(string))
+
+		if err := ExecResource(conn, q); err != nil {
+			log.Printf("[ERROR] could not rename secret: %s", q)
+			return diag.FromErr(err)
+		}
+
 	}
 
 	return secretRead(ctx, d, meta)

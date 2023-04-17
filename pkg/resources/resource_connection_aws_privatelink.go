@@ -87,8 +87,8 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
-		newConnectionName := d.Get("name").(string)
-		q := materialize.NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName)
+		_, newConnectionName := d.GetChange("name")
+		q := materialize.NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
