@@ -2,10 +2,10 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 func CurrentDatabase() *schema.Resource {
@@ -23,7 +23,7 @@ func CurrentDatabase() *schema.Resource {
 func currentDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sql.DB)
+	conn := meta.(*sqlx.DB)
 	var name string
 	conn.QueryRow("SHOW DATABASE;").Scan(&name)
 

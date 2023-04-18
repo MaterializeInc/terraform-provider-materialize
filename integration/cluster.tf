@@ -7,3 +7,5 @@ resource "materialize_cluster" "cluster_source" {
 }
 
 data "materialize_cluster" "all" {}
+
+data "materialize_current_cluster" "default" {}

@@ -12,26 +12,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inPostgres = map[string]interface{}{
+	"name":                      "conn",
+	"schema_name":               "schema",
+	"database_name":             "database",
+	"database":                  "default",
+	"host":                      "postgres_host",
+	"port":                      5432,
+	"user":                      []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
+	"password":                  []interface{}{map[string]interface{}{"name": "password"}},
+	"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "ssh_conn"}},
+	"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "root"}}}},
+	"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
+	"ssl_key":                   []interface{}{map[string]interface{}{"name": "key"}},
+	"ssl_mode":                  "verify-full",
+	"aws_privatelink":           []interface{}{map[string]interface{}{"name": "link"}},
+}
+
 func TestResourcePostgresCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":                      "conn",
-		"schema_name":               "schema",
-		"database_name":             "database",
-		"database":                  "default",
-		"host":                      "postgres_host",
-		"port":                      5432,
-		"user":                      []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
-		"password":                  []interface{}{map[string]interface{}{"name": "password"}},
-		"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "ssh_conn"}},
-		"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "root"}}}},
-		"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
-		"ssl_key":                   []interface{}{map[string]interface{}{"name": "key"}},
-		"ssl_mode":                  "verify-full",
-		"aws_privatelink":           []interface{}{map[string]interface{}{"name": "link"}},
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, in)
+	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -56,19 +56,32 @@ func TestResourcePostgresCreate(t *testing.T) {
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
 			AddRow("conn", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_connections.name,
-				mz_schemas.name,
-				mz_databases.name
-			FROM mz_connections
-			JOIN mz_schemas
-				ON mz_connections.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_connections.id = 'u1';`).WillReturnRows(ip)
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
 		if err := connectionPostgresCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourcePostgresUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_conn")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+
+		if err := connectionPostgresUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

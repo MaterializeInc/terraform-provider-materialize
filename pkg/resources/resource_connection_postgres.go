@@ -165,8 +165,8 @@ func connectionPostgresUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
-		newConnectionName := d.Get("name").(string)
-		q := materialize.NewConnectionPostgresBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName)
+		_, newConnectionName := d.GetChange("name")
+		q := materialize.NewConnectionPostgresBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
 		if err := ExecResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)

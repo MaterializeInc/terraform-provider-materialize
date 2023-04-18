@@ -12,16 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inView = map[string]interface{}{
+	"name":          "view",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"statement":     "SELECT 1 FROM 1",
+}
+
+var readView string = `
+SELECT
+	mz_views.name,
+	mz_schemas.name,
+	mz_databases.name
+FROM mz_views
+JOIN mz_schemas
+	ON mz_views.schema_id = mz_schemas.id
+JOIN mz_databases
+	ON mz_schemas.database_id = mz_databases.id
+WHERE mz_views.id = 'u1';`
+
 func TestResourceViewCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "view",
-		"schema_name":   "schema",
-		"database_name": "database",
-		"statement":     "SELECT 1 FROM 1",
-	}
-	d := schema.TestResourceDataRaw(t, View().Schema, in)
+	d := schema.TestResourceDataRaw(t, View().Schema, inView)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -44,20 +56,32 @@ func TestResourceViewCreate(t *testing.T) {
 
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("view", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_views.name,
-				mz_schemas.name,
-				mz_databases.name
-			FROM mz_views
-			JOIN mz_schemas
-				ON mz_views.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_views.id = 'u1';
-		`).WillReturnRows(ip)
+		mock.ExpectQuery(readView).WillReturnRows(ip)
 
 		if err := viewCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceViewUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, View().Schema, inView)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_view")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER VIEW "database"."schema"."old_view" RENAME TO "database"."schema"."view";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("view", "schema", "database")
+		mock.ExpectQuery(readView).WillReturnRows(ip)
+
+		if err := viewUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

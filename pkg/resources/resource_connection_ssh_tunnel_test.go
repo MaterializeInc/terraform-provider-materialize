@@ -12,19 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inSshTunnel = map[string]interface{}{
+	"name":          "conn",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"database":      "default",
+	"host":          "localhost",
+	"port":          123,
+	"user":          "user",
+}
+
 func TestResourceSshTunnelCreate(t *testing.T) {
 	r := require.New(t)
 
-	in := map[string]interface{}{
-		"name":          "conn",
-		"schema_name":   "schema",
-		"database_name": "database",
-		"database":      "default",
-		"host":          "localhost",
-		"port":          123,
-		"user":          "user",
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, in)
+	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -62,6 +63,29 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 			WHERE mz_connections.id = 'u1';`).WillReturnRows(ip)
 
 		if err := connectionSshTunnelCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceSshTunnelUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inSshTunnel)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_conn")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+
+		if err := connectionSshTunnelUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

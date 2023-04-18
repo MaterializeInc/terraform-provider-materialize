@@ -12,17 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inAwsPrivatelink = map[string]interface{}{
+	"name":               "conn",
+	"schema_name":        "schema",
+	"database_name":      "database",
+	"service_name":       "service",
+	"availability_zones": []interface{}{"use1-az1", "use1-az2"},
+}
+
 func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":               "conn",
-		"schema_name":        "schema",
-		"database_name":      "database",
-		"service_name":       "service",
-		"availability_zones": []interface{}{"use1-az1", "use1-az2"},
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, in)
+	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -45,21 +45,33 @@ func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
-			AddRow("conn", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_connections.name,
-				mz_schemas.name,
-				mz_databases.name
-			FROM mz_connections
-			JOIN mz_schemas
-				ON mz_connections.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_connections.id = 'u1';`).WillReturnRows(ip)
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
 		if err := connectionAwsPrivatelinkCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceAwsPrivatelinkUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_conn")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
+		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+
+		if err := connectionAwsPrivatelinkUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

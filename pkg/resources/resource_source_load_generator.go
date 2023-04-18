@@ -245,30 +245,28 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 func sourceLoadgenUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
-	schemaName := d.Get("name").(string)
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	if d.HasChange("name") {
-		oldName, newName := d.GetChange("name")
+	if d.HasChange("size") {
+		_, newSize := d.GetChange("size")
 
-		builder := materialize.NewSourceLoadgenBuilder(oldName.(string), schemaName, databaseName)
-		q := builder.Rename(newName.(string))
+		q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
 
 		if err := ExecResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
+			log.Printf("[ERROR] could not resize sink: %s", q)
 			return diag.FromErr(err)
 		}
 	}
 
-	if d.HasChange("size") {
-		sourceName := d.Get("sourceName").(string)
-		_, newSize := d.GetChange("size")
+	if d.HasChange("name") {
+		_, newName := d.GetChange("name")
 
-		builder := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName)
-		q := builder.UpdateSize(newSize.(string))
+		q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
 
 		if err := ExecResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
+			log.Printf("[ERROR] could not rename sink: %s", q)
 			return diag.FromErr(err)
 		}
 	}

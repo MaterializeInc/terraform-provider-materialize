@@ -12,16 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var inSecret = map[string]interface{}{
+	"name":          "secret",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"value":         "value",
+}
+
+var readSecret string = `
+SELECT
+	mz_secrets.name AS name,
+	mz_schemas.name AS schema_name,
+	mz_databases.name AS database_name
+FROM mz_secrets
+JOIN mz_schemas
+	ON mz_secrets.schema_id = mz_schemas.id
+JOIN mz_databases
+	ON mz_schemas.database_id = mz_databases.id
+WHERE mz_secrets.id = 'u1';`
+
 func TestResourceSecretCreate(t *testing.T) {
 	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "secret",
-		"schema_name":   "schema",
-		"database_name": "database",
-		"value":         "value",
-	}
-	d := schema.TestResourceDataRaw(t, Secret().Schema, in)
+	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -47,19 +59,35 @@ func TestResourceSecretCreate(t *testing.T) {
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema_name", "database_name"}).
 			AddRow("secret", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_secrets.name AS name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_secrets
-			JOIN mz_schemas
-				ON mz_secrets.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_secrets.id = 'u1';`).WillReturnRows(ip)
+		mock.ExpectQuery(readSecret).WillReturnRows(ip)
 
 		if err := secretCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestResourceSecretUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_secret")
+	d.Set("value", "old_value")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SECRET "database"."schema"."old_secret" AS 'value';`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SECRET "database"."schema"."old_secret" RENAME TO "database"."schema"."secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		ip := sqlmock.NewRows([]string{"name", "schema_name", "database_name"}).
+			AddRow("secret", "schema", "database")
+		mock.ExpectQuery(readSecret).WillReturnRows(ip)
+
+		if err := secretUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
