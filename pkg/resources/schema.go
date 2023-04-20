@@ -52,30 +52,6 @@ func SchemaResourceQualifiedName(resource string) *schema.Schema {
 	}
 }
 
-func SchemaResourceConnectionName() *schema.Schema {
-	return &schema.Schema{
-		Type:        schema.TypeString,
-		Description: "The type of connection.",
-		Computed:    true,
-	}
-}
-
-func SchemaResourceSinkType() *schema.Schema {
-	return &schema.Schema{
-		Type:        schema.TypeString,
-		Description: "The type of sink.",
-		Computed:    true,
-	}
-}
-
-func SchemaResourceSourceType() *schema.Schema {
-	return &schema.Schema{
-		Type:        schema.TypeString,
-		Description: "The type of source.",
-		Computed:    true,
-	}
-}
-
 func SchemaSize(resource string) *schema.Schema {
 	return &schema.Schema{
 		Type:         schema.TypeString,

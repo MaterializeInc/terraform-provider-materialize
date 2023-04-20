@@ -55,7 +55,6 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaResourceSchemaName("source", false),
 	"database_name":      SchemaResourceDatabaseName("source", false),
 	"qualified_sql_name": SchemaResourceQualifiedName("source"),
-	"source_type":        SchemaResourceSourceType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
