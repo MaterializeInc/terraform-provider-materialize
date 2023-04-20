@@ -30,6 +30,12 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"principal": {
+		Description: "The principal of the AWS PrivateLink service.",
+		Type:        schema.TypeString,
+		Computed:    true,
+		Sensitive:   true,
+	},
 }
 
 func ConnectionAwsPrivatelink() *schema.Resource {
@@ -37,7 +43,7 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionAwsPrivatelinkCreate,
-		ReadContext:   connectionRead,
+		ReadContext:   connectionAwsPrivatelinkRead,
 		UpdateContext: connectionAwsPrivatelinkUpdate,
 		DeleteContext: connectionAwsPrivatelinkDelete,
 
@@ -77,7 +83,8 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
 		return diag.FromErr(err)
 	}
-	return connectionRead(ctx, d, meta)
+
+	return connectionAwsPrivatelinkRead(ctx, d, meta)
 }
 
 func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -95,7 +102,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	return connectionRead(ctx, d, meta)
+	return connectionAwsPrivatelinkRead(ctx, d, meta)
 }
 
 func connectionAwsPrivatelinkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

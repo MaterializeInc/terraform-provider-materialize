@@ -43,6 +43,42 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	return nil
 }
 
+func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := materialize.ReadAwsPrivatelinkConnectionParams(i)
+
+	var name, schema, database, principal *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &principal); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", schema); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("principal", principal); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.Connection{ConnectionName: *name, SchemaName: *schema, DatabaseName: *database}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
 func ValueSecretSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,

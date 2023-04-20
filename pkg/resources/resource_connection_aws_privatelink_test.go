@@ -45,8 +45,8 @@ func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "principal"}).AddRow("conn", "schema", "database", "principal")
+		mock.ExpectQuery(readConnectionAwsPrivatelink).WillReturnRows(ip)
 
 		if err := connectionAwsPrivatelinkCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -68,8 +68,8 @@ func TestResourceAwsPrivatelinkUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "principal"}).AddRow("conn", "schema", "database", "principal")
+		mock.ExpectQuery(readConnectionAwsPrivatelink).WillReturnRows(ip)
 
 		if err := connectionAwsPrivatelinkUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
