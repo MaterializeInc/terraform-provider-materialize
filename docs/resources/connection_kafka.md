@@ -92,7 +92,6 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 ### Read-Only
 
-- `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the connection.
 
