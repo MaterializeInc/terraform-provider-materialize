@@ -48,6 +48,23 @@ func ReadConnectionParams(id string) string {
 		WHERE mz_connections.id = %s;`, QuoteString(id))
 }
 
+func ReadAwsPrivatelinkConnectionParams(id string) string {
+	return fmt.Sprintf(`
+		SELECT
+			mz_connections.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_aws_privatelink_connections.principal
+		FROM mz_connections
+		JOIN mz_schemas
+			ON mz_connections.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		JOIN mz_aws_privatelink_connections
+			ON mz_connections.id = mz_aws_privatelink_connections.id
+		WHERE mz_connections.id = %s;`, QuoteString(id))
+}
+
 func ReadConnectionDatasource(databaseName, schemaName string) string {
 	q := strings.Builder{}
 	q.WriteString(`
