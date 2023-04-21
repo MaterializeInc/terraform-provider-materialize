@@ -5,27 +5,73 @@ import (
 	"strings"
 )
 
-type TableLoadgen struct {
-	Name  string
-	Alias string
-}
-
 type CounterOptions struct {
 	TickInterval   string
 	ScaleFactor    float64
 	MaxCardinality int
 }
 
+func GetCounterOptionsStruct(v interface{}) CounterOptions {
+	var o CounterOptions
+	u := v.([]interface{})[0].(map[string]interface{})
+	if v, ok := u["tick_interval"]; ok {
+		o.TickInterval = v.(string)
+	}
+
+	if v, ok := u["scale_factor"]; ok {
+		o.ScaleFactor = v.(float64)
+	}
+
+	if v, ok := u["max_cardinality"]; ok {
+		o.MaxCardinality = v.(int)
+	}
+	return o
+}
+
 type AuctionOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []TableLoadgen
+	Table        []Table
+}
+
+func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
+	var o AuctionOptions
+	u := v.([]interface{})[0].(map[string]interface{})
+	if v, ok := u["tick_interval"]; ok {
+		o.TickInterval = v.(string)
+	}
+
+	if v, ok := u["scale_factor"]; ok {
+		o.ScaleFactor = v.(float64)
+	}
+
+	if v, ok := u["table"]; ok {
+		o.Table = GetTableStruct(v.([]interface{}))
+	}
+	return o
 }
 
 type TPCHOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []TableLoadgen
+	Table        []Table
+}
+
+func GetTPCHOptionsStruct(v interface{}) TPCHOptions {
+	var o TPCHOptions
+	u := v.([]interface{})[0].(map[string]interface{})
+	if v, ok := u["tick_interval"]; ok {
+		o.TickInterval = v.(string)
+	}
+
+	if v, ok := u["scale_factor"]; ok {
+		o.ScaleFactor = v.(float64)
+	}
+
+	if v, ok := u["table"]; ok {
+		o.Table = GetTableStruct(v.([]interface{}))
+	}
+	return o
 }
 
 type SourceLoadgenBuilder struct {
@@ -114,7 +160,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 		// Tables do not apply to COUNTER
 	} else if len(b.auctionOptions.Table) > 0 || len(b.tpchOptions.Table) > 0 {
 
-		var ot []TableLoadgen
+		var ot []Table
 		if len(b.auctionOptions.Table) > 0 {
 			ot = b.auctionOptions.Table
 		} else {

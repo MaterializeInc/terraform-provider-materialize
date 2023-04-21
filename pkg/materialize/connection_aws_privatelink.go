@@ -11,6 +11,14 @@ type ConnectionAwsPrivatelinkBuilder struct {
 	privateLinkAvailabilityZones []string
 }
 
+func GetAvailabilityZones(v []interface{}) []string {
+	var azs []string
+	for _, az := range v {
+		azs = append(azs, az.(string))
+	}
+	return azs
+}
+
 func NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName string) *ConnectionAwsPrivatelinkBuilder {
 	return &ConnectionAwsPrivatelinkBuilder{
 		Connection: Connection{connectionName, schemaName, databaseName},

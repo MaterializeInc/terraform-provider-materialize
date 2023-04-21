@@ -12,10 +12,10 @@ import (
 )
 
 var materializedViewSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("materialized view", true, false),
-	"schema_name":        SchemaResourceSchemaName("materialized view", false),
-	"database_name":      SchemaResourceDatabaseName("materialized view", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("materialized view"),
+	"name":               NameSchema("materialized view", true, false),
+	"schema_name":        SchemaNameSchema("materialized view", false),
+	"database_name":      DatabaseNameSchema("materialized view", false),
+	"qualified_sql_name": QualifiedNameSchema("materialized view"),
 	"cluster_name": {
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
@@ -115,7 +115,7 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 		q := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename materialized view: %s", q)
 			return diag.FromErr(err)
 		}

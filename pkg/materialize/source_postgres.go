@@ -5,11 +5,6 @@ import (
 	"strings"
 )
 
-type TablePostgres struct {
-	Name  string
-	Alias string
-}
-
 type SourcePostgresBuilder struct {
 	Source
 	clusterName        string
@@ -17,7 +12,7 @@ type SourcePostgresBuilder struct {
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
-	table              []TablePostgres
+	table              []Table
 }
 
 func NewSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
@@ -51,7 +46,7 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Table(t []TablePostgres) *SourcePostgresBuilder {
+func (b *SourcePostgresBuilder) Table(t []Table) *SourcePostgresBuilder {
 	b.table = t
 	return b
 }

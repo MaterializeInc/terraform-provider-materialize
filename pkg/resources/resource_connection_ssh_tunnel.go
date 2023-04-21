@@ -12,11 +12,10 @@ import (
 )
 
 var connectionSshTunnelSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("connection", true, false),
-	"schema_name":        SchemaResourceSchemaName("connection", false),
-	"database_name":      SchemaResourceDatabaseName("connection", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
-	"connection_type":    SchemaResourceConnectionName(),
+	"name":               NameSchema("connection", true, false),
+	"schema_name":        SchemaNameSchema("connection", false),
+	"database_name":      DatabaseNameSchema("connection", false),
+	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"host": {
 		Description: "The host of the SSH tunnel.",
 		Type:        schema.TypeString,
@@ -82,7 +81,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
 		q := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}

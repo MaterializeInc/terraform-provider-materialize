@@ -11,7 +11,7 @@ import (
 )
 
 var clusterSchema = map[string]*schema.Schema{
-	"name": SchemaResourceName("cluster", true, true),
+	"name": NameSchema("cluster", true, true),
 }
 
 func Cluster() *schema.Resource {

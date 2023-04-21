@@ -13,11 +13,10 @@ import (
 )
 
 var sinkKafkaSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("sink", true, false),
-	"schema_name":        SchemaResourceSchemaName("sink", false),
-	"database_name":      SchemaResourceDatabaseName("sink", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("sink"),
-	"sink_type":          SchemaResourceSinkType(),
+	"name":               NameSchema("sink", true, false),
+	"schema_name":        SchemaNameSchema("sink", false),
+	"database_name":      DatabaseNameSchema("sink", false),
+	"qualified_sql_name": QualifiedNameSchema("sink"),
 	"cluster_name": {
 		Description:  "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -141,13 +140,7 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		var envelope materialize.SinkEnvelopeStruct
-		if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
-			envelope.Upsert = v.(bool)
-		}
-		if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
-			envelope.Debezium = v.(bool)
-		}
+		envelope := materialize.GetSinkKafkaEnelopeStruct(v)
 		builder.Envelope(envelope)
 	}
 
@@ -175,7 +168,7 @@ func sinkKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 		q := materialize.NewSinkKafkaBuilder(sinkName, schemaName, databaseName).UpdateSize(newSize.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not resize sink: %s", q)
 			return diag.FromErr(err)
 		}
@@ -186,7 +179,7 @@ func sinkKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 		q := materialize.NewSinkKafkaBuilder(sinkName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename sink: %s", q)
 			return diag.FromErr(err)
 		}

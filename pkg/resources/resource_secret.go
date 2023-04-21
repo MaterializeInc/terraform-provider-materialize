@@ -12,10 +12,10 @@ import (
 )
 
 var secretSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("secret", true, false),
-	"schema_name":        SchemaResourceSchemaName("secret", false),
-	"database_name":      SchemaResourceDatabaseName("secret", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("secret"),
+	"name":               NameSchema("secret", true, false),
+	"schema_name":        SchemaNameSchema("secret", false),
+	"database_name":      DatabaseNameSchema("secret", false),
+	"qualified_sql_name": QualifiedNameSchema("secret"),
 	"value": {
 		Description: "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.",
 		Type:        schema.TypeString,
@@ -101,7 +101,7 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 		q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).UpdateValue(newValue.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not update value of secret: %s", q)
 			return diag.FromErr(err)
 		}
@@ -112,7 +112,7 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 		q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename secret: %s", q)
 			return diag.FromErr(err)
 		}

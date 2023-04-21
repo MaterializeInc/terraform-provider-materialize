@@ -12,10 +12,10 @@ import (
 )
 
 var viewSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("view", true, false),
-	"schema_name":        SchemaResourceSchemaName("view", false),
-	"database_name":      SchemaResourceDatabaseName("view", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("view"),
+	"name":               NameSchema("view", true, false),
+	"schema_name":        SchemaNameSchema("view", false),
+	"database_name":      DatabaseNameSchema("view", false),
+	"qualified_sql_name": QualifiedNameSchema("view"),
 	"statement": {
 		Description: "The SQL statement to create the view.",
 		Type:        schema.TypeString,
@@ -106,7 +106,7 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 		q := materialize.NewViewBuilder(viewName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename view: %s", q)
 			return diag.FromErr(err)
 		}

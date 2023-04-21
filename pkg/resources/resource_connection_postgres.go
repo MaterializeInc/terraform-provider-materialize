@@ -12,11 +12,10 @@ import (
 )
 
 var connectionPostgresSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("connection", true, false),
-	"schema_name":        SchemaResourceSchemaName("connection", false),
-	"database_name":      SchemaResourceDatabaseName("connection", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
-	"connection_type":    SchemaResourceConnectionName(),
+	"name":               NameSchema("connection", true, false),
+	"schema_name":        SchemaNameSchema("connection", false),
+	"database_name":      DatabaseNameSchema("connection", false),
+	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"database": {
 		Description: "The target Postgres database.",
 		Type:        schema.TypeString,
@@ -86,14 +85,7 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if v, ok := d.GetOk("user"); ok {
-		var user materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			user.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			user.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		user := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.PostgresUser(user)
 	}
 
@@ -111,26 +103,12 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		var ssl_ca materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			ssl_ca.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			ssl_ca.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.PostgresSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		var ssl_cert materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			ssl_cert.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			ssl_cert.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.PostgresSSLCert(ssl_cert)
 	}
 
@@ -167,7 +145,7 @@ func connectionPostgresUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
 		q := materialize.NewConnectionPostgresBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}

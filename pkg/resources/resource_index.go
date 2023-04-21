@@ -36,7 +36,7 @@ var indexSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
-	"qualified_sql_name": SchemaResourceQualifiedName("view"),
+	"qualified_sql_name": QualifiedNameSchema("view"),
 	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
 	"cluster_name": {
 		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
@@ -146,15 +146,8 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 
 	if v, ok := d.GetOk("col_expr"); ok {
-		var colExprs []materialize.IndexColumn
-		for _, colExpr := range v.([]interface{}) {
-			b := colExpr.(map[string]interface{})
-			colExprs = append(colExprs, materialize.IndexColumn{
-				Field: b["field"].(string),
-				Val:   b["val"].(string),
-			})
-		}
-		builder.ColExpr(colExprs)
+		c := materialize.GetIndexColumnStruct(v.([]interface{}))
+		builder.ColExpr(c)
 	}
 
 	qc := builder.Create()

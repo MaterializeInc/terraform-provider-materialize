@@ -11,7 +11,7 @@ import (
 )
 
 var databaseSchema = map[string]*schema.Schema{
-	"name": SchemaResourceName("database", true, true),
+	"name": NameSchema("database", true, true),
 }
 
 func Database() *schema.Resource {

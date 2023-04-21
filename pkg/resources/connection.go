@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -77,27 +76,4 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	return nil
-}
-
-func ValueSecretSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"text": {
-					Description:   fmt.Sprintf("The %s text value.", elem),
-					Type:          schema.TypeString,
-					Optional:      true,
-					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
-				},
-				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false),
-			},
-		},
-		Required:    isRequired,
-		Optional:    isOptional,
-		MinItems:    1,
-		MaxItems:    1,
-		ForceNew:    true,
-		Description: description,
-	}
 }

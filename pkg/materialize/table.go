@@ -11,6 +11,19 @@ type TableColumn struct {
 	NotNull bool
 }
 
+func GetTableColumnStruct(v []interface{}) []TableColumn {
+	var columns []TableColumn
+	for _, column := range v {
+		c := column.(map[string]interface{})
+		columns = append(columns, TableColumn{
+			ColName: c["name"].(string),
+			ColType: c["type"].(string),
+			NotNull: c["nullable"].(bool),
+		})
+	}
+	return columns
+}
+
 type TableBuilder struct {
 	tableName    string
 	schemaName   string

@@ -12,11 +12,10 @@ import (
 )
 
 var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("connection", true, false),
-	"schema_name":        SchemaResourceSchemaName("connection", false),
-	"database_name":      SchemaResourceDatabaseName("connection", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
-	"connection_type":    SchemaResourceConnectionName(),
+	"name":               NameSchema("connection", true, false),
+	"schema_name":        SchemaNameSchema("connection", false),
+	"database_name":      DatabaseNameSchema("connection", false),
+	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,
@@ -62,26 +61,12 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		var ssl_ca materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			ssl_ca.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			ssl_ca.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.ConfluentSchemaRegistrySSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		var ssl_cert materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			ssl_cert.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			ssl_cert.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.ConfluentSchemaRegistrySSLCert(ssl_cert)
 	}
 
@@ -91,15 +76,7 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	}
 
 	if v, ok := d.GetOk("username"); ok {
-		var user materialize.ValueSecretStruct
-		// Print the v value which is a []interface{}
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok && v != nil {
-			user.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			user.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		user := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.ConfluentSchemaRegistryUsername(user)
 	}
 
@@ -136,7 +113,7 @@ func connectionConfluentSchemaRegistryUpdate(ctx context.Context, d *schema.Reso
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
 		q := materialize.NewConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}
