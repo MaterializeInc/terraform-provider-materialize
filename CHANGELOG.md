@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.0.3 - 2022-04-20
+
+### Features
+
+* Adds `principal` property to the AWS PrivateLink connection resource
+
+### BugFixes
+
+### Misc
+
+* Remove unnecessary type property
+* Dependabot updates
+
 ## 0.0.2 - 2022-04-18
 
 ### Features
