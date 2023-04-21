@@ -94,7 +94,7 @@ func TestResourceConfluentSchemaRegistryDelete(t *testing.T) {
 		"schema_name":   "schema",
 		"database_name": "database",
 	}
-	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, in)
+	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, in)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

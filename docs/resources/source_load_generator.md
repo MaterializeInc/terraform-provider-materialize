@@ -53,7 +53,6 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
-- `source_type` (String) The type of source.
 
 <a id="nestedblock--auction_options"></a>
 ### Nested Schema for `auction_options`
