@@ -53,24 +53,24 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 - `from` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--from))
 - `kafka_connection` (Block List, Min: 1, Max: 1) The name of the Kafka connection to use in the sink. (see [below for nested schema](#nestedblock--kafka_connection))
-- `name` (String) The identifier for the source.
+- `name` (String) The identifier for the sink.
 - `topic` (String) The Kafka topic you want to subscribe to.
 
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this sink. If not specified, the size option must be specified.
-- `database_name` (String) The identifier for the source database.
+- `database_name` (String) The identifier for the sink database.
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
-- `schema_name` (String) The identifier for the source schema.
+- `schema_name` (String) The identifier for the sink schema.
 - `size` (String) The size of the sink.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_sql_name` (String) The fully qualified name of the source.
+- `qualified_sql_name` (String) The fully qualified name of the sink.
 
 <a id="nestedblock--from"></a>
 ### Nested Schema for `from`
