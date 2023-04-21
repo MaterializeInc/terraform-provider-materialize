@@ -16,7 +16,6 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaResourceSchemaName("connection", false),
 	"database_name":      SchemaResourceDatabaseName("connection", false),
 	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
-	"connection_type":    SchemaResourceConnectionName(),
 	"service_name": {
 		Description: "The name of the AWS PrivateLink service.",
 		Type:        schema.TypeString,

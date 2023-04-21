@@ -75,7 +75,6 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
-- `source_type` (String) The type of source.
 
 <a id="nestedblock--kafka_connection"></a>
 ### Nested Schema for `kafka_connection`

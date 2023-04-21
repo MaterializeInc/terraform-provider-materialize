@@ -17,7 +17,6 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaResourceSchemaName("sink", false),
 	"database_name":      SchemaResourceDatabaseName("sink", false),
 	"qualified_sql_name": SchemaResourceQualifiedName("sink"),
-	"sink_type":          SchemaResourceSinkType(),
 	"cluster_name": {
 		Description:  "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,

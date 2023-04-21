@@ -45,7 +45,6 @@ resource "materialize_connection_aws_privatelink" "example_privatelink_connectio
 
 ### Read-Only
 
-- `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
 - `principal` (String, Sensitive) The principal of the AWS PrivateLink service.
 - `qualified_sql_name` (String) The fully qualified name of the connection.

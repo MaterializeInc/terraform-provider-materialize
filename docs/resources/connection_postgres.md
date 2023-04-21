@@ -67,7 +67,6 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 ### Read-Only
 
-- `connection_type` (String) The type of connection.
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the connection.
 
