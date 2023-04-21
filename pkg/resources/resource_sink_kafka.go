@@ -13,10 +13,10 @@ import (
 )
 
 var sinkKafkaSchema = map[string]*schema.Schema{
-	"name":               NameSchema("source", true, false),
-	"schema_name":        SchemaNameSchema("source", false),
-	"database_name":      DatabaseNameSchema("source", false),
-	"qualified_sql_name": QualifiedNameSchema("source"),
+	"name":               NameSchema("sink", true, false),
+	"schema_name":        SchemaNameSchema("sink", false),
+	"database_name":      DatabaseNameSchema("sink", false),
+	"qualified_sql_name": QualifiedNameSchema("sink"),
 	"cluster_name": {
 		Description:  "The cluster to maintain this sink. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
