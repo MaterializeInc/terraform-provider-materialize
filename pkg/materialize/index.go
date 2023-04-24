@@ -10,6 +10,18 @@ type IndexColumn struct {
 	Val   string
 }
 
+func GetIndexColumnStruct(v []interface{}) []IndexColumn {
+	var i []IndexColumn
+	for _, column := range v {
+		c := column.(map[string]interface{})
+		i = append(i, IndexColumn{
+			Field: c["field"].(string),
+			Val:   c["val"].(string),
+		})
+	}
+	return i
+}
+
 type IndexBuilder struct {
 	indexName    string
 	indexDefault bool

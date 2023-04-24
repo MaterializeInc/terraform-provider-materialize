@@ -12,10 +12,10 @@ import (
 )
 
 var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("connection", true, false),
-	"schema_name":        SchemaResourceSchemaName("connection", false),
-	"database_name":      SchemaResourceDatabaseName("connection", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
+	"name":               NameSchema("connection", true, false),
+	"schema_name":        SchemaNameSchema("connection", false),
+	"database_name":      DatabaseNameSchema("connection", false),
+	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"service_name": {
 		Description: "The name of the AWS PrivateLink service.",
 		Type:        schema.TypeString,
@@ -68,12 +68,8 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if v, ok := d.GetOk("availability_zones"); ok {
-		azs := v.([]interface{})
-		var azStrings []string
-		for _, az := range azs {
-			azStrings = append(azStrings, az.(string))
-		}
-		builder.PrivateLinkAvailabilityZones(azStrings)
+		azs := materialize.GetAvailabilityZones(v.([]interface{}))
+		builder.PrivateLinkAvailabilityZones(azs)
 	}
 
 	qc := builder.Create()
@@ -95,7 +91,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
 		q := materialize.NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}

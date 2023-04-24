@@ -13,10 +13,10 @@ import (
 )
 
 var connectionKafkaSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("connection", true, false),
-	"schema_name":        SchemaResourceSchemaName("connection", false),
-	"database_name":      SchemaResourceDatabaseName("connection", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("connection"),
+	"name":               NameSchema("connection", true, false),
+	"schema_name":        SchemaNameSchema("connection", false),
+	"database_name":      DatabaseNameSchema("connection", false),
+	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"kafka_broker": {
 		Description: "The Kafka brokers configuration.",
 		Type:        schema.TypeList,
@@ -90,20 +90,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	builder := materialize.NewConnectionKafkaBuilder(connectionName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
-		var brokers []materialize.KafkaBroker
-		for _, broker := range v.([]interface{}) {
-			b := broker.(map[string]interface{})
-			privateLinkConn := materialize.IdentifierSchemaStruct{}
-			if b["private_link_connection"] != nil {
-				privateLinkConn = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, b["private_link_connection"].([]interface{}))
-			}
-			brokers = append(brokers, materialize.KafkaBroker{
-				Broker:                b["broker"].(string),
-				TargetGroupPort:       b["target_group_port"].(int),
-				AvailabilityZone:      b["availability_zone"].(string),
-				PrivateLinkConnection: privateLinkConn,
-			})
-		}
+		brokers := materialize.GetKafkaBrokersStruct(databaseName, schemaName, v)
 		builder.KafkaBrokers(brokers)
 	}
 
@@ -112,26 +99,12 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		var ssl_ca materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			ssl_ca.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			ssl_ca.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.KafkaSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		var ssl_cert materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			ssl_cert.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			ssl_cert.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.KafkaSSLCert(ssl_cert)
 	}
 
@@ -145,14 +118,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := d.GetOk("sasl_username"); ok {
-		var sasl_username materialize.ValueSecretStruct
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["text"]; ok {
-			sasl_username.Text = v.(string)
-		}
-		if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-			sasl_username.Secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		}
+		sasl_username := materialize.GetValueSecretStruct(databaseName, schemaName, v)
 		builder.KafkaSASLUsername(sasl_username)
 	}
 
@@ -184,7 +150,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
 		q := materialize.NewConnectionKafkaBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not execute query: %s", q)
 			return diag.FromErr(err)
 		}

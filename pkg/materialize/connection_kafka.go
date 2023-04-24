@@ -12,6 +12,24 @@ type KafkaBroker struct {
 	PrivateLinkConnection IdentifierSchemaStruct
 }
 
+func GetKafkaBrokersStruct(databaseName, schemaName string, v interface{}) []KafkaBroker {
+	var brokers []KafkaBroker
+	for _, broker := range v.([]interface{}) {
+		b := broker.(map[string]interface{})
+		privateLinkConn := IdentifierSchemaStruct{}
+		if b["private_link_connection"] != nil {
+			privateLinkConn = GetIdentifierSchemaStruct(databaseName, schemaName, b["private_link_connection"].([]interface{}))
+		}
+		brokers = append(brokers, KafkaBroker{
+			Broker:                b["broker"].(string),
+			TargetGroupPort:       b["target_group_port"].(int),
+			AvailabilityZone:      b["availability_zone"].(string),
+			PrivateLinkConnection: privateLinkConn,
+		})
+	}
+	return brokers
+}
+
 type ConnectionKafkaBuilder struct {
 	Connection
 	kafkaBrokers        []KafkaBroker

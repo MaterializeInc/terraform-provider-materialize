@@ -6,10 +6,6 @@ type IdentifierSchemaStruct struct {
 	DatabaseName string
 }
 
-func (i *IdentifierSchemaStruct) QualifiedName() string {
-	return QualifiedName(i.DatabaseName, i.SchemaName, i.Name)
-}
-
 func GetIdentifierSchemaStruct(databaseName string, schemaName string, v interface{}) IdentifierSchemaStruct {
 	var conn IdentifierSchemaStruct
 	u := v.([]interface{})[0].(map[string]interface{})
@@ -27,4 +23,8 @@ func GetIdentifierSchemaStruct(databaseName string, schemaName string, v interfa
 		conn.DatabaseName = databaseName
 	}
 	return conn
+}
+
+func (i *IdentifierSchemaStruct) QualifiedName() string {
+	return QualifiedName(i.DatabaseName, i.SchemaName, i.Name)
 }

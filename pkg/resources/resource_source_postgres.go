@@ -13,10 +13,10 @@ import (
 )
 
 var sourcePostgresSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("source", true, false),
-	"schema_name":        SchemaResourceSchemaName("source", false),
-	"database_name":      SchemaResourceDatabaseName("source", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("source"),
+	"name":               NameSchema("source", true, false),
+	"schema_name":        SchemaNameSchema("source", false),
+	"database_name":      DatabaseNameSchema("source", false),
+	"qualified_sql_name": QualifiedNameSchema("source"),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -113,14 +113,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("table"); ok {
-		var tables []materialize.TablePostgres
-		for _, table := range v.([]interface{}) {
-			t := table.(map[string]interface{})
-			tables = append(tables, materialize.TablePostgres{
-				Name:  t["name"].(string),
-				Alias: t["alias"].(string),
-			})
-		}
+		tables := materialize.GetTableStruct(v.([]interface{}))
 		builder.Table(tables)
 	}
 
@@ -148,7 +141,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 		q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not resize sink: %s", q)
 			return diag.FromErr(err)
 		}
@@ -159,7 +152,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 		q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename sink: %s", q)
 			return diag.FromErr(err)
 		}

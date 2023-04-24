@@ -52,7 +52,7 @@ func TestSourceLoadgenCreateTPCHParamsQuery(t *testing.T) {
 	b.TPCHOptions(TPCHOptions{
 		TickInterval: "1s",
 		ScaleFactor:  0.01,
-		Table: []TableLoadgen{
+		Table: []Table{
 			{
 				Name:  "schema1.table_1",
 				Alias: "s1_table_1",

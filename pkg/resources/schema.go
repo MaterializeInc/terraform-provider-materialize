@@ -12,7 +12,7 @@ const (
 	defaultDatabase = "materialize"
 )
 
-func SchemaResourceName(resource string, required, forceNew bool) *schema.Schema {
+func NameSchema(resource string, required, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
 		Description: fmt.Sprintf("The identifier for the %s.", resource),
@@ -22,7 +22,7 @@ func SchemaResourceName(resource string, required, forceNew bool) *schema.Schema
 	}
 }
 
-func SchemaResourceSchemaName(resource string, required bool) *schema.Schema {
+func SchemaNameSchema(resource string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
 		Description: fmt.Sprintf("The identifier for the %s schema.", resource),
@@ -33,7 +33,7 @@ func SchemaResourceSchemaName(resource string, required bool) *schema.Schema {
 	}
 }
 
-func SchemaResourceDatabaseName(resource string, required bool) *schema.Schema {
+func DatabaseNameSchema(resource string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
 		Description: fmt.Sprintf("The identifier for the %s database.", resource),
@@ -44,7 +44,7 @@ func SchemaResourceDatabaseName(resource string, required bool) *schema.Schema {
 	}
 }
 
-func SchemaResourceQualifiedName(resource string) *schema.Schema {
+func QualifiedNameSchema(resource string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
 		Description: fmt.Sprintf("The fully qualified name of the %s.", resource),
@@ -52,7 +52,7 @@ func SchemaResourceQualifiedName(resource string) *schema.Schema {
 	}
 }
 
-func SchemaSize(resource string) *schema.Schema {
+func SizeSchema(resource string) *schema.Schema {
 	return &schema.Schema{
 		Type:         schema.TypeString,
 		Description:  fmt.Sprintf("The size of the %s.", resource),
@@ -86,6 +86,29 @@ func IdentifierSchema(elem, description string, required bool) *schema.Schema {
 		},
 		Required:    required,
 		Optional:    !required,
+		MinItems:    1,
+		MaxItems:    1,
+		ForceNew:    true,
+		Description: description,
+	}
+}
+
+func ValueSecretSchema(elem string, description string, isRequired bool, isOptional bool) *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"text": {
+					Description:   fmt.Sprintf("The %s text value.", elem),
+					Type:          schema.TypeString,
+					Optional:      true,
+					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
+				},
+				"secret": IdentifierSchema(elem, fmt.Sprintf("The %s secret value.", elem), false),
+			},
+		},
+		Required:    isRequired,
+		Optional:    isOptional,
 		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,

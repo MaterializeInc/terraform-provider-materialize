@@ -51,10 +51,10 @@ var table = &schema.Schema{
 }
 
 var sourceLoadgenSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("source", true, false),
-	"schema_name":        SchemaResourceSchemaName("source", false),
-	"database_name":      SchemaResourceDatabaseName("source", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("source"),
+	"name":               NameSchema("source", true, false),
+	"schema_name":        SchemaNameSchema("source", false),
+	"database_name":      DatabaseNameSchema("source", false),
+	"qualified_sql_name": QualifiedNameSchema("source"),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -167,69 +167,17 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	}
 
 	if v, ok := d.GetOk("counter_options"); ok {
-		var o materialize.CounterOptions
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["tick_interval"]; ok {
-			o.TickInterval = v.(string)
-		}
-
-		if v, ok := u["scale_factor"]; ok {
-			o.ScaleFactor = v.(float64)
-		}
-
-		if v, ok := u["max_cardinality"]; ok {
-			o.MaxCardinality = v.(int)
-		}
+		o := materialize.GetCounterOptionsStruct(v)
 		builder.CounterOptions(o)
 	}
 
 	if v, ok := d.GetOk("auction_options"); ok {
-		var o materialize.AuctionOptions
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["tick_interval"]; ok {
-			o.TickInterval = v.(string)
-		}
-
-		if v, ok := u["scale_factor"]; ok {
-			o.ScaleFactor = v.(float64)
-		}
-
-		if v, ok := u["table"]; ok {
-			var tables []materialize.TableLoadgen
-			for _, table := range v.([]interface{}) {
-				t := table.(map[string]interface{})
-				tables = append(tables, materialize.TableLoadgen{
-					Name:  t["name"].(string),
-					Alias: t["alias"].(string),
-				})
-			}
-			o.Table = tables
-		}
+		o := materialize.GetAuctionOptionsStruct(v)
 		builder.AuctionOptions(o)
 	}
 
 	if v, ok := d.GetOk("tpch_options"); ok {
-		var o materialize.TPCHOptions
-		u := v.([]interface{})[0].(map[string]interface{})
-		if v, ok := u["tick_interval"]; ok {
-			o.TickInterval = v.(string)
-		}
-
-		if v, ok := u["scale_factor"]; ok {
-			o.ScaleFactor = v.(float64)
-		}
-
-		if v, ok := u["table"]; ok {
-			var tables []materialize.TableLoadgen
-			for _, table := range v.([]interface{}) {
-				t := table.(map[string]interface{})
-				tables = append(tables, materialize.TableLoadgen{
-					Name:  t["name"].(string),
-					Alias: t["alias"].(string),
-				})
-			}
-			o.Table = tables
-		}
+		o := materialize.GetTPCHOptionsStruct(v)
 		builder.TPCHOptions(o)
 	}
 
@@ -253,7 +201,7 @@ func sourceLoadgenUpdate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 		q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not resize sink: %s", q)
 			return diag.FromErr(err)
 		}
@@ -264,7 +212,7 @@ func sourceLoadgenUpdate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 		q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename sink: %s", q)
 			return diag.FromErr(err)
 		}

@@ -11,6 +11,20 @@ type KafkaSourceEnvelopeStruct struct {
 	Upsert   bool
 }
 
+func GetSourceKafkaEnelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
+	var envelope KafkaSourceEnvelopeStruct
+	if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
+		envelope.Upsert = v.(bool)
+	}
+	if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
+		envelope.Debezium = v.(bool)
+	}
+	if v, ok := v.([]interface{})[0].(map[string]interface{})["none"]; ok {
+		envelope.None = v.(bool)
+	}
+	return envelope
+}
+
 type SourceKafkaBuilder struct {
 	Source
 	clusterName      string

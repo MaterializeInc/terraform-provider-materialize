@@ -12,10 +12,10 @@ import (
 )
 
 var tableSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("table", true, false),
-	"schema_name":        SchemaResourceSchemaName("table", false),
-	"database_name":      SchemaResourceDatabaseName("table", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("table"),
+	"name":               NameSchema("table", true, false),
+	"schema_name":        SchemaNameSchema("table", false),
+	"database_name":      DatabaseNameSchema("table", false),
+	"qualified_sql_name": QualifiedNameSchema("table"),
 	"column": {
 		Description: "Column of the table.",
 		Type:        schema.TypeList,
@@ -103,15 +103,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	builder := materialize.NewTableBuilder(tableName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("column"); ok {
-		var columns []materialize.TableColumn
-		for _, column := range v.([]interface{}) {
-			c := column.(map[string]interface{})
-			columns = append(columns, materialize.TableColumn{
-				ColName: c["name"].(string),
-				ColType: c["type"].(string),
-				NotNull: c["nullable"].(bool),
-			})
-		}
+		columns := materialize.GetTableColumnStruct(v.([]interface{}))
 		builder.Column(columns)
 	}
 
@@ -135,7 +127,7 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 		q := materialize.NewTableBuilder(tableName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename table: %s", q)
 			return diag.FromErr(err)
 		}

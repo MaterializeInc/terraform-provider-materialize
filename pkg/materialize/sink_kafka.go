@@ -5,9 +5,20 @@ import (
 	"strings"
 )
 
-type SinkEnvelopeStruct struct {
+type KafkaSinkEnvelopeStruct struct {
 	Upsert   bool
 	Debezium bool
+}
+
+func GetSinkKafkaEnelopeStruct(v interface{}) KafkaSinkEnvelopeStruct {
+	var envelope KafkaSinkEnvelopeStruct
+	if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
+		envelope.Upsert = v.(bool)
+	}
+	if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
+		envelope.Debezium = v.(bool)
+	}
+	return envelope
 }
 
 type SinkKafkaBuilder struct {
@@ -19,7 +30,7 @@ type SinkKafkaBuilder struct {
 	topic           string
 	key             []string
 	format          SinkFormatSpecStruct
-	envelope        SinkEnvelopeStruct
+	envelope        KafkaSinkEnvelopeStruct
 	snapshot        bool
 }
 
@@ -64,7 +75,7 @@ func (b *SinkKafkaBuilder) Format(f SinkFormatSpecStruct) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) Envelope(e SinkEnvelopeStruct) *SinkKafkaBuilder {
+func (b *SinkKafkaBuilder) Envelope(e KafkaSinkEnvelopeStruct) *SinkKafkaBuilder {
 	b.envelope = e
 	return b
 }

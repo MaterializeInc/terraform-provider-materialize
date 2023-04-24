@@ -16,7 +16,7 @@ func (e *SQLError) Error() string {
 	return fmt.Sprintf("Unable to execute SQL: %v", e.Err)
 }
 
-func ExecResource(conn *sqlx.DB, queryStr string) error {
+func execResource(conn *sqlx.DB, queryStr string) error {
 	_, err := conn.Exec(queryStr)
 	if err != nil {
 		return &SQLError{Err: err}

@@ -13,10 +13,10 @@ import (
 )
 
 var sourceKafkaSchema = map[string]*schema.Schema{
-	"name":               SchemaResourceName("source", true, false),
-	"schema_name":        SchemaResourceSchemaName("source", false),
-	"database_name":      SchemaResourceDatabaseName("source", false),
-	"qualified_sql_name": SchemaResourceQualifiedName("source"),
+	"name":               NameSchema("source", true, false),
+	"schema_name":        SchemaNameSchema("source", false),
+	"database_name":      DatabaseNameSchema("source", false),
+	"qualified_sql_name": QualifiedNameSchema("source"),
 	"cluster_name": {
 		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
 		Type:         schema.TypeString,
@@ -209,16 +209,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		var envelope materialize.KafkaSourceEnvelopeStruct
-		if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
-			envelope.Upsert = v.(bool)
-		}
-		if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
-			envelope.Debezium = v.(bool)
-		}
-		if v, ok := v.([]interface{})[0].(map[string]interface{})["none"]; ok {
-			envelope.None = v.(bool)
-		}
+		envelope := materialize.GetSourceKafkaEnelopeStruct(v)
 		builder.Envelope(envelope)
 	}
 
@@ -254,7 +245,7 @@ func sourceKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 		q := materialize.NewSourceKafkaBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not resize sink: %s", q)
 			return diag.FromErr(err)
 		}
@@ -265,7 +256,7 @@ func sourceKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 		q := materialize.NewSourceKafkaBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
 
-		if err := ExecResource(conn, q); err != nil {
+		if err := execResource(conn, q); err != nil {
 			log.Printf("[ERROR] could not rename sink: %s", q)
 			return diag.FromErr(err)
 		}
