@@ -68,7 +68,7 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if v, ok := d.GetOk("availability_zones"); ok {
-		azs := materialize.GetAvailabilityZones(v.([]interface{}))
+		azs := materialize.GetSliceValueString(v.([]interface{}))
 		builder.PrivateLinkAvailabilityZones(azs)
 	}
 

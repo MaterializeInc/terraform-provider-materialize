@@ -214,11 +214,13 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("primary_key"); ok {
-		builder.PrimaryKey(v.([]string))
+		pk := materialize.GetSliceValueString(v.([]interface{}))
+		builder.PrimaryKey(pk)
 	}
 
 	if v, ok := d.GetOk("start_offset"); ok {
-		builder.StartOffset(v.([]int))
+		so := materialize.GetSliceValueInt(v.([]interface{}))
+		builder.StartOffset(so)
 	}
 
 	if v, ok := d.GetOk("start_timestamp"); ok {
