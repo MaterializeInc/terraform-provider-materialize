@@ -131,7 +131,8 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("key"); ok {
-		builder.Key(v.([]string))
+		keys := materialize.GetSliceValueString(v.([]interface{}))
+		builder.Key(keys)
 	}
 
 	if v, ok := d.GetOk("format"); ok {

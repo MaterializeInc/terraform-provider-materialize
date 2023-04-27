@@ -28,3 +28,19 @@ func QualifiedName(fields ...string) string {
 	q := strings.Join(o[:], ".")
 	return q
 }
+
+func GetSliceValueString(v []interface{}) []string {
+	var o []string
+	for _, i := range v {
+		o = append(o, i.(string))
+	}
+	return o
+}
+
+func GetSliceValueInt(v []interface{}) []int {
+	var o []int
+	for _, i := range v {
+		o = append(o, i.(int))
+	}
+	return o
+}
