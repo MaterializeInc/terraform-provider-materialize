@@ -20,6 +20,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
 		Optional:    true,
+		Computed:    true,
 	},
 	"statement": {
 		Description: "The SQL statement to create the materialized view.",
