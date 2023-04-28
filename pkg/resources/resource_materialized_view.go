@@ -51,8 +51,8 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 	i := d.Id()
 	q := materialize.ReadMaterializedViewParams(i)
 
-	var name, schema, database *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
+	var name, schema, database, cluster *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &cluster); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -67,6 +67,10 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", cluster); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -87,7 +91,7 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	builder := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName)
 
-	if v, ok := d.GetOk("in_cluster"); ok && v.(string) != "" {
+	if v, ok := d.GetOk("cluster_name"); ok && v.(string) != "" {
 		builder.ClusterName(v.(string))
 	}
 
