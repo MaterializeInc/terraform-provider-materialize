@@ -31,6 +31,16 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Type:        schema.TypeInt,
 		Required:    true,
 	},
+	"public_key_1": {
+		Description: "The first public key associated with the SSH tunnel.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
+	"public_key_2": {
+		Description: "The second public key associated with the SSH tunnel.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 }
 
 func ConnectionSshTunnel() *schema.Resource {
@@ -38,7 +48,7 @@ func ConnectionSshTunnel() *schema.Resource {
 		Description: "The connection resource allows you to manage connections in Materialize.",
 
 		CreateContext: connectionSshTunnelCreate,
-		ReadContext:   connectionRead,
+		ReadContext:   connectionSshTunnelRead,
 		UpdateContext: connectionSshTunnelUpdate,
 		DeleteContext: connectionSshTunnelDelete,
 
@@ -48,6 +58,46 @@ func ConnectionSshTunnel() *schema.Resource {
 
 		Schema: connectionSshTunnelSchema,
 	}
+}
+
+func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	conn := meta.(*sqlx.DB)
+	i := d.Id()
+	q := materialize.ReadConnectionSshTunnelParams(i)
+
+	var name, schema, database, pk1, pk2 *string
+	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &pk1, &pk2); err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", schema); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", database); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("public_key_1", pk1); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("public_key_2", pk2); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.Connection{ConnectionName: *name, SchemaName: *schema, DatabaseName: *database}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
 }
 
 func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -69,7 +119,7 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
 		return diag.FromErr(err)
 	}
-	return connectionRead(ctx, d, meta)
+	return connectionSshTunnelRead(ctx, d, meta)
 }
 
 func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -87,7 +137,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
-	return connectionRead(ctx, d, meta)
+	return connectionSshTunnelRead(ctx, d, meta)
 }
 
 func connectionSshTunnelDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
