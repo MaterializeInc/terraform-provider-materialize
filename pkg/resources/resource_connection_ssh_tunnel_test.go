@@ -48,19 +48,9 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
-			AddRow("conn", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_connections.name,
-				mz_schemas.name,
-				mz_databases.name
-			FROM mz_connections
-			JOIN mz_schemas
-				ON mz_connections.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_connections.id = 'u1';`).WillReturnRows(ip)
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "pk1", "pk2"}).
+			AddRow("conn", "schema", "database", "pk1", "pk2")
+		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
 
 		if err := connectionSshTunnelCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -71,7 +61,7 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 
 func TestResourceSshTunnelUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inSshTunnel)
+	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel)
 
 	// Set current state
 	d.SetId("u1")
@@ -82,8 +72,9 @@ func TestResourceSshTunnelUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "pk1", "pk2"}).
+			AddRow("conn", "schema", "database", "pk1", "pk2")
+		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
 
 		if err := connectionSshTunnelUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

@@ -47,6 +47,8 @@ resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `public_key_1` (String) The first public key associated with the SSH tunnel.
+- `public_key_2` (String) The second public key associated with the SSH tunnel.
 - `qualified_sql_name` (String) The fully qualified name of the connection.
 
 ## Import
