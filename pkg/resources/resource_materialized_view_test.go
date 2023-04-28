@@ -23,12 +23,15 @@ var readMaterializedView string = `
 SELECT
 	mz_materialized_views.name,
 	mz_schemas.name,
-	mz_databases.name
+	mz_databases.name,
+	mz_clusters.name
 FROM mz_materialized_views
 JOIN mz_schemas
 	ON mz_materialized_views.schema_id = mz_schemas.id
 JOIN mz_databases
 	ON mz_schemas.database_id = mz_databases.id
+LEFT JOIN mz_clusters
+	ON mz_materialized_views.cluster_id = mz_clusters.id
 WHERE mz_materialized_views.id = 'u1';`
 
 func TestResourceMaterializedViewCreate(t *testing.T) {
@@ -55,7 +58,7 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("materialized_view", "schema", "database")
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "cluster"}).AddRow("materialized_view", "schema", "database", "cluster")
 		mock.ExpectQuery(readMaterializedView).WillReturnRows(ip)
 
 		if err := materializedViewCreate(context.TODO(), d, db); err != nil {
@@ -67,7 +70,7 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 
 func TestResourceMaterializedViewUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, View().Schema, inMaterializedView)
+	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)
 
 	// Set current state
 	d.SetId("u1")
@@ -78,7 +81,7 @@ func TestResourceMaterializedViewUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER MATERIALIZED VIEW "database"."schema"."old_materialized_view" RENAME TO "database"."schema"."materialized_view";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("materialized_view", "schema", "database")
+		ip := sqlmock.NewRows([]string{"name", "schema", "database", "cluster"}).AddRow("materialized_view", "schema", "database", "cluster")
 		mock.ExpectQuery(readMaterializedView).WillReturnRows(ip)
 
 		if err := materializedViewUpdate(context.TODO(), d, db); err != nil {

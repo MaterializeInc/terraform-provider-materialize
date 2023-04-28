@@ -76,12 +76,15 @@ func ReadMaterializedViewParams(id string) string {
 		SELECT
 			mz_materialized_views.name,
 			mz_schemas.name,
-			mz_databases.name
+			mz_databases.name,
+			mz_clusters.name
 		FROM mz_materialized_views
 		JOIN mz_schemas
 			ON mz_materialized_views.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
+		LEFT JOIN mz_clusters
+			ON mz_materialized_views.cluster_id = mz_clusters.id
 		WHERE mz_materialized_views.id = %s;`, QuoteString(id))
 }
 
