@@ -84,6 +84,7 @@ func Provider() *schema.Provider {
 			"materialize_database":          datasources.Database(),
 			"materialize_index":             datasources.Index(),
 			"materialize_materialized_view": datasources.MaterializedView(),
+			"materialize_role":              datasources.Role(),
 			"materialize_schema":            datasources.Schema(),
 			"materialize_secret":            datasources.Secret(),
 			"materialize_sink":              datasources.Sink(),

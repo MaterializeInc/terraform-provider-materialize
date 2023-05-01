@@ -50,32 +50,32 @@ func (b *RoleBuilder) Create() string {
 	var p []string
 
 	if b.inherit {
-		p = append(p, `INHERIT`)
+		p = append(p, ` INHERIT`)
 	}
 
 	if b.createRole {
-		p = append(p, `CREATEROLE`)
+		p = append(p, ` CREATEROLE`)
 	}
 
 	if b.createDb {
-		p = append(p, `CREATEDB`)
+		p = append(p, ` CREATEDB`)
 	}
 
 	if b.createCluster {
-		p = append(p, `CREATECLUSTER`)
+		p = append(p, ` CREATECLUSTER`)
 	}
 
 	if len(p) > 0 {
-		f := strings.Join(p, " ")
-		q.WriteString(fmt.Sprintf(` %s`, f))
+		f := strings.Join(p, "")
+		q.WriteString(f)
 	}
 
 	q.WriteString(`;`)
 	return q.String()
 }
 
-func (b *RoleBuilder) Alter(p string) string {
-	return fmt.Sprintf(`ALTER ROLE %s %s;`, b.QualifiedName(), p)
+func (b *RoleBuilder) Alter(permission string) string {
+	return fmt.Sprintf(`ALTER ROLE %s %s;`, b.QualifiedName(), permission)
 }
 
 func (b *RoleBuilder) Drop() string {
@@ -103,5 +103,5 @@ func ReadRoleParams(id string) string {
 }
 
 func ReadRoleDatasource() string {
-	return "SELECT id, name FROM mz_roles"
+	return "SELECT id, name FROM mz_roles;"
 }
