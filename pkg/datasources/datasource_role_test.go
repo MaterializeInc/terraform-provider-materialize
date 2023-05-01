@@ -12,19 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDatabaseDatasource(t *testing.T) {
+func TestRoleDatasource(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{}
-	d := schema.TestResourceDataRaw(t, Database().Schema, in)
+	d := schema.TestResourceDataRaw(t, Role().Schema, in)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		ir := mock.NewRows([]string{"id", "name"}).
-			AddRow("u1", "database")
-		mock.ExpectQuery(`SELECT id, name FROM mz_databases;`).WillReturnRows(ir)
+			AddRow("u1", "role")
+		mock.ExpectQuery(`SELECT id, name FROM mz_roles;`).WillReturnRows(ir)
 
-		if err := databaseRead(context.TODO(), d, db); err != nil {
+		if err := roleRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
