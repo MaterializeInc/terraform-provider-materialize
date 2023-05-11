@@ -10,7 +10,7 @@ import (
 type OwnershipBuilder struct {
 	conn       *sqlx.DB
 	objectType string
-	object     IdentifierSchemaStruct
+	object     ObjectSchemaStruct
 	roleName   string
 }
 
@@ -21,7 +21,7 @@ func NewOwnershipBuilder(conn *sqlx.DB, objectType string) *OwnershipBuilder {
 	}
 }
 
-func (b *OwnershipBuilder) Object(o IdentifierSchemaStruct) *OwnershipBuilder {
+func (b *OwnershipBuilder) Object(o ObjectSchemaStruct) *OwnershipBuilder {
 	b.object = o
 	return b
 }

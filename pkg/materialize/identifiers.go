@@ -1,5 +1,7 @@
 package materialize
 
+// Any Materialize Object. Will contain name and database and schema
+// If no database or schema is provided will inherit those values
 type IdentifierSchemaStruct struct {
 	Name         string
 	SchemaName   string

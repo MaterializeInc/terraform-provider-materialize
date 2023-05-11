@@ -36,7 +36,7 @@ func TestOwnershipAlter(t *testing.T) {
 
 		b := NewOwnershipBuilder(db, "TABLE")
 		b.RoleName("my_role")
-		b.Object(IdentifierSchemaStruct{
+		b.Object(ObjectSchemaStruct{
 			DatabaseName: "database",
 			SchemaName:   "schema",
 			Name:         "table",
@@ -67,7 +67,7 @@ func TestOwnershipReadId(t *testing.T) {
 		mock.ExpectQuery(query).WillReturnRows(ir)
 
 		b := NewOwnershipBuilder(db, "TABLE")
-		b.Object(IdentifierSchemaStruct{
+		b.Object(ObjectSchemaStruct{
 			DatabaseName: "database",
 			SchemaName:   "schema",
 			Name:         "table",

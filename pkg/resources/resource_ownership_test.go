@@ -13,87 +13,82 @@ import (
 )
 
 var inOwnership = map[string]interface{}{
-	"object":      []interface{}{map[string]interface{}{"name": "item", "schema_name": "public", "database_name": "database"}},
+	"object":      []interface{}{map[string]interface{}{"name": "table", "schema_name": "schema", "database_name": "database"}},
 	"object_type": "TABLE",
 	"role_name":   "my_role",
 }
 
-// func TestResourceOwnershipCreate(t *testing.T) {
-// 	r := require.New(t)
-// 	d := schema.TestResourceDataRaw(t, Ownership().Schema, inOwnership)
-// 	r.NotNil(d)
+func mockOwnershipParams(mock sqlmock.Sqlmock) {
+	ip := sqlmock.NewRows([]string{"owner_id", "name"}).AddRow("u1", "my_role")
+	mock.ExpectQuery(`
+		SELECT
+			o.owner_id,
+			r.name
+		FROM mz_tables o
+		JOIN mz_roles r
+			ON o.owner_id = r.id
+		WHERE o.id = 'u1'
+	`).WillReturnRows(ip)
+}
 
-// 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-// 		// Create
-// 		mock.ExpectExec(
-// 			`ALTER TABLE "database"."schema"."table" OWNER TO my_role;`,
-// 		).WillReturnResult(sqlmock.NewResult(1, 1))
+func TestResourceOwnershipCreate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Ownership().Schema, inOwnership)
+	r.NotNil(d)
 
-// 		// Query Id
-// 		ir := mock.NewRows([]string{"id"}).
-// 			AddRow("u1")
-// 		mock.ExpectQuery(`
-// 			SELECT o.id
-// 			FROM mz_tables o
-// 			JOIN mz_schemas
-// 				ON o.schema_id = mz_schemas.id
-// 			JOIN mz_databases
-// 				ON mz_schemas.database_id = mz_databases.id
-// 			WHERE o.name = 'table'
-// 			AND mz_databases.name = 'database'
-// 			AND mz_schemas.name = 'schema'
-// 		`).WillReturnRows(ir)
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`ALTER TABLE "database"."schema"."table" OWNER TO my_role;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-// 		// Query Params
-// 		ip := sqlmock.NewRows([]string{"owner_id", "name"}).AddRow("u1", "my_role")
-// 		mock.ExpectQuery(`
-// 			SELECT
-// 				o.owner_id,
-// 				r.name
-// 			FROM mz_tables o
-// 			JOIN mz_roles r
-// 				ON o.owner_id = r.id
-// 			WHERE o.id = 'u1'
-// 		`).WillReturnRows(ip)
+		// Query Id
+		ir := mock.NewRows([]string{"id"}).AddRow("u1")
+		mock.ExpectQuery(`
+			SELECT o.id
+			FROM mz_tables o
+			JOIN mz_schemas
+				ON o.schema_id = mz_schemas.id
+			JOIN mz_databases
+				ON mz_schemas.database_id = mz_databases.id
+			WHERE o.name = 'table'
+			AND mz_databases.name = 'database'
+			AND mz_schemas.name = 'schema'
+		`).WillReturnRows(ir)
 
-// 		if err := ownershipCreate(context.TODO(), d, db); err != nil {
-// 			t.Fatal(err)
-// 		}
-// 	})
-// }
+		// Query Params
+		mockOwnershipParams(mock)
 
-// func TestResourceOwnershipUpdate(t *testing.T) {
-// 	r := require.New(t)
-// 	d := schema.TestResourceDataRaw(t, Ownership().Schema, inOwnership)
+		if err := ownershipCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
 
-// 	// Set current state
-// 	d.SetId("ownership|table|u1")
-// 	d.Set("role_name", "my_old_role")
-// 	d.Set("object", []interface{}{map[string]interface{}{"name": "item", "schema_name": "public", "database_name": "database"}})
-// 	r.NotNil(d)
+func TestResourceOwnershipUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Ownership().Schema, inOwnership)
 
-// 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-// 		mock.ExpectExec(
-// 			`ALTER TABLE "database"."schema"."table" OWNER TO my_role;`,
-// 		).WillReturnResult(sqlmock.NewResult(1, 1))
+	// Set current state
+	d.SetId("ownership|table|u1")
+	d.Set("object", []interface{}{map[string]interface{}{"name": "table", "schema_name": "schema", "database_name": "database"}})
+	d.Set("object_type", "TABLE")
+	d.Set("role_name", "my_old_role")
+	r.NotNil(d)
 
-// 		// Query Params
-// 		ip := sqlmock.NewRows([]string{"owner_id", "name"}).AddRow("u1", "my_role")
-// 		mock.ExpectQuery(`
-// 			SELECT
-// 				o.owner_id,
-// 				r.name
-// 			FROM mz_tables o
-// 			JOIN mz_roles r
-// 				ON o.owner_id = r.id
-// 			WHERE o.id = 'u1'
-// 		`).WillReturnRows(ip)
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER TABLE "database"."schema"."table" OWNER TO my_role;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-// 		if err := ownershipCreate(context.TODO(), d, db); err != nil {
-// 			t.Fatal(err)
-// 		}
-// 	})
-// }
+		// Query Params
+		mockOwnershipParams(mock)
+
+		if err := ownershipUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
 
 func TestResourceOwnershipDelete(t *testing.T) {
 	r := require.New(t)

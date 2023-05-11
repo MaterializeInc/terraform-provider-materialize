@@ -2,40 +2,68 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
-var allowedOwners = []string{
-	"CLUSTER",
-	"CLUSTER_REPLICA",
-	"CONNECTION",
-	"DATABASE",
-	"SCHEMA",
-	"SOURCE",
-	"SINK",
-	"VIEW",
-	"MATERIALIZED VIEW",
-	"TABLE",
-	"TYPE",
-	"SECRET",
-}
-
 var ownershipSchema = map[string]*schema.Schema{
-	"object":                    IdentifierSchema("object", "The identifier of the item you want to set ownership.", true),
+	"object": {
+		Description: "The object to manage ownership of.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"name": {
+					Description: "The name of the object.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"schema_name": {
+					Description: "The schema name of the object (if applicable).",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+				"database_name": {
+					Description: "The database name of the object (if applicable).",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+			},
+		},
+		Required: true,
+		MinItems: 1,
+		MaxItems: 1,
+		ForceNew: true,
+	},
 	"object_qualified_sql_name": QualifiedNameSchema("object"),
 	"object_type": {
-		Description:  "The type of object.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ValidateFunc: validation.StringInSlice(allowedOwners, true),
-	},
+		Description: "The type of object.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ValidateFunc: func(val any, key string) (warns []string, errs []error) {
+			v := val.(string)
+
+			objects := make([]string, len(materialize.ObjectPermissions))
+			i := 0
+			for k := range materialize.ObjectPermissions {
+				objects[i] = k
+				i++
+			}
+
+			for _, b := range objects {
+				if b == v {
+					return
+				}
+			}
+
+			errs = append(errs, fmt.Errorf("[ERROR] %s is not of allowed object type: %s", v, objects))
+			return
+		}},
 	"role_name": {
 		Description: "The role to assoicate as the owner of the object.",
 		Type:        schema.TypeString,
@@ -76,9 +104,11 @@ func ownershipRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.FromErr(err)
 	}
 
-	qn := d.Get("object").(materialize.IdentifierSchemaStruct)
-	if err := d.Set("qualified_sql_name", qn.QualifiedName()); err != nil {
-		return diag.FromErr(err)
+	if v, ok := d.GetOk("object"); ok {
+		o := materialize.GetObjectSchemaStruct(v)
+		if err := d.Set("object_qualified_sql_name", o.QualifiedName()); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return nil
@@ -94,21 +124,30 @@ func ownershipCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	if v, ok := d.GetOk("object"); ok {
-		builder.Object(v.(materialize.IdentifierSchemaStruct))
+		o := materialize.GetObjectSchemaStruct(v)
+		builder.Object(o)
 	}
 
+	// create resource as ALTER
 	if err := builder.Alter(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := builder.ReadId()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
 
 	return ownershipRead(ctx, d, meta)
 }
 
 func ownershipUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	object := d.Get("object").(materialize.IdentifierSchemaStruct)
 	objectType := d.Get("object_type").(string)
 	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), objectType)
 
+	object := materialize.GetObjectSchemaStruct(d.Get("object"))
 	b.Object(object)
 
 	if d.HasChange("role_name") {

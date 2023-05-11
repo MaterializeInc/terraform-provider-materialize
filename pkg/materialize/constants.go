@@ -14,6 +14,7 @@ type ObjectType struct {
 	CatalogTable string
 }
 
+// https://materialize.com/docs/sql/grant-privilege/#details
 var ObjectPermissions = map[string]ObjectType{
 	"DATABASE": {
 		Permissions:  []string{"U", "C"},
