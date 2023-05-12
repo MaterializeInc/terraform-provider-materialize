@@ -92,7 +92,7 @@ func TestResourceAwsPrivatelinkDelete(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := connectionAwsPrivatelinkDelete(context.TODO(), d, db); err != nil {
+		if err := connectionDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

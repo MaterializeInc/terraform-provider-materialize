@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ConnectionSshTunnelBuilder struct {
@@ -12,9 +14,9 @@ type ConnectionSshTunnelBuilder struct {
 	sshPort int
 }
 
-func NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName string) *ConnectionSshTunnelBuilder {
+func NewConnectionSshTunnelBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionSshTunnelBuilder {
 	return &ConnectionSshTunnelBuilder{
-		Connection: Connection{connectionName, schemaName, databaseName},
+		Connection: Connection{conn, connectionName, schemaName, databaseName},
 	}
 }
 
@@ -33,7 +35,7 @@ func (b *ConnectionSshTunnelBuilder) SSHPort(sshPort int) *ConnectionSshTunnelBu
 	return b
 }
 
-func (b *ConnectionSshTunnelBuilder) Create() string {
+func (b *ConnectionSshTunnelBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.QualifiedName()))
 
@@ -42,28 +44,12 @@ func (b *ConnectionSshTunnelBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
 
 	q.WriteString(`);`)
-	return q.String()
-}
 
-func (b *ConnectionSshTunnelBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
-}
+	_, err := b.conn.Exec(q.String())
 
-func (b *ConnectionSshTunnelBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
-}
+	if err != nil {
+		return err
+	}
 
-func (b *ConnectionSshTunnelBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_connections.id
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = %s
-		AND mz_schemas.name = %s
-		AND mz_databases.name = %s;
-	`, QuoteString(b.ConnectionName), QuoteString(b.SchemaName), QuoteString(b.DatabaseName))
+	return nil
 }

@@ -87,7 +87,7 @@ func TestResourceSinkKafkaUpdate(t *testing.T) {
 			AddRow("sink", "schema", "database", "small", "conn", "cluster")
 		mock.ExpectQuery(readSink).WillReturnRows(ip)
 
-		if err := sinkKafkaUpdate(context.TODO(), d, db); err != nil {
+		if err := sinkUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -108,7 +108,7 @@ func TestResourceSinkKafkaDelete(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP SINK "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := sinkKafkaDelete(context.TODO(), d, db); err != nil {
+		if err := sinkDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

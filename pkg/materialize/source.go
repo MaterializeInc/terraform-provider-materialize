@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Table struct {
@@ -23,17 +25,61 @@ func GetTableStruct(v []interface{}) []Table {
 }
 
 type Source struct {
+	conn         *sqlx.DB
 	SourceName   string
 	SchemaName   string
 	DatabaseName string
+}
+
+func NewSource(conn *sqlx.DB, name, schema, database string) *Source {
+	return &Source{
+		conn:         conn,
+		SourceName:   name,
+		SchemaName:   schema,
+		DatabaseName: database,
+	}
 }
 
 func (s *Source) QualifiedName() string {
 	return QualifiedName(s.DatabaseName, s.SchemaName, s.SourceName)
 }
 
-func ReadSourceId(name, schema, database string) string {
-	return fmt.Sprintf(`
+func (b *Source) Rename(newName string) error {
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	q := fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
+
+	_, err := b.conn.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Source) UpdateSize(newSize string) error {
+	q := fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
+
+	_, err := b.conn.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Source) Drop() error {
+	q := fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
+
+	_, err := b.conn.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Source) ReadId() (string, error) {
+	q := fmt.Sprintf(`
 		SELECT mz_sources.id
 		FROM mz_sources
 		JOIN mz_schemas
@@ -47,11 +93,27 @@ func ReadSourceId(name, schema, database string) string {
 		WHERE mz_sources.name = %s
 		AND mz_schemas.name = %s
 		AND mz_databases.name = %s;
-	`, QuoteString(name), QuoteString(schema), QuoteString(database))
+	`, QuoteString(b.SourceName), QuoteString(b.SchemaName), QuoteString(b.DatabaseName))
+
+	var i string
+	if err := b.conn.QueryRowx(q).Scan(&i); err != nil {
+		return "", err
+	}
+
+	return i, nil
 }
 
-func ReadSourceParams(id string) string {
-	return fmt.Sprintf(`
+type SourceParams struct {
+	SourceName     string
+	SchemaName     string
+	DatabaseName   string
+	Size           string
+	ConnectionName string
+	ClusterName    string
+}
+
+func (b *Source) Params(catalogId string) (SourceParams, error) {
+	q := fmt.Sprintf(`
 		SELECT
 			mz_sources.name,
 			mz_schemas.name,
@@ -68,7 +130,23 @@ func ReadSourceParams(id string) string {
 			ON mz_sources.connection_id = mz_connections.id
 		JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
-		WHERE mz_sources.id = %s;`, QuoteString(id))
+		WHERE mz_sources.id = %s;
+	`, QuoteString(catalogId))
+
+	var name, schema, database, size, connectionName, clusterName string
+	if err := b.conn.QueryRowx(q).Scan(name, schema, database, size, connectionName, clusterName); err != nil {
+		return SourceParams{}, err
+	}
+
+	return SourceParams{
+		SourceName:     name,
+		SchemaName:     schema,
+		DatabaseName:   database,
+		Size:           size,
+		ConnectionName: connectionName,
+		ClusterName:    clusterName,
+	}, nil
+
 }
 
 func ReadSourceDatasource(databaseName, schemaName string) string {

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -88,8 +87,8 @@ func SinkKafka() *schema.Resource {
 
 		CreateContext: sinkKafkaCreate,
 		ReadContext:   sinkRead,
-		UpdateContext: sinkKafkaUpdate,
-		DeleteContext: sinkKafkaDelete,
+		UpdateContext: sinkUpdate,
+		DeleteContext: sinkDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -100,13 +99,11 @@ func SinkKafka() *schema.Resource {
 }
 
 func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	sinkName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewSinkKafkaBuilder(sinkName, schemaName, databaseName)
+	builder := materialize.NewSinkKafkaBuilder(meta.(*sqlx.DB), sinkName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		builder.ClusterName(v.(string))
@@ -149,56 +146,17 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		builder.Snapshot(v.(bool))
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "sink"); err != nil {
+	// create resource
+	if err := builder.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return sinkRead(ctx, d, meta)
-}
 
-func sinkKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sinkName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-
-		q := materialize.NewSinkKafkaBuilder(sinkName, schemaName, databaseName).UpdateSize(newSize.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not resize sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewSinkKafkaBuilder(sinkName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return sinkRead(ctx, d, meta)
-}
-
-func sinkKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sinkName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewSinkKafkaBuilder(sinkName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "sink"); err != nil {
+	// set id
+	i, err := builder.ReadId()
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+
+	d.SetId(i)
+	return sinkRead(ctx, d, meta)
 }

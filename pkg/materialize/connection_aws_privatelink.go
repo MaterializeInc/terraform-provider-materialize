@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ConnectionAwsPrivatelinkBuilder struct {
@@ -11,9 +13,9 @@ type ConnectionAwsPrivatelinkBuilder struct {
 	privateLinkAvailabilityZones []string
 }
 
-func NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName string) *ConnectionAwsPrivatelinkBuilder {
+func NewConnectionAwsPrivatelinkBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionAwsPrivatelinkBuilder {
 	return &ConnectionAwsPrivatelinkBuilder{
-		Connection: Connection{connectionName, schemaName, databaseName},
+		Connection: Connection{conn, connectionName, schemaName, databaseName},
 	}
 }
 
@@ -27,7 +29,7 @@ func (b *ConnectionAwsPrivatelinkBuilder) PrivateLinkAvailabilityZones(privateLi
 	return b
 }
 
-func (b *ConnectionAwsPrivatelinkBuilder) Create() string {
+func (b *ConnectionAwsPrivatelinkBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO AWS PRIVATELINK (`, b.QualifiedName()))
 
@@ -41,18 +43,12 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() string {
 	}
 
 	q.WriteString(`));`)
-	return q.String()
-}
 
-func (b *ConnectionAwsPrivatelinkBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
-}
+	_, err := b.conn.Exec(q.String())
 
-func (b *ConnectionAwsPrivatelinkBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
-}
+	if err != nil {
+		return err
+	}
 
-func (b *ConnectionAwsPrivatelinkBuilder) ReadId() string {
-	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
+	return nil
 }

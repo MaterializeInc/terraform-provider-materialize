@@ -76,7 +76,7 @@ func TestResourceSshTunnelUpdate(t *testing.T) {
 			AddRow("conn", "schema", "database", "pk1", "pk2")
 		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
 
-		if err := connectionSshTunnelUpdate(context.TODO(), d, db); err != nil {
+		if err := connectionUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -97,7 +97,7 @@ func TestResourceSshTunnelDelete(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := connectionSshTunnelDelete(context.TODO(), d, db); err != nil {
+		if err := connectionDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

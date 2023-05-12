@@ -81,28 +81,7 @@ func TestResourcePostgresUpdate(t *testing.T) {
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
-		if err := connectionPostgresUpdate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourcePostgresDelete(t *testing.T) {
-	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "conn",
-		"schema_name":   "schema",
-		"database_name": "database",
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, in)
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		if err := connectionPostgresDelete(context.TODO(), d, db); err != nil {
+		if err := connectionUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

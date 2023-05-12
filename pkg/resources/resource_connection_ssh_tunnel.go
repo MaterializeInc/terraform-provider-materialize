@@ -50,7 +50,7 @@ func ConnectionSshTunnel() *schema.Resource {
 		CreateContext: connectionSshTunnelCreate,
 		ReadContext:   connectionSshTunnelRead,
 		UpdateContext: connectionSshTunnelUpdate,
-		DeleteContext: connectionSshTunnelDelete,
+		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -61,39 +61,36 @@ func ConnectionSshTunnel() *schema.Resource {
 }
 
 func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
+	connectionName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	builder := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+
 	i := d.Id()
-	q := materialize.ReadConnectionSshTunnelParams(i)
+	params, _ := builder.SshTunnelParams(i)
 
-	var name, schema, database, pk1, pk2 *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &pk1, &pk2); err != nil {
+	if err := d.Set("name", params.ConnectionName); err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
-
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("schema_name", params.SchemaName); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", schema); err != nil {
+	if err := d.Set("database_name", params.DatabaseName); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", database); err != nil {
+	if err := d.Set("public_key_1", params.PublicKey1); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("public_key_1", pk1); err != nil {
+	if err := d.Set("public_key_2", params.PublicKey2); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("public_key_2", pk2); err != nil {
-		return diag.FromErr(err)
-	}
-
-	b := materialize.Connection{ConnectionName: *name, SchemaName: *schema, DatabaseName: *database}
-	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+	if err := d.Set("qualified_sql_name", builder.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -101,55 +98,46 @@ func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName)
+	builder := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	builder.SSHHost(d.Get("host").(string))
 	builder.SSHUser(d.Get("user").(string))
 	builder.SSHPort(d.Get("port").(int))
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+	// create resource
+	if err := builder.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := builder.ReadId()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(i)
 	return connectionSshTunnelRead(ctx, d, meta)
 }
 
 func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	builder := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+
 	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		q := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
+		_, newName := d.GetChange("name")
+
+		if err := builder.Rename(newName.(string)); err != nil {
+			log.Printf("[ERROR] could not rename connection %s", connectionName)
 			return diag.FromErr(err)
 		}
 	}
 
 	return connectionSshTunnelRead(ctx, d, meta)
-}
-
-func connectionSshTunnelDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "connection"); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
 }

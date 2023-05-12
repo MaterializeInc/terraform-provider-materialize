@@ -3,20 +3,66 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Sink struct {
+	conn         *sqlx.DB
 	SinkName     string
 	SchemaName   string
 	DatabaseName string
+}
+
+func NewSink(conn *sqlx.DB, name, schema, database string) *Sink {
+	return &Sink{
+		conn:         conn,
+		SinkName:     name,
+		SchemaName:   schema,
+		DatabaseName: database,
+	}
 }
 
 func (s *Sink) QualifiedName() string {
 	return QualifiedName(s.DatabaseName, s.SchemaName, s.SinkName)
 }
 
-func ReadSinkId(name, schema, database string) string {
-	return fmt.Sprintf(`
+func (b *Sink) Rename(newName string) error {
+	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
+	q := fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.QualifiedName(), n)
+
+	_, err := b.conn.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Sink) UpdateSize(newSize string) error {
+	q := fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
+
+	_, err := b.conn.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Sink) Drop() error {
+	q := fmt.Sprintf(`DROP SINK %s;`, b.QualifiedName())
+
+	_, err := b.conn.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Sink) ReadId() (string, error) {
+	q := fmt.Sprintf(`
 		SELECT mz_sinks.id
 		FROM mz_sinks
 		JOIN mz_schemas
@@ -30,11 +76,27 @@ func ReadSinkId(name, schema, database string) string {
 		WHERE mz_sinks.name = %s
 		AND mz_schemas.name = %s
 		AND mz_databases.name = %s;
-	`, QuoteString(name), QuoteString(schema), QuoteString(database))
+	`, QuoteString(b.SinkName), QuoteString(b.SchemaName), QuoteString(b.DatabaseName))
+
+	var i string
+	if err := b.conn.QueryRowx(q).Scan(&i); err != nil {
+		return "", err
+	}
+
+	return i, nil
 }
 
-func ReadSinkParams(id string) string {
-	return fmt.Sprintf(`
+type SinkParams struct {
+	SinkName       string
+	SchemaName     string
+	DatabaseName   string
+	Size           string
+	ConnectionName string
+	ClusterName    string
+}
+
+func (b *Sink) Params(catalogId string) (SinkParams, error) {
+	q := fmt.Sprintf(`
 		SELECT
 			mz_sinks.name,
 			mz_schemas.name,
@@ -51,7 +113,22 @@ func ReadSinkParams(id string) string {
 			ON mz_sinks.connection_id = mz_connections.id
 		JOIN mz_clusters
 			ON mz_sinks.cluster_id = mz_clusters.id
-		WHERE mz_sinks.id = %s;`, QuoteString(id))
+		WHERE mz_sinks.id = %s;
+	`, QuoteString(catalogId))
+
+	var name, schema, database, size, connectionName, clusterName string
+	if err := b.conn.QueryRowx(q).Scan(name, schema, database, size, connectionName, clusterName); err != nil {
+		return SinkParams{}, err
+	}
+
+	return SinkParams{
+		SinkName:       name,
+		SchemaName:     schema,
+		DatabaseName:   database,
+		Size:           size,
+		ConnectionName: connectionName,
+		ClusterName:    clusterName,
+	}, nil
 }
 
 func ReadSinkDatasource(databaseName, schemaName string) string {

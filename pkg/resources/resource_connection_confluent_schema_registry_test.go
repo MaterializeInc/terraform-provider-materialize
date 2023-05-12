@@ -79,7 +79,7 @@ func TestResourceConfluentSchemaRegistryUpdate(t *testing.T) {
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
-		if err := connectionConfluentSchemaRegistryUpdate(context.TODO(), d, db); err != nil {
+		if err := connectionUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -100,7 +100,7 @@ func TestResourceConfluentSchemaRegistryDelete(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := connectionConfluentSchemaRegistryDelete(context.TODO(), d, db); err != nil {
+		if err := connectionDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

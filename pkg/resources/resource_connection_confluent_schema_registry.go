@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -36,8 +35,8 @@ func ConnectionConfluentSchemaRegistry() *schema.Resource {
 
 		CreateContext: connectionConfluentSchemaRegistryCreate,
 		ReadContext:   connectionRead,
-		UpdateContext: connectionConfluentSchemaRegistryUpdate,
-		DeleteContext: connectionConfluentSchemaRegistryDelete,
+		UpdateContext: connectionUpdate,
+		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -48,13 +47,11 @@ func ConnectionConfluentSchemaRegistry() *schema.Resource {
 }
 
 func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName)
+	builder := materialize.NewConnectionConfluentSchemaRegistryBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("url"); ok {
 		builder.ConfluentSchemaRegistryUrl(v.(string))
@@ -95,43 +92,17 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		builder.ConfluentSchemaRegistryAWSPrivateLink(conn)
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+	// create resource
+	if err := builder.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return connectionRead(ctx, d, meta)
-}
 
-func connectionConfluentSchemaRegistryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		q := materialize.NewConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return connectionRead(ctx, d, meta)
-}
-
-func connectionConfluentSchemaRegistryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "connection"); err != nil {
+	// set id
+	i, err := builder.ReadId()
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+
+	d.SetId(i)
+	return connectionRead(ctx, d, meta)
 }

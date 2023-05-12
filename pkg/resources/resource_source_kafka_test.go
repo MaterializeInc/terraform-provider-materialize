@@ -63,9 +63,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
-			AddRow("conn", "schema", "database", "small", "conn", "cluster")
-		mock.ExpectQuery(readSource).WillReturnRows(ip)
+		mockSourceParams(mock)
 
 		if err := sourceKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -89,11 +87,9 @@ func TestResourceSourceKafkaUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" RENAME TO "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
-			AddRow("conn", "schema", "database", "small", "conn", "cluster")
-		mock.ExpectQuery(readSource).WillReturnRows(ip)
+		mockSourceParams(mock)
 
-		if err := sourceKafkaUpdate(context.TODO(), d, db); err != nil {
+		if err := sourceUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -114,7 +110,7 @@ func TestResourceSourceKafkaDelete(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP SOURCE "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := sourceKafkaDelete(context.TODO(), d, db); err != nil {
+		if err := sourceDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

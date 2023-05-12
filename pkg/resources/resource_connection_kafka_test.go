@@ -81,7 +81,7 @@ func TestResourceKafkaUpdate(t *testing.T) {
 		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
-		if err := connectionKafkaUpdate(context.TODO(), d, db); err != nil {
+		if err := connectionUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -102,7 +102,7 @@ func TestResourceKafkaDelete(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := connectionKafkaDelete(context.TODO(), d, db); err != nil {
+		if err := connectionDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

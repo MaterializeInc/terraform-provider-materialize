@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -75,8 +74,8 @@ func SourcePostgres() *schema.Resource {
 
 		CreateContext: sourcePostgresCreate,
 		ReadContext:   sourceRead,
-		UpdateContext: sourcePostgresUpdate,
-		DeleteContext: sourcePostgresDelete,
+		UpdateContext: sourceUpdate,
+		DeleteContext: sourceDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -87,13 +86,11 @@ func SourcePostgres() *schema.Resource {
 }
 
 func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName)
+	builder := materialize.NewSourcePostgresBuilder(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		builder.ClusterName(v.(string))
@@ -121,56 +118,17 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		builder.TextColumns(v.([]string))
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+	// create resource
+	if err := builder.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return sourceRead(ctx, d, meta)
-}
 
-func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-
-		q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not resize sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return sourceRead(ctx, d, meta)
-}
-
-func sourcePostgresDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "source"); err != nil {
+	// set id
+	i, err := builder.ReadId()
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+
+	d.SetId(i)
+	return sourceRead(ctx, d, meta)
 }
