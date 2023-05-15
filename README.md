@@ -4,9 +4,6 @@
 
 This repository contains a Terraform provider for managing resources in a [Materialize](https://materialize.com/) account.
 
-> **Warning**
-> The plugin is under active development.
-
 ## Requirements
 
 * Materialize >= 0.27
@@ -15,13 +12,13 @@ This repository contains a Terraform provider for managing resources in a [Mater
 
 ## Installation
 
-To use the provider, add the following configuration to your Terraform settings:
+The `materialize` provider is published to the [Terraform Registry](https://registry.terraform.io/providers/MaterializeInc/materialize/latest). To use it, add the following configuration to your Terraform settings:
 
 ```hcl
 terraform {
   required_providers {
     materialize = {
-      source = "materialize.com/devex/materialize"
+      source = "MaterializeInc/materialize"
     }
   }
 }
