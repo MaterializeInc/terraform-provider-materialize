@@ -65,7 +65,9 @@ func Provider() *schema.Provider {
 			"materialize_connection_ssh_tunnel":                resources.ConnectionSshTunnel(),
 			"materialize_database":                             resources.Database(),
 			"materialize_index":                                resources.Index(),
-			"materialize_materialized_view":                    resources.MaterializedView(),
+			// TODO Expose RBAC resources when ready
+			// "materialize_ownership":                            resources.Ownership(),
+			"materialize_materialized_view": resources.MaterializedView(),
 			// "materialize_role":                                 resources.Role(),
 			"materialize_schema":                resources.Schema(),
 			"materialize_secret":                resources.Secret(),
