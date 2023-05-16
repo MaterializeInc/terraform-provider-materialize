@@ -1,25 +1,43 @@
 package materialize
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	"github.com/stretchr/testify/require"
-// )
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
+)
 
-// func TestConnectionCreateConfluentSchemaRegistryQuery(t *testing.T) {
-// 	r := require.New(t)
-// 	b := NewConnectionConfluentSchemaRegistryBuilder("csr_conn", "schema", "database")
-// 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
-// 	b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Text: "user"})
-// 	b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
-// 	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "database"."schema"."password");`, b.Create())
-// }
+func TestConnectionConfluentSchemaRegistryCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "database"."schema"."password"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-// func TestConnectionCreateConfluentSchemaRegistryQueryUsernameSecret(t *testing.T) {
-// 	r := require.New(t)
-// 	b := NewConnectionConfluentSchemaRegistryBuilder("csr_conn", "schema", "database")
-// 	b.ConfluentSchemaRegistryUrl("http://localhost:8081")
-// 	b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "user", DatabaseName: "database"}})
-// 	b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
-// 	r.Equal(`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = SECRET "database"."schema"."user", PASSWORD = SECRET "database"."schema"."password");`, b.Create())
-// }
+		b := NewConnectionConfluentSchemaRegistryBuilder(db, "csr_conn", "schema", "database")
+		b.ConfluentSchemaRegistryUrl("http://localhost:8081")
+		b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Text: "user"})
+		b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestConnectionConfluentSchemaRegistryUsernameSecretCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = SECRET "database"."schema"."user", PASSWORD = SECRET "database"."schema"."password"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewConnectionConfluentSchemaRegistryBuilder(db, "csr_conn", "schema", "database")
+		b.ConfluentSchemaRegistryUrl("http://localhost:8081")
+		b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "user", DatabaseName: "database"}})
+		b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

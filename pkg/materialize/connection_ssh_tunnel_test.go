@@ -1,17 +1,26 @@
 package materialize
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	"github.com/stretchr/testify/require"
-// )
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
+)
 
-// func TestConnectionSshTunnelCreateQuery(t *testing.T) {
-// 	r := require.New(t)
+func TestConnectionSshTunnelCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."ssh_conn" TO SSH TUNNEL \(HOST 'localhost', USER 'user', PORT 123\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-// 	b := NewConnectionSshTunnelBuilder("ssh_conn", "schema", "database")
-// 	b.SSHHost("localhost")
-// 	b.SSHPort(123)
-// 	b.SSHUser("user")
-// 	r.Equal(`CREATE CONNECTION "database"."schema"."ssh_conn" TO SSH TUNNEL (HOST 'localhost', USER 'user', PORT 123);`, b.Create())
-// }
+		b := NewConnectionSshTunnelBuilder(db, "ssh_conn", "schema", "database")
+		b.SSHHost("localhost")
+		b.SSHPort(123)
+		b.SSHUser("user")
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
