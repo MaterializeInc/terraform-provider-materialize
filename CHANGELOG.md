@@ -12,6 +12,7 @@
 * Include `3xsmall` as a valid size
 
 ### Misc
+
 * Update index queries to use `mz_objects`
 
 ## 0.0.4 - 2022-05-01
