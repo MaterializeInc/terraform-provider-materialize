@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,11 +20,10 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	},
 	"size": SizeSchema("replica"),
 	"availability_zone": {
-		Description:  "If you want the replica to reside in a specific availability zone.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(regions, true),
+		Description: "If you want the replica to reside in a specific availability zone.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"introspection_interval": {
 		Description: "The interval at which to collect introspection data.",
