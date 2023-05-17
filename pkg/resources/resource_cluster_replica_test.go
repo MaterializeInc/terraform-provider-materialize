@@ -46,7 +46,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "cluster", "size", "availability_zone"}).
-			AddRow("replica", "cluster", "small", "us-east-1")
+			AddRow("replica", "cluster", "medium", "use1-az1")
 		mock.ExpectQuery(`
 			SELECT
 				mz_cluster_replicas.name,
@@ -61,6 +61,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 		if err := clusterReplicaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
+
 	})
 
 }

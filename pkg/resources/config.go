@@ -26,11 +26,6 @@ var localSizes = []string{
 	"32-32",
 }
 
-var regions = []string{
-	"us-east-1",
-	"eu-west-1",
-}
-
 // https://materialize.com/docs/sql/create-cluster-replica/#sizes
 var replicaSizes = []string{
 	"3xsmall",
