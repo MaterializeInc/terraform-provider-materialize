@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.5 - 2022-05-18
+
+### Features
+
+* Include datasource `materialize_egress_ips`
+
+### BugFixes
+
+* Remove improper validation for cluster replica availability zones
+* Include `3xsmall` as a valid size
+
+### Misc
+* Update index queries to use `mz_objects`
+
 ## 0.0.4 - 2022-05-01
 
 ### Features
