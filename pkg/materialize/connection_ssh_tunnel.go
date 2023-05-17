@@ -53,3 +53,37 @@ func (b *ConnectionSshTunnelBuilder) Create() error {
 
 	return nil
 }
+
+type ConnectionSshTunnelParams struct {
+	ConnectionName string `db:"name"`
+	SchemaName     string `db:"schema"`
+	DatabaseName   string `db:"database"`
+	PublicKey1     string `db:"pk1"`
+	PublicKey2     string `db:"pk2"`
+}
+
+func (b *ConnectionSshTunnelBuilder) Params(catalogId string) (ConnectionSshTunnelParams, error) {
+	q := fmt.Sprintf(`
+		SELECT
+			mz_connections.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_ssh_tunnel_connections.public_key_1,
+			mz_ssh_tunnel_connections.public_key_2
+		FROM mz_connections
+		JOIN mz_schemas
+			ON mz_connections.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		LEFT JOIN mz_ssh_tunnel_connections
+			ON mz_connections.id = mz_ssh_tunnel_connections.id
+		WHERE mz_connections.id = %s;
+	`, QuoteString(catalogId))
+
+	var s ConnectionSshTunnelParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return s, err
+	}
+
+	return s, nil
+}

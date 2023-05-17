@@ -62,7 +62,10 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 	builder := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	i := d.Id()
-	params, _ := builder.AwsPrivatelinkParams(i)
+	params, err := builder.Params(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err := d.Set("name", params.ConnectionName); err != nil {
 		return diag.FromErr(err)

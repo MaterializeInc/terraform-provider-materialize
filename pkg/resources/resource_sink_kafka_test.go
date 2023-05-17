@@ -57,9 +57,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
-			AddRow("sink", "schema", "database", "small", "conn", "cluster")
-		mock.ExpectQuery(readSink).WillReturnRows(ip)
+		mockSinkParams(mock)
 
 		if err := sinkKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -83,9 +81,7 @@ func TestResourceSinkKafkaUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" RENAME TO "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
-			AddRow("sink", "schema", "database", "small", "conn", "cluster")
-		mock.ExpectQuery(readSink).WillReturnRows(ip)
+		mockSinkParams(mock)
 
 		if err := sinkUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

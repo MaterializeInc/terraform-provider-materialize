@@ -19,7 +19,10 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	builder := materialize.NewSink(meta.(*sqlx.DB), sinkName, schemaName, databaseName)
 
 	i := d.Id()
-	params, _ := builder.Params(i)
+	params, err := builder.Params(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err := d.Set("name", params.SinkName); err != nil {
 		return diag.FromErr(err)

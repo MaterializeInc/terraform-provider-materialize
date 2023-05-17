@@ -52,9 +52,7 @@ func TestResourceConfluentSchemaRegistryCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
-			AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+		mockConnectionParams(mock)
 
 		if err := connectionConfluentSchemaRegistryCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -76,8 +74,7 @@ func TestResourceConfluentSchemaRegistryUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
+		mockConnectionParams(mock)
 
 		if err := connectionUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

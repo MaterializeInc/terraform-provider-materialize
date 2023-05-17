@@ -89,9 +89,9 @@ func (b *Connection) ReadId() (string, error) {
 }
 
 type ConnectionParams struct {
-	ConnectionName string
-	SchemaName     string
-	DatabaseName   string
+	ConnectionName string `db:"name"`
+	SchemaName     string `db:"schema"`
+	DatabaseName   string `db:"database"`
 }
 
 func (b *Connection) Params(catalogId string) (ConnectionParams, error) {
@@ -108,93 +108,12 @@ func (b *Connection) Params(catalogId string) (ConnectionParams, error) {
 		WHERE mz_connections.id = %s;
 	`, QuoteString(catalogId))
 
-	var name, schema, database string
-	if err := b.conn.QueryRowx(q).Scan(name, schema, database); err != nil {
-		return ConnectionParams{}, err
+	var s ConnectionParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return s, err
 	}
 
-	return ConnectionParams{
-		ConnectionName: name,
-		SchemaName:     schema,
-		DatabaseName:   database,
-	}, nil
-}
-
-type ConnectionAwsPrivatelinkParams struct {
-	ConnectionName string
-	SchemaName     string
-	DatabaseName   string
-	Principal      string
-}
-
-func (b *Connection) AwsPrivatelinkParams(catalogId string) (ConnectionAwsPrivatelinkParams, error) {
-	q := fmt.Sprintf(`
-		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_aws_privatelink_connections.principal
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		JOIN mz_aws_privatelink_connections
-			ON mz_connections.id = mz_aws_privatelink_connections.id
-		WHERE mz_connections.id = %s;
-	`, QuoteString(catalogId))
-
-	var name, schema, database, principal string
-	if err := b.conn.QueryRowx(q).Scan(name, schema, database, principal); err != nil {
-		return ConnectionAwsPrivatelinkParams{}, err
-	}
-
-	return ConnectionAwsPrivatelinkParams{
-		ConnectionName: name,
-		SchemaName:     schema,
-		DatabaseName:   database,
-		Principal:      principal,
-	}, nil
-}
-
-type ConnectionSshTunnelParams struct {
-	ConnectionName string
-	SchemaName     string
-	DatabaseName   string
-	PublicKey1     string
-	PublicKey2     string
-}
-
-func (b *Connection) SshTunnelParams(catalogId string) (ConnectionSshTunnelParams, error) {
-	q := fmt.Sprintf(`
-		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_ssh_tunnel_connections.public_key_1,
-			mz_ssh_tunnel_connections.public_key_2
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		LEFT JOIN mz_ssh_tunnel_connections
-			ON mz_connections.id = mz_ssh_tunnel_connections.id
-		WHERE mz_connections.id = %s;
-	`, QuoteString(catalogId))
-
-	var name, schema, database, publick1, publick2 string
-	if err := b.conn.QueryRowx(q).Scan(name, schema, database, publick1, publick2); err != nil {
-		return ConnectionSshTunnelParams{}, err
-	}
-
-	return ConnectionSshTunnelParams{
-		ConnectionName: name,
-		SchemaName:     schema,
-		DatabaseName:   database,
-		PublicKey1:     publick1,
-		PublicKey2:     publick2,
-	}, nil
+	return s, nil
 }
 
 func ReadConnectionDatasource(databaseName, schemaName string) string {

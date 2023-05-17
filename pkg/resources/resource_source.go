@@ -19,7 +19,10 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	builder := materialize.NewSource(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
 
 	i := d.Id()
-	params, _ := builder.Params(i)
+	params, err := builder.Params(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err := d.Set("name", params.SourceName); err != nil {
 		return diag.FromErr(err)

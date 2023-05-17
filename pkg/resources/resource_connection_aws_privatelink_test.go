@@ -20,6 +20,37 @@ var inAwsPrivatelink = map[string]interface{}{
 	"availability_zones": []interface{}{"use1-az1", "use1-az2"},
 }
 
+func TestResourceAwsPrivatelinkRead(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
+	r.NotNil(d)
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mockConnectionAwsPrivatelinkParams(mock)
+
+		if err := connectionAwsPrivatelinkRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		// Ensure parameters set
+		expectedParams := map[string]string{
+			"name":               "conn",
+			"schema_name":        "schema",
+			"database_name":      "database",
+			"principal":          "principal",
+			"qualified_sql_name": `"database"."schema"."conn"`,
+		}
+
+		for key, value := range expectedParams {
+			v := d.Get(key).(string)
+			if v != value {
+				t.Fatalf("Unexpected parameter set for %s. Recieved: %s", key, v)
+			}
+		}
+	})
+}
+
 func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
@@ -45,8 +76,7 @@ func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "principal"}).AddRow("conn", "schema", "database", "principal")
-		mock.ExpectQuery(readConnectionAwsPrivatelink).WillReturnRows(ip)
+		mockConnectionAwsPrivatelinkParams(mock)
 
 		if err := connectionAwsPrivatelinkCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -68,8 +98,7 @@ func TestResourceAwsPrivatelinkUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "principal"}).AddRow("conn", "schema", "database", "principal")
-		mock.ExpectQuery(readConnectionAwsPrivatelink).WillReturnRows(ip)
+		mockConnectionAwsPrivatelinkParams(mock)
 
 		if err := connectionAwsPrivatelinkUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

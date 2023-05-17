@@ -104,12 +104,12 @@ func (b *Source) ReadId() (string, error) {
 }
 
 type SourceParams struct {
-	SourceName     string
-	SchemaName     string
-	DatabaseName   string
-	Size           string
-	ConnectionName string
-	ClusterName    string
+	SourceName     string `db:"name"`
+	SchemaName     string `db:"schema"`
+	DatabaseName   string `db:"database"`
+	Size           string `db:"size"`
+	ConnectionName string `db:"connection_name"`
+	ClusterName    string `db:"cluster_name"`
 }
 
 func (b *Source) Params(catalogId string) (SourceParams, error) {
@@ -133,20 +133,12 @@ func (b *Source) Params(catalogId string) (SourceParams, error) {
 		WHERE mz_sources.id = %s;
 	`, QuoteString(catalogId))
 
-	var name, schema, database, size, connectionName, clusterName string
-	if err := b.conn.QueryRowx(q).Scan(name, schema, database, size, connectionName, clusterName); err != nil {
-		return SourceParams{}, err
+	var s SourceParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return s, err
 	}
 
-	return SourceParams{
-		SourceName:     name,
-		SchemaName:     schema,
-		DatabaseName:   database,
-		Size:           size,
-		ConnectionName: connectionName,
-		ClusterName:    clusterName,
-	}, nil
-
+	return s, nil
 }
 
 func ReadSourceDatasource(databaseName, schemaName string) string {

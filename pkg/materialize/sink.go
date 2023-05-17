@@ -87,12 +87,12 @@ func (b *Sink) ReadId() (string, error) {
 }
 
 type SinkParams struct {
-	SinkName       string
-	SchemaName     string
-	DatabaseName   string
-	Size           string
-	ConnectionName string
-	ClusterName    string
+	SinkName       string `db:"name"`
+	SchemaName     string `db:"schema"`
+	DatabaseName   string `db:"database"`
+	Size           string `db:"size"`
+	ConnectionName string `db:"connection_name"`
+	ClusterName    string `db:"cluster_name"`
 }
 
 func (b *Sink) Params(catalogId string) (SinkParams, error) {
@@ -102,8 +102,8 @@ func (b *Sink) Params(catalogId string) (SinkParams, error) {
 			mz_schemas.name,
 			mz_databases.name,
 			mz_sinks.size,
-			mz_connections.name as connection_name,
-			mz_clusters.name as cluster_name
+			mz_connections.name AS connection_name,
+			mz_clusters.name AS cluster_name
 		FROM mz_sinks
 		JOIN mz_schemas
 			ON mz_sinks.schema_id = mz_schemas.id
@@ -116,19 +116,12 @@ func (b *Sink) Params(catalogId string) (SinkParams, error) {
 		WHERE mz_sinks.id = %s;
 	`, QuoteString(catalogId))
 
-	var name, schema, database, size, connectionName, clusterName string
-	if err := b.conn.QueryRowx(q).Scan(name, schema, database, size, connectionName, clusterName); err != nil {
-		return SinkParams{}, err
+	var s SinkParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return s, err
 	}
 
-	return SinkParams{
-		SinkName:       name,
-		SchemaName:     schema,
-		DatabaseName:   database,
-		Size:           size,
-		ConnectionName: connectionName,
-		ClusterName:    clusterName,
-	}, nil
+	return s, nil
 }
 
 func ReadSinkDatasource(databaseName, schemaName string) string {

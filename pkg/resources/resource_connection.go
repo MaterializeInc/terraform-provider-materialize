@@ -19,7 +19,10 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	builder := materialize.NewConnection(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	i := d.Id()
-	params, _ := builder.Params(i)
+	params, err := builder.Params(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err := d.Set("name", params.ConnectionName); err != nil {
 		return diag.FromErr(err)

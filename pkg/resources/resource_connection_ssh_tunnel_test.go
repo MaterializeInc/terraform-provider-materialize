@@ -22,6 +22,38 @@ var inSshTunnel = map[string]interface{}{
 	"user":          "user",
 }
 
+func TestResourceSshTunnelRead(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel)
+	r.NotNil(d)
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mockConnectionSshTunnelParams(mock)
+
+		if err := connectionSshTunnelRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		// Ensure parameters set
+		expectedParams := map[string]string{
+			"name":               "conn",
+			"schema_name":        "schema",
+			"database_name":      "database",
+			"public_key_1":       "pk1",
+			"public_key_2":       "pk2",
+			"qualified_sql_name": `"database"."schema"."conn"`,
+		}
+
+		for key, value := range expectedParams {
+			v := d.Get(key).(string)
+			if v != value {
+				t.Fatalf("Unexpected parameter set for %s. Recieved: %s", key, v)
+			}
+		}
+	})
+}
+
 func TestResourceSshTunnelCreate(t *testing.T) {
 	r := require.New(t)
 
@@ -48,9 +80,7 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "pk1", "pk2"}).
-			AddRow("conn", "schema", "database", "pk1", "pk2")
-		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
+		mockConnectionSshTunnelParams(mock)
 
 		if err := connectionSshTunnelCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -72,11 +102,9 @@ func TestResourceSshTunnelUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "pk1", "pk2"}).
-			AddRow("conn", "schema", "database", "pk1", "pk2")
-		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
+		mockConnectionSshTunnelParams(mock)
 
-		if err := connectionUpdate(context.TODO(), d, db); err != nil {
+		if err := connectionSshTunnelUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

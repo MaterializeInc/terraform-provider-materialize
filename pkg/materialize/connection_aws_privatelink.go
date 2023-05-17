@@ -52,3 +52,35 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() error {
 
 	return nil
 }
+
+type ConnectionAwsPrivatelinkParams struct {
+	ConnectionName string `db:"name"`
+	SchemaName     string `db:"schema"`
+	DatabaseName   string `db:"database"`
+	Principal      string `db:"principal"`
+}
+
+func (b *ConnectionAwsPrivatelinkBuilder) Params(catalogId string) (ConnectionAwsPrivatelinkParams, error) {
+	q := fmt.Sprintf(`
+		SELECT
+			mz_connections.name,
+			mz_schemas.name,
+			mz_databases.name,
+			mz_aws_privatelink_connections.principal
+		FROM mz_connections
+		JOIN mz_schemas
+			ON mz_connections.schema_id = mz_schemas.id
+		JOIN mz_databases
+			ON mz_schemas.database_id = mz_databases.id
+		JOIN mz_aws_privatelink_connections
+			ON mz_connections.id = mz_aws_privatelink_connections.id
+		WHERE mz_connections.id = %s;
+	`, QuoteString(catalogId))
+
+	var s ConnectionAwsPrivatelinkParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return s, err
+	}
+
+	return s, nil
+}
