@@ -14,11 +14,11 @@ Configure the provider by adding the following block to your Terraform project:
 ```terraform
 # Configuration-based authentication
 provider "materialize" {
-  host     = var.materialize_hostname  # optionally use MZ_HOST env var
-  username = var.materialize_username  # optionally use MZ_USER env var
-  password = var.materialize_password  # optionally use MZ_PW env var
-  port     = var.materialize_port      # optionally use MZ_PORT env var
-  database = var.materialize_database  # optionally use MZ_DATABASE env var
+  host     = var.materialize_hostname # optionally use MZ_HOST env var
+  username = var.materialize_username # optionally use MZ_USER env var
+  password = var.materialize_password # optionally use MZ_PW env var
+  port     = var.materialize_port     # optionally use MZ_PORT env var
+  database = var.materialize_database # optionally use MZ_DATABASE env var
 }
 ```
 
