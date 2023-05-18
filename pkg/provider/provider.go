@@ -20,33 +20,33 @@ func Provider() *schema.Provider {
 			"host": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Materialize host",
+				Description: "Materialize host. Can also come from the `MZ_HOST` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Materialize username",
+				Description: "Materialize username. Can also come from the `MZ_USER` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_USER", nil),
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
-				Description: "Materialize host",
+				Description: "Materialize host. Can also come from the `MZ_PW` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PW", nil),
 			},
 			"port": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Description: "The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6875),
-				Description: "The Materialize port number to connect to at the server host",
 			},
 			"database": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Description: "The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
-				Description: "The Materialize database",
 			},
 			"testing": {
 				Type:        schema.TypeBool,
