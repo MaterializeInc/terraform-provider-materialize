@@ -1,0 +1,35 @@
+---
+page_title: "Provider: Materialize"
+description: Manage Materialize with Terraform.
+---
+
+# Materialize Provider
+
+This repository contains a Terraform provider for managing resources in a [Materialize](https://materialize.com/) account.
+
+## Example Provider Configuration
+
+Configure the provider by adding the following block to your Terraform project:
+
+{{tffile "examples/provider/provider.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Order Precedence
+
+The Materialize provider will use the following order of precedence when determining which credentials to use:
+1) Provider Configuration
+2) Environment Variables
+
+## Modules
+
+To help with your projects, you can use these Materialize maintained Terraform modules for common configurations:
+
+* [MSK Privatelink](https://registry.terraform.io/modules/MaterializeInc/msk-privatelink/aws/latest)
+* [Kafka Privatelink](https://registry.terraform.io/modules/MaterializeInc/kafka-privatelink/aws/latest)
+* [EC2 SSH Bastion](https://registry.terraform.io/modules/MaterializeInc/ec2-ssh-bastion/aws/latest)
+* [RDS Postgres](https://registry.terraform.io/modules/MaterializeInc/rds-postgres/aws/latest)
+
+## Helpful Links/Information
+
+* [Report Bugs](https://github.com/MaterializeInc/terraform-provider-materialize/issues)
