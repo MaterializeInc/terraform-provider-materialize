@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -54,10 +55,10 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() error {
 }
 
 type ConnectionAwsPrivatelinkParams struct {
-	ConnectionName string `db:"name"`
-	SchemaName     string `db:"schema"`
-	DatabaseName   string `db:"database"`
-	Principal      string `db:"principal"`
+	ConnectionName sql.NullString `db:"name"`
+	SchemaName     sql.NullString `db:"schema"`
+	DatabaseName   sql.NullString `db:"database"`
+	Principal      sql.NullString `db:"principal"`
 }
 
 func (b *ConnectionAwsPrivatelinkBuilder) Params(catalogId string) (ConnectionAwsPrivatelinkParams, error) {

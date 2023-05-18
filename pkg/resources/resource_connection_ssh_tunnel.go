@@ -73,23 +73,23 @@ func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("name", params.ConnectionName); err != nil {
+	if err := d.Set("name", params.ConnectionName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", params.SchemaName); err != nil {
+	if err := d.Set("schema_name", params.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", params.DatabaseName); err != nil {
+	if err := d.Set("database_name", params.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("public_key_1", params.PublicKey1); err != nil {
+	if err := d.Set("public_key_1", params.PublicKey1.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("public_key_2", params.PublicKey2); err != nil {
+	if err := d.Set("public_key_2", params.PublicKey2.String); err != nil {
 		return diag.FromErr(err)
 	}
 

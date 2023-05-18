@@ -24,23 +24,23 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("name", params.SourceName); err != nil {
+	if err := d.Set("name", params.SourceName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", params.SchemaName); err != nil {
+	if err := d.Set("schema_name", params.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", params.DatabaseName); err != nil {
+	if err := d.Set("database_name", params.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("size", params.Size); err != nil {
+	if err := d.Set("size", params.Size.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("cluster_name", params.ClusterName); err != nil {
+	if err := d.Set("cluster_name", params.ClusterName.String); err != nil {
 		return diag.FromErr(err)
 	}
 

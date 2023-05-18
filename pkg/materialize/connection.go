@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -89,9 +90,9 @@ func (b *Connection) ReadId() (string, error) {
 }
 
 type ConnectionParams struct {
-	ConnectionName string `db:"name"`
-	SchemaName     string `db:"schema"`
-	DatabaseName   string `db:"database"`
+	ConnectionName sql.NullString `db:"name"`
+	SchemaName     sql.NullString `db:"schema"`
+	DatabaseName   sql.NullString `db:"database"`
 }
 
 func (b *Connection) Params(catalogId string) (ConnectionParams, error) {

@@ -24,15 +24,15 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("name", params.ConnectionName); err != nil {
+	if err := d.Set("name", params.ConnectionName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", params.SchemaName); err != nil {
+	if err := d.Set("schema_name", params.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", params.DatabaseName); err != nil {
+	if err := d.Set("database_name", params.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 

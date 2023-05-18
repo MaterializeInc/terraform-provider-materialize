@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -55,11 +56,11 @@ func (b *ConnectionSshTunnelBuilder) Create() error {
 }
 
 type ConnectionSshTunnelParams struct {
-	ConnectionName string `db:"name"`
-	SchemaName     string `db:"schema"`
-	DatabaseName   string `db:"database"`
-	PublicKey1     string `db:"pk1"`
-	PublicKey2     string `db:"pk2"`
+	ConnectionName sql.NullString `db:"name"`
+	SchemaName     sql.NullString `db:"schema"`
+	DatabaseName   sql.NullString `db:"database"`
+	PublicKey1     sql.NullString `db:"pk1"`
+	PublicKey2     sql.NullString `db:"pk2"`
 }
 
 func (b *ConnectionSshTunnelBuilder) Params(catalogId string) (ConnectionSshTunnelParams, error) {

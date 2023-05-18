@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -104,12 +105,12 @@ func (b *Source) ReadId() (string, error) {
 }
 
 type SourceParams struct {
-	SourceName     string `db:"name"`
-	SchemaName     string `db:"schema"`
-	DatabaseName   string `db:"database"`
-	Size           string `db:"size"`
-	ConnectionName string `db:"connection_name"`
-	ClusterName    string `db:"cluster_name"`
+	SourceName     sql.NullString `db:"name"`
+	SchemaName     sql.NullString `db:"schema"`
+	DatabaseName   sql.NullString `db:"database"`
+	Size           sql.NullString `db:"size"`
+	ConnectionName sql.NullString `db:"connection_name"`
+	ClusterName    sql.NullString `db:"cluster_name"`
 }
 
 func (b *Source) Params(catalogId string) (SourceParams, error) {

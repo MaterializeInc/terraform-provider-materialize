@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -87,12 +88,12 @@ func (b *Sink) ReadId() (string, error) {
 }
 
 type SinkParams struct {
-	SinkName       string `db:"name"`
-	SchemaName     string `db:"schema"`
-	DatabaseName   string `db:"database"`
-	Size           string `db:"size"`
-	ConnectionName string `db:"connection_name"`
-	ClusterName    string `db:"cluster_name"`
+	SinkName       sql.NullString `db:"name"`
+	SchemaName     sql.NullString `db:"schema"`
+	DatabaseName   sql.NullString `db:"database"`
+	Size           sql.NullString `db:"size"`
+	ConnectionName sql.NullString `db:"connection_name"`
+	ClusterName    sql.NullString `db:"cluster_name"`
 }
 
 func (b *Sink) Params(catalogId string) (SinkParams, error) {
