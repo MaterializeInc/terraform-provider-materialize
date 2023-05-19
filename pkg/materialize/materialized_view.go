@@ -74,10 +74,10 @@ func (b *MaterializedViewBuilder) ReadId() string {
 func ReadMaterializedViewParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
-			mz_materialized_views.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_clusters.name
+			mz_materialized_views.name AS materialized_view_name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name,
+			mz_clusters.name AS cluster_name
 		FROM mz_materialized_views
 		JOIN mz_schemas
 			ON mz_materialized_views.schema_id = mz_schemas.id

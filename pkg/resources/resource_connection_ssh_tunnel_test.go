@@ -48,7 +48,7 @@ func TestResourceSshTunnelCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "public_key_1", "public_key_2"}).
+		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name", "public_key_1", "public_key_2"}).
 			AddRow("conn", "schema", "database", "pk1", "pk2")
 		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
 
@@ -72,7 +72,7 @@ func TestResourceSshTunnelUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "public_key_1", "public_key_2"}).
+		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name", "public_key_1", "public_key_2"}).
 			AddRow("conn", "schema", "database", "pk1", "pk2")
 		mock.ExpectQuery(readConnectionSshTunnellink).WillReturnRows(ip)
 

@@ -2,12 +2,12 @@ package resources
 
 var readSink = `
 SELECT
-	mz_sinks.name,
-	mz_schemas.name,
-	mz_databases.name,
+	mz_sinks.name AS sink_name,
+	mz_schemas.name AS schema_name,
+	mz_databases.name AS database_name,
 	mz_sinks.size,
-	mz_connections.name as connection_name,
-	mz_clusters.name as cluster_name
+	mz_connections.name AS connection_name,
+	mz_clusters.name AS cluster_name
 FROM mz_sinks
 JOIN mz_schemas
 	ON mz_sinks.schema_id = mz_schemas.id

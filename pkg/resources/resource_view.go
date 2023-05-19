@@ -43,9 +43,9 @@ func View() *schema.Resource {
 }
 
 type ViewParams struct {
-	ViewName     sql.NullString `db:"name"`
-	SchemaName   sql.NullString `db:"schema"`
-	DatabaseName sql.NullString `db:"database"`
+	ViewName     sql.NullString `db:"view_name"`
+	SchemaName   sql.NullString `db:"schema_name"`
+	DatabaseName sql.NullString `db:"database_name"`
 }
 
 func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

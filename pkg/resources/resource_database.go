@@ -32,7 +32,7 @@ func Database() *schema.Resource {
 }
 
 type DatabaseParams struct {
-	DatabaseName sql.NullString `db:"name"`
+	DatabaseName sql.NullString `db:"database_name"`
 }
 
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

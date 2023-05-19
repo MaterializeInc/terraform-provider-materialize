@@ -28,7 +28,7 @@ func (b *ClusterBuilder) ReadId() string {
 }
 
 func ReadClusterParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_clusters WHERE id = %s;", QuoteString(id))
+	return fmt.Sprintf("SELECT name AS cluster_name FROM mz_clusters WHERE id = %s;", QuoteString(id))
 }
 
 func ReadClusterDatasource() string {

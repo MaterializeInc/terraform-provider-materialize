@@ -36,17 +36,20 @@ func TestConnectionAwsPrivatelinkDropQuery(t *testing.T) {
 
 func TestConnectionAwsPrivatelinkReadParamsQuery(t *testing.T) {
 	r := require.New(t)
-	b := ReadConnectionParams("u1")
+	b := ReadConnectionAwsPrivatelinkParams("u1")
 	r.Equal(`
 		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name
+			mz_connections.name AS connection_name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name,
+			mz_aws_privatelink_connections.principal
 		FROM mz_connections
 		JOIN mz_schemas
 			ON mz_connections.schema_id = mz_schemas.id
 		JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
+		LEFT JOIN mz_aws_privatelink_connections
+			ON mz_connections.id = mz_aws_privatelink_connections.id
 		WHERE mz_connections.id = 'u1';`, b)
 }
 

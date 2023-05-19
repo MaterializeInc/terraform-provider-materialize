@@ -32,7 +32,7 @@ func Cluster() *schema.Resource {
 }
 
 type ClusterParams struct {
-	ClusterName sql.NullString `db:"name"`
+	ClusterName sql.NullString `db:"cluster_name"`
 }
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

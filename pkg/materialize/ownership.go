@@ -92,7 +92,7 @@ func (b *OwnershipBuilder) ReadId() (string, error) {
 // return parameters specific to ownership
 type OwnershipParams struct {
 	OwnershipId sql.NullString `db:"owner_id"`
-	RoleName    sql.NullString `db:"name"`
+	RoleName    sql.NullString `db:"role_name"`
 }
 
 func (b *OwnershipBuilder) Params(catalogId string) (OwnershipParams, error) {
@@ -100,7 +100,7 @@ func (b *OwnershipBuilder) Params(catalogId string) (OwnershipParams, error) {
 	q := fmt.Sprintf(`
 		SELECT
 			o.owner_id,
-			r.name
+			r.name AS role_name
 		FROM %s o
 		JOIN mz_roles r
 			ON o.owner_id = r.id

@@ -63,9 +63,9 @@ func Table() *schema.Resource {
 }
 
 type TableParams struct {
-	TableName    sql.NullString `db:"name"`
-	SchemaName   sql.NullString `db:"schema"`
-	DatabaseName sql.NullString `db:"database"`
+	TableName    sql.NullString `db:"table_name"`
+	SchemaName   sql.NullString `db:"schema_name"`
+	DatabaseName sql.NullString `db:"database_name"`
 }
 
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

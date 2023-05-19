@@ -49,10 +49,10 @@ func MaterializedView() *schema.Resource {
 }
 
 type MaterializedViewParams struct {
-	MaterializedViewName sql.NullString `db:"name"`
-	SchemaName           sql.NullString `db:"schema"`
-	DatabaseName         sql.NullString `db:"database"`
-	Cluster              sql.NullString `db:"cluster"`
+	MaterializedViewName sql.NullString `db:"materialized_view_name"`
+	SchemaName           sql.NullString `db:"schema_name"`
+	DatabaseName         sql.NullString `db:"database_name"`
+	Cluster              sql.NullString `db:"cluster_name"`
 }
 
 func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

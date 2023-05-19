@@ -22,8 +22,7 @@ var inRole = map[string]interface{}{
 
 var readRole string = `
 SELECT
-	id,
-	name,
+	name AS role_name,
 	inherit,
 	create_role,
 	create_db,
@@ -51,7 +50,7 @@ func TestResourceRoleCreate(t *testing.T) {
 			WHERE name = 'role'`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "inherit", "create_role", "create_db", "create_cluster"}).
+		ip := sqlmock.NewRows([]string{"role_name", "inherit", "create_role", "create_db", "create_cluster"}).
 			AddRow("role", true, true, false, true)
 		mock.ExpectQuery(readRole).WillReturnRows(ip)
 
@@ -79,7 +78,7 @@ func TestResourceRoleUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER ROLE "role" CREATECLUSTER;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "inherit", "create_role", "create_db", "create_cluster"}).
+		ip := sqlmock.NewRows([]string{"role_name", "inherit", "create_role", "create_db", "create_cluster"}).
 			AddRow("role", true, true, false, true)
 		mock.ExpectQuery(readRole).WillReturnRows(ip)
 

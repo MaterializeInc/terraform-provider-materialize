@@ -34,7 +34,7 @@ func Schema() *schema.Resource {
 }
 
 type SchemaParams struct {
-	SchemaName   sql.NullString `db:"name"`
+	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
 }
 

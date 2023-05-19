@@ -12,9 +12,9 @@ import (
 )
 
 type ConnectionParams struct {
-	ConnectionName sql.NullString `db:"name"`
-	SchemaName     sql.NullString `db:"schema"`
-	DatabaseName   sql.NullString `db:"database"`
+	ConnectionName sql.NullString `db:"connection_name"`
+	SchemaName     sql.NullString `db:"schema_name"`
+	DatabaseName   sql.NullString `db:"database_name"`
 }
 
 func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

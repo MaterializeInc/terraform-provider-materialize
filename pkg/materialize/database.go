@@ -31,7 +31,7 @@ func (b *DatabaseBuilder) ReadId() string {
 }
 
 func ReadDatabaseParams(id string) string {
-	return fmt.Sprintf("SELECT name FROM mz_databases WHERE id = %s;", QuoteString(id))
+	return fmt.Sprintf("SELECT name AS database_name FROM mz_databases WHERE id = %s;", QuoteString(id))
 }
 
 func ReadDatabaseDatasource() string {

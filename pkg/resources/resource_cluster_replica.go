@@ -49,8 +49,8 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 }
 
 type ClusterReplicaParams struct {
-	ReplicaName      sql.NullString `db:"name"`
-	ClusterName      sql.NullString `db:"cluster"`
+	ReplicaName      sql.NullString `db:"replica_name"`
+	ClusterName      sql.NullString `db:"cluster_name"`
 	Size             sql.NullString `db:"size"`
 	AvailabilityZone sql.NullString `db:"availability_zone"`
 }

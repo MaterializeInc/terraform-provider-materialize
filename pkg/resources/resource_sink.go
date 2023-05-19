@@ -12,9 +12,9 @@ import (
 )
 
 type SinkParams struct {
-	SinkName       sql.NullString `db:"name"`
-	SchemaName     sql.NullString `db:"schema"`
-	DatabaseName   sql.NullString `db:"database"`
+	SinkName       sql.NullString `db:"sink_name"`
+	SchemaName     sql.NullString `db:"schema_name"`
+	DatabaseName   sql.NullString `db:"database_name"`
 	Size           sql.NullString `db:"size"`
 	ConnectionName sql.NullString `db:"connection_name"`
 	ClusterName    sql.NullString `db:"cluster_name"`

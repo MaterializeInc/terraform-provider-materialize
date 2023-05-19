@@ -93,10 +93,10 @@ func Index() *schema.Resource {
 }
 
 type IndexParams struct {
-	IndexName    sql.NullString `db:"name"`
+	IndexName    sql.NullString `db:"index_name"`
 	Object       sql.NullString `db:"obj_name"`
-	SchemaName   sql.NullString `db:"obj_schema"`
-	DatabaseName sql.NullString `db:"obj_database"`
+	SchemaName   sql.NullString `db:"obj_schema_name"`
+	DatabaseName sql.NullString `db:"obj_database_name"`
 }
 
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

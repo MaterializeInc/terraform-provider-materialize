@@ -85,9 +85,9 @@ func TestSourcePostgresReadParamsQuery(t *testing.T) {
 	b := ReadSourceParams("u1")
 	r.Equal(`
 		SELECT
-			mz_sources.name,
-			mz_schemas.name,
-			mz_databases.name,
+			mz_sources.name AS source_name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name,
 			mz_sources.size,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name

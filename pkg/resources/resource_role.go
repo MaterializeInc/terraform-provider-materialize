@@ -60,7 +60,7 @@ func Role() *schema.Resource {
 }
 
 type RoleParams struct {
-	RoleName       sql.NullString `db:"name"`
+	RoleName       sql.NullString `db:"role_name"`
 	Inherit        sql.NullBool   `db:"inherit"`
 	CreateRole     sql.NullBool   `db:"create_role"`
 	CreateDatabase sql.NullBool   `db:"create_db"`
