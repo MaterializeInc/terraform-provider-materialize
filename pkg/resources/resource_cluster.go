@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -30,19 +31,23 @@ func Cluster() *schema.Resource {
 	}
 }
 
+type ClusterParams struct {
+	ClusterName sql.NullString `db:"name"`
+}
+
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadClusterParams(i)
 
-	var name string
-	if err := conn.QueryRowx(q).Scan(&name); err != nil {
+	var s ClusterParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
 	}
 

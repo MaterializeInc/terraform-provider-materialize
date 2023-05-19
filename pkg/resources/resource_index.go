@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -91,31 +92,38 @@ func Index() *schema.Resource {
 	}
 }
 
+type IndexParams struct {
+	IndexName    sql.NullString `db:"name"`
+	Object       sql.NullString `db:"obj_name"`
+	SchemaName   sql.NullString `db:"obj_schema"`
+	DatabaseName sql.NullString `db:"obj_database"`
+}
+
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadIndexParams(i)
 
-	var name, obj, schema, database string
-	if err := conn.QueryRowx(q).Scan(&name, &obj, &schema, &database); err != nil {
+	var s IndexParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.IndexName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", schema); err != nil {
+	if err := d.Set("schema_name", s.Object.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", database); err != nil {
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(database, schema, name)
+	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.IndexName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

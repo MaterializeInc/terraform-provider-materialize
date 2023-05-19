@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -32,27 +33,32 @@ func Schema() *schema.Resource {
 	}
 }
 
+type SchemaParams struct {
+	SchemaName   sql.NullString `db:"name"`
+	DatabaseName sql.NullString `db:"database_name"`
+}
+
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadSchemaParams(i)
 
-	var name, database_name string
-	if err := conn.QueryRowx(q).Scan(&name, &database_name); err != nil {
+	var s SchemaParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", database_name); err != nil {
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(database_name, name)
+	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

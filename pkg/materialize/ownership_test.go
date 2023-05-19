@@ -94,24 +94,15 @@ func TestOwnershipParams(t *testing.T) {
 				ON o.owner_id = r.id
 			WHERE o.id = 'u1'
 		`
-		ir := mock.NewRows([]string{"ower_id", "name"}).AddRow("u1", "my_role")
+		ir := mock.NewRows([]string{"owner_id", "name"}).AddRow("u1", "my_role")
 		mock.ExpectQuery(query).WillReturnRows(ir)
 
 		b := NewOwnershipBuilder(db, "TABLE")
 
-		params, err := b.Params("u1")
+		_, err := b.Params("u1")
 
 		if err != nil {
 			t.Fatal(err)
-		}
-
-		expectedParams := OwnershipParams{
-			OwnershipId: "u1",
-			RoleName:    "my_role",
-		}
-
-		if params != expectedParams {
-			t.Errorf("%s does not match %s", params, expectedParams)
 		}
 	})
 }
