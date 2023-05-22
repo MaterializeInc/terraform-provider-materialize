@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
