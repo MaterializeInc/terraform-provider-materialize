@@ -92,8 +92,7 @@ func (b *RoleBuilder) ReadId() string {
 func ReadRoleParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
-			id,
-			name,
+			name AS role_name,
 			inherit,
 			create_role,
 			create_db,

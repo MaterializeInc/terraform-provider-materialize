@@ -95,9 +95,9 @@ func (b *TableBuilder) ReadId() string {
 func ReadTableParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
-			mz_tables.name,
-			mz_schemas.name,
-			mz_databases.name
+			mz_tables.name AS table_name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name
 		FROM mz_tables
 		JOIN mz_schemas
 			ON mz_tables.schema_id = mz_schemas.id

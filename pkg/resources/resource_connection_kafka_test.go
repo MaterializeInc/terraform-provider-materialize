@@ -54,7 +54,7 @@ func TestResourceKafkaCreate(t *testing.T) {
 			AND mz_databases.name = 'database';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).
+		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name"}).
 			AddRow("conn", "schema", "database")
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
@@ -78,7 +78,7 @@ func TestResourceKafkaUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("conn", "schema", "database")
+		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name"}).AddRow("conn", "schema", "database")
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
 		if err := connectionKafkaUpdate(context.TODO(), d, db); err != nil {

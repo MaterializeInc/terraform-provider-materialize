@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -90,8 +91,8 @@ func (b *OwnershipBuilder) ReadId() (string, error) {
 
 // return parameters specific to ownership
 type OwnershipParams struct {
-	OwnershipId string
-	RoleName    string
+	OwnershipId sql.NullString `db:"owner_id"`
+	RoleName    sql.NullString `db:"role_name"`
 }
 
 func (b *OwnershipBuilder) Params(catalogId string) (OwnershipParams, error) {
@@ -99,20 +100,16 @@ func (b *OwnershipBuilder) Params(catalogId string) (OwnershipParams, error) {
 	q := fmt.Sprintf(`
 		SELECT
 			o.owner_id,
-			r.name
+			r.name AS role_name
 		FROM %s o
 		JOIN mz_roles r
 			ON o.owner_id = r.id
 		WHERE o.id = %s
 	`, o.CatalogTable, QuoteString(catalogId))
 
-	var i, r string
-	if err := b.conn.QueryRowx(q).Scan(&i, &r); err != nil {
-		return OwnershipParams{}, err
+	var s OwnershipParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return s, err
 	}
-
-	return OwnershipParams{
-		OwnershipId: i,
-		RoleName:    r,
-	}, nil
+	return s, nil
 }

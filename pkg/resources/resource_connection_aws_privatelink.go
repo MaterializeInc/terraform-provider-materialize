@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -54,35 +55,42 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 	}
 }
 
+type ConnectionAwsPrivatelinkParams struct {
+	ConnectionName sql.NullString `db:"connection_name"`
+	SchemaName     sql.NullString `db:"schema_name"`
+	DatabaseName   sql.NullString `db:"database_name"`
+	Principal      sql.NullString `db:"principal"`
+}
+
 func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadConnectionAwsPrivatelinkParams(i)
 
-	var name, schema, database, principal *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &principal); err != nil {
+	var s ConnectionAwsPrivatelinkParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.ConnectionName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", schema); err != nil {
+	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", database); err != nil {
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("principal", principal); err != nil {
+	if err := d.Set("principal", s.Principal.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	b := materialize.Connection{ConnectionName: *name, SchemaName: *schema, DatabaseName: *database}
+	b := materialize.Connection{ConnectionName: s.ConnectionName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
 	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}

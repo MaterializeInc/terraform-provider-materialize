@@ -39,9 +39,9 @@ func TestConnectionConfluentSchemaRegistryReadParamsQuery(t *testing.T) {
 	b := ReadConnectionParams("u1")
 	r.Equal(`
 		SELECT
-			mz_connections.name,
-			mz_schemas.name,
-			mz_databases.name
+			mz_connections.name AS connection_name,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name
 		FROM mz_connections
 		JOIN mz_schemas
 			ON mz_connections.schema_id = mz_schemas.id

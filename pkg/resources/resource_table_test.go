@@ -21,9 +21,9 @@ var inTable = map[string]interface{}{
 
 var readTable string = `
 SELECT
-	mz_tables.name,
-	mz_schemas.name,
-	mz_databases.name
+	mz_tables.name AS table_name,
+	mz_schemas.name AS schema_name,
+	mz_databases.name AS database_name
 FROM mz_tables
 JOIN mz_schemas
 	ON mz_tables.schema_id = mz_schemas.id
@@ -55,7 +55,7 @@ func TestResourceTableCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("table", "schema", "database")
+		ip := sqlmock.NewRows([]string{"table_name", "schema_name", "database_name"}).AddRow("table", "schema", "database")
 		mock.ExpectQuery(readTable).WillReturnRows(ip)
 
 		if err := tableCreate(context.TODO(), d, db); err != nil {
@@ -78,7 +78,7 @@ func TestResourceTableUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."old_table" RENAME TO "database"."schema"."table";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("table", "schema", "database")
+		ip := sqlmock.NewRows([]string{"table_name", "schema_name", "database_name"}).AddRow("table", "schema", "database")
 		mock.ExpectQuery(readTable).WillReturnRows(ip)
 
 		if err := tableUpdate(context.TODO(), d, db); err != nil {

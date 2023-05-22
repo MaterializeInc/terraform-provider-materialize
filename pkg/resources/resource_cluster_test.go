@@ -28,8 +28,8 @@ func TestResourceClusterCreate(t *testing.T) {
 		mock.ExpectQuery(`SELECT id FROM mz_clusters WHERE name = 'cluster'`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name"}).AddRow("cluster")
-		mock.ExpectQuery(`SELECT name FROM mz_clusters WHERE id = 'u1';`).WillReturnRows(ip)
+		ip := sqlmock.NewRows([]string{"cluster_name"}).AddRow("cluster")
+		mock.ExpectQuery(`SELECT name AS cluster_name FROM mz_clusters WHERE id = 'u1';`).WillReturnRows(ip)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

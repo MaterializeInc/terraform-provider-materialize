@@ -45,12 +45,12 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 			AND mz_clusters.name = 'cluster'`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "cluster", "size", "availability_zone"}).
+		ip := sqlmock.NewRows([]string{"replica_name", "cluster_name", "size", "availability_zone"}).
 			AddRow("replica", "cluster", "medium", "use1-az1")
 		mock.ExpectQuery(`
 			SELECT
-				mz_cluster_replicas.name,
-				mz_clusters.name,
+				mz_cluster_replicas.name AS replica_name,
+				mz_clusters.name AS cluster_name,
 				mz_cluster_replicas.size,
 				mz_cluster_replicas.availability_zone
 			FROM mz_cluster_replicas

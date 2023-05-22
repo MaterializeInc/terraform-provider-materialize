@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -47,35 +48,42 @@ func MaterializedView() *schema.Resource {
 	}
 }
 
+type MaterializedViewParams struct {
+	MaterializedViewName sql.NullString `db:"materialized_view_name"`
+	SchemaName           sql.NullString `db:"schema_name"`
+	DatabaseName         sql.NullString `db:"database_name"`
+	Cluster              sql.NullString `db:"cluster_name"`
+}
+
 func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadMaterializedViewParams(i)
 
-	var name, schema, database, cluster *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database, &cluster); err != nil {
+	var s MaterializedViewParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.MaterializedViewName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", schema); err != nil {
+	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", database); err != nil {
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("cluster_name", cluster); err != nil {
+	if err := d.Set("cluster_name", s.Cluster.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(*database, *schema, *name)
+	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.MaterializedViewName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

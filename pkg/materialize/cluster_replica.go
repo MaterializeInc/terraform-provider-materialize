@@ -106,8 +106,8 @@ func (b *ClusterReplicaBuilder) ReadId() string {
 func ReadClusterReplicaParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
-			mz_cluster_replicas.name,
-			mz_clusters.name,
+			mz_cluster_replicas.name AS replica_name,
+			mz_clusters.name AS cluster_name,
 			mz_cluster_replicas.size,
 			mz_cluster_replicas.availability_zone
 		FROM mz_cluster_replicas

@@ -50,8 +50,8 @@ func TestClusterReplicaReadParamsQuery(t *testing.T) {
 	b := ReadClusterReplicaParams("u1")
 	r.Equal(`
 		SELECT
-			mz_cluster_replicas.name,
-			mz_clusters.name,
+			mz_cluster_replicas.name AS replica_name,
+			mz_clusters.name AS cluster_name,
 			mz_cluster_replicas.size,
 			mz_cluster_replicas.availability_zone
 		FROM mz_cluster_replicas

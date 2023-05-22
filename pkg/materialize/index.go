@@ -110,10 +110,10 @@ func (b *IndexBuilder) ReadId() string {
 func ReadIndexParams(id string) string {
 	return fmt.Sprintf(`
 		SELECT
-			mz_indexes.name,
-			mz_objects.name,
-			mz_schemas.name,
-			mz_databases.name
+			mz_indexes.name AS index_name,
+			mz_objects.name AS obj_name,
+			mz_schemas.name AS obj_schema_name,
+			mz_databases.name AS obj_database_name
 		FROM mz_indexes
 		JOIN mz_objects
 			ON mz_indexes.on_id = mz_objects.id
