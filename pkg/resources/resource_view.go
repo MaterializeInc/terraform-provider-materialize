@@ -65,7 +65,7 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	b := materialize.NewViewBuilder(*database, *schema, *name)
+	b := materialize.NewViewBuilder(*name, *schema, *database)
 	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}
