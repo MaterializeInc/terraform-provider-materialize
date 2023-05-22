@@ -78,9 +78,8 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		if err == sql.ErrNoRows {
 			d.SetId("")
 			return nil
-		} else {
-			return diag.FromErr(err)
 		}
+		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
