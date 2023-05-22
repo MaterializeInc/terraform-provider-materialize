@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -58,40 +59,47 @@ func Role() *schema.Resource {
 	}
 }
 
+type RoleParams struct {
+	RoleName       sql.NullString `db:"role_name"`
+	Inherit        sql.NullBool   `db:"inherit"`
+	CreateRole     sql.NullBool   `db:"create_role"`
+	CreateDatabase sql.NullBool   `db:"create_db"`
+	CreateCluster  sql.NullBool   `db:"create_cluster"`
+}
+
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadRoleParams(i)
 
-	var name string
-	var inherit, createR, createD, createC bool
-	if err := conn.QueryRowx(q).Scan(&name, &inherit, &createR, &createD, &createC); err != nil {
+	var s RoleParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.RoleName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("inherit", inherit); err != nil {
+	if err := d.Set("inherit", s.Inherit.Bool); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("create_role", createR); err != nil {
+	if err := d.Set("create_role", s.CreateRole.Bool); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("create_db", createD); err != nil {
+	if err := d.Set("create_db", s.CreateDatabase.Bool); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("create_cluster", createC); err != nil {
+	if err := d.Set("create_cluster", s.CreateCluster.Bool); err != nil {
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(name)
+	qn := materialize.QualifiedName(s.RoleName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

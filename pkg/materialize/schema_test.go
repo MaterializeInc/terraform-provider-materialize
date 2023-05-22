@@ -35,8 +35,8 @@ func TestSchemaReadParamsQuery(t *testing.T) {
 	b := ReadSchemaParams("u1")
 	r.Equal(`
 		SELECT
-			mz_schemas.name,
-			mz_databases.name
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name
 		FROM mz_schemas JOIN mz_databases
 			ON mz_schemas.database_id = mz_databases.id
 		WHERE mz_schemas.id = 'u1';`, b)

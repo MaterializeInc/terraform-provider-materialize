@@ -100,7 +100,7 @@ func ownershipRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("role_name", params.RoleName); err != nil {
+	if err := d.Set("role_name", params.RoleName.String); err != nil {
 		return diag.FromErr(err)
 	}
 

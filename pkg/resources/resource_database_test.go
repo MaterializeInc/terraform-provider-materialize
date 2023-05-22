@@ -32,9 +32,9 @@ func TestResourceDatabaseCreate(t *testing.T) {
 		mock.ExpectQuery(`SELECT id FROM mz_databases WHERE name = 'database'`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name"}).
+		ip := sqlmock.NewRows([]string{"database_name"}).
 			AddRow("database")
-		mock.ExpectQuery(`SELECT name FROM mz_databases WHERE id = 'u1';`).WillReturnRows(ip)
+		mock.ExpectQuery(`SELECT name AS database_name FROM mz_databases WHERE id = 'u1';`).WillReturnRows(ip)
 
 		if err := databaseCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

@@ -62,13 +62,19 @@ func Table() *schema.Resource {
 	}
 }
 
+type TableParams struct {
+	TableName    sql.NullString `db:"table_name"`
+	SchemaName   sql.NullString `db:"schema_name"`
+	DatabaseName sql.NullString `db:"database_name"`
+}
+
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn := meta.(*sqlx.DB)
 	i := d.Id()
 	q := materialize.ReadTableParams(i)
 
-	var name, schema, database *string
-	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
+	var s TableParams
+	if err := conn.Get(&s, q); err != nil {
 		if err == sql.ErrNoRows {
 			d.SetId("")
 			return nil
@@ -79,19 +85,19 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.TableName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", schema); err != nil {
+	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", database); err != nil {
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	b := materialize.NewTableBuilder(*name, *schema, *database)
+	b := materialize.NewTableBuilder(s.TableName.String, s.SchemaName.String, s.DatabaseName.String)
 	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
 	}

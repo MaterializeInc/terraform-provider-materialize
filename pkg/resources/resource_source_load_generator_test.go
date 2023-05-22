@@ -55,7 +55,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
+		ip := sqlmock.NewRows([]string{"source_name", "schema_name", "database_name", "size", "connection_name", "cluster_name"}).
 			AddRow("conn", "schema", "database", "small", "conn", "cluster")
 		mock.ExpectQuery(readSource).WillReturnRows(ip)
 
@@ -81,7 +81,7 @@ func TestResourceSourceLoadgenUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" RENAME TO "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database", "size", "connection_name", "cluster_name"}).
+		ip := sqlmock.NewRows([]string{"source_name", "schema_name", "database_name", "size", "connection_name", "cluster_name"}).
 			AddRow("conn", "schema", "database", "small", "conn", "cluster")
 		mock.ExpectQuery(readSource).WillReturnRows(ip)
 

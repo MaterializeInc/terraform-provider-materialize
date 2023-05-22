@@ -21,9 +21,9 @@ var inView = map[string]interface{}{
 
 var readView string = `
 SELECT
-	mz_views.name,
-	mz_schemas.name,
-	mz_databases.name
+	mz_views.name AS view_name,
+	mz_schemas.name AS schema_name,
+	mz_databases.name AS database_name
 FROM mz_views
 JOIN mz_schemas
 	ON mz_views.schema_id = mz_schemas.id
@@ -55,7 +55,7 @@ func TestResourceViewCreate(t *testing.T) {
 		`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("view", "schema", "database")
+		ip := sqlmock.NewRows([]string{"view_name", "schema_name", "database_name"}).AddRow("view", "schema", "database")
 		mock.ExpectQuery(readView).WillReturnRows(ip)
 
 		if err := viewCreate(context.TODO(), d, db); err != nil {
@@ -78,7 +78,7 @@ func TestResourceViewUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER VIEW "database"."schema"."old_view" RENAME TO "database"."schema"."view";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema", "database"}).AddRow("view", "schema", "database")
+		ip := sqlmock.NewRows([]string{"view_name", "schema_name", "database_name"}).AddRow("view", "schema", "database")
 		mock.ExpectQuery(readView).WillReturnRows(ip)
 
 		if err := viewUpdate(context.TODO(), d, db); err != nil {

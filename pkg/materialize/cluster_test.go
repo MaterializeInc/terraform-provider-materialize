@@ -27,5 +27,5 @@ func TestClusterReadIdQuery(t *testing.T) {
 func TestClusterReadParamsQuery(t *testing.T) {
 	r := require.New(t)
 	b := ReadClusterParams("u1")
-	r.Equal(`SELECT name FROM mz_clusters WHERE id = 'u1';`, b)
+	r.Equal(`SELECT name AS cluster_name FROM mz_clusters WHERE id = 'u1';`, b)
 }

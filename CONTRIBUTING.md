@@ -47,7 +47,7 @@ To run the full suite of integration tests run:
 
 ```bash
 # Start all containers
-docker-compose up -d
+docker-compose up -d --build
 
 # Run the tests
 docker exec provider terraform init

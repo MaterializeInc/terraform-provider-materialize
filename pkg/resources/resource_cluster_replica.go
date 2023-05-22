@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -47,6 +48,13 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	},
 }
 
+type ClusterReplicaParams struct {
+	ReplicaName      sql.NullString `db:"replica_name"`
+	ClusterName      sql.NullString `db:"cluster_name"`
+	Size             sql.NullString `db:"size"`
+	AvailabilityZone sql.NullString `db:"availability_zone"`
+}
+
 func ClusterReplica() *schema.Resource {
 	return &schema.Resource{
 		Description: "A cluster replica is the physical resource which maintains dataflow-powered objects.",
@@ -68,26 +76,26 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 	i := d.Id()
 	q := materialize.ReadClusterReplicaParams(i)
 
-	var name, cluster_name, size, availability_zone *string
-	if err := conn.QueryRowx(q).Scan(&name, &cluster_name, &size, &availability_zone); err != nil {
+	var s ClusterReplicaParams
+	if err := conn.Get(&s, q); err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(i)
 
-	if err := d.Set("name", name); err != nil {
+	if err := d.Set("name", s.ReplicaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("cluster_name", cluster_name); err != nil {
+	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("size", size); err != nil {
+	if err := d.Set("size", s.Size.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("availability_zone", availability_zone); err != nil {
+	if err := d.Set("availability_zone", s.AvailabilityZone.String); err != nil {
 		return diag.FromErr(err)
 	}
 

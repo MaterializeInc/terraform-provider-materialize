@@ -27,5 +27,5 @@ func TestDatabaseDropQuery(t *testing.T) {
 func TestDatabaseReadParamsQuery(t *testing.T) {
 	r := require.New(t)
 	b := ReadDatabaseParams("u1")
-	r.Equal(`SELECT name FROM mz_databases WHERE id = 'u1';`, b)
+	r.Equal(`SELECT name AS database_name FROM mz_databases WHERE id = 'u1';`, b)
 }

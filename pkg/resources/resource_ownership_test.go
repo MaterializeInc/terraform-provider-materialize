@@ -19,11 +19,11 @@ var inOwnership = map[string]interface{}{
 }
 
 func mockOwnershipParams(mock sqlmock.Sqlmock) {
-	ip := sqlmock.NewRows([]string{"owner_id", "name"}).AddRow("u1", "my_role")
+	ip := sqlmock.NewRows([]string{"owner_id", "role_name"}).AddRow("u1", "my_role")
 	mock.ExpectQuery(`
 		SELECT
 			o.owner_id,
-			r.name
+			r.name AS role_name
 		FROM mz_tables o
 		JOIN mz_roles r
 			ON o.owner_id = r.id
