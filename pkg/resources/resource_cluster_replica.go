@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -48,13 +47,6 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	},
 }
 
-type ClusterReplicaParams struct {
-	ReplicaName      sql.NullString `db:"replica_name"`
-	ClusterName      sql.NullString `db:"cluster_name"`
-	Size             sql.NullString `db:"size"`
-	AvailabilityZone sql.NullString `db:"availability_zone"`
-}
-
 func ClusterReplica() *schema.Resource {
 	return &schema.Resource{
 		Description: "A cluster replica is the physical resource which maintains dataflow-powered objects.",
@@ -72,14 +64,10 @@ func ClusterReplica() *schema.Resource {
 }
 
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadClusterReplicaParams(i)
 
-	var s ClusterReplicaParams
-	if err := conn.Get(&s, q); err != nil {
-		return diag.FromErr(err)
-	}
+	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), "", "")
+	s, _ := builder.Params(i)
 
 	d.SetId(i)
 
@@ -103,12 +91,10 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	builder := materialize.NewClusterReplicaBuilder(replicaName, clusterName)
+	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
 
 	if v, ok := d.GetOk("size"); ok {
 		builder.Size(v.(string))
@@ -130,24 +116,21 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		builder.IdleArrangementMergeEffort(v.(int))
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
+	// create resource
+	builder.Create()
 
-	if err := createResource(conn, d, qc, qr, "cluster replica"); err != nil {
-		return diag.FromErr(err)
-	}
+	// set id
+	i, _ := builder.Id()
+	d.SetId(i)
+
 	return clusterReplicaRead(ctx, d, meta)
 }
 
 func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	q := materialize.NewClusterReplicaBuilder(replicaName, clusterName).Drop()
+	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
 
-	if err := dropResource(conn, d, q, "cluster replica"); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	builder.Drop()
 }

@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -53,33 +50,22 @@ func ClusterReplica() *schema.Resource {
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
+	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), "", "")
 
-	q := materialize.ReadClusterReplicaDatasource()
-
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no cluster replicas found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list cluster replicas")
-		d.SetId("")
+	dataSource, err := b.DataSource()
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	clusterReplicaFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name, cluster, size, availability_zone string
-		rows.Scan(&id, &name, &cluster, &size, &availability_zone)
-
+	for _, p := range dataSource {
 		clusterReplicaMap := map[string]interface{}{}
 
-		clusterReplicaMap["id"] = id
-		clusterReplicaMap["name"] = name
-		clusterReplicaMap["cluster"] = cluster
-		clusterReplicaMap["size"] = size
-		clusterReplicaMap["availability_zone"] = availability_zone
+		clusterReplicaMap["id"] = p.ReplicaId.String
+		clusterReplicaMap["name"] = p.ReplicaName.String
+		clusterReplicaMap["cluster"] = p.ClusterName.String
+		clusterReplicaMap["size"] = p.Size.String
+		clusterReplicaMap["availability_zone"] = p.AvailabilityZone.String
 
 		clusterReplicaFormats = append(clusterReplicaFormats, clusterReplicaMap)
 	}
