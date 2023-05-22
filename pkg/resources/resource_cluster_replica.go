@@ -117,10 +117,15 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	// create resource
-	builder.Create()
+	if err := builder.Create(); err != nil {
+		return diag.FromErr(err)
+	}
 
 	// set id
-	i, _ := builder.Id()
+	i, err := builder.Id()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	d.SetId(i)
 
 	return clusterReplicaRead(ctx, d, meta)
@@ -132,5 +137,8 @@ func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta inte
 
 	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
 
-	builder.Drop()
+	if err := builder.Drop(); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

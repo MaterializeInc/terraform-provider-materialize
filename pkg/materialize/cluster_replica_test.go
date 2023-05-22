@@ -3,59 +3,34 @@ package materialize
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
 )
 
-func TestClusterReplicaCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewClusterReplicaBuilder("replica", "cluster")
-	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica";`, b.Create())
+func TestClusterReplicaCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	b.Size("xsmall")
-	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall';`, b.Create())
+		b := NewClusterReplicaBuilder(db, "replica", "cluster")
+		b.Size("xsmall")
+		b.AvailabilityZone("us-east-1")
+		b.IntrospectionInterval("1s")
+		b.IntrospectionDebugging()
+		b.IdleArrangementMergeEffort(1)
 
-	b.AvailabilityZone("us-east-1")
-	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1';`, b.Create())
-
-	b.IntrospectionInterval("1s")
-	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s';`, b.Create())
-
-	b.IntrospectionDebugging()
-	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE;`, b.Create())
-
-	b.IdleArrangementMergeEffort(1)
-	r.Equal(`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`, b.Create())
+		b.Create()
+	})
 }
 
 func TestClusterReplicaDropQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewClusterReplicaBuilder("replica", "cluster")
-	r.Equal(`DROP CLUSTER REPLICA "cluster"."replica";`, b.Drop())
-}
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`DROP CLUSTER REPLICA "cluster"."replica";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-func TestClusterReplicaReadQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewClusterReplicaBuilder("replica", "cluster")
-	r.Equal(`
-		SELECT mz_cluster_replicas.id
-		FROM mz_cluster_replicas
-		JOIN mz_clusters
-			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.name = 'replica'
-		AND mz_clusters.name = 'cluster';`, b.ReadId())
-}
-
-func TestClusterReplicaReadParamsQuery(t *testing.T) {
-	r := require.New(t)
-	b := ReadClusterReplicaParams("u1")
-	r.Equal(`
-		SELECT
-			mz_cluster_replicas.name AS replica_name,
-			mz_clusters.name AS cluster_name,
-			mz_cluster_replicas.size,
-			mz_cluster_replicas.availability_zone
-		FROM mz_cluster_replicas
-		JOIN mz_clusters
-			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.id = 'u1';`, b)
+		NewClusterReplicaBuilder(db, "replica", "cluster").Drop()
+	})
 }

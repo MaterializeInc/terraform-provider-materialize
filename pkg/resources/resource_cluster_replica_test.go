@@ -34,21 +34,27 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).
-			AddRow("u1")
+		ir := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone"}).
+			AddRow("u1", "replica", "cluster", "small", "us-east-1")
 		mock.ExpectQuery(`
-			SELECT mz_cluster_replicas.id
+			SELECT
+				mz_cluster_replicas.id,
+				mz_cluster_replicas.name AS replica_name,
+				mz_clusters.name AS cluster_name,
+				mz_cluster_replicas.size,
+				mz_cluster_replicas.availability_zone
 			FROM mz_cluster_replicas
 			JOIN mz_clusters
 				ON mz_cluster_replicas.cluster_id = mz_clusters.id
 			WHERE mz_cluster_replicas.name = 'replica'
-			AND mz_clusters.name = 'cluster'`).WillReturnRows(ir)
+			AND mz_clusters.name = 'cluster';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"replica_name", "cluster_name", "size", "availability_zone"}).
-			AddRow("replica", "cluster", "medium", "use1-az1")
+		ip := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone"}).
+			AddRow("u1", "replica", "cluster", "small", "us-east-1")
 		mock.ExpectQuery(`
 			SELECT
+				mz_cluster_replicas.id,
 				mz_cluster_replicas.name AS replica_name,
 				mz_clusters.name AS cluster_name,
 				mz_cluster_replicas.size,
