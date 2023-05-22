@@ -24,6 +24,7 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 		Description: "If you want the replica to reside in a specific availability zone.",
 		Type:        schema.TypeString,
 		Optional:    true,
+		Computed:    true,
 		ForceNew:    true,
 	},
 	"introspection_interval": {
