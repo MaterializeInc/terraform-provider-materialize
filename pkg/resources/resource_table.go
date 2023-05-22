@@ -68,7 +68,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	var name, schema, database *string
 	if err := conn.QueryRowx(q).Scan(&name, &schema, &database); err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if err == sql.ErrNoRows {
 			d.SetId("")
 			return nil
 		} else {
