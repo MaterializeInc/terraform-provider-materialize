@@ -34,8 +34,8 @@ var tableSchema = map[string]*schema.Schema{
 				},
 				"nullable": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:        schema.TypeBool,
-					Optional:    true,
+					Type:     schema.TypeBool,
+					Optional: true,
 				},
 			},
 		},
@@ -75,6 +75,10 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	var s TableParams
 	if err := conn.Get(&s, q); err != nil {
+		if err == sql.ErrNoRows {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 
