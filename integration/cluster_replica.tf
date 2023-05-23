@@ -5,10 +5,10 @@ resource "materialize_cluster_replica" "cluster_replica_1" {
 }
 
 resource "materialize_cluster_replica" "cluster_replica_2" {
-  name         = "r2"
-  cluster_name = materialize_cluster.cluster.name
-  size         = "4"
-  # availability_zone             = "use1-az1"
+  name                          = "r2"
+  cluster_name                  = materialize_cluster.cluster.name
+  size                          = "4"
+  availability_zone             = "test2"
   introspection_interval        = "2s"
   introspection_debugging       = true
   idle_arrangement_merge_effort = 1

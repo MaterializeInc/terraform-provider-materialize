@@ -6,6 +6,9 @@ services:
   materialized:
     image: materialize/materialized:latest
     container_name: materialized
+    command:
+      - --availability-zone=test1
+      - --availability-zone=test2
     ports:
       - 6875:6875
       - 6878:6878
