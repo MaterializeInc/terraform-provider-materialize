@@ -1,36 +1,80 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
+
+	"github.com/jmoiron/sqlx"
 )
 
+// DDL
 type ClusterBuilder struct {
+	ddl         Builder
 	clusterName string
 }
 
-func NewClusterBuilder(clusterName string) *ClusterBuilder {
+func NewClusterBuilder(conn *sqlx.DB, clusterName string) *ClusterBuilder {
 	return &ClusterBuilder{
+		ddl:         Builder{conn, Cluster},
 		clusterName: clusterName,
 	}
 }
 
-func (b *ClusterBuilder) Create() string {
+func (b *ClusterBuilder) QualifiedName() string {
+	return QualifiedName(b.clusterName)
+}
+
+func (b *ClusterBuilder) Create() error {
 	// Only create empty clusters, manage replicas with separate resource
-	return fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, QuoteIdentifier(b.clusterName))
+	q := fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, b.QualifiedName())
+	return b.ddl.exec(q)
 }
 
-func (b *ClusterBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER %s;`, QuoteIdentifier(b.clusterName))
+func (b *ClusterBuilder) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func (b *ClusterBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_clusters WHERE name = %s;`, QuoteString(b.clusterName))
+// DML
+type ClusterParams struct {
+	ClusterId   sql.NullString `db:"id"`
+	ClusterName sql.NullString `db:"name"`
 }
 
-func ReadClusterParams(id string) string {
-	return fmt.Sprintf("SELECT name AS cluster_name FROM mz_clusters WHERE id = %s;", QuoteString(id))
+var clusterQuery = `SELECT id, name FROM mz_clusters`
+
+func ClusterId(conn *sqlx.DB, clusterName string) (string, error) {
+	p := map[string]string{"name": clusterName}
+	q := queryPredicate(clusterQuery, p)
+
+	var c ClusterParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
+	}
+
+	return c.ClusterId.String, nil
 }
 
-func ReadClusterDatasource() string {
-	return `SELECT id, name FROM mz_clusters;`
+func ScanCluster(conn *sqlx.DB, id string) (ClusterParams, error) {
+	p := map[string]string{"id": id}
+	q := queryPredicate(clusterQuery, p)
+
+	var c ClusterParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListClusters(conn *sqlx.DB) ([]ClusterParams, error) {
+	p := map[string]string{}
+	q := queryPredicate(clusterQuery, p)
+
+	var c []ClusterParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

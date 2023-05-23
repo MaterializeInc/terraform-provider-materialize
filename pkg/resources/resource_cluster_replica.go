@@ -66,8 +66,10 @@ func ClusterReplica() *schema.Resource {
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), "", "")
-	s, _ := builder.Params(i)
+	s, err := materialize.ScanClusterReplica(meta.(*sqlx.DB), i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	d.SetId(i)
 
@@ -94,35 +96,35 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
+	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
 
 	if v, ok := d.GetOk("size"); ok {
-		builder.Size(v.(string))
+		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("availability_zone"); ok {
-		builder.AvailabilityZone(v.(string))
+		b.AvailabilityZone(v.(string))
 	}
 
 	if v, ok := d.GetOk("introspection_interval"); ok {
-		builder.IntrospectionInterval(v.(string))
+		b.IntrospectionInterval(v.(string))
 	}
 
 	if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
-		builder.IntrospectionDebugging()
+		b.IntrospectionDebugging()
 	}
 
 	if v, ok := d.GetOk("idle_arrangement_merge_effort"); ok {
-		builder.IdleArrangementMergeEffort(v.(int))
+		b.IdleArrangementMergeEffort(v.(int))
 	}
 
 	// create resource
-	if err := builder.Create(); err != nil {
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
 
 	// set id
-	i, err := builder.Id()
+	i, err := materialize.ClusterReplicaId(meta.(*sqlx.DB), replicaName, clusterName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -135,9 +137,9 @@ func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	builder := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
+	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
 
-	if err := builder.Drop(); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

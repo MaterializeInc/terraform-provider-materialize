@@ -35,7 +35,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 
 		// Query Id
 		ir := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone"}).
-			AddRow("u1", "replica", "cluster", "small", "us-east-1")
+			AddRow("u1", "replica", "cluster", "small", "use1-az2")
 		mock.ExpectQuery(`
 			SELECT
 				mz_cluster_replicas.id,
@@ -51,7 +51,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 
 		// Query Params
 		ip := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone"}).
-			AddRow("u1", "replica", "cluster", "small", "us-east-1")
+			AddRow("u1", "replica", "cluster", "small", "use1-az2")
 		mock.ExpectQuery(`
 			SELECT
 				mz_cluster_replicas.id,

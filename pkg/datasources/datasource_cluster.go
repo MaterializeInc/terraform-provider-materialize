@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -41,30 +38,17 @@ func Cluster() *schema.Resource {
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
-
-	q := materialize.ReadClusterDatasource()
-
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no clusters found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list clusters")
-		d.SetId("")
+	dataSource, err := materialize.ListClusters(meta.(*sqlx.DB))
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	clusterFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name string
-		rows.Scan(&id, &name)
-
+	for _, p := range dataSource {
 		clusterMap := map[string]interface{}{}
 
-		clusterMap["id"] = id
-		clusterMap["name"] = name
+		clusterMap["id"] = p.ClusterId.String
+		clusterMap["name"] = p.ClusterName.String
 
 		clusterFormats = append(clusterFormats, clusterMap)
 	}

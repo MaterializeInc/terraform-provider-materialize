@@ -8,8 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// DDL
 type ClusterReplicaBuilder struct {
-	conn                       *sqlx.DB
+	ddl                        Builder
 	replicaName                string
 	clusterName                string
 	size                       string
@@ -21,7 +22,7 @@ type ClusterReplicaBuilder struct {
 
 func NewClusterReplicaBuilder(conn *sqlx.DB, replicaName, clusterName string) *ClusterReplicaBuilder {
 	return &ClusterReplicaBuilder{
-		conn:        conn,
+		ddl:         Builder{conn, ClusterReplica},
 		replicaName: replicaName,
 		clusterName: clusterName,
 	}
@@ -92,25 +93,15 @@ func (b *ClusterReplicaBuilder) Create() error {
 
 	q.WriteString(`;`)
 
-	_, err := b.conn.Exec(q.String())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.ddl.exec(q.String())
 }
 
 func (b *ClusterReplicaBuilder) Drop() error {
-	q := fmt.Sprintf(`DROP CLUSTER REPLICA %s;`, b.QualifiedName())
-
-	_, err := b.conn.Exec(q)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
+// DML
 type ClusterReplicaParams struct {
 	ReplicaId        sql.NullString `db:"id"`
 	ReplicaName      sql.NullString `db:"replica_name"`
@@ -128,46 +119,45 @@ var clusterReplicaQuery = `
 		mz_cluster_replicas.availability_zone
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
-		ON mz_cluster_replicas.cluster_id = mz_clusters.id
-`
+		ON mz_cluster_replicas.cluster_id = mz_clusters.id`
 
-func (b *ClusterReplicaBuilder) Id() (string, error) {
-	q := NewBaseQuery(clusterReplicaQuery)
+func ClusterReplicaId(conn *sqlx.DB, replciaName, clusterName string) (string, error) {
 	p := map[string]string{
-		"mz_cluster_replicas.name": b.replicaName,
-		"mz_clusters.name":         b.clusterName,
+		"mz_cluster_replicas.name": replciaName,
+		"mz_clusters.name":         clusterName,
 	}
+	q := queryPredicate(clusterReplicaQuery, p)
 
-	var s ClusterReplicaParams
-	if err := b.conn.Get(&s, q.queryPredicate(p)); err != nil {
+	var c ClusterReplicaParams
+	if err := conn.Get(&c, q); err != nil {
 		return "", err
 	}
 
-	return s.ReplicaId.String, nil
+	return c.ReplicaId.String, nil
 }
 
-func (b *ClusterReplicaBuilder) Params(id string) (ClusterReplicaParams, error) {
-	q := NewBaseQuery(clusterReplicaQuery)
+func ScanClusterReplica(conn *sqlx.DB, id string) (ClusterReplicaParams, error) {
 	p := map[string]string{
 		"mz_cluster_replicas.id": id,
 	}
+	q := queryPredicate(clusterReplicaQuery, p)
 
-	var s ClusterReplicaParams
-	if err := b.conn.Get(&s, q.queryPredicate(p)); err != nil {
-		return s, err
+	var c ClusterReplicaParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
 	}
 
-	return s, nil
+	return c, nil
 }
 
-func (b *ClusterReplicaBuilder) DataSource() ([]ClusterReplicaParams, error) {
-	q := NewBaseQuery(clusterReplicaQuery)
+func ListClusterReplicas(conn *sqlx.DB) ([]ClusterReplicaParams, error) {
 	p := map[string]string{}
+	q := queryPredicate(clusterReplicaQuery, p)
 
-	var s []ClusterReplicaParams
-	if err := b.conn.Select(&s, q.queryPredicate(p)); err != nil {
-		return s, err
+	var c []ClusterReplicaParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
 	}
 
-	return s, nil
+	return c, nil
 }

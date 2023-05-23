@@ -50,9 +50,7 @@ func ClusterReplica() *schema.Resource {
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), "", "")
-
-	dataSource, err := b.DataSource()
+	dataSource, err := materialize.ListClusterReplicas(meta.(*sqlx.DB))
 	if err != nil {
 		return diag.FromErr(err)
 	}
