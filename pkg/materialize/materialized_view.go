@@ -1,11 +1,15 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type MaterializedViewBuilder struct {
+	ddl                  Builder
 	materializedViewName string
 	schemaName           string
 	databaseName         string
@@ -13,16 +17,17 @@ type MaterializedViewBuilder struct {
 	selectStmt           string
 }
 
-func (b *MaterializedViewBuilder) QualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.materializedViewName)
-}
-
-func NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName string) *MaterializedViewBuilder {
+func NewMaterializedViewBuilder(conn *sqlx.DB, materializedViewName, schemaName, databaseName string) *MaterializedViewBuilder {
 	return &MaterializedViewBuilder{
+		ddl:                  Builder{conn, MaterializedView},
 		materializedViewName: materializedViewName,
 		schemaName:           schemaName,
 		databaseName:         databaseName,
 	}
+}
+
+func (b *MaterializedViewBuilder) QualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.materializedViewName)
 }
 
 func (b *MaterializedViewBuilder) ClusterName(clusterName string) *MaterializedViewBuilder {
@@ -35,7 +40,7 @@ func (b *MaterializedViewBuilder) SelectStmt(selectStmt string) *MaterializedVie
 	return b
 }
 
-func (b *MaterializedViewBuilder) Create() string {
+func (b *MaterializedViewBuilder) Create() error {
 	q := strings.Builder{}
 
 	q.WriteString(fmt.Sprintf(`CREATE MATERIALIZED VIEW %s`, b.QualifiedName()))
@@ -45,72 +50,84 @@ func (b *MaterializedViewBuilder) Create() string {
 	}
 
 	q.WriteString(fmt.Sprintf(` AS %s;`, b.selectStmt))
-	return q.String()
+	return b.ddl.exec(q.String())
 }
 
-func (b *MaterializedViewBuilder) Rename(newName string) string {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER MATERIALIZED VIEW %s RENAME TO %s;`, b.QualifiedName(), n)
+func (b *MaterializedViewBuilder) Rename(newMaterializedViewName string) error {
+	old := b.QualifiedName()
+	new := QualifiedName(b.databaseName, b.schemaName, newMaterializedViewName)
+	return b.ddl.rename(old, new)
 }
 
-func (b *MaterializedViewBuilder) Drop() string {
-	return fmt.Sprintf(`DROP MATERIALIZED VIEW %s;`, b.QualifiedName())
+func (b *MaterializedViewBuilder) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func (b *MaterializedViewBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_materialized_views.id
-		FROM mz_materialized_views
-		JOIN mz_schemas
-			ON mz_materialized_views.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_materialized_views.name = %s
-		AND mz_schemas.name = %s
-		AND mz_databases.name = %s;
-	`, QuoteString(b.materializedViewName), QuoteString(b.schemaName), QuoteString(b.databaseName))
+type MaterializedViewParams struct {
+	MaterializedViewId   sql.NullString `db:"id"`
+	MaterializedViewName sql.NullString `db:"materialized_view_name"`
+	SchemaName           sql.NullString `db:"schema_name"`
+	DatabaseName         sql.NullString `db:"database_name"`
+	Cluster              sql.NullString `db:"cluster_name"`
 }
 
-func ReadMaterializedViewParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_materialized_views.name AS materialized_view_name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name,
-			mz_clusters.name AS cluster_name
-		FROM mz_materialized_views
-		JOIN mz_schemas
-			ON mz_materialized_views.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		LEFT JOIN mz_clusters
-			ON mz_materialized_views.cluster_id = mz_clusters.id
-		WHERE mz_materialized_views.id = %s;`, QuoteString(id))
-}
+var materializedViewQuery = NewBaseQuery(`
+	SELECT
+		mz_materialized_views.id,
+		mz_materialized_views.name AS materialized_view_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_clusters.name AS cluster_name
+	FROM mz_materialized_views
+	JOIN mz_schemas
+		ON mz_materialized_views.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_clusters
+		ON mz_materialized_views.cluster_id = mz_clusters.id`)
 
-func ReadMaterializedViewDatasource(databaseName, schemaName string) string {
-	q := strings.Builder{}
-	q.WriteString(`
-		SELECT
-			mz_materialized_views.id,
-			mz_materialized_views.name,
-			mz_schemas.name,
-			mz_databases.name
-		FROM mz_materialized_views
-		JOIN mz_schemas
-			ON mz_materialized_views.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id`)
+func MaterializedViewId(conn *sqlx.DB, materializedViewName, schemaName, databaseName string) (string, error) {
+	p := map[string]string{
+		"mz_materialized_views.name": materializedViewName,
+		"mz_schemas.name":            schemaName,
+		"mz_databases.name":          databaseName,
+	}
+	q := materializedViewQuery.QueryPredicate(p)
 
-	if databaseName != "" {
-		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
-
-		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
-		}
+	var c MaterializedViewParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
 	}
 
-	q.WriteString(`;`)
-	return q.String()
+	return c.MaterializedViewId.String, nil
+}
+
+func ScanMaterializedView(conn *sqlx.DB, id string) (MaterializedViewParams, error) {
+	p := map[string]string{
+		"mz_materialized_views.id": id,
+	}
+	q := materializedViewQuery.QueryPredicate(p)
+
+	var c MaterializedViewParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListMaterializedViews(conn *sqlx.DB, schemaName, databaseName string) ([]MaterializedViewParams, error) {
+	p := map[string]string{
+		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
+	}
+	q := materializedViewQuery.QueryPredicate(p)
+
+	var c []MaterializedViewParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

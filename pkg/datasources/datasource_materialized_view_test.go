@@ -23,20 +23,24 @@ func TestMaterializedViewDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := mock.NewRows([]string{"id", "name", "schema", "database"}).
-			AddRow("u1", "view", "schema", "database")
+		ir := mock.NewRows([]string{"id", "materialized_view_name", "schema_name", "database_name", "cluster_name"}).
+			AddRow("u1", "view", "schema", "database", "cluster")
 		mock.ExpectQuery(`
 			SELECT
 				mz_materialized_views.id,
-				mz_materialized_views.name,
-				mz_schemas.name,
-				mz_databases.name
+				mz_materialized_views.name AS materialized_view_name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name,
+				mz_clusters.name AS cluster_name
 			FROM mz_materialized_views
 			JOIN mz_schemas
 				ON mz_materialized_views.schema_id = mz_schemas.id
 			JOIN mz_databases
 				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`).WillReturnRows(ir)
+			LEFT JOIN mz_clusters
+				ON mz_materialized_views.cluster_id = mz_clusters.id
+			WHERE mz_databases.name = 'database'
+			AND mz_schemas.name = 'schema'`).WillReturnRows(ir)
 
 		if err := materializedViewRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

@@ -106,7 +106,7 @@ func (b *IndexBuilder) Create() error {
 
 func (b *IndexBuilder) Drop() error {
 	q := fmt.Sprintf(`DROP INDEX %s RESTRICT;`, b.QualifiedName())
-	return b.ddl.drop(q)
+	return b.ddl.exec(q)
 }
 
 type IndexParams struct {
