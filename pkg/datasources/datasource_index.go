@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -62,37 +59,25 @@ func Index() *schema.Resource {
 }
 
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sqlx.DB)
-
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-	q := materialize.ReadIndexDatasource(databaseName, schemaName)
 
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no indexes found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list indexes")
-		d.SetId("")
+	var diags diag.Diagnostics
+
+	dataSource, err := materialize.ListIndexes(meta.(*sqlx.DB), schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	indexFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name, obj, schema, database string
-		rows.Scan(&id, &name, &obj, &schema, &database)
-
+	for _, p := range dataSource {
 		indexMap := map[string]interface{}{}
 
-		indexMap["id"] = id
-		indexMap["name"] = name
-		indexMap["obj_name"] = obj
-		indexMap["obj_schema"] = schema
-		indexMap["obj_database"] = database
+		indexMap["id"] = p.IndexId.String
+		indexMap["name"] = p.IndexName.String
+		indexMap["obj_name"] = p.Object.String
+		indexMap["obj_schema"] = p.SchemaName.String
+		indexMap["obj_database"] = p.DatabaseName.String
 
 		indexFormats = append(indexFormats, indexMap)
 	}
@@ -102,6 +87,5 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	SetId("indexes", databaseName, schemaName, d)
-
 	return diags
 }

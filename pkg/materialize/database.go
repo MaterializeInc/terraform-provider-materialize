@@ -38,11 +38,10 @@ type DatabaseParams struct {
 	DatabaseName sql.NullString `db:"database_name"`
 }
 
-var databaseQuery = "SELECT id, name AS database_name FROM mz_databases"
+var databaseQuery = NewBaseQuery("SELECT id, name AS database_name FROM mz_databases")
 
 func DatabaseId(conn *sqlx.DB, databaseName string) (string, error) {
-	p := map[string]string{"name": databaseName}
-	q := queryPredicate(databaseQuery, p)
+	q := databaseQuery.QueryPredicate(map[string]string{"name": databaseName})
 
 	var c DatabaseParams
 	if err := conn.Get(&c, q); err != nil {
@@ -53,8 +52,7 @@ func DatabaseId(conn *sqlx.DB, databaseName string) (string, error) {
 }
 
 func ScanDatabase(conn *sqlx.DB, id string) (DatabaseParams, error) {
-	p := map[string]string{"id": id}
-	q := queryPredicate(databaseQuery, p)
+	q := databaseQuery.QueryPredicate(map[string]string{"id": id})
 
 	var c DatabaseParams
 	if err := conn.Get(&c, q); err != nil {
@@ -65,8 +63,7 @@ func ScanDatabase(conn *sqlx.DB, id string) (DatabaseParams, error) {
 }
 
 func ListDatabases(conn *sqlx.DB) ([]DatabaseParams, error) {
-	p := map[string]string{}
-	q := queryPredicate(databaseQuery, p)
+	q := databaseQuery.QueryPredicate(map[string]string{})
 
 	var c []DatabaseParams
 	if err := conn.Select(&c, q); err != nil {

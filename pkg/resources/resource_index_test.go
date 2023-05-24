@@ -31,15 +31,11 @@ func TestResourceIndexCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).
-			AddRow("u1")
-		mock.ExpectQuery(`SELECT id FROM mz_indexes WHERE name = 'index';`).WillReturnRows(ir)
-
-		// Query Params
-		ip := sqlmock.NewRows([]string{"index_name", "obj_name", "obj_schema_name", "obj_database_name"}).
-			AddRow("index", "obj", "schema", "database")
+		ir := mock.NewRows([]string{"id", "index_name", "obj_name", "obj_schema_name", "obj_database_name"}).
+			AddRow("u1", "index", "obj", "schema", "database")
 		mock.ExpectQuery(`
 			SELECT
+				mz_indexes.id,
 				mz_indexes.name AS index_name,
 				mz_objects.name AS obj_name,
 				mz_schemas.name AS obj_schema_name,
@@ -51,9 +47,28 @@ func TestResourceIndexCreate(t *testing.T) {
 				ON mz_objects.schema_id = mz_schemas.id
 			LEFT JOIN mz_databases
 				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_objects.type IN \('source', 'view', 'materialized-view'\)
-			AND mz_indexes.id = 'u1';
-		`).WillReturnRows(ip)
+			WHERE mz_indexes.name = 'index'
+			AND mz_objects.type IN \('source', 'view', 'materialized-view'\);`).WillReturnRows(ir)
+
+		// Query Params
+		ip := mock.NewRows([]string{"id", "index_name", "obj_name", "obj_schema_name", "obj_database_name"}).
+			AddRow("u1", "index", "obj", "schema", "database")
+		mock.ExpectQuery(`
+			SELECT
+				mz_indexes.id,
+				mz_indexes.name AS index_name,
+				mz_objects.name AS obj_name,
+				mz_schemas.name AS obj_schema_name,
+				mz_databases.name AS obj_database_name
+			FROM mz_indexes
+			JOIN mz_objects
+				ON mz_indexes.on_id = mz_objects.id
+			LEFT JOIN mz_schemas
+				ON mz_objects.schema_id = mz_schemas.id
+			LEFT JOIN mz_databases
+				ON mz_schemas.database_id = mz_databases.id
+			WHERE mz_indexes.id = 'u1'
+			AND mz_objects.type IN \('source', 'view', 'materialized-view'\);`).WillReturnRows(ip)
 
 		if err := indexCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

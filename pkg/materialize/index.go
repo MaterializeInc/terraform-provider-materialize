@@ -1,8 +1,11 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type IndexColumn struct {
@@ -23,6 +26,7 @@ func GetIndexColumnStruct(v []interface{}) []IndexColumn {
 }
 
 type IndexBuilder struct {
+	ddl          Builder
 	indexName    string
 	indexDefault bool
 	objName      IdentifierSchemaStruct
@@ -31,16 +35,17 @@ type IndexBuilder struct {
 	colExpr      []IndexColumn
 }
 
-func (b *IndexBuilder) QualifiedName() string {
-	return QualifiedName(b.objName.DatabaseName, b.objName.SchemaName, b.indexName)
-}
-
-func NewIndexBuilder(indexName string, indexDefault bool, objName IdentifierSchemaStruct) *IndexBuilder {
+func NewIndexBuilder(conn *sqlx.DB, indexName string, indexDefault bool, objName IdentifierSchemaStruct) *IndexBuilder {
 	return &IndexBuilder{
+		ddl:          Builder{conn, Index},
 		indexName:    indexName,
 		indexDefault: indexDefault,
 		objName:      objName,
 	}
+}
+
+func (b *IndexBuilder) QualifiedName() string {
+	return QualifiedName(b.objName.DatabaseName, b.objName.SchemaName, b.indexName)
 }
 
 func (b *IndexBuilder) ClusterName(c string) *IndexBuilder {
@@ -58,7 +63,7 @@ func (b *IndexBuilder) ColExpr(c []IndexColumn) *IndexBuilder {
 	return b
 }
 
-func (b *IndexBuilder) Create() string {
+func (b *IndexBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(`CREATE`)
 
@@ -96,64 +101,71 @@ func (b *IndexBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
+	return b.ddl.exec(q.String())
 }
 
-func (b *IndexBuilder) Drop() string {
-	return fmt.Sprintf(`DROP INDEX %s RESTRICT;`, b.QualifiedName())
+func (b *IndexBuilder) Drop() error {
+	q := fmt.Sprintf(`DROP INDEX %s RESTRICT;`, b.QualifiedName())
+	return b.ddl.drop(q)
 }
 
-func (b *IndexBuilder) ReadId() string {
-	return fmt.Sprintf(`SELECT id FROM mz_indexes WHERE name = %s;`, QuoteString(b.indexName))
+type IndexParams struct {
+	IndexId      sql.NullString `db:"id"`
+	IndexName    sql.NullString `db:"index_name"`
+	Object       sql.NullString `db:"obj_name"`
+	SchemaName   sql.NullString `db:"obj_schema_name"`
+	DatabaseName sql.NullString `db:"obj_database_name"`
 }
 
-func ReadIndexParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_indexes.name AS index_name,
-			mz_objects.name AS obj_name,
-			mz_schemas.name AS obj_schema_name,
-			mz_databases.name AS obj_database_name
-		FROM mz_indexes
-		JOIN mz_objects
-			ON mz_indexes.on_id = mz_objects.id
-		LEFT JOIN mz_schemas
-			ON mz_objects.schema_id = mz_schemas.id
-		LEFT JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_objects.type IN ('source', 'view', 'materialized-view')
-		AND mz_indexes.id = %s;
-	`, QuoteString(id))
-}
+var indexQuery = NewBaseQuery(`
+	SELECT
+		mz_indexes.id,
+		mz_indexes.name AS index_name,
+		mz_objects.name AS obj_name,
+		mz_schemas.name AS obj_schema_name,
+		mz_databases.name AS obj_database_name
+	FROM mz_indexes
+	JOIN mz_objects
+		ON mz_indexes.on_id = mz_objects.id
+	LEFT JOIN mz_schemas
+		ON mz_objects.schema_id = mz_schemas.id
+	LEFT JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id`).
+	CustomPredicate([]string{"mz_objects.type IN ('source', 'view', 'materialized-view')"})
 
-func ReadIndexDatasource(databaseName, schemaName string) string {
-	q := strings.Builder{}
-	q.WriteString(`
-		SELECT
-			mz_indexes.id,
-			mz_indexes.name,
-			mz_objects.name,
-			mz_schemas.name,
-			mz_databases.name
-		FROM mz_indexes
-		JOIN mz_objects
-			ON mz_indexes.on_id = mz_objects.id
-		LEFT JOIN mz_schemas
-			ON mz_objects.schema_id = mz_schemas.id
-		LEFT JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_objects.type IN ('source', 'view', 'materialized-view')
-	`)
+func IndexId(conn *sqlx.DB, indexName string) (string, error) {
+	q := indexQuery.QueryPredicate(map[string]string{"mz_indexes.name": indexName})
 
-	if databaseName != "" {
-		q.WriteString(fmt.Sprintf(`
-		AND mz_databases.name = %s`, QuoteString(databaseName)))
-
-		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
-		}
+	var c IndexParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
 	}
 
-	q.WriteString(`;`)
-	return q.String()
+	return c.IndexId.String, nil
+}
+
+func ScanIndex(conn *sqlx.DB, id string) (IndexParams, error) {
+	q := indexQuery.QueryPredicate(map[string]string{"mz_indexes.id": id})
+
+	var c IndexParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListIndexes(conn *sqlx.DB, schemaName, databaseName string) ([]IndexParams, error) {
+	p := map[string]string{
+		"mz_databases.name": databaseName,
+		"mz_schemas.name":   schemaName,
+	}
+	q := indexQuery.QueryPredicate(p)
+
+	var c []IndexParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

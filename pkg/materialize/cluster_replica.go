@@ -110,7 +110,7 @@ type ClusterReplicaParams struct {
 	AvailabilityZone sql.NullString `db:"availability_zone"`
 }
 
-var clusterReplicaQuery = `
+var clusterReplicaQuery = NewBaseQuery(`
 	SELECT
 		mz_cluster_replicas.id,
 		mz_cluster_replicas.name AS replica_name,
@@ -119,14 +119,14 @@ var clusterReplicaQuery = `
 		mz_cluster_replicas.availability_zone
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
-		ON mz_cluster_replicas.cluster_id = mz_clusters.id`
+		ON mz_cluster_replicas.cluster_id = mz_clusters.id`)
 
 func ClusterReplicaId(conn *sqlx.DB, replciaName, clusterName string) (string, error) {
 	p := map[string]string{
 		"mz_cluster_replicas.name": replciaName,
 		"mz_clusters.name":         clusterName,
 	}
-	q := queryPredicate(clusterReplicaQuery, p)
+	q := clusterReplicaQuery.QueryPredicate(p)
 
 	var c ClusterReplicaParams
 	if err := conn.Get(&c, q); err != nil {
@@ -140,7 +140,7 @@ func ScanClusterReplica(conn *sqlx.DB, id string) (ClusterReplicaParams, error) 
 	p := map[string]string{
 		"mz_cluster_replicas.id": id,
 	}
-	q := queryPredicate(clusterReplicaQuery, p)
+	q := clusterReplicaQuery.QueryPredicate(p)
 
 	var c ClusterReplicaParams
 	if err := conn.Get(&c, q); err != nil {
@@ -152,7 +152,7 @@ func ScanClusterReplica(conn *sqlx.DB, id string) (ClusterReplicaParams, error) 
 
 func ListClusterReplicas(conn *sqlx.DB) ([]ClusterReplicaParams, error) {
 	p := map[string]string{}
-	q := queryPredicate(clusterReplicaQuery, p)
+	q := clusterReplicaQuery.QueryPredicate(p)
 
 	var c []ClusterReplicaParams
 	if err := conn.Select(&c, q); err != nil {

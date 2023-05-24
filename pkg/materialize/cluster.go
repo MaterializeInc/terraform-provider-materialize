@@ -41,11 +41,10 @@ type ClusterParams struct {
 	ClusterName sql.NullString `db:"name"`
 }
 
-var clusterQuery = `SELECT id, name FROM mz_clusters`
+var clusterQuery = NewBaseQuery(`SELECT id, name FROM mz_clusters`)
 
 func ClusterId(conn *sqlx.DB, clusterName string) (string, error) {
-	p := map[string]string{"name": clusterName}
-	q := queryPredicate(clusterQuery, p)
+	q := clusterQuery.QueryPredicate(map[string]string{"name": clusterName})
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
@@ -56,8 +55,7 @@ func ClusterId(conn *sqlx.DB, clusterName string) (string, error) {
 }
 
 func ScanCluster(conn *sqlx.DB, id string) (ClusterParams, error) {
-	p := map[string]string{"id": id}
-	q := queryPredicate(clusterQuery, p)
+	q := clusterQuery.QueryPredicate(map[string]string{"id": id})
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
@@ -68,8 +66,7 @@ func ScanCluster(conn *sqlx.DB, id string) (ClusterParams, error) {
 }
 
 func ListClusters(conn *sqlx.DB) ([]ClusterParams, error) {
-	p := map[string]string{}
-	q := queryPredicate(clusterQuery, p)
+	q := clusterQuery.QueryPredicate(map[string]string{})
 
 	var c []ClusterParams
 	if err := conn.Select(&c, q); err != nil {
