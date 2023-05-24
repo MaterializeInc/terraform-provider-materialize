@@ -1,8 +1,9 @@
 package materialize
 
 import (
-	"fmt"
-	"strings"
+	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ValueSecretStruct struct {
@@ -23,102 +24,96 @@ func GetValueSecretStruct(databaseName string, schemaName string, v interface{})
 }
 
 type Connection struct {
+	ddl            Builder
 	ConnectionName string
 	SchemaName     string
 	DatabaseName   string
+}
+
+func NewConnection(conn *sqlx.DB, connectionName, schemaName, databaseName string) *Connection {
+	return &Connection{
+		ddl:            Builder{conn, BaseConnection},
+		ConnectionName: connectionName,
+		SchemaName:     schemaName,
+		DatabaseName:   databaseName,
+	}
 }
 
 func (c *Connection) QualifiedName() string {
 	return QualifiedName(c.DatabaseName, c.SchemaName, c.ConnectionName)
 }
 
-func ReadConnectionId(name, schema, database string) string {
-	return fmt.Sprintf(`
-		SELECT mz_connections.id
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = %s
-		AND mz_schemas.name = %s
-		AND mz_databases.name = %s;
-	`, QuoteString(name), QuoteString(schema), QuoteString(database))
+func (b *Connection) Rename(newConnectionName string) error {
+	old := b.QualifiedName()
+	new := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	return b.ddl.rename(old, new)
 }
 
-func ReadConnectionParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_connections.name AS connection_name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.id = %s;`, QuoteString(id))
+func (b *Connection) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func ReadConnectionAwsPrivatelinkParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_connections.name AS connection_name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name,
-			mz_aws_privatelink_connections.principal
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		LEFT JOIN mz_aws_privatelink_connections
-			ON mz_connections.id = mz_aws_privatelink_connections.id
-		WHERE mz_connections.id = %s;`, QuoteString(id))
+type ConnectionParams struct {
+	ConnectionId   sql.NullString `db:"id"`
+	ConnectionName sql.NullString `db:"connection_name"`
+	SchemaName     sql.NullString `db:"schema_name"`
+	DatabaseName   sql.NullString `db:"database_name"`
+	ConnectionType sql.NullString `db:"connection_type"`
 }
 
-func ReadConnectionSshTunnelParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_connections.name AS connection_name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name,
-			mz_ssh_tunnel_connections.public_key_1,
-			mz_ssh_tunnel_connections.public_key_2
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		LEFT JOIN mz_ssh_tunnel_connections
-			ON mz_connections.id = mz_ssh_tunnel_connections.id
-		WHERE mz_connections.id = %s;`, QuoteString(id))
-}
+var connectionQuery = `
+	SELECT
+		mz_connections.id,
+		mz_connections.name AS connection_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_connections.type AS connection_type
+	FROM mz_connections
+	JOIN mz_schemas
+		ON mz_connections.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id`
 
-func ReadConnectionDatasource(databaseName, schemaName string) string {
-	q := strings.Builder{}
-	q.WriteString(`
-		SELECT
-			mz_connections.id,
-			mz_connections.name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name,
-			mz_connections.type
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id`)
+func ConnectionId(conn *sqlx.DB, connectionName, schemaName, databaseName string) (string, error) {
+	p := map[string]string{
+		"mz_connections.name": connectionName,
+		"mz_schemas.name":     schemaName,
+		"mz_databases.name":   databaseName,
+	}
+	q := queryPredicate(connectionQuery, p)
 
-	if databaseName != "" {
-		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
-
-		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
-		}
+	var c ConnectionParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
 	}
 
-	q.WriteString(`;`)
-	return q.String()
+	return c.ConnectionId.String, nil
+}
+
+func ScanConnection(conn *sqlx.DB, id string) (ConnectionParams, error) {
+	p := map[string]string{"mz_connections.id": id}
+	q := queryPredicate(connectionQuery, p)
+
+	var c ConnectionParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListConnections(conn *sqlx.DB, schemaName, databaseName string) ([]ConnectionParams, error) {
+	p := map[string]string{
+		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
+	}
+	q := queryPredicate(connectionQuery, p)
+
+	var c []ConnectionParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

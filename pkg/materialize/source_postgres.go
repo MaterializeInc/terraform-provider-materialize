@@ -12,7 +12,7 @@ type SourcePostgresBuilder struct {
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
-	table              []Table
+	table              []TableStruct
 }
 
 func NewSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
@@ -46,7 +46,7 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Table(t []Table) *SourcePostgresBuilder {
+func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	b.table = t
 	return b
 }

@@ -2,9 +2,11 @@ package resources
 
 var readConnection string = `
 SELECT
+	mz_connections.id,
 	mz_connections.name AS connection_name,
 	mz_schemas.name AS schema_name,
-	mz_databases.name AS database_name
+	mz_databases.name AS database_name,
+	mz_connections.type AS connection_type
 FROM mz_connections
 JOIN mz_schemas
 	ON mz_connections.schema_id = mz_schemas.id
@@ -14,6 +16,7 @@ WHERE mz_connections.id = 'u1';`
 
 var readConnectionAwsPrivatelink string = `
 SELECT
+	mz_connections.id,
 	mz_connections.name AS connection_name,
 	mz_schemas.name AS schema_name,
 	mz_databases.name AS database_name,
@@ -29,6 +32,7 @@ WHERE mz_connections.id = 'u1';`
 
 var readConnectionSshTunnellink string = `
 SELECT
+	mz_connections.id,
 	mz_connections.name AS connection_name,
 	mz_schemas.name AS schema_name,
 	mz_databases.name AS database_name,

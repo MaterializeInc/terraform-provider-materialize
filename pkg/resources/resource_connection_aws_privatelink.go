@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -45,7 +44,7 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 		CreateContext: connectionAwsPrivatelinkCreate,
 		ReadContext:   connectionAwsPrivatelinkRead,
 		UpdateContext: connectionAwsPrivatelinkUpdate,
-		DeleteContext: connectionAwsPrivatelinkDelete,
+		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -63,12 +62,10 @@ type ConnectionAwsPrivatelinkParams struct {
 }
 
 func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadConnectionAwsPrivatelinkParams(i)
 
-	var s ConnectionAwsPrivatelinkParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanConnectionAwsPrivatelink(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -99,62 +96,47 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName)
+	b := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("service_name"); ok {
-		builder.PrivateLinkServiceName(v.(string))
+		b.PrivateLinkServiceName(v.(string))
 	}
 
 	if v, ok := d.GetOk("availability_zones"); ok {
 		azs := materialize.GetSliceValueString(v.([]interface{}))
-		builder.PrivateLinkAvailabilityZones(azs)
+		b.PrivateLinkAvailabilityZones(azs)
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.ConnectionId(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
 
 	return connectionAwsPrivatelinkRead(ctx, d, meta)
 }
 
 func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
+
+	b := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
-		q := materialize.NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
-			return diag.FromErr(err)
-		}
+		b.Rename(newConnectionName.(string))
 	}
 
 	return connectionAwsPrivatelinkRead(ctx, d, meta)
-}
-
-func connectionAwsPrivatelinkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	builder := materialize.NewConnectionAwsPrivatelinkBuilder(connectionName, schemaName, databaseName)
-	q := builder.Drop()
-
-	if err := dropResource(conn, d, q, "connection"); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
 }

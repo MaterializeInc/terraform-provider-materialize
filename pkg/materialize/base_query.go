@@ -6,8 +6,10 @@ import (
 )
 
 func queryPredicate(statement string, predicate map[string]string) string {
-	var p []string
+	q := strings.Builder{}
+	q.WriteString(statement)
 
+	var p []string
 	for k, v := range predicate {
 		if v != "" {
 			p = append(p, fmt.Sprintf(`%s = %s`, k, QuoteString(v)))
@@ -16,8 +18,9 @@ func queryPredicate(statement string, predicate map[string]string) string {
 
 	if len(p) > 0 {
 		f := strings.Join(p, " AND ")
-		return fmt.Sprintf(`%s WHERE %s;`, statement, f)
+		q.WriteString(fmt.Sprintf(` WHERE %s`, f))
 	}
 
-	return fmt.Sprintf(`%s;`, statement)
+	q.WriteString(";")
+	return q.String()
 }

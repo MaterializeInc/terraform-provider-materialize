@@ -2,8 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -51,7 +49,7 @@ func ConnectionSshTunnel() *schema.Resource {
 		CreateContext: connectionSshTunnelCreate,
 		ReadContext:   connectionSshTunnelRead,
 		UpdateContext: connectionSshTunnelUpdate,
-		DeleteContext: connectionSshTunnelDelete,
+		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -61,21 +59,11 @@ func ConnectionSshTunnel() *schema.Resource {
 	}
 }
 
-type ConnectionSshTunnelParams struct {
-	ConnectionName sql.NullString `db:"connection_name"`
-	SchemaName     sql.NullString `db:"schema_name"`
-	DatabaseName   sql.NullString `db:"database_name"`
-	PublicKey1     sql.NullString `db:"public_key_1"`
-	PublicKey2     sql.NullString `db:"public_key_2"`
-}
-
 func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadConnectionSshTunnelParams(i)
 
-	var s ConnectionSshTunnelParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanConnectionSshTunnel(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -110,55 +98,42 @@ func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName)
+	b := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
-	builder.SSHHost(d.Get("host").(string))
-	builder.SSHUser(d.Get("user").(string))
-	builder.SSHPort(d.Get("port").(int))
+	b.SSHHost(d.Get("host").(string))
+	b.SSHUser(d.Get("user").(string))
+	b.SSHPort(d.Get("port").(int))
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.ConnectionId(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return connectionSshTunnelRead(ctx, d, meta)
 }
 
 func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
+
+	b := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
-		q := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
-			return diag.FromErr(err)
-		}
+		b.Rename(newConnectionName.(string))
 	}
 
 	return connectionSshTunnelRead(ctx, d, meta)
-}
-
-func connectionSshTunnelDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "connection"); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
 }

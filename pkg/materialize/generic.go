@@ -9,8 +9,20 @@ import (
 type EntityType string
 
 const (
-	ClusterReplica EntityType = "CLUSTER REPLICA"
-	Cluster        EntityType = "CLUSTER"
+	BaseConnection   EntityType = "CONNECTION"
+	BaseSink         EntityType = "SINK"
+	BaseSource       EntityType = "SOURCE"
+	ClusterReplica   EntityType = "CLUSTER REPLICA"
+	Cluster          EntityType = "CLUSTER"
+	Database         EntityType = "DATABASE"
+	Index            EntityType = "INDEX"
+	MaterializedView EntityType = "MATERIALIZED VIEW"
+	Ownership        EntityType = "OWNERSHIP"
+	Role             EntityType = "ROLE"
+	Schema           EntityType = "SCHEMA"
+	Secret           EntityType = "SECRET"
+	Table            EntityType = "TABLE"
+	View             EntityType = "VIEW"
 )
 
 type Builder struct {
@@ -29,33 +41,15 @@ func (b *Builder) exec(statement string) error {
 
 func (b *Builder) drop(name string) error {
 	q := fmt.Sprintf(`DROP %s %s;`, b.entity, name)
-
-	_, err := b.conn.Exec(q)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.exec(q)
 }
 
 func (b *Builder) rename(oldName, newName string) error {
 	q := fmt.Sprintf(`ALTER %s %s RENAME TO %s;`, b.entity, oldName, newName)
-
-	_, err := b.conn.Exec(q)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.exec(q)
 }
 
 func (b *Builder) resize(name, size string) error {
 	q := fmt.Sprintf(`ALTER %s %s SET (SIZE = %s);`, b.entity, name, size)
-
-	_, err := b.conn.Exec(q)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.exec(q)
 }

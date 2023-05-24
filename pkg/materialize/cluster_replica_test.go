@@ -25,11 +25,9 @@ func TestClusterReplicaCreate(t *testing.T) {
 	})
 }
 
-func TestClusterReplicaDropQuery(t *testing.T) {
+func TestClusterReplicaDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`DROP CLUSTER REPLICA "cluster"."replica";`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`DROP CLUSTER REPLICA "cluster"."replica";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		NewClusterReplicaBuilder(db, "replica", "cluster").Drop()
 	})

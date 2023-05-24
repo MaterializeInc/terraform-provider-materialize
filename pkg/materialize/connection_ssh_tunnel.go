@@ -1,8 +1,11 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ConnectionSshTunnelBuilder struct {
@@ -12,9 +15,10 @@ type ConnectionSshTunnelBuilder struct {
 	sshPort int
 }
 
-func NewConnectionSshTunnelBuilder(connectionName, schemaName, databaseName string) *ConnectionSshTunnelBuilder {
+func NewConnectionSshTunnelBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionSshTunnelBuilder {
+	b := Builder{conn, BaseConnection}
 	return &ConnectionSshTunnelBuilder{
-		Connection: Connection{connectionName, schemaName, databaseName},
+		Connection: Connection{b, connectionName, schemaName, databaseName},
 	}
 }
 
@@ -33,37 +37,49 @@ func (b *ConnectionSshTunnelBuilder) SSHPort(sshPort int) *ConnectionSshTunnelBu
 	return b
 }
 
-func (b *ConnectionSshTunnelBuilder) Create() string {
+func (b *ConnectionSshTunnelBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.QualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`HOST %s, `, QuoteString(b.sshHost)))
-	q.WriteString(fmt.Sprintf(`USER %s, `, QuoteString(b.sshUser)))
-	q.WriteString(fmt.Sprintf(`PORT %d`, b.sshPort))
+	q.WriteString(fmt.Sprintf(`HOST %s, USER %s, PORT %d`, QuoteString(b.sshHost), QuoteString(b.sshUser), b.sshPort))
 
 	q.WriteString(`);`)
-	return q.String()
+	return b.ddl.exec(q.String())
 }
 
-func (b *ConnectionSshTunnelBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
+type ConnectionSshTunnelParams struct {
+	ConnectionId   sql.NullString `db:"id"`
+	ConnectionName sql.NullString `db:"connection_name"`
+	SchemaName     sql.NullString `db:"schema_name"`
+	DatabaseName   sql.NullString `db:"database_name"`
+	PublicKey1     sql.NullString `db:"public_key_1"`
+	PublicKey2     sql.NullString `db:"public_key_2"`
 }
 
-func (b *ConnectionSshTunnelBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
-}
+var connectionSshTunnelQuery = `
+	SELECT
+		mz_connections.id,
+		mz_connections.name AS connection_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_ssh_tunnel_connections.public_key_1,
+		mz_ssh_tunnel_connections.public_key_2
+	FROM mz_connections
+	JOIN mz_schemas
+		ON mz_connections.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_ssh_tunnel_connections
+		ON mz_connections.id = mz_ssh_tunnel_connections.id`
 
-func (b *ConnectionSshTunnelBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_connections.id
-		FROM mz_connections
-		JOIN mz_schemas
-			ON mz_connections.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_connections.name = %s
-		AND mz_schemas.name = %s
-		AND mz_databases.name = %s;
-	`, QuoteString(b.ConnectionName), QuoteString(b.SchemaName), QuoteString(b.DatabaseName))
+func ScanConnectionSshTunnel(conn *sqlx.DB, id string) (ConnectionSshTunnelParams, error) {
+	p := map[string]string{"mz_connections.id": id}
+	q := queryPredicate(connectionSshTunnelQuery, p)
+
+	var c ConnectionSshTunnelParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

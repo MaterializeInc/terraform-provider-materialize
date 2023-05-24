@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -11,19 +10,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ConnectionParams struct {
-	ConnectionName sql.NullString `db:"connection_name"`
-	SchemaName     sql.NullString `db:"schema_name"`
-	DatabaseName   sql.NullString `db:"database_name"`
-}
-
 func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadConnectionParams(i)
 
-	var s ConnectionParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanConnection(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -46,5 +37,33 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
+	return nil
+}
+
+func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	connectionName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	b := materialize.NewConnectionPostgresBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+
+	if d.HasChange("name") {
+		_, newConnectionName := d.GetChange("name")
+		b.Rename(newConnectionName.(string))
+	}
+
+	return connectionRead(ctx, d, meta)
+}
+
+func connectionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	connectionName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	b := materialize.NewConnectionPostgresBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+
+	if err := b.Drop(); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }
