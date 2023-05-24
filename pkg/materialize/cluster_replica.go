@@ -1,11 +1,16 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
+// DDL
 type ClusterReplicaBuilder struct {
+	ddl                        Builder
 	replicaName                string
 	clusterName                string
 	size                       string
@@ -15,8 +20,9 @@ type ClusterReplicaBuilder struct {
 	idleArrangementMergeEffort int
 }
 
-func NewClusterReplicaBuilder(replicaName, clusterName string) *ClusterReplicaBuilder {
+func NewClusterReplicaBuilder(conn *sqlx.DB, replicaName, clusterName string) *ClusterReplicaBuilder {
 	return &ClusterReplicaBuilder{
+		ddl:         Builder{conn, ClusterReplica},
 		replicaName: replicaName,
 		clusterName: clusterName,
 	}
@@ -51,7 +57,7 @@ func (b *ClusterReplicaBuilder) IdleArrangementMergeEffort(e int) *ClusterReplic
 	return b
 }
 
-func (b *ClusterReplicaBuilder) Create() string {
+func (b *ClusterReplicaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s`, b.QualifiedName()))
 
@@ -86,46 +92,72 @@ func (b *ClusterReplicaBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
+
+	return b.ddl.exec(q.String())
 }
 
-func (b *ClusterReplicaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CLUSTER REPLICA %s;`, b.QualifiedName())
+func (b *ClusterReplicaBuilder) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func (b *ClusterReplicaBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_cluster_replicas.id
-		FROM mz_cluster_replicas
-		JOIN mz_clusters
-			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.name = %s
-		AND mz_clusters.name = %s;`, QuoteString(b.replicaName), QuoteString(b.clusterName))
+// DML
+type ClusterReplicaParams struct {
+	ReplicaId        sql.NullString `db:"id"`
+	ReplicaName      sql.NullString `db:"replica_name"`
+	ClusterName      sql.NullString `db:"cluster_name"`
+	Size             sql.NullString `db:"size"`
+	AvailabilityZone sql.NullString `db:"availability_zone"`
 }
 
-func ReadClusterReplicaParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_cluster_replicas.name AS replica_name,
-			mz_clusters.name AS cluster_name,
-			mz_cluster_replicas.size,
-			mz_cluster_replicas.availability_zone
-		FROM mz_cluster_replicas
-		JOIN mz_clusters
-			ON mz_cluster_replicas.cluster_id = mz_clusters.id
-		WHERE mz_cluster_replicas.id = %s;`, QuoteString(id))
+var clusterReplicaQuery = `
+	SELECT
+		mz_cluster_replicas.id,
+		mz_cluster_replicas.name AS replica_name,
+		mz_clusters.name AS cluster_name,
+		mz_cluster_replicas.size,
+		mz_cluster_replicas.availability_zone
+	FROM mz_cluster_replicas
+	JOIN mz_clusters
+		ON mz_cluster_replicas.cluster_id = mz_clusters.id`
+
+func ClusterReplicaId(conn *sqlx.DB, replciaName, clusterName string) (string, error) {
+	p := map[string]string{
+		"mz_cluster_replicas.name": replciaName,
+		"mz_clusters.name":         clusterName,
+	}
+	q := queryPredicate(clusterReplicaQuery, p)
+
+	var c ClusterReplicaParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
+	}
+
+	return c.ReplicaId.String, nil
 }
 
-func ReadClusterReplicaDatasource() string {
-	return `
-		SELECT
-			mz_cluster_replicas.id,
-			mz_cluster_replicas.name,
-			mz_clusters.name,
-			mz_cluster_replicas.size,
-			mz_cluster_replicas.availability_zone
-		FROM mz_cluster_replicas
-		JOIN mz_clusters
-			ON mz_cluster_replicas.cluster_id = mz_clusters.id;
-	`
+func ScanClusterReplica(conn *sqlx.DB, id string) (ClusterReplicaParams, error) {
+	p := map[string]string{
+		"mz_cluster_replicas.id": id,
+	}
+	q := queryPredicate(clusterReplicaQuery, p)
+
+	var c ClusterReplicaParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListClusterReplicas(conn *sqlx.DB) ([]ClusterReplicaParams, error) {
+	p := map[string]string{}
+	q := queryPredicate(clusterReplicaQuery, p)
+
+	var c []ClusterReplicaParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

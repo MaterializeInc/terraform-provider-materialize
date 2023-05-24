@@ -28,7 +28,7 @@ var inKafka = map[string]interface{}{
 	"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "tunnel"}},
 }
 
-func TestResourceKafkaCreate(t *testing.T) {
+func TestResourceConnectionKafkaCreate(t *testing.T) {
 	r := require.New(t)
 
 	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inKafka)
@@ -43,7 +43,12 @@ func TestResourceKafkaCreate(t *testing.T) {
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
 		mock.ExpectQuery(`
-			SELECT mz_connections.id
+			SELECT
+				mz_connections.id,
+				mz_connections.name AS connection_name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name,
+				mz_connections.type AS connection_type
 			FROM mz_connections
 			JOIN mz_schemas
 				ON mz_connections.schema_id = mz_schemas.id
@@ -59,50 +64,6 @@ func TestResourceKafkaCreate(t *testing.T) {
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
 		if err := connectionKafkaCreate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourceKafkaUpdate(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inKafka)
-
-	// Set current state
-	d.SetId("u1")
-	d.Set("name", "old_conn")
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Params
-		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name"}).AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
-
-		if err := connectionKafkaUpdate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourceKafkaDelete(t *testing.T) {
-	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "conn",
-		"schema_name":   "schema",
-		"database_name": "database",
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, in)
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		if err := connectionKafkaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

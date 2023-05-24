@@ -20,7 +20,7 @@ var inAwsPrivatelink = map[string]interface{}{
 	"availability_zones": []interface{}{"use1-az1", "use1-az2"},
 }
 
-func TestResourceAwsPrivatelinkCreate(t *testing.T) {
+func TestResourceConnectionAwsPrivatelinkCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
 	r.NotNil(d)
@@ -34,7 +34,12 @@ func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
 		mock.ExpectQuery(`
-			SELECT mz_connections.id
+			SELECT
+				mz_connections.id,
+				mz_connections.name AS connection_name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name,
+				mz_connections.type AS connection_type
 			FROM mz_connections
 			JOIN mz_schemas
 				ON mz_connections.schema_id = mz_schemas.id
@@ -55,7 +60,7 @@ func TestResourceAwsPrivatelinkCreate(t *testing.T) {
 
 }
 
-func TestResourceAwsPrivatelinkUpdate(t *testing.T) {
+func TestResourceConnectionAwsPrivatelinkUpdate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
 
@@ -72,27 +77,6 @@ func TestResourceAwsPrivatelinkUpdate(t *testing.T) {
 		mock.ExpectQuery(readConnectionAwsPrivatelink).WillReturnRows(ip)
 
 		if err := connectionAwsPrivatelinkUpdate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourceAwsPrivatelinkDelete(t *testing.T) {
-	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "conn",
-		"schema_name":   "schema",
-		"database_name": "database",
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, in)
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		if err := connectionAwsPrivatelinkDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

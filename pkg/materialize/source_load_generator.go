@@ -31,7 +31,7 @@ func GetCounterOptionsStruct(v interface{}) CounterOptions {
 type AuctionOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []Table
+	Table        []TableStruct
 }
 
 func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
@@ -54,7 +54,7 @@ func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
 type TPCHOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []Table
+	Table        []TableStruct
 }
 
 func GetTPCHOptionsStruct(v interface{}) TPCHOptions {
@@ -160,7 +160,7 @@ func (b *SourceLoadgenBuilder) Create() string {
 		// Tables do not apply to COUNTER
 	} else if len(b.auctionOptions.Table) > 0 || len(b.tpchOptions.Table) > 0 {
 
-		var ot []Table
+		var ot []TableStruct
 		if len(b.auctionOptions.Table) > 0 {
 			ot = b.auctionOptions.Table
 		} else {

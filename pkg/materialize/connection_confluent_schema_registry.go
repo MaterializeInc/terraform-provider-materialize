@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ConnectionConfluentSchemaRegistryBuilder struct {
@@ -17,9 +19,10 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	confluentSchemaRegistryAWSPrivateLink IdentifierSchemaStruct
 }
 
-func NewConnectionConfluentSchemaRegistryBuilder(connectionName, schemaName, databaseName string) *ConnectionConfluentSchemaRegistryBuilder {
+func NewConnectionConfluentSchemaRegistryBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionConfluentSchemaRegistryBuilder {
+	b := Builder{conn, BaseConnection}
 	return &ConnectionConfluentSchemaRegistryBuilder{
-		Connection: Connection{connectionName, schemaName, databaseName},
+		Connection: Connection{b, connectionName, schemaName, databaseName},
 	}
 }
 
@@ -63,7 +66,7 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryAWSPri
 	return b
 }
 
-func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
+func (b *ConnectionConfluentSchemaRegistryBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.QualifiedName()))
 
@@ -100,18 +103,5 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() string {
 	}
 
 	q.WriteString(`);`)
-	return q.String()
-}
-
-func (b *ConnectionConfluentSchemaRegistryBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *ConnectionConfluentSchemaRegistryBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
-}
-
-func (b *ConnectionConfluentSchemaRegistryBuilder) ReadId() string {
-	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
+	return b.ddl.exec(q.String())
 }

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -31,17 +30,10 @@ func Cluster() *schema.Resource {
 	}
 }
 
-type ClusterParams struct {
-	ClusterName sql.NullString `db:"cluster_name"`
-}
-
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadClusterParams(i)
-
-	var s ClusterParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanCluster(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -55,26 +47,31 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 }
 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
-	builder := materialize.NewClusterBuilder(clusterName)
-	qc := builder.Create()
-	qr := builder.ReadId()
+	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), clusterName)
 
-	if err := createResource(conn, d, qc, qr, "cluster"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.ClusterId(meta.(*sqlx.DB), clusterName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return clusterRead(ctx, d, meta)
 }
 
 func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	clusterName := d.Get("name").(string)
 
-	q := materialize.NewClusterBuilder(clusterName).Drop()
+	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), clusterName)
 
-	if err := dropResource(conn, d, q, "cluster"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

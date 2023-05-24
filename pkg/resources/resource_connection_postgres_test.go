@@ -29,7 +29,7 @@ var inPostgres = map[string]interface{}{
 	"aws_privatelink":           []interface{}{map[string]interface{}{"name": "link"}},
 }
 
-func TestResourcePostgresCreate(t *testing.T) {
+func TestResourceConnectionPostgresCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres)
 	r.NotNil(d)
@@ -43,7 +43,12 @@ func TestResourcePostgresCreate(t *testing.T) {
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
 		mock.ExpectQuery(`
-			SELECT mz_connections.id
+			SELECT
+				mz_connections.id,
+				mz_connections.name AS connection_name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name,
+				mz_connections.type AS connection_type
 			FROM mz_connections
 			JOIN mz_schemas
 				ON mz_connections.schema_id = mz_schemas.id
@@ -59,50 +64,6 @@ func TestResourcePostgresCreate(t *testing.T) {
 		mock.ExpectQuery(readConnection).WillReturnRows(ip)
 
 		if err := connectionPostgresCreate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourcePostgresUpdate(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres)
-
-	// Set current state
-	d.SetId("u1")
-	d.Set("name", "old_conn")
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Params
-		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name"}).AddRow("conn", "schema", "database")
-		mock.ExpectQuery(readConnection).WillReturnRows(ip)
-
-		if err := connectionPostgresUpdate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourcePostgresDelete(t *testing.T) {
-	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "conn",
-		"schema_name":   "schema",
-		"database_name": "database",
-	}
-	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, in)
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		if err := connectionPostgresDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

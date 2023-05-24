@@ -35,7 +35,7 @@ data "materialize_connection" "materialize_schema" {
 
 ### Read-Only
 
-- `connections` (List of Object) The schemas in the account (see [below for nested schema](#nestedatt--connections))
+- `connections` (List of Object) The connections in the account (see [below for nested schema](#nestedatt--connections))
 - `id` (String) The ID of this resource.
 
 <a id="nestedatt--connections"></a>

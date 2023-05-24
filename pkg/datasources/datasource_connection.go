@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -31,7 +28,7 @@ func Connection() *schema.Resource {
 			"connections": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The schemas in the account",
+				Description: "The connections in the account",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -62,37 +59,25 @@ func Connection() *schema.Resource {
 }
 
 func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sqlx.DB)
-
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-	q := materialize.ReadConnectionDatasource(databaseName, schemaName)
 
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no connections found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list connections")
-		d.SetId("")
+	var diags diag.Diagnostics
+
+	dataSource, err := materialize.ListConnections(meta.(*sqlx.DB), schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	connectionFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name, schema_name, database_name, connection_type string
-		rows.Scan(&id, &name, &schema_name, &database_name, &connection_type)
-
+	for _, p := range dataSource {
 		connectionMap := map[string]interface{}{}
 
-		connectionMap["id"] = id
-		connectionMap["name"] = name
-		connectionMap["schema_name"] = schema_name
-		connectionMap["database_name"] = database_name
-		connectionMap["type"] = connection_type
+		connectionMap["id"] = p.ConnectionId.String
+		connectionMap["name"] = p.ConnectionName.String
+		connectionMap["schema_name"] = p.SchemaName.String
+		connectionMap["database_name"] = p.DatabaseName.String
+		connectionMap["type"] = p.ConnectionType.String
 
 		connectionFormats = append(connectionFormats, connectionMap)
 	}
@@ -102,6 +87,5 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	SetId("connections", databaseName, schemaName, d)
-
 	return diags
 }

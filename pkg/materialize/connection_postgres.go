@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ConnectionPostgresBuilder struct {
@@ -21,9 +23,10 @@ type ConnectionPostgresBuilder struct {
 	postgresAWSPrivateLink IdentifierSchemaStruct
 }
 
-func NewConnectionPostgresBuilder(connectionName, schemaName, databaseName string) *ConnectionPostgresBuilder {
+func NewConnectionPostgresBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionPostgresBuilder {
+	b := Builder{conn, BaseConnection}
 	return &ConnectionPostgresBuilder{
-		Connection: Connection{connectionName, schemaName, databaseName},
+		Connection: Connection{b, connectionName, schemaName, databaseName},
 	}
 }
 
@@ -87,7 +90,7 @@ func (b *ConnectionPostgresBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLin
 	return b
 }
 
-func (b *ConnectionPostgresBuilder) Create() string {
+func (b *ConnectionPostgresBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.QualifiedName()))
 
@@ -130,19 +133,5 @@ func (b *ConnectionPostgresBuilder) Create() string {
 	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.postgresDatabase)))
 
 	q.WriteString(`);`)
-	return q.String()
-}
-
-func (b *ConnectionPostgresBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *ConnectionPostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
-}
-
-func (b *ConnectionPostgresBuilder) ReadId() string {
-	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
-
+	return b.ddl.exec(q.String())
 }

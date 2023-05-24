@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type KafkaBroker struct {
@@ -43,9 +45,10 @@ type ConnectionKafkaBuilder struct {
 	kafkaSSHTunnel      IdentifierSchemaStruct
 }
 
-func NewConnectionKafkaBuilder(connectionName, schemaName, databaseName string) *ConnectionKafkaBuilder {
+func NewConnectionKafkaBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionKafkaBuilder {
+	b := Builder{conn, BaseConnection}
 	return &ConnectionKafkaBuilder{
-		Connection: Connection{connectionName, schemaName, databaseName},
+		Connection: Connection{b, connectionName, schemaName, databaseName},
 	}
 }
 
@@ -94,7 +97,7 @@ func (b *ConnectionKafkaBuilder) KafkaSSHTunnel(kafkaSSHTunnel IdentifierSchemaS
 	return b
 }
 
-func (b *ConnectionKafkaBuilder) Create() string {
+func (b *ConnectionKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.QualifiedName()))
 
@@ -158,18 +161,5 @@ func (b *ConnectionKafkaBuilder) Create() string {
 	}
 
 	q.WriteString(`);`)
-	return q.String()
-}
-
-func (b *ConnectionKafkaBuilder) Rename(newConnectionName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
-	return fmt.Sprintf(`ALTER CONNECTION %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *ConnectionKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP CONNECTION %s;`, b.QualifiedName())
-}
-
-func (b *ConnectionKafkaBuilder) ReadId() string {
-	return ReadConnectionId(b.ConnectionName, b.SchemaName, b.DatabaseName)
+	return b.ddl.exec(q.String())
 }

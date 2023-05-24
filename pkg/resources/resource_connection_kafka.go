@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -69,8 +68,8 @@ func ConnectionKafka() *schema.Resource {
 
 		CreateContext: connectionKafkaCreate,
 		ReadContext:   connectionRead,
-		UpdateContext: connectionKafkaUpdate,
-		DeleteContext: connectionKafkaDelete,
+		UpdateContext: connectionUpdate,
+		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -81,95 +80,66 @@ func ConnectionKafka() *schema.Resource {
 }
 
 func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewConnectionKafkaBuilder(connectionName, schemaName, databaseName)
+	b := materialize.NewConnectionKafkaBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
 		brokers := materialize.GetKafkaBrokersStruct(databaseName, schemaName, v)
-		builder.KafkaBrokers(brokers)
+		b.KafkaBrokers(brokers)
 	}
 
 	if v, ok := d.GetOk("progress_topic"); ok {
-		builder.KafkaProgressTopic(v.(string))
+		b.KafkaProgressTopic(v.(string))
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
 		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
-		builder.KafkaSSLCa(ssl_ca)
+		b.KafkaSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
 		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
-		builder.KafkaSSLCert(ssl_cert)
+		b.KafkaSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
 		key := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.KafkaSSLKey(key)
+		b.KafkaSSLKey(key)
 	}
 
 	if v, ok := d.GetOk("sasl_mechanisms"); ok {
-		builder.KafkaSASLMechanisms(v.(string))
+		b.KafkaSASLMechanisms(v.(string))
 	}
 
 	if v, ok := d.GetOk("sasl_username"); ok {
 		sasl_username := materialize.GetValueSecretStruct(databaseName, schemaName, v)
-		builder.KafkaSASLUsername(sasl_username)
+		b.KafkaSASLUsername(sasl_username)
 	}
 
 	if v, ok := d.GetOk("sasl_password"); ok {
 		pass := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.KafkaSASLPassword(pass)
+		b.KafkaSASLPassword(pass)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.KafkaSSHTunnel(conn)
+		b.KafkaSSHTunnel(conn)
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "connection"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return connectionRead(ctx, d, meta)
-}
 
-func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		q := materialize.NewConnectionKafkaBuilder(connectionName, schemaName, databaseName).Rename(newConnectionName.(string))
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not execute query: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return connectionRead(ctx, d, meta)
-}
-
-func connectionKafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	connectionName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	builder := materialize.NewConnectionKafkaBuilder(connectionName, schemaName, databaseName)
-	q := builder.Drop()
-
-	if err := dropResource(conn, d, q, "connection"); err != nil {
+	// set id
+	i, err := materialize.ConnectionId(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+	d.SetId(i)
+
+	return connectionRead(ctx, d, meta)
 }

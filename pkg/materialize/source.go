@@ -5,16 +5,16 @@ import (
 	"strings"
 )
 
-type Table struct {
+type TableStruct struct {
 	Name  string
 	Alias string
 }
 
-func GetTableStruct(v []interface{}) []Table {
-	var tables []Table
+func GetTableStruct(v []interface{}) []TableStruct {
+	var tables []TableStruct
 	for _, table := range v {
 		t := table.(map[string]interface{})
-		tables = append(tables, Table{
+		tables = append(tables, TableStruct{
 			Name:  t["name"].(string),
 			Alias: t["alias"].(string),
 		})
