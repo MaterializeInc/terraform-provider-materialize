@@ -20,7 +20,9 @@ func TestQueryPredicateParams(t *testing.T) {
 		"table":    "table_name",
 		"schema":   "schema_name",
 		"database": "database_name",
+		"cluster":  "cluster_name",
+		"az":       "us-east-1",
 	}
 	q := queryPredicate(statement, p)
-	r.Equal(`SELECT * FROM table WHERE table = 'table_name' AND schema = 'schema_name' AND database = 'database_name';`, q)
+	r.Equal(`SELECT * FROM table WHERE az = 'us-east-1' AND cluster = 'cluster_name' AND database = 'database_name' AND schema = 'schema_name' AND table = 'table_name';`, q)
 }

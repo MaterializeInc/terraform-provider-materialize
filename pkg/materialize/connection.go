@@ -78,8 +78,8 @@ var connectionQuery = `
 func ConnectionId(conn *sqlx.DB, connectionName, schemaName, databaseName string) (string, error) {
 	p := map[string]string{
 		"mz_connections.name": connectionName,
-		"mz_schemas.name":     schemaName,
 		"mz_databases.name":   databaseName,
+		"mz_schemas.name":     schemaName,
 	}
 	q := queryPredicate(connectionQuery, p)
 
