@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -41,30 +38,17 @@ func Database() *schema.Resource {
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
-
-	q := materialize.ReadDatabaseDatasource()
-
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no databases found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list databases")
-		d.SetId("")
+	dataSource, err := materialize.ListDatabases(meta.(*sqlx.DB))
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	databaseFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name string
-		rows.Scan(&id, &name)
-
+	for _, p := range dataSource {
 		databaseMap := map[string]interface{}{}
 
-		databaseMap["id"] = id
-		databaseMap["name"] = name
+		databaseMap["id"] = p.DatabaseId.String
+		databaseMap["name"] = p.DatabaseName.String
 
 		databaseFormats = append(databaseFormats, databaseMap)
 	}

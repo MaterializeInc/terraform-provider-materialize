@@ -3,29 +3,16 @@ package materialize
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
 )
 
-func TestDatabaseReadIdQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewDatabaseBuilder("database")
-	r.Equal(`SELECT id FROM mz_databases WHERE name = 'database';`, b.ReadId())
-}
-
 func TestDatabaseCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewDatabaseBuilder("database")
-	r.Equal(`CREATE DATABASE "database";`, b.Create())
-}
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`CREATE DATABASE "database";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		b := NewDatabaseBuilder(db, "database")
 
-func TestDatabaseDropQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewDatabaseBuilder("database")
-	r.Equal(`DROP DATABASE "database";`, b.Drop())
-}
-
-func TestDatabaseReadParamsQuery(t *testing.T) {
-	r := require.New(t)
-	b := ReadDatabaseParams("u1")
-	r.Equal(`SELECT name AS database_name FROM mz_databases WHERE id = 'u1';`, b)
+		b.Create()
+	})
 }
