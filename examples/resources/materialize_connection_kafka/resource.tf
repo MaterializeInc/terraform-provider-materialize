@@ -4,7 +4,9 @@ resource "materialize_connection_kafka" "example_kafka_connection" {
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
-  sasl_username = "example"
+  sasl_username = {
+    text = "user"
+  }
   sasl_password {
     name          = "kafka_password"
     database_name = "materialize"
