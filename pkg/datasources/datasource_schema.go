@@ -2,10 +2,7 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -49,34 +46,22 @@ func Schema() *schema.Resource {
 }
 
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	databaseName := d.Get("database_name").(string)
+
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
-
-	databaseName := d.Get("database_name").(string)
-	q := materialize.ReadSchemaDatasource(databaseName)
-
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no schemas found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list schemas")
-		d.SetId("")
+	dataSource, err := materialize.ListSchemas(meta.(*sqlx.DB), databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	schemasFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name, database_name string
-		rows.Scan(&id, &name, &database_name)
-
+	for _, p := range dataSource {
 		schemaMap := map[string]interface{}{}
 
-		schemaMap["id"] = id
-		schemaMap["name"] = name
-		schemaMap["database_name"] = database_name
+		schemaMap["id"] = p.SchemaId.String
+		schemaMap["name"] = p.SchemaName.String
+		schemaMap["database_name"] = p.DatabaseName.String
 
 		schemasFormats = append(schemasFormats, schemaMap)
 	}

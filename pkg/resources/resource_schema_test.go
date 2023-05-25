@@ -31,11 +31,14 @@ func TestResourceSchemaCreate(t *testing.T) {
 		// Query Id
 		ir := mock.NewRows([]string{"id"}).AddRow("u1")
 		mock.ExpectQuery(`
-			SELECT mz_schemas.id
+			SELECT
+				mz_schemas.id,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name
 			FROM mz_schemas JOIN mz_databases
 				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_schemas.name = 'schema'
-			AND mz_databases.name = 'database';
+			WHERE mz_databases.name = 'database'
+			AND mz_schemas.name = 'schema';
 		`).WillReturnRows(ir)
 
 		// Query Params
@@ -43,6 +46,7 @@ func TestResourceSchemaCreate(t *testing.T) {
 			AddRow("schema", "database")
 		mock.ExpectQuery(`
 			SELECT
+				mz_schemas.id,
 				mz_schemas.name AS schema_name,
 				mz_databases.name AS database_name
 			FROM mz_schemas JOIN mz_databases
