@@ -41,8 +41,7 @@ func (b *SecretBuilder) Create() error {
 
 func (b *SecretBuilder) Rename(newName string) error {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	q := fmt.Sprintf(`ALTER SECRET %s RENAME TO %s;`, b.QualifiedName(), n)
-	return b.ddl.exec(q)
+	return b.ddl.rename(b.QualifiedName(), n)
 }
 
 func (b *SecretBuilder) UpdateValue(newValue string) error {
