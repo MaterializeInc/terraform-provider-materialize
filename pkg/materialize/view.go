@@ -1,27 +1,32 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
-	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
+// DDL
 type ViewBuilder struct {
+	ddl          Builder
 	viewName     string
 	schemaName   string
 	databaseName string
 	selectStmt   string
 }
 
-func (b *ViewBuilder) QualifiedName() string {
-	return QualifiedName(b.databaseName, b.schemaName, b.viewName)
-}
-
-func NewViewBuilder(viewName, schemaName, databaseName string) *ViewBuilder {
+func NewViewBuilder(conn *sqlx.DB, viewName, schemaName, databaseName string) *ViewBuilder {
 	return &ViewBuilder{
+		ddl:          Builder{conn, View},
 		viewName:     viewName,
 		schemaName:   schemaName,
 		databaseName: databaseName,
 	}
+}
+
+func (b *ViewBuilder) QualifiedName() string {
+	return QualifiedName(b.databaseName, b.schemaName, b.viewName)
 }
 
 func (b *ViewBuilder) SelectStmt(selectStmt string) *ViewBuilder {
@@ -29,75 +34,82 @@ func (b *ViewBuilder) SelectStmt(selectStmt string) *ViewBuilder {
 	return b
 }
 
-func (b *ViewBuilder) Create() string {
-	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE VIEW %s AS `, b.QualifiedName()))
-	q.WriteString(b.selectStmt)
-	q.WriteString(`;`)
-
-	return q.String()
+func (b *ViewBuilder) Create() error {
+	q := fmt.Sprintf(`CREATE VIEW %s AS %s;`, b.QualifiedName(), b.selectStmt)
+	return b.ddl.exec(q)
 }
 
-func (b *ViewBuilder) Rename(newName string) string {
+func (b *ViewBuilder) Rename(newName string) error {
 	n := QualifiedName(b.databaseName, b.schemaName, newName)
-	return fmt.Sprintf(`ALTER VIEW %s RENAME TO %s;`, b.QualifiedName(), n)
+	return b.ddl.rename(b.QualifiedName(), n)
 }
 
-func (b *ViewBuilder) Drop() string {
-	return fmt.Sprintf(`DROP VIEW %s;`, b.QualifiedName())
+func (b *ViewBuilder) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func (b *ViewBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT mz_views.id
-		FROM mz_views
-		JOIN mz_schemas
-			ON mz_views.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_views.name = %s
-		AND mz_schemas.name = %s
-		AND mz_databases.name = %s;
-	`, QuoteString(b.viewName), QuoteString(b.schemaName), QuoteString(b.databaseName))
+// DML
+type ViewParams struct {
+	ViewId       sql.NullString `db:"id"`
+	ViewName     sql.NullString `db:"name"`
+	SchemaName   sql.NullString `db:"schema_name"`
+	DatabaseName sql.NullString `db:"database_name"`
 }
 
-func ReadViewParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			mz_views.name AS view_name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name
-		FROM mz_views
-		JOIN mz_schemas
-			ON mz_views.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_views.id = %s;`, QuoteString(id))
-}
+var viewQuery = NewBaseQuery(`
+	SELECT
+		mz_views.id,
+		mz_views.name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name
+	FROM mz_views
+	JOIN mz_schemas
+		ON mz_views.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id`)
 
-func ReadViewDatasource(databaseName, schemaName string) string {
-	q := strings.Builder{}
-	q.WriteString(`
-		SELECT
-			mz_views.id,
-			mz_views.name,
-			mz_schemas.name,
-			mz_databases.name
-		FROM mz_views
-		JOIN mz_schemas
-			ON mz_views.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id`)
+func ViewId(conn *sqlx.DB, viewName, schemaName, databaseName string) (string, error) {
+	p := map[string]string{
+		"mz_views.name":     viewName,
+		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
+	}
+	q := viewQuery.QueryPredicate(p)
 
-	if databaseName != "" {
-		q.WriteString(fmt.Sprintf(`
-		WHERE mz_databases.name = %s`, QuoteString(databaseName)))
-
-		if schemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(schemaName)))
-		}
+	var c ViewParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
 	}
 
-	q.WriteString(`;`)
-	return q.String()
+	return c.ViewId.String, nil
+}
+
+func ScanView(conn *sqlx.DB, id string) (ViewParams, error) {
+	p := map[string]string{
+		"mz_views.id": id,
+	}
+	q := viewQuery.QueryPredicate(p)
+
+	var c ViewParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListViews(conn *sqlx.DB, schemaName, databaseName string) ([]ViewParams, error) {
+	p := map[string]string{
+		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
+	}
+	q := viewQuery.QueryPredicate(p)
+
+	var c []ViewParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }
