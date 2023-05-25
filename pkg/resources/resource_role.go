@@ -2,8 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -59,21 +57,10 @@ func Role() *schema.Resource {
 	}
 }
 
-type RoleParams struct {
-	RoleName       sql.NullString `db:"role_name"`
-	Inherit        sql.NullBool   `db:"inherit"`
-	CreateRole     sql.NullBool   `db:"create_role"`
-	CreateDatabase sql.NullBool   `db:"create_db"`
-	CreateCluster  sql.NullBool   `db:"create_cluster"`
-}
-
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadRoleParams(i)
-
-	var s RoleParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanRole(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -108,85 +95,73 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 }
 
 func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	roleName := d.Get("name").(string)
 
-	builder := materialize.NewRoleBuilder(roleName)
+	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), roleName)
 
 	if v, ok := d.GetOk("inherit"); ok && v.(bool) {
-		builder.Inherit()
+		b.Inherit()
 	}
 
 	if v, ok := d.GetOk("create_role"); ok && v.(bool) {
-		builder.CreateRole()
+		b.CreateRole()
 	}
 
 	if v, ok := d.GetOk("create_db"); ok && v.(bool) {
-		builder.CreateDb()
+		b.CreateDb()
 	}
 
 	if v, ok := d.GetOk("create_cluster"); ok && v.(bool) {
-		builder.CreateCluster()
+		b.CreateCluster()
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "role"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return roleRead(ctx, d, meta)
 }
 
 func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	roleName := d.Get("name").(string)
+
+	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), roleName)
 
 	if d.HasChange("create_role") {
 		_, nr := d.GetChange("create_role")
 
-		var qr string
 		if nr.(bool) {
-			qr = materialize.NewRoleBuilder(roleName).Alter("CREATEROLE")
+			b.Alter("CREATEROLE")
 		} else {
-			qr = materialize.NewRoleBuilder(roleName).Alter("NOCREATEROLE")
-		}
-
-		if err := execResource(conn, qr); err != nil {
-			log.Printf("[ERROR] could not update 'create role' permission for role: %s", qr)
-			return diag.FromErr(err)
+			b.Alter("NOCREATEROLE")
 		}
 	}
 
 	if d.HasChange("create_db") {
 		_, nd := d.GetChange("create_db")
 
-		var qd string
 		if nd.(bool) {
-			qd = materialize.NewRoleBuilder(roleName).Alter("CREATEDB")
+			b.Alter("CREATEDB")
 		} else {
-			qd = materialize.NewRoleBuilder(roleName).Alter("NOCREATEDB")
-		}
-
-		if err := execResource(conn, qd); err != nil {
-			log.Printf("[ERROR] could not update 'create db' permission for role: %s", qd)
-			return diag.FromErr(err)
+			b.Alter("NOCREATEDB")
 		}
 	}
 
 	if d.HasChange("create_cluster") {
 		_, nc := d.GetChange("create_cluster")
 
-		var qc string
 		if nc.(bool) {
-			qc = materialize.NewRoleBuilder(roleName).Alter("CREATECLUSTER")
+			b.Alter("CREATECLUSTER")
 		} else {
-			qc = materialize.NewRoleBuilder(roleName).Alter("NOCREATECLUSTER")
-		}
-
-		if err := execResource(conn, qc); err != nil {
-			log.Printf("[ERROR] could not update 'create cluster' permission for role: %s", qc)
-			return diag.FromErr(err)
+			b.Alter("NOCREATECLUSTER")
 		}
 	}
 
@@ -194,12 +169,11 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func roleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	roleName := d.Get("name").(string)
 
-	q := materialize.NewRoleBuilder(roleName).Drop()
+	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), roleName)
 
-	if err := dropResource(conn, d, q, "role"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

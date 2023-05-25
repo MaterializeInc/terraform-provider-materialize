@@ -22,13 +22,14 @@ var inRole = map[string]interface{}{
 
 var readRole string = `
 SELECT
+	id,
 	name AS role_name,
 	inherit,
 	create_role,
 	create_db,
 	create_cluster
 FROM mz_roles
-WHERE id = 'u1';`
+WHERE mz_roles.id = 'u1';`
 
 func TestResourceRoleCreate(t *testing.T) {
 	r := require.New(t)
@@ -45,9 +46,15 @@ func TestResourceRoleCreate(t *testing.T) {
 		ir := mock.NewRows([]string{"id"}).
 			AddRow("u1")
 		mock.ExpectQuery(`
-			SELECT id
+			SELECT
+				id,
+				name AS role_name,
+				inherit,
+				create_role,
+				create_db,
+				create_cluster
 			FROM mz_roles
-			WHERE name = 'role'`).WillReturnRows(ir)
+			WHERE mz_roles.name = 'role'`).WillReturnRows(ir)
 
 		// Query Params
 		ip := sqlmock.NewRows([]string{"role_name", "inherit", "create_role", "create_db", "create_cluster"}).
