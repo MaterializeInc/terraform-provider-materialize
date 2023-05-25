@@ -23,15 +23,15 @@ func TestSinkDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := mock.NewRows([]string{"id", "name", "schema", "database"}).
-			AddRow("u1", "view", "schema", "database")
+		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).
+			AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
 		mock.ExpectQuery(`
 		SELECT
 			mz_sinks.id,
 			mz_sinks.name,
-			mz_schemas.name,
-			mz_databases.name,
-			mz_sinks.type,
+			mz_schemas.name AS schema_name,
+			mz_databases.name AS database_name,
+			mz_sinks.type AS sink_type,
 			mz_sinks.size,
 			mz_sinks.envelope_type,
 			mz_connections.name as connection_name,
@@ -44,7 +44,9 @@ func TestSinkDatasource(t *testing.T) {
 		LEFT JOIN mz_connections
 			ON mz_sinks.connection_id = mz_connections.id
 		LEFT JOIN mz_clusters
-			ON mz_sinks.cluster_id = mz_clusters.id`).WillReturnRows(ir)
+			ON mz_sinks.cluster_id = mz_clusters.id
+		WHERE mz_databases.name = 'database'
+		AND mz_schemas.name = 'schema';`).WillReturnRows(ir)
 
 		if err := sinkRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

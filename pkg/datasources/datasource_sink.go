@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -78,42 +75,29 @@ func Sink() *schema.Resource {
 }
 
 func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sqlx.DB)
-
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	q := materialize.ReadSinkDatasource(databaseName, schemaName)
+	var diags diag.Diagnostics
 
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no sinks found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list sinks")
-		d.SetId("")
+	dataSource, err := materialize.ListSinks(meta.(*sqlx.DB), schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	sinkFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name, schema_name, database_name, sink_type, size, envelope_type, connection_name, cluster_name string
-		rows.Scan(&id, &name, &schema_name, &database_name, &sink_type, &size, &envelope_type, &connection_name, &cluster_name)
-
+	for _, p := range dataSource {
 		sinkMap := map[string]interface{}{}
 
-		sinkMap["id"] = id
-		sinkMap["name"] = name
-		sinkMap["schema_name"] = schema_name
-		sinkMap["database_name"] = database_name
-		sinkMap["type"] = sink_type
-		sinkMap["size"] = size
-		sinkMap["envelope_type"] = envelope_type
-		sinkMap["connection_name"] = connection_name
-		sinkMap["cluster_name"] = cluster_name
+		sinkMap["id"] = p.SinkId.String
+		sinkMap["name"] = p.SinkName.String
+		sinkMap["schema_name"] = p.SchemaName.String
+		sinkMap["database_name"] = p.DatabaseName.String
+		sinkMap["type"] = p.SinkType.String
+		sinkMap["size"] = p.Size.String
+		sinkMap["envelope_type"] = p.EnvelopeType.String
+		sinkMap["connection_name"] = p.ConnectionName.String
+		sinkMap["cluster_name"] = p.ClusterName.String
 
 		sinkFormats = append(sinkFormats, sinkMap)
 	}

@@ -45,7 +45,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionPostgresBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	b := materialize.NewConnection(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
@@ -60,7 +60,7 @@ func connectionDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionPostgresBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	b := materialize.NewConnection(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

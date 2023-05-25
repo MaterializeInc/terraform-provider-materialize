@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type KafkaSinkEnvelopeStruct struct {
@@ -34,9 +36,10 @@ type SinkKafkaBuilder struct {
 	snapshot        bool
 }
 
-func NewSinkKafkaBuilder(sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
+func NewSinkKafkaBuilder(conn *sqlx.DB, sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
+	b := Builder{conn, BaseSink}
 	return &SinkKafkaBuilder{
-		Sink: Sink{sinkName, schemaName, databaseName},
+		Sink: Sink{b, sinkName, schemaName, databaseName},
 	}
 }
 
@@ -85,7 +88,7 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) Create() string {
+func (b *SinkKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
 
@@ -146,22 +149,5 @@ func (b *SinkKafkaBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
-}
-
-func (b *SinkKafkaBuilder) Rename(newName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
-	return fmt.Sprintf(`ALTER SINK %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *SinkKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
-}
-
-func (b *SinkKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SINK %s;`, b.QualifiedName())
-}
-
-func (b *SinkKafkaBuilder) ReadId() string {
-	return ReadSinkId(b.SinkName, b.SchemaName, b.DatabaseName)
+	return b.ddl.exec(q.String())
 }
