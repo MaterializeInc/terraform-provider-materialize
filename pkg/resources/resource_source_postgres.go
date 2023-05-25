@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -75,8 +74,8 @@ func SourcePostgres() *schema.Resource {
 
 		CreateContext: sourcePostgresCreate,
 		ReadContext:   sourceRead,
-		UpdateContext: sourcePostgresUpdate,
-		DeleteContext: sourcePostgresDelete,
+		UpdateContext: sourceUpdate,
+		DeleteContext: sourceDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -87,90 +86,49 @@ func SourcePostgres() *schema.Resource {
 }
 
 func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName)
+	b := materialize.NewSourcePostgresBuilder(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
-		builder.ClusterName(v.(string))
+		b.ClusterName(v.(string))
 	}
 
 	if v, ok := d.GetOk("size"); ok {
-		builder.Size(v.(string))
+		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("postgres_connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.PostgresConnection(conn)
+		b.PostgresConnection(conn)
 	}
 
 	if v, ok := d.GetOk("publication"); ok {
-		builder.Publication(v.(string))
+		b.Publication(v.(string))
 	}
 
 	if v, ok := d.GetOk("table"); ok {
 		tables := materialize.GetTableStruct(v.([]interface{}))
-		builder.Table(tables)
+		b.Table(tables)
 	}
 
 	if v, ok := d.GetOk("textColumns"); ok {
-		builder.TextColumns(v.([]string))
+		b.TextColumns(v.([]string))
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return sourceRead(ctx, d, meta)
-}
 
-func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-
-		q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not resize sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return sourceRead(ctx, d, meta)
-}
-
-func sourcePostgresDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewSourcePostgresBuilder(sourceName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "source"); err != nil {
+	// set id
+	i, err := materialize.SourceId(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+	d.SetId(i)
+
+	return sourceRead(ctx, d, meta)
 }

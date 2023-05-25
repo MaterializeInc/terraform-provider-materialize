@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -134,8 +133,8 @@ func SourceLoadgen() *schema.Resource {
 
 		CreateContext: sourceLoadgenCreate,
 		ReadContext:   sourceRead,
-		UpdateContext: sourceLoadgenUpdate,
-		DeleteContext: sourceLoadgenDelete,
+		UpdateContext: sourceUpdate,
+		DeleteContext: sourceDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -146,91 +145,50 @@ func SourceLoadgen() *schema.Resource {
 }
 
 func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName)
+	b := materialize.NewSourceLoadgenBuilder(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
-		builder.ClusterName(v.(string))
+		b.ClusterName(v.(string))
 	}
 
 	if v, ok := d.GetOk("size"); ok {
-		builder.Size(v.(string))
+		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("load_generator_type"); ok {
-		builder.LoadGeneratorType(v.(string))
+		b.LoadGeneratorType(v.(string))
 	}
 
 	if v, ok := d.GetOk("counter_options"); ok {
 		o := materialize.GetCounterOptionsStruct(v)
-		builder.CounterOptions(o)
+		b.CounterOptions(o)
 	}
 
 	if v, ok := d.GetOk("auction_options"); ok {
 		o := materialize.GetAuctionOptionsStruct(v)
-		builder.AuctionOptions(o)
+		b.AuctionOptions(o)
 	}
 
 	if v, ok := d.GetOk("tpch_options"); ok {
 		o := materialize.GetTPCHOptionsStruct(v)
-		builder.TPCHOptions(o)
+		b.TPCHOptions(o)
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return sourceRead(ctx, d, meta)
-}
 
-func sourceLoadgenUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-
-		q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not resize sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return sourceRead(ctx, d, meta)
-}
-
-func sourceLoadgenDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewSourceLoadgenBuilder(sourceName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "source"); err != nil {
+	// set id
+	i, err := materialize.SourceId(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+	d.SetId(i)
+
+	return sourceRead(ctx, d, meta)
 }

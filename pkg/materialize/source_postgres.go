@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type SourcePostgresBuilder struct {
@@ -15,9 +17,10 @@ type SourcePostgresBuilder struct {
 	table              []TableStruct
 }
 
-func NewSourcePostgresBuilder(sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
+func NewSourcePostgresBuilder(conn *sqlx.DB, sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
+	b := Builder{conn, BaseSource}
 	return &SourcePostgresBuilder{
-		Source: Source{sourceName, schemaName, databaseName},
+		Source: Source{b, sourceName, schemaName, databaseName},
 	}
 }
 
@@ -51,7 +54,7 @@ func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Create() string {
+func (b *SourcePostgresBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
@@ -92,22 +95,5 @@ func (b *SourcePostgresBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
-}
-
-func (b *SourcePostgresBuilder) Rename(newName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *SourcePostgresBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
-}
-
-func (b *SourcePostgresBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
-}
-
-func (b *SourcePostgresBuilder) ReadId() string {
-	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
+	return b.ddl.exec(q.String())
 }

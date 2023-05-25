@@ -50,6 +50,6 @@ func (b *Builder) rename(oldName, newName string) error {
 }
 
 func (b *Builder) resize(name, size string) error {
-	q := fmt.Sprintf(`ALTER %s %s SET (SIZE = %s);`, b.entity, name, size)
+	q := fmt.Sprintf(`ALTER %s %s SET (SIZE = '%s');`, b.entity, name, size)
 	return b.exec(q)
 }

@@ -2,7 +2,6 @@ package materialize
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -33,8 +32,7 @@ func (b *Sink) Rename(newConnectionName string) error {
 }
 
 func (b *Sink) Resize(newSize string) error {
-	q := fmt.Sprintf(`ALTER SINK %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
-	return b.ddl.exec(q)
+	return b.ddl.resize(b.QualifiedName(), newSize)
 }
 
 func (b *Sink) Drop() error {
@@ -75,11 +73,11 @@ var sinkQuery = NewBaseQuery(`
 	LEFT JOIN mz_clusters
 		ON mz_sinks.cluster_id = mz_clusters.id`)
 
-func SinkId(conn *sqlx.DB, connectionName, schemaName, databaseName string) (string, error) {
+func SinkId(conn *sqlx.DB, sinkName, schemaName, databaseName string) (string, error) {
 	p := map[string]string{
-		"mz_sinks.name":     connectionName,
-		"mz_databases.name": databaseName,
+		"mz_sinks.name":     sinkName,
 		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
 	}
 	q := sinkQuery.QueryPredicate(p)
 

@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type KafkaSourceEnvelopeStruct struct {
@@ -45,9 +47,10 @@ type SourceKafkaBuilder struct {
 	startTimestamp   int
 }
 
-func NewSourceKafkaBuilder(sourceName, schemaName, databaseName string) *SourceKafkaBuilder {
+func NewSourceKafkaBuilder(conn *sqlx.DB, sourceName, schemaName, databaseName string) *SourceKafkaBuilder {
+	b := Builder{conn, BaseSink}
 	return &SourceKafkaBuilder{
-		Source: Source{sourceName, schemaName, databaseName},
+		Source: Source{b, sourceName, schemaName, databaseName},
 	}
 }
 
@@ -131,7 +134,7 @@ func (b *SourceKafkaBuilder) StartTimestamp(s int) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) Create() string {
+func (b *SourceKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
@@ -338,22 +341,5 @@ func (b *SourceKafkaBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
-}
-
-func (b *SourceKafkaBuilder) Rename(newName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *SourceKafkaBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
-}
-
-func (b *SourceKafkaBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
-}
-
-func (b *SourceKafkaBuilder) ReadId() string {
-	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
+	return b.ddl.exec(q.String())
 }
