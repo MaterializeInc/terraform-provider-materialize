@@ -21,7 +21,8 @@ var inSecret = map[string]interface{}{
 
 var readSecret string = `
 SELECT
-	mz_secrets.name AS name,
+	mz_secrets.id,
+	mz_secrets.name,
 	mz_schemas.name AS schema_name,
 	mz_databases.name AS database_name
 FROM mz_secrets
@@ -43,22 +44,26 @@ func TestResourceSecretCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).
-			AddRow("u1")
+		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
+			AddRow("u1", "secret", "schema", "database")
 		mock.ExpectQuery(`
-			SELECT mz_secrets.id
+			SELECT
+				mz_secrets.id,
+				mz_secrets.name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name
 			FROM mz_secrets
 			JOIN mz_schemas
 				ON mz_secrets.schema_id = mz_schemas.id
 			JOIN mz_databases
 				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_secrets.name = 'secret'
+			WHERE mz_databases.name = 'database'
 			AND mz_schemas.name = 'schema'
-			AND mz_databases.name = 'database';`).WillReturnRows(ir)
+			AND mz_secrets.name = 'secret';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema_name", "database_name"}).
-			AddRow("secret", "schema", "database")
+		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
+			AddRow("u1", "secret", "schema", "database")
 		mock.ExpectQuery(readSecret).WillReturnRows(ip)
 
 		if err := secretCreate(context.TODO(), d, db); err != nil {

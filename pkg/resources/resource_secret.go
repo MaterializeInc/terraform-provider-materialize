@@ -2,8 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -42,19 +40,11 @@ func Secret() *schema.Resource {
 	}
 }
 
-type SecretParams struct {
-	SecretName   sql.NullString `db:"name"`
-	SchemaName   sql.NullString `db:"schema_name"`
-	DatabaseName sql.NullString `db:"database_name"`
-}
-
 func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadSecretParams(i)
 
-	var s SecretParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanSecret(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -81,63 +71,59 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	secretName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-	value := d.Get("value").(string)
 
-	builder := materialize.NewSecretBuilder(secretName, schemaName, databaseName)
-	qc := builder.Create(value)
-	qr := builder.ReadId()
+	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), secretName, schemaName, databaseName)
 
-	if err := createResource(conn, d, qc, qr, "secret"); err != nil {
+	if v, ok := d.GetOk("value"); ok {
+		b.Value(v.(string))
+	}
+
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.SecretId(meta.(*sqlx.DB), secretName, schemaName, databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return secretRead(ctx, d, meta)
 }
 
 func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	secretName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), secretName, schemaName, databaseName)
+
 	if d.HasChange("value") {
 		_, newValue := d.GetChange("value")
-
-		q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).UpdateValue(newValue.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not update value of secret: %s", q)
-			return diag.FromErr(err)
-		}
+		b.UpdateValue(newValue.(string))
 	}
 
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
-
-		q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename secret: %s", q)
-			return diag.FromErr(err)
-		}
-
+		b.Rename(newName.(string))
 	}
 
 	return secretRead(ctx, d, meta)
 }
 
 func secretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	secretName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	q := materialize.NewSecretBuilder(secretName, schemaName, databaseName).Drop()
+	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), secretName, schemaName, databaseName)
 
-	if err := dropResource(conn, d, q, "secret"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
