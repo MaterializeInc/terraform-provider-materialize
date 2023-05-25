@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -41,30 +38,17 @@ func Role() *schema.Resource {
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
-
-	q := materialize.ReadRoleDatasource()
-
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no roles found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list roles")
-		d.SetId("")
+	dataSource, err := materialize.ListRoles(meta.(*sqlx.DB))
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	roleFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name string
-		rows.Scan(&id, &name)
-
+	for _, p := range dataSource {
 		roleMap := map[string]interface{}{}
 
-		roleMap["id"] = id
-		roleMap["name"] = name
+		roleMap["id"] = p.RoleId.String
+		roleMap["name"] = p.RoleName.String
 
 		roleFormats = append(roleFormats, roleMap)
 	}

@@ -21,7 +21,8 @@ var inTable = map[string]interface{}{
 
 var readTable string = `
 SELECT
-	mz_tables.name AS table_name,
+	mz_tables.id,
+	mz_tables.name,
 	mz_schemas.name AS schema_name,
 	mz_databases.name AS database_name
 FROM mz_tables
@@ -41,21 +42,26 @@ func TestResourceTableCreate(t *testing.T) {
 		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).AddRow("u1")
+		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
+			AddRow("u1", "table", "schema", "database")
 		mock.ExpectQuery(`
-			SELECT mz_tables.id
+			SELECT
+				mz_tables.id,
+				mz_tables.name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name
 			FROM mz_tables
 			JOIN mz_schemas
 				ON mz_tables.schema_id = mz_schemas.id
 			JOIN mz_databases
 				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_tables.name = 'table'
+			WHERE mz_databases.name = 'database'
 			AND mz_schemas.name = 'schema'
-			AND mz_databases.name = 'database';
-		`).WillReturnRows(ir)
+			AND mz_tables.name = 'table';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"table_name", "schema_name", "database_name"}).AddRow("table", "schema", "database")
+		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
+			AddRow("u1", "table", "schema", "database")
 		mock.ExpectQuery(readTable).WillReturnRows(ip)
 
 		if err := tableCreate(context.TODO(), d, db); err != nil {
@@ -78,7 +84,8 @@ func TestResourceTableUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."old_table" RENAME TO "database"."schema"."table";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"table_name", "schema_name", "database_name"}).AddRow("table", "schema", "database")
+		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
+			AddRow("u1", "table", "schema", "database")
 		mock.ExpectQuery(readTable).WillReturnRows(ip)
 
 		if err := tableUpdate(context.TODO(), d, db); err != nil {

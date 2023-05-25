@@ -2,8 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -48,20 +46,11 @@ func MaterializedView() *schema.Resource {
 	}
 }
 
-type MaterializedViewParams struct {
-	MaterializedViewName sql.NullString `db:"materialized_view_name"`
-	SchemaName           sql.NullString `db:"schema_name"`
-	DatabaseName         sql.NullString `db:"database_name"`
-	Cluster              sql.NullString `db:"cluster_name"`
-}
-
 func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadMaterializedViewParams(i)
 
-	var s MaterializedViewParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanMaterializedView(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -92,60 +81,58 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	materializedViewName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName)
+	b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), materializedViewName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok && v.(string) != "" {
-		builder.ClusterName(v.(string))
+		b.ClusterName(v.(string))
 	}
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
-		builder.SelectStmt(v.(string))
+		b.SelectStmt(v.(string))
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "materialized view"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.MaterializedViewId(meta.(*sqlx.DB), materializedViewName, schemaName, databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return materializedViewRead(ctx, d, meta)
 }
 
 func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	materializedViewName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), materializedViewName, schemaName, databaseName)
+
 	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename materialized view: %s", q)
-			return diag.FromErr(err)
-		}
+		_, newMaterializedViewName := d.GetChange("name")
+		b.Rename(newMaterializedViewName.(string))
 	}
 
 	return materializedViewRead(ctx, d, meta)
 }
 
 func materializedViewDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	materializedViewName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	q := materialize.NewMaterializedViewBuilder(materializedViewName, schemaName, databaseName).Drop()
+	b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), materializedViewName, schemaName, databaseName)
 
-	if err := dropResource(conn, d, q, "materialized view"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

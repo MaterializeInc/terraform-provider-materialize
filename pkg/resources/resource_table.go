@@ -2,8 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -62,23 +60,11 @@ func Table() *schema.Resource {
 	}
 }
 
-type TableParams struct {
-	TableName    sql.NullString `db:"table_name"`
-	SchemaName   sql.NullString `db:"schema_name"`
-	DatabaseName sql.NullString `db:"database_name"`
-}
-
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadTableParams(i)
 
-	var s TableParams
-	if err := conn.Get(&s, q); err != nil {
-		if err == sql.ErrNoRows {
-			d.SetId("")
-			return nil
-		}
+	s, err := materialize.ScanTable(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -96,8 +82,8 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	b := materialize.NewTableBuilder(s.TableName.String, s.SchemaName.String, s.DatabaseName.String)
-	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+	qn := materialize.QualifiedName(s.TableName.String, s.SchemaName.String, s.DatabaseName.String)
+	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -105,57 +91,55 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 }
 
 func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewTableBuilder(tableName, schemaName, databaseName)
+	b := materialize.NewTableBuilder(meta.(*sqlx.DB), tableName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("column"); ok {
 		columns := materialize.GetTableColumnStruct(v.([]interface{}))
-		builder.Column(columns)
+		b.Column(columns)
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "table"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.TableId(meta.(*sqlx.DB), tableName, schemaName, databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return tableRead(ctx, d, meta)
 }
 
 func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	b := materialize.NewTableBuilder(meta.(*sqlx.DB), tableName, schemaName, databaseName)
+
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
-
-		q := materialize.NewTableBuilder(tableName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename table: %s", q)
-			return diag.FromErr(err)
-		}
+		b.Rename(newName.(string))
 	}
 
 	return tableRead(ctx, d, meta)
 }
 
 func tableDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	q := materialize.NewTableBuilder(tableName, schemaName, databaseName).Drop()
+	b := materialize.NewTableBuilder(meta.(*sqlx.DB), tableName, schemaName, databaseName)
 
-	if err := dropResource(conn, d, q, "table"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

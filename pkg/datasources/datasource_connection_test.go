@@ -37,7 +37,7 @@ func TestConnectionDatasource(t *testing.T) {
 				ON mz_connections.schema_id = mz_schemas.id
 			JOIN mz_databases
 				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_schemas.name = 'schema' AND mz_databases.name = 'database';`).WillReturnRows(ir)
+			WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`).WillReturnRows(ir)
 
 		if err := connectionRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

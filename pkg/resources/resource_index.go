@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -92,20 +91,10 @@ func Index() *schema.Resource {
 	}
 }
 
-type IndexParams struct {
-	IndexName    sql.NullString `db:"index_name"`
-	Object       sql.NullString `db:"obj_name"`
-	SchemaName   sql.NullString `db:"obj_schema_name"`
-	DatabaseName sql.NullString `db:"obj_database_name"`
-}
-
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadIndexParams(i)
-
-	var s IndexParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanIndex(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -132,12 +121,15 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 }
 
 func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
+	indexName := d.Get("name").(string)
+	indexDefault := d.Get("default").(bool)
 
 	o := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
-	builder := materialize.NewIndexBuilder(
-		d.Get("name").(string),
-		d.Get("default").(bool),
+
+	b := materialize.NewIndexBuilder(
+		meta.(*sqlx.DB),
+		indexName,
+		indexDefault,
 		materialize.IdentifierSchemaStruct{
 			Name:         o["name"].(string),
 			SchemaName:   o["schema_name"].(string),
@@ -146,32 +138,38 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
-		builder.ClusterName(v.(string))
+		b.ClusterName(v.(string))
 	}
 
 	if v, ok := d.GetOk("method"); ok {
-		builder.Method(v.(string))
+		b.Method(v.(string))
 	}
 
 	if v, ok := d.GetOk("col_expr"); ok {
 		c := materialize.GetIndexColumnStruct(v.([]interface{}))
-		builder.ColExpr(c)
+		b.ColExpr(c)
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "index"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.IndexId(meta.(*sqlx.DB), indexName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return indexRead(ctx, d, meta)
 }
 
 func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	o := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
-	builder := materialize.NewIndexBuilder(
+
+	b := materialize.NewIndexBuilder(
+		meta.(*sqlx.DB),
 		d.Get("name").(string),
 		d.Get("default").(bool),
 		materialize.IdentifierSchemaStruct{
@@ -181,9 +179,7 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		},
 	)
 
-	q := builder.Drop()
-
-	if err := dropResource(conn, d, q, "index"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

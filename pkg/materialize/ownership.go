@@ -9,7 +9,7 @@ import (
 )
 
 type OwnershipBuilder struct {
-	conn       *sqlx.DB
+	ddl        Builder
 	objectType string
 	object     ObjectSchemaStruct
 	roleName   string
@@ -17,7 +17,7 @@ type OwnershipBuilder struct {
 
 func NewOwnershipBuilder(conn *sqlx.DB, objectType string) *OwnershipBuilder {
 	return &OwnershipBuilder{
-		conn:       conn,
+		ddl:        Builder{conn, Ownership},
 		objectType: objectType,
 	}
 }
@@ -46,70 +46,59 @@ func OwnershipCatalogId(resourceId string) string {
 
 func (b *OwnershipBuilder) Alter() error {
 	q := fmt.Sprintf(`ALTER %s %s OWNER TO %s;`, b.objectType, b.object.QualifiedName(), b.roleName)
-	_, err := b.conn.Exec(q)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.ddl.exec(q)
 }
 
-func (b *OwnershipBuilder) ReadId() (string, error) {
-	o := ObjectPermissions[b.objectType]
-
-	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`SELECT o.id FROM %s o`, o.CatalogTable))
-
-	if b.object.SchemaName != "" {
-		q.WriteString(` JOIN mz_schemas ON o.schema_id = mz_schemas.id`)
-	}
-
-	if b.object.DatabaseName != "" {
-		q.WriteString(` JOIN mz_databases ON mz_schemas.database_id = mz_databases.id`)
-	}
-
-	// filter predicate
-	q.WriteString(fmt.Sprintf(` WHERE o.name = %s`, QuoteString(b.object.Name)))
-
-	if b.object.DatabaseName != "" {
-		q.WriteString(fmt.Sprintf(`
-		AND mz_databases.name = %s`, QuoteString(b.object.DatabaseName)))
-
-		if b.object.SchemaName != "" {
-			q.WriteString(fmt.Sprintf(` AND mz_schemas.name = %s`, QuoteString(b.object.SchemaName)))
-		}
-	}
-
-	var i string
-	if err := b.conn.QueryRowx(q.String()).Scan(&i); err != nil {
-		return "", err
-	}
-
-	return OwnershipResourceId(b.objectType, i), nil
-}
-
-// return parameters specific to ownership
 type OwnershipParams struct {
+	ObjectId    sql.NullString `db:"id"`
+	ObjectType  sql.NullString `db:"obj_type"`
 	OwnershipId sql.NullString `db:"owner_id"`
 	RoleName    sql.NullString `db:"role_name"`
 }
 
-func (b *OwnershipBuilder) Params(catalogId string) (OwnershipParams, error) {
-	o := ObjectPermissions[b.objectType]
-	q := fmt.Sprintf(`
-		SELECT
-			o.owner_id,
-			r.name AS role_name
-		FROM %s o
-		JOIN mz_roles r
-			ON o.owner_id = r.id
-		WHERE o.id = %s
-	`, o.CatalogTable, QuoteString(catalogId))
+var ownershipQuery = NewBaseQuery(`
+	SELECT
+		mz_objects.id,
+		mz_objects.type AS obj_type,
+		mz_objects.owner_id AS schema_name,
+		mz_roles.name AS role_name
+	FROM mz_objects
+	JOIN mz_roles
+		ON mz_objects.owner_id = mz_roles.id
+	LEFT JOIN mz_schemas
+		ON mz_objects.schema_id = mz_schemas.id
+	LEFT JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id;`)
 
-	var s OwnershipParams
-	if err := b.conn.Get(&s, q); err != nil {
-		return s, err
+func OwnershipId(conn *sqlx.DB, objectType, objectName, schemaName, databaseName string) (string, error) {
+	p := map[string]string{
+		"mz_objects.type":  objectType,
+		"mz_objects.name":  objectName,
+		"mz_schemas.name":  schemaName,
+		"mz_database.name": databaseName,
 	}
-	return s, nil
+	q := ownershipQuery.QueryPredicate(p)
+
+	var c OwnershipParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
+	}
+
+	return OwnershipResourceId(objectType, c.OwnershipId.String), nil
+}
+
+func ScanOwnership(conn *sqlx.DB, id, objectType string) (OwnershipParams, error) {
+	p := map[string]string{
+		"mz_objects.type": objectType,
+		"mz_objects.id":   id,
+	}
+
+	q := ownershipQuery.QueryPredicate(p)
+
+	var c OwnershipParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

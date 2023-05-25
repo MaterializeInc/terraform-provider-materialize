@@ -62,7 +62,7 @@ type ConnectionParams struct {
 	ConnectionType sql.NullString `db:"connection_type"`
 }
 
-var connectionQuery = `
+var connectionQuery = NewBaseQuery(`
 	SELECT
 		mz_connections.id,
 		mz_connections.name AS connection_name,
@@ -73,15 +73,15 @@ var connectionQuery = `
 	JOIN mz_schemas
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id`)
 
 func ConnectionId(conn *sqlx.DB, connectionName, schemaName, databaseName string) (string, error) {
 	p := map[string]string{
 		"mz_connections.name": connectionName,
-		"mz_schemas.name":     schemaName,
 		"mz_databases.name":   databaseName,
+		"mz_schemas.name":     schemaName,
 	}
-	q := queryPredicate(connectionQuery, p)
+	q := connectionQuery.QueryPredicate(p)
 
 	var c ConnectionParams
 	if err := conn.Get(&c, q); err != nil {
@@ -92,8 +92,7 @@ func ConnectionId(conn *sqlx.DB, connectionName, schemaName, databaseName string
 }
 
 func ScanConnection(conn *sqlx.DB, id string) (ConnectionParams, error) {
-	p := map[string]string{"mz_connections.id": id}
-	q := queryPredicate(connectionQuery, p)
+	q := connectionQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
 
 	var c ConnectionParams
 	if err := conn.Get(&c, q); err != nil {
@@ -108,7 +107,7 @@ func ListConnections(conn *sqlx.DB, schemaName, databaseName string) ([]Connecti
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := queryPredicate(connectionQuery, p)
+	q := connectionQuery.QueryPredicate(p)
 
 	var c []ConnectionParams
 	if err := conn.Select(&c, q); err != nil {

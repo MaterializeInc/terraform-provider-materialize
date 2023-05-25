@@ -3,33 +3,42 @@ package materialize
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
 )
 
-func TestIndexCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewIndexBuilder("index", false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
-	b.ClusterName("cluster")
-	b.Method("ARRANGEMENT")
-	b.ColExpr([]IndexColumn{
-		{
-			Field: "Column",
-			Val:   "LONG",
-		},
+func TestIndexCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT (Column LONG);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewIndexBuilder(db, "index", false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		b.ClusterName("cluster")
+		b.Method("ARRANGEMENT")
+		b.ColExpr([]IndexColumn{
+			{
+				Field: "Column",
+				Val:   "LONG",
+			},
+		})
+
+		b.Create()
 	})
-	r.Equal(`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT (Column LONG);`, b.Create())
 }
 
-func TestIndexDefaultCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewIndexBuilder("", true, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
-	b.ClusterName("cluster")
-	b.Method("ARRANGEMENT")
-	r.Equal(`CREATE DEFAULT INDEX IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT ();`, b.Create())
-}
+func TestIndexDefaultCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE DEFAULT INDEX IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT ();`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-func TestIndexDropQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewIndexBuilder("index", false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
-	r.Equal(`DROP INDEX "database"."schema"."index" RESTRICT;`, b.Drop())
+		b := NewIndexBuilder(db, "", true, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		b.ClusterName("cluster")
+		b.Method("ARRANGEMENT")
+
+		b.Create()
+	})
+
 }

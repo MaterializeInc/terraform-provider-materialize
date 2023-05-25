@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -31,17 +30,11 @@ func Database() *schema.Resource {
 	}
 }
 
-type DatabaseParams struct {
-	DatabaseName sql.NullString `db:"database_name"`
-}
-
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadDatabaseParams(i)
 
-	var s DatabaseParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanDatabase(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -55,26 +48,31 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 }
 
 func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
-	builder := materialize.NewDatabaseBuilder(databaseName)
-	qc := builder.Create()
-	qr := builder.ReadId()
+	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), databaseName)
 
-	if err := createResource(conn, d, qc, qr, "database"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.DatabaseId(meta.(*sqlx.DB), databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return databaseRead(ctx, d, meta)
 }
 
 func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	databaseName := d.Get("name").(string)
 
-	q := materialize.NewDatabaseBuilder(databaseName).Drop()
+	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), databaseName)
 
-	if err := dropResource(conn, d, q, "database"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

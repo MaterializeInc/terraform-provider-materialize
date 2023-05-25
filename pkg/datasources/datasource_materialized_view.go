@@ -2,9 +2,6 @@ package datasources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -58,36 +55,24 @@ func MaterializedView() *schema.Resource {
 }
 
 func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	conn := meta.(*sqlx.DB)
-
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-	q := materialize.ReadMaterializedViewDatasource(databaseName, schemaName)
 
-	rows, err := conn.Query(q)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Printf("[DEBUG] no materialized views found in account")
-		d.SetId("")
-		return diag.FromErr(err)
-	} else if err != nil {
-		log.Println("[DEBUG] failed to list materialized views")
-		d.SetId("")
+	var diags diag.Diagnostics
+
+	dataSource, err := materialize.ListMaterializedViews(meta.(*sqlx.DB), schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	materizliedViewFormats := []map[string]interface{}{}
-	for rows.Next() {
-		var id, name, schema_name, database_name string
-		rows.Scan(&id, &name, &schema_name, &database_name)
-
+	for _, p := range dataSource {
 		materizliedViewMap := map[string]interface{}{}
 
-		materizliedViewMap["id"] = id
-		materizliedViewMap["name"] = name
-		materizliedViewMap["schema_name"] = schema_name
-		materizliedViewMap["database_name"] = database_name
+		materizliedViewMap["id"] = p.MaterializedViewId.String
+		materizliedViewMap["name"] = p.MaterializedViewName.String
+		materizliedViewMap["schema_name"] = p.SchemaName.String
+		materizliedViewMap["database_name"] = p.DatabaseName.String
 
 		materizliedViewFormats = append(materizliedViewFormats, materizliedViewMap)
 	}
@@ -97,6 +82,5 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	SetId("materialized_views", databaseName, schemaName, d)
-
 	return diags
 }

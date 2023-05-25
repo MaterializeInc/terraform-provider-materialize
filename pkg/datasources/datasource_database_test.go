@@ -20,9 +20,9 @@ func TestDatabaseDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := mock.NewRows([]string{"id", "name"}).
+		ir := mock.NewRows([]string{"id", "database_name"}).
 			AddRow("u1", "database")
-		mock.ExpectQuery(`SELECT id, name FROM mz_databases;`).WillReturnRows(ir)
+		mock.ExpectQuery(`SELECT id, name AS database_name FROM mz_databases;`).WillReturnRows(ir)
 
 		if err := databaseRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

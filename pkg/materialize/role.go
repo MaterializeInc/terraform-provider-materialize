@@ -1,11 +1,15 @@
 package materialize
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type RoleBuilder struct {
+	ddl           Builder
 	roleName      string
 	inherit       bool
 	createRole    bool
@@ -13,14 +17,15 @@ type RoleBuilder struct {
 	createCluster bool
 }
 
-func (b *RoleBuilder) QualifiedName() string {
-	return QualifiedName(b.roleName)
-}
-
-func NewRoleBuilder(roleName string) *RoleBuilder {
+func NewRoleBuilder(conn *sqlx.DB, roleName string) *RoleBuilder {
 	return &RoleBuilder{
+		ddl:      Builder{conn, Role},
 		roleName: roleName,
 	}
+}
+
+func (b *RoleBuilder) QualifiedName() string {
+	return QualifiedName(b.roleName)
 }
 
 func (b *RoleBuilder) Inherit() *RoleBuilder {
@@ -43,7 +48,7 @@ func (b *RoleBuilder) CreateCluster() *RoleBuilder {
 	return b
 }
 
-func (b *RoleBuilder) Create() string {
+func (b *RoleBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE ROLE %s`, b.QualifiedName()))
 
@@ -71,36 +76,70 @@ func (b *RoleBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
+
+	return b.ddl.exec(q.String())
 }
 
-func (b *RoleBuilder) Alter(permission string) string {
-	return fmt.Sprintf(`ALTER ROLE %s %s;`, b.QualifiedName(), permission)
+func (b *RoleBuilder) Alter(permission string) error {
+	q := fmt.Sprintf(`ALTER ROLE %s %s;`, b.QualifiedName(), permission)
+	return b.ddl.exec(q)
 }
 
-func (b *RoleBuilder) Drop() string {
-	return fmt.Sprintf(`DROP ROLE %s;`, b.QualifiedName())
+func (b *RoleBuilder) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func (b *RoleBuilder) ReadId() string {
-	return fmt.Sprintf(`
-		SELECT id
-		FROM mz_roles
-		WHERE name = %s`, QuoteString(b.roleName))
+type RoleParams struct {
+	RoleId         sql.NullString `db:"id"`
+	RoleName       sql.NullString `db:"role_name"`
+	Inherit        sql.NullBool   `db:"inherit"`
+	CreateRole     sql.NullBool   `db:"create_role"`
+	CreateDatabase sql.NullBool   `db:"create_db"`
+	CreateCluster  sql.NullBool   `db:"create_cluster"`
 }
 
-func ReadRoleParams(id string) string {
-	return fmt.Sprintf(`
-		SELECT
-			name AS role_name,
-			inherit,
-			create_role,
-			create_db,
-			create_cluster
-		FROM mz_roles
-		WHERE id = %s;`, QuoteString(id))
+var roleQuery = NewBaseQuery(`
+	SELECT
+		id,
+		name AS role_name,
+		inherit,
+		create_role,
+		create_db,
+		create_cluster
+	FROM mz_roles`)
+
+func RoleId(conn *sqlx.DB, roleName string) (string, error) {
+	p := map[string]string{"mz_roles.name": roleName}
+	q := roleQuery.QueryPredicate(p)
+
+	var c RoleParams
+	if err := conn.Get(&c, q); err != nil {
+		return "", err
+	}
+
+	return c.RoleId.String, nil
 }
 
-func ReadRoleDatasource() string {
-	return "SELECT id, name FROM mz_roles;"
+func ScanRole(conn *sqlx.DB, id string) (RoleParams, error) {
+	p := map[string]string{"mz_roles.id": id}
+	q := roleQuery.QueryPredicate(p)
+
+	var c RoleParams
+	if err := conn.Get(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func ListRoles(conn *sqlx.DB) ([]RoleParams, error) {
+	q := roleQuery.QueryPredicate(map[string]string{})
+
+	var c []RoleParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

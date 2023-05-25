@@ -3,34 +3,54 @@ package materialize
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
 )
 
 func TestTableCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewTableBuilder("table", "schema", "database")
-	b.Column([]TableColumn{
-		{
-			ColName: "column_1",
-			ColType: "int",
-		},
-		{
-			ColName: "column_2",
-			ColType: "text",
-			NotNull: true,
-		},
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE TABLE "database"."schema"."table" (column_1 int, column_2 text NOT NULL);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewTableBuilder(db, "table", "schema", "database")
+		b.Column([]TableColumn{
+			{
+				ColName: "column_1",
+				ColType: "int",
+			},
+			{
+				ColName: "column_2",
+				ColType: "text",
+				NotNull: true,
+			},
+		})
+
+		b.Create()
 	})
-	r.Equal(`CREATE TABLE "database"."schema"."table" (column_1 int, column_2 text NOT NULL);`, b.Create())
 }
 
 func TestTableRenameQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewTableBuilder("table", "schema", "database")
-	r.Equal(`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`, b.Rename("new_table"))
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewTableBuilder(db, "table", "schema", "database")
+
+		b.Create()
+	})
 }
 
 func TestTableDropQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewTableBuilder("table", "schema", "database")
-	r.Equal(`DROP TABLE "database"."schema"."table";`, b.Drop())
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`DROP TABLE "database"."schema"."table";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewTableBuilder(db, "table", "schema", "database")
+
+		b.Create()
+	})
 }

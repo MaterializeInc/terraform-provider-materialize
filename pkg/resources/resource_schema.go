@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -33,18 +32,10 @@ func Schema() *schema.Resource {
 	}
 }
 
-type SchemaParams struct {
-	SchemaName   sql.NullString `db:"schema_name"`
-	DatabaseName sql.NullString `db:"database_name"`
-}
-
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadSchemaParams(i)
-
-	var s SchemaParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanSchema(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -67,28 +58,33 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewSchemaBuilder(schemaName, databaseName)
-	qc := builder.Create()
-	qr := builder.ReadId()
+	b := materialize.NewSchemaBuilder(meta.(*sqlx.DB), schemaName, databaseName)
 
-	if err := createResource(conn, d, qc, qr, "schema"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// set id
+	i, err := materialize.SchemaId(meta.(*sqlx.DB), schemaName, databaseName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(i)
+
 	return schemaRead(ctx, d, meta)
 }
 
 func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	q := materialize.NewSchemaBuilder(schemaName, databaseName).Drop()
+	b := materialize.NewSchemaBuilder(meta.(*sqlx.DB), schemaName, databaseName)
 
-	if err := dropResource(conn, d, q, "schema"); err != nil {
+	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -90,17 +89,16 @@ func Ownership() *schema.Resource {
 
 func ownershipRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	objectType := d.Get("object_type").(string)
-	id := d.Id()
+	i := d.Id()
 
-	builder := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), objectType)
-
-	catalogId := materialize.OwnershipCatalogId(id)
-	params, err := builder.Params(catalogId)
+	s, err := materialize.ScanOwnership(meta.(*sqlx.DB), i, objectType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("role_name", params.RoleName.String); err != nil {
+	d.SetId(i)
+
+	if err := d.Set("role_name", s.RoleName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -117,24 +115,25 @@ func ownershipRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 func ownershipCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	objectType := d.Get("object_type").(string)
 
-	builder := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), objectType)
+	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), objectType)
 
 	if v, ok := d.GetOk("role_name"); ok {
-		builder.RoleName(v.(string))
+		b.RoleName(v.(string))
 	}
 
 	if v, ok := d.GetOk("object"); ok {
 		o := materialize.GetObjectSchemaStruct(v)
-		builder.Object(o)
+		b.Object(o)
 	}
 
 	// create resource as ALTER
-	if err := builder.Alter(); err != nil {
+	if err := b.Alter(); err != nil {
 		return diag.FromErr(err)
 	}
 
 	// set id
-	i, err := builder.ReadId()
+	var o = materialize.GetObjectSchemaStruct(d.Get("object"))
+	i, err := materialize.OwnershipId(meta.(*sqlx.DB), objectType, o.Name, o.SchemaName, o.DatabaseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,6 +144,7 @@ func ownershipCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 func ownershipUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	objectType := d.Get("object_type").(string)
+
 	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), objectType)
 
 	object := materialize.GetObjectSchemaStruct(d.Get("object"))
@@ -152,13 +152,7 @@ func ownershipUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	if d.HasChange("role_name") {
 		_, newRole := d.GetChange("role_name")
-
 		b.RoleName(newRole.(string))
-
-		if err := b.Alter(); err != nil {
-			log.Printf("[ERROR] updating ownership of %v", d.Id())
-			return diag.FromErr(err)
-		}
 	}
 
 	return ownershipRead(ctx, d, meta)

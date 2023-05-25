@@ -3,41 +3,30 @@ package materialize
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
 )
 
-func TestSchemaReadIdQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSchemaBuilder("schema", "database")
-	r.Equal(`
-		SELECT mz_schemas.id
-		FROM mz_schemas JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_schemas.name = 'schema'
-		AND mz_databases.name = 'database';
-	`, b.ReadId())
+func TestSchemaCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SCHEMA "database"."schema";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+		b := NewSchemaBuilder(db, "schema", "database")
+
+		b.Create()
+	})
 }
 
-func TestSchemaCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSchemaBuilder("schema", "database")
-	r.Equal(`CREATE SCHEMA "database"."schema";`, b.Create())
-}
+func TestSchemaDrop(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`DROP SCHEMA "database"."schema";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+		b := NewSchemaBuilder(db, "schema", "database")
 
-func TestSchemaDropQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSchemaBuilder("schema", "database")
-	r.Equal(`DROP SCHEMA "database"."schema";`, b.Drop())
-}
+		b.Create()
 
-func TestSchemaReadParamsQuery(t *testing.T) {
-	r := require.New(t)
-	b := ReadSchemaParams("u1")
-	r.Equal(`
-		SELECT
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name
-		FROM mz_schemas JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_schemas.id = 'u1';`, b)
+	})
 }

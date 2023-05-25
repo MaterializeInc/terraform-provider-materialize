@@ -3,78 +3,80 @@ package materialize
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jmoiron/sqlx"
 )
 
-func TestSecretCreateQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET "database"."schema"."secret" AS 'c2VjcmV0Cg';`, b.Create(`c2VjcmV0Cg`))
+func TestSecretCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SECRET "database"."schema"."secret" AS 'c2VjcmV0Cg';`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+		b := NewSecretBuilder(db, "secret", "schema", "database")
+		b.Value(`c2VjcmV0Cg`)
+
+		b.Create()
+	})
 }
 
-func TestSecretCreateEmptyValueQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET "database"."schema"."secret" AS '';`, b.Create(``))
+func TestSecretCreateEscapedValue(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cg';`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSecretBuilder(db, "secret", "schema", "database")
+		b.Value(`c2Vjcm'V0Cg`)
+
+		b.Create()
+	})
 }
 
-func TestSecretCreateEscapedValueQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`CREATE SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cg';`, b.Create(`c2Vjcm'V0Cg`))
+func TestSecretRename(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SECRET "database"."schema"."secret" RENAME TO "database"."schema"."new_secret";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSecretBuilder(db, "secret", "schema", "database")
+
+		b.Rename("new_secret")
+	})
 }
 
-func TestSecretRenameQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET "database"."schema"."secret" RENAME TO "database"."schema"."new_secret";`, b.Rename("new_secret"))
+func TestSecretUpdateValue(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SECRET "database"."schema"."secret" AS 'c2VjcmV0Cgdd';`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSecretBuilder(db, "secret", "schema", "database")
+
+		b.UpdateValue(`c2VjcmV0Cgdd`)
+	})
 }
 
-func TestSecretUpdateValueQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET "database"."schema"."secret" AS 'c2VjcmV0Cgdd';`, b.UpdateValue(`c2VjcmV0Cgdd`))
+func TestSecretUpdateEscapedValue(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cgdd';`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSecretBuilder(db, "secret", "schema", "database")
+
+		b.UpdateValue(`c2Vjcm'V0Cgdd`)
+	})
 }
 
-func TestSecretUpdateEscapedValueQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`ALTER SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cgdd';`, b.UpdateValue(`c2Vjcm'V0Cgdd`))
-}
+func TestSecretDrop(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`DROP SECRET "database"."schema"."secret";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-func TestSecretDropQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`DROP SECRET "database"."schema"."secret";`, b.Drop())
-}
+		b := NewSecretBuilder(db, "secret", "schema", "database")
 
-func TestSecretReadIdQuery(t *testing.T) {
-	r := require.New(t)
-	b := NewSecretBuilder("secret", "schema", "database")
-	r.Equal(`
-		SELECT mz_secrets.id
-		FROM mz_secrets
-		JOIN mz_schemas
-			ON mz_secrets.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.name = 'secret'
-		AND mz_schemas.name = 'schema'
-		AND mz_databases.name = 'database';`, b.ReadId())
-}
-
-func TestSecretReadParamsQuery(t *testing.T) {
-	r := require.New(t)
-	b := ReadSecretParams("u1")
-	r.Equal(`
-		SELECT
-			mz_secrets.name AS name,
-			mz_schemas.name AS schema_name,
-			mz_databases.name AS database_name
-		FROM mz_secrets
-		JOIN mz_schemas
-			ON mz_secrets.schema_id = mz_schemas.id
-		JOIN mz_databases
-			ON mz_schemas.database_id = mz_databases.id
-		WHERE mz_secrets.id = 'u1';`, b)
+		b.Drop()
+	})
 }
