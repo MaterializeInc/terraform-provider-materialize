@@ -21,7 +21,9 @@ func TestClusterReplicaCreate(t *testing.T) {
 		b.IntrospectionDebugging()
 		b.IdleArrangementMergeEffort(1)
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
@@ -29,6 +31,8 @@ func TestClusterReplicaDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CLUSTER REPLICA "cluster"."replica";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		NewClusterReplicaBuilder(db, "replica", "cluster").Drop()
+		if err := NewClusterReplicaBuilder(db, "replica", "cluster").Drop(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }

@@ -11,7 +11,7 @@ import (
 func TestSourceLoadgenCounterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER (TICK INTERVAL '1s', MAX CARDINALITY 8) WITH (SIZE = 'xsmall');`,
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER \(TICK INTERVAL '1s', MAX CARDINALITY 8\) WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, "source", "schema", "database")
@@ -22,14 +22,16 @@ func TestSourceLoadgenCounterCreate(t *testing.T) {
 			MaxCardinality: 8,
 		})
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
 func TestSourceLoadgenAuctionCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR AUCTION (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR ALL TABLES WITH (SIZE = 'xsmall');`,
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR AUCTION \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR ALL TABLES WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, "source", "schema", "database")
@@ -40,14 +42,16 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 			ScaleFactor:  0.01,
 		})
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
 func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH (TICK INTERVAL '1s', SCALE FACTOR 0.01) FOR TABLES (schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1) WITH (SIZE = 'xsmall');`,
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR TABLES \(schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1\) WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, "source", "schema", "database")
@@ -68,6 +72,8 @@ func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 			},
 		})
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }

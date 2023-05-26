@@ -13,9 +13,10 @@ func TestSchemaCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE SCHEMA "database"."schema";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
-		b := NewSchemaBuilder(db, "schema", "database")
 
-		b.Create()
+		if err := NewSchemaBuilder(db, "schema", "database").Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
@@ -24,9 +25,9 @@ func TestSchemaDrop(t *testing.T) {
 		mock.ExpectExec(
 			`DROP SCHEMA "database"."schema";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
-		b := NewSchemaBuilder(db, "schema", "database")
 
-		b.Create()
-
+		if err := NewSchemaBuilder(db, "schema", "database").Drop(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }

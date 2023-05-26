@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestViewCreateQuery(t *testing.T) {
+func TestViewCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE VIEW "database"."schema"."view" AS SELECT 1 FROM t1;`,
@@ -17,30 +17,32 @@ func TestViewCreateQuery(t *testing.T) {
 		b := NewViewBuilder(db, "view", "schema", "database")
 		b.SelectStmt("SELECT 1 FROM t1")
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
-func TestViewRenameQuery(t *testing.T) {
+func TestViewRename(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER VIEW "database"."schema"."view" RENAME TO "database"."schema"."new_view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewViewBuilder(db, "view", "schema", "database")
-
-		b.Rename("new_view")
+		if err := NewViewBuilder(db, "view", "schema", "database").Rename("new_view"); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
-func TestViewDropQuery(t *testing.T) {
+func TestViewDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP VIEW "database"."schema"."view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewViewBuilder(db, "view", "schema", "database")
-
-		b.Drop()
+		if err := NewViewBuilder(db, "view", "schema", "database").Drop(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }

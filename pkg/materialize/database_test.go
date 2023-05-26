@@ -8,11 +8,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestDatabaseCreateQuery(t *testing.T) {
+func TestDatabaseCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE DATABASE "database";`).WillReturnResult(sqlmock.NewResult(1, 1))
-		b := NewDatabaseBuilder(db, "database")
 
-		b.Create()
+		if err := NewDatabaseBuilder(db, "database").Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
