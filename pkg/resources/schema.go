@@ -116,7 +116,7 @@ func ValueSecretSchema(elem string, description string, required bool) *schema.S
 		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,
-		Description: fmt.Sprintf("%s. Can be supplied as either free text using `text` or a reference the secret object using `secret`.", description),
+		Description: fmt.Sprintf("%s. Can be supplied as either free text using `text` or reference to a secret object using `secret`.", description),
 	}
 }
 
