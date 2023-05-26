@@ -11,7 +11,7 @@ import (
 func TestConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "database"."schema"."password");`,
+			`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewConnectionConfluentSchemaRegistryBuilder(db, "csr_conn", "schema", "database")
@@ -26,7 +26,7 @@ func TestConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 func TestConnectionConfluentSchemaRegistryUsernameSecretCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY (URL 'http://localhost:8081', USERNAME = SECRET "database"."schema"."user", PASSWORD = SECRET "database"."schema"."password");`,
+			`CREATE CONNECTION "database"."schema"."csr_conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = SECRET "database"."schema"."user", PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewConnectionConfluentSchemaRegistryBuilder(db, "csr_conn", "schema", "database")
@@ -34,6 +34,8 @@ func TestConnectionConfluentSchemaRegistryUsernameSecretCreate(t *testing.T) {
 		b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "user", DatabaseName: "database"}})
 		b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }

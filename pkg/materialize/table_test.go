@@ -8,10 +8,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestTableCreateQuery(t *testing.T) {
+func TestTableCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" (column_1 int, column_2 text NOT NULL);`,
+			`CREATE TABLE "database"."schema"."table" \(column_1 int, column_2 text NOT NULL\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewTableBuilder(db, "table", "schema", "database")
@@ -27,30 +27,32 @@ func TestTableCreateQuery(t *testing.T) {
 			},
 		})
 
-		b.Create()
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
-func TestTableRenameQuery(t *testing.T) {
+func TestTableRename(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewTableBuilder(db, "table", "schema", "database")
-
-		b.Create()
+		if err := NewTableBuilder(db, "table", "schema", "database").Rename("new_table"); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
-func TestTableDropQuery(t *testing.T) {
+func TestTableDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP TABLE "database"."schema"."table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewTableBuilder(db, "table", "schema", "database")
-
-		b.Create()
+		if err := NewTableBuilder(db, "table", "schema", "database").Drop(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
