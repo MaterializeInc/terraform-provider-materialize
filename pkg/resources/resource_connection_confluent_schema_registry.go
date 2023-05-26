@@ -20,18 +20,18 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Required:    true,
 	},
-	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Confluent Schema Registry.", false, true),
-	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Confluent Schema Registry.", false, true),
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Confluent Schema Registry.", false),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Confluent Schema Registry.", false),
 	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Confluent Schema Registry.", false),
 	"password":                  IdentifierSchema("password", "The password for the Confluent Schema Registry.", false),
-	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false, true),
+	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false),
 	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false),
 	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {
 	return &schema.Resource{
-		Description: "The connection resource allows you to manage connections in Materialize.",
+		Description: "A Confluent Schema Registry connection establishes a link to a Confluent Schema Registry server.",
 
 		CreateContext: connectionConfluentSchemaRegistryCreate,
 		ReadContext:   connectionRead,

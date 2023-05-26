@@ -44,7 +44,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 
 func ConnectionSshTunnel() *schema.Resource {
 	return &schema.Resource{
-		Description: "The connection resource allows you to manage connections in Materialize.",
+		Description: "An SSH tunnel connection establishes a link to an SSH bastion server.",
 
 		CreateContext: connectionSshTunnelCreate,
 		ReadContext:   connectionSshTunnelRead,

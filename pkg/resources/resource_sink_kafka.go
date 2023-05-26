@@ -83,7 +83,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 
 func SinkKafka() *schema.Resource {
 	return &schema.Resource{
-		Description: "A sink describes an external system you want Materialize to write data to, and provides details about how to encode that data.",
+		Description: "A Kafka sink establishes a link to a Kafka cluster that you want Materialize to write data to.",
 
 		CreateContext: sinkKafkaCreate,
 		ReadContext:   sinkRead,

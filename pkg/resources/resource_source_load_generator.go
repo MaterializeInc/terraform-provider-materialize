@@ -129,7 +129,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 
 func SourceLoadgen() *schema.Resource {
 	return &schema.Resource{
-		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
+		Description: "A load generator source produces synthetic data for use in demos and performance tests.",
 
 		CreateContext: sourceLoadgenCreate,
 		ReadContext:   sourceRead,

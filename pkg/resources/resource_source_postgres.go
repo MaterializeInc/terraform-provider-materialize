@@ -70,7 +70,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 
 func SourcePostgres() *schema.Resource {
 	return &schema.Resource{
-		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
+		Description: "A Postgres source describes a PostgreSQL instance you want Materialize to read data from.",
 
 		CreateContext: sourcePostgresCreate,
 		ReadContext:   sourceRead,
