@@ -3,12 +3,12 @@
 page_title: "materialize_source_postgres Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.
+  A Postgres source describes a PostgreSQL instance you want Materialize to read data from.
 ---
 
 # materialize_source_postgres (Resource)
 
-A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.
+A Postgres source describes a PostgreSQL instance you want Materialize to read data from.
 
 ## Example Usage
 
@@ -48,8 +48,8 @@ resource "materialize_source_postgres" "example_source_postgres" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
-- `database_name` (String) The identifier for the source database.
-- `schema_name` (String) The identifier for the source schema.
+- `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.

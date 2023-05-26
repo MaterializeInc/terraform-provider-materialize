@@ -3,12 +3,12 @@
 page_title: "materialize_sink_kafka Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A sink describes an external system you want Materialize to write data to, and provides details about how to encode that data.
+  A Kafka sink establishes a link to a Kafka cluster that you want Materialize to write data to.
 ---
 
 # materialize_sink_kafka (Resource)
 
-A sink describes an external system you want Materialize to write data to, and provides details about how to encode that data.
+A Kafka sink establishes a link to a Kafka cluster that you want Materialize to write data to.
 
 ## Example Usage
 
@@ -59,11 +59,11 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this sink. If not specified, the size option must be specified.
-- `database_name` (String) The identifier for the sink database.
+- `database_name` (String) The identifier for the sink database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
-- `schema_name` (String) The identifier for the sink schema.
+- `schema_name` (String) The identifier for the sink schema. Defaults to `public`.
 - `size` (String) The size of the sink.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
 

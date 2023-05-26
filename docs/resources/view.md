@@ -47,8 +47,8 @@ resource "materialize_view" "simple_view" {
 
 ### Optional
 
-- `database_name` (String) The identifier for the view database.
-- `schema_name` (String) The identifier for the view schema.
+- `database_name` (String) The identifier for the view database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The identifier for the view schema. Defaults to `public`.
 
 ### Read-Only
 

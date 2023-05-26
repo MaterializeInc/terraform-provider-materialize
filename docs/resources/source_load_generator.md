@@ -3,12 +3,12 @@
 page_title: "materialize_source_load_generator Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.
+  A load generator source produces synthetic data for use in demos and performance tests.
 ---
 
 # materialize_source_load_generator (Resource)
 
-A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.
+A load generator source produces synthetic data for use in demos and performance tests.
 
 ## Example Usage
 
@@ -44,8 +44,8 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `auction_options` (Block List) Auction Options. (see [below for nested schema](#nestedblock--auction_options))
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
 - `counter_options` (Block List) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
-- `database_name` (String) The identifier for the source database.
-- `schema_name` (String) The identifier for the source schema.
+- `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `tpch_options` (Block List) TPCH Options. (see [below for nested schema](#nestedblock--tpch_options))
 

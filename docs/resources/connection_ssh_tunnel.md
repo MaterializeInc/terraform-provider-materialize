@@ -3,12 +3,12 @@
 page_title: "materialize_connection_ssh_tunnel Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The connection resource allows you to manage connections in Materialize.
+  An SSH tunnel connection establishes a link to an SSH bastion server.
 ---
 
 # materialize_connection_ssh_tunnel (Resource)
 
-The connection resource allows you to manage connections in Materialize.
+An SSH tunnel connection establishes a link to an SSH bastion server.
 
 ## Example Usage
 
@@ -41,8 +41,8 @@ resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
 
 ### Optional
 
-- `database_name` (String) The identifier for the connection database.
-- `schema_name` (String) The identifier for the connection schema.
+- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 
 ### Read-Only
 

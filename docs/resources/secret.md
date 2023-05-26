@@ -28,8 +28,8 @@ resource "materialize_secret" "example_secret" {
 
 ### Optional
 
-- `database_name` (String) The identifier for the secret database.
-- `schema_name` (String) The identifier for the secret schema.
+- `database_name` (String) The identifier for the secret database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The identifier for the secret schema. Defaults to `public`.
 - `value` (String, Sensitive) The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.
 
 ### Read-Only
