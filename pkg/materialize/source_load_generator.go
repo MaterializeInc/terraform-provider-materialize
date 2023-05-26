@@ -3,6 +3,8 @@ package materialize
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type CounterOptions struct {
@@ -84,9 +86,10 @@ type SourceLoadgenBuilder struct {
 	tpchOptions       TPCHOptions
 }
 
-func NewSourceLoadgenBuilder(sourceName, schemaName, databaseName string) *SourceLoadgenBuilder {
+func NewSourceLoadgenBuilder(conn *sqlx.DB, sourceName, schemaName, databaseName string) *SourceLoadgenBuilder {
+	b := Builder{conn, BaseSource}
 	return &SourceLoadgenBuilder{
-		Source: Source{sourceName, schemaName, databaseName},
+		Source: Source{b, sourceName, schemaName, databaseName},
 	}
 }
 
@@ -120,7 +123,7 @@ func (b *SourceLoadgenBuilder) TPCHOptions(t TPCHOptions) *SourceLoadgenBuilder 
 	return b
 }
 
-func (b *SourceLoadgenBuilder) Create() string {
+func (b *SourceLoadgenBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 
@@ -187,22 +190,5 @@ func (b *SourceLoadgenBuilder) Create() string {
 	}
 
 	q.WriteString(`;`)
-	return q.String()
-}
-
-func (b *SourceLoadgenBuilder) Rename(newName string) string {
-	n := QualifiedName(b.DatabaseName, b.SchemaName, newName)
-	return fmt.Sprintf(`ALTER SOURCE %s RENAME TO %s;`, b.QualifiedName(), n)
-}
-
-func (b *SourceLoadgenBuilder) UpdateSize(newSize string) string {
-	return fmt.Sprintf(`ALTER SOURCE %s SET (SIZE = %s);`, b.QualifiedName(), QuoteString(newSize))
-}
-
-func (b *SourceLoadgenBuilder) Drop() string {
-	return fmt.Sprintf(`DROP SOURCE %s;`, b.QualifiedName())
-}
-
-func (b *SourceLoadgenBuilder) ReadId() string {
-	return ReadSourceId(b.SourceName, b.SchemaName, b.DatabaseName)
+	return b.ddl.exec(q.String())
 }

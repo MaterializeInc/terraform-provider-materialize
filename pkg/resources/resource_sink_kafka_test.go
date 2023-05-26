@@ -39,9 +39,19 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).AddRow("u1")
+		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).
+			AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
 		mock.ExpectQuery(`
-			SELECT mz_sinks.id
+			SELECT
+				mz_sinks.id,
+				mz_sinks.name,
+				mz_schemas.name AS schema_name,
+				mz_databases.name AS database_name,
+				mz_sinks.type AS sink_type,
+				mz_sinks.size,
+				mz_sinks.envelope_type,
+				mz_connections.name as connection_name,
+				mz_clusters.name as cluster_name
 			FROM mz_sinks
 			JOIN mz_schemas
 				ON mz_sinks.schema_id = mz_schemas.id
@@ -49,66 +59,18 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 				ON mz_schemas.database_id = mz_databases.id
 			LEFT JOIN mz_connections
 				ON mz_sinks.connection_id = mz_connections.id
-			JOIN mz_clusters
+			LEFT JOIN mz_clusters
 				ON mz_sinks.cluster_id = mz_clusters.id
-			WHERE mz_sinks.name = 'sink'
+			WHERE mz_databases.name = 'database'
 			AND mz_schemas.name = 'schema'
-			AND mz_databases.name = 'database';
-		`).WillReturnRows(ir)
+			AND mz_sinks.name = 'sink';`).WillReturnRows(ir)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"sink_name", "schema_name", "database_name", "size", "connection_name", "cluster_name"}).
-			AddRow("sink", "schema", "database", "small", "conn", "cluster")
+		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).
+			AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
 		mock.ExpectQuery(readSink).WillReturnRows(ip)
 
 		if err := sinkKafkaCreate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourceSinkKafkaUpdate(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka)
-
-	// Set current state
-	d.SetId("u1")
-	d.Set("name", "old_sink")
-	d.Set("size", "medium")
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" SET \(SIZE = 'small'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" RENAME TO "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Params
-		ip := sqlmock.NewRows([]string{"sink_name", "schema_name", "database_name", "size", "connection_name", "cluster_name"}).
-			AddRow("sink", "schema", "database", "small", "conn", "cluster")
-		mock.ExpectQuery(readSink).WillReturnRows(ip)
-
-		if err := sinkKafkaUpdate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
-}
-
-func TestResourceSinkKafkaDelete(t *testing.T) {
-	r := require.New(t)
-
-	in := map[string]interface{}{
-		"name":          "sink",
-		"schema_name":   "schema",
-		"database_name": "database",
-	}
-	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, in)
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`DROP SINK "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		if err := sinkKafkaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

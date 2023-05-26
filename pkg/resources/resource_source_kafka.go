@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -136,8 +135,8 @@ func SourceKafka() *schema.Resource {
 
 		CreateContext: sourceKafkaCreate,
 		ReadContext:   sourceRead,
-		UpdateContext: sourceKafkaUpdate,
-		DeleteContext: sourceKafkaDelete,
+		UpdateContext: sourceUpdate,
+		DeleteContext: sourceDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -148,135 +147,94 @@ func SourceKafka() *schema.Resource {
 }
 
 func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	builder := materialize.NewSourceKafkaBuilder(sourceName, schemaName, databaseName)
+	b := materialize.NewSourceKafkaBuilder(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
-		builder.ClusterName(v.(string))
+		b.ClusterName(v.(string))
 	}
 
 	if v, ok := d.GetOk("size"); ok {
-		builder.Size(v.(string))
+		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
-		builder.KafkaConnection(conn)
+		b.KafkaConnection(conn)
 	}
 
 	if v, ok := d.GetOk("topic"); ok {
-		builder.Topic(v.(string))
+		b.Topic(v.(string))
 	}
 
 	if v, ok := d.GetOk("include_key"); ok && v.(bool) {
-		builder.IncludeKey()
+		b.IncludeKey()
 	}
 
 	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
-		builder.IncludeHeaders()
+		b.IncludeHeaders()
 	}
 
 	if v, ok := d.GetOk("include_partition"); ok && v.(bool) {
-		builder.IncludePartition()
+		b.IncludePartition()
 	}
 
 	if v, ok := d.GetOk("include_offset"); ok && v.(bool) {
-		builder.IncludeOffset()
+		b.IncludeOffset()
 	}
 
 	if v, ok := d.GetOk("include_timestamp"); ok && v.(bool) {
-		builder.IncludeTimestamp()
+		b.IncludeTimestamp()
 	}
 
 	if v, ok := d.GetOk("format"); ok {
 		format := materialize.GetFormatSpecStruc(v)
-		builder.Format(format)
+		b.Format(format)
 	}
 
 	if v, ok := d.GetOk("key_format"); ok {
 		format := materialize.GetFormatSpecStruc(v)
-		builder.KeyFormat(format)
+		b.KeyFormat(format)
 	}
 
 	if v, ok := d.GetOk("value_format"); ok {
 		format := materialize.GetFormatSpecStruc(v)
-		builder.ValueFormat(format)
+		b.ValueFormat(format)
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
 		envelope := materialize.GetSourceKafkaEnelopeStruct(v)
-		builder.Envelope(envelope)
+		b.Envelope(envelope)
 	}
 
 	if v, ok := d.GetOk("primary_key"); ok {
 		pk := materialize.GetSliceValueString(v.([]interface{}))
-		builder.PrimaryKey(pk)
+		b.PrimaryKey(pk)
 	}
 
 	if v, ok := d.GetOk("start_offset"); ok {
 		so := materialize.GetSliceValueInt(v.([]interface{}))
-		builder.StartOffset(so)
+		b.StartOffset(so)
 	}
 
 	if v, ok := d.GetOk("start_timestamp"); ok {
-		builder.StartTimestamp(v.(int))
+		b.StartTimestamp(v.(int))
 	}
 
-	qc := builder.Create()
-	qr := builder.ReadId()
-
-	if err := createResource(conn, d, qc, qr, "source"); err != nil {
+	// create resource
+	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
-	return sourceRead(ctx, d, meta)
-}
 
-func sourceKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-
-		q := materialize.NewSourceKafkaBuilder(sourceName, schemaName, databaseName).UpdateSize(newSize.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not resize sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-
-		q := materialize.NewSourceKafkaBuilder(sourceName, schemaName, databaseName).Rename(newName.(string))
-
-		if err := execResource(conn, q); err != nil {
-			log.Printf("[ERROR] could not rename sink: %s", q)
-			return diag.FromErr(err)
-		}
-	}
-
-	return sourceRead(ctx, d, meta)
-}
-
-func sourceKafkaDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
-	sourceName := d.Get("name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	q := materialize.NewSourceKafkaBuilder(sourceName, schemaName, databaseName).Drop()
-
-	if err := dropResource(conn, d, q, "source"); err != nil {
+	// set id
+	i, err := materialize.SourceId(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+	d.SetId(i)
+
+	return sourceRead(ctx, d, meta)
 }

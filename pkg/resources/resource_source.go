@@ -21,12 +21,10 @@ type SourceParams struct {
 }
 
 func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	conn := meta.(*sqlx.DB)
 	i := d.Id()
-	q := materialize.ReadSourceParams(i)
 
-	var s SourceParams
-	if err := conn.Get(&s, q); err != nil {
+	s, err := materialize.ScanSource(meta.(*sqlx.DB), i)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -57,5 +55,38 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	return nil
+}
+
+func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	b := materialize.NewSource(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+
+	if d.HasChange("size") {
+		_, newSize := d.GetChange("size")
+		b.Resize(newSize.(string))
+	}
+
+	if d.HasChange("name") {
+		_, newSinkName := d.GetChange("name")
+		b.Rename(newSinkName.(string))
+	}
+
+	return sourceRead(ctx, d, meta)
+}
+
+func sourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	b := materialize.NewSource(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+
+	if err := b.Drop(); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }
