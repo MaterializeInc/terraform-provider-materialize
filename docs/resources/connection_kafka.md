@@ -85,11 +85,11 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
 - `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
 - `sasl_password` (Block List, Max: 1) The SASL password for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_password))
-- `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))
+- `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Kafka broker. (see [below for nested schema](#nestedblock--ssh_tunnel))
-- `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
-- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_key))
 
 ### Read-Only

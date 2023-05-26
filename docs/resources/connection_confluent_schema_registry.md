@@ -49,10 +49,10 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 - `password` (Block List, Max: 1) The password for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--password))
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssh_tunnel))
-- `ssl_certificate` (Block List, Max: 1) The client certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
-- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssl_key))
-- `username` (Block List, Max: 1) The username for the Confluent Schema Registry.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--username))
+- `username` (Block List, Max: 1) The username for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--username))
 
 ### Read-Only
 

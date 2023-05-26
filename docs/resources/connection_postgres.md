@@ -50,7 +50,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 - `database` (String) The target Postgres database.
 - `host` (String) The Postgres database hostname.
 - `name` (String) The identifier for the connection.
-- `user` (Block List, Min: 1, Max: 1) The Postgres database username.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--user))
+- `user` (Block List, Min: 1, Max: 1) The Postgres database username.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--user))
 
 ### Optional
 
@@ -60,8 +60,8 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 - `port` (Number) The Postgres database port.
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Postgres database. (see [below for nested schema](#nestedblock--ssh_tunnel))
-- `ssl_certificate` (Block List, Max: 1) The client certificate for the Postgres database.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
-- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Postgres database.. Can be supplied as either free text using `text` or a reference the secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Postgres database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Postgres database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Postgres database. (see [below for nested schema](#nestedblock--ssl_key))
 - `ssl_mode` (String) The SSL mode for the Postgres database.
 
