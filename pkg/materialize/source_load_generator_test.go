@@ -48,6 +48,26 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 	})
 }
 
+func TestSourceLoadgenMarketingCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR MARKETING \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR ALL TABLES WITH \(SIZE = 'xsmall'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceLoadgenBuilder(db, "source", "schema", "database")
+		b.Size("xsmall")
+		b.LoadGeneratorType("MARKETING")
+		b. MarketingOptions(MarketingOptions{
+			TickInterval: "1s",
+			ScaleFactor:  0.01,
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
