@@ -12,7 +12,7 @@ import (
 
 func Type() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: tableRead,
+		ReadContext: typeRead,
 		Schema: map[string]*schema.Schema{
 			"database_name": {
 				Type:        schema.TypeString,

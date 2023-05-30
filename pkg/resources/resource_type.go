@@ -32,6 +32,7 @@ var typeSchema = map[string]*schema.Schema{
 		MaxItems:      1,
 		ForceNew:      true,
 		ConflictsWith: []string{"map_properties"},
+		AtLeastOneOf:  []string{"map_properties", "list_properties"},
 	},
 	"map_properties": {
 		Description: "Map properties.",
@@ -55,6 +56,7 @@ var typeSchema = map[string]*schema.Schema{
 		MaxItems:      1,
 		ForceNew:      true,
 		ConflictsWith: []string{"list_properties"},
+		AtLeastOneOf:  []string{"map_properties", "list_properties"},
 	},
 	"category": {
 		Description: "Type category.",
@@ -65,7 +67,7 @@ var typeSchema = map[string]*schema.Schema{
 
 func Type() *schema.Resource {
 	return &schema.Resource{
-		Description: "A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.",
+		Description: "A custom types, which let you create named versions of anonymous types.",
 
 		CreateContext: typeCreate,
 		ReadContext:   typeRead,
@@ -105,7 +107,7 @@ func typeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(s.TypeName.String, s.SchemaName.String, s.DatabaseName.String)
+	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.TypeName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
