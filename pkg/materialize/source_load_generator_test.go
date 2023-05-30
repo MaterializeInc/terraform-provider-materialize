@@ -57,7 +57,7 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 		b := NewSourceLoadgenBuilder(db, "source", "schema", "database")
 		b.Size("xsmall")
 		b.LoadGeneratorType("MARKETING")
-		b.AuctionOptions(AuctionOptions{
+		b. MarketingOptions(MarketingOptions{
 			TickInterval: "1s",
 			ScaleFactor:  0.01,
 		})
