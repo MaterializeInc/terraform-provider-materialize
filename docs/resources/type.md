@@ -3,12 +3,12 @@
 page_title: "materialize_type Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.
+  A custom types, which let you create named versions of anonymous types.
 ---
 
 # materialize_type (Resource)
 
-A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.
+A custom types, which let you create named versions of anonymous types.
 
 
 
