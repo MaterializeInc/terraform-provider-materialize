@@ -31,11 +31,11 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     5432,
 	},
-	"user":                      ValueSecretSchema("user", "The Postgres database username.", true, false),
+	"user":                      ValueSecretSchema("user", "The Postgres database username.", true),
 	"password":                  IdentifierSchema("password", "The Postgres database password.", false),
 	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Postgres database.", false),
-	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false, true),
-	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Postgres database.", false, true),
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Postgres database.", false),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Postgres database.", false),
 	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Postgres database.", false),
 	"ssl_mode": {
 		Description: "The SSL mode for the Postgres database.",
@@ -47,7 +47,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 
 func ConnectionPostgres() *schema.Resource {
 	return &schema.Resource{
-		Description: "The connection resource allows you to manage connections in Materialize.",
+		Description: "A Postgres connection establishes a link to a single database of a PostgreSQL server.",
 
 		CreateContext: connectionPostgresCreate,
 		ReadContext:   connectionRead,

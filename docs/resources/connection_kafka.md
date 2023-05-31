@@ -3,12 +3,12 @@
 page_title: "materialize_connection_kafka Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The connection resource allows you to manage connections in Materialize.
+  A Kafka connection establishes a link to a Kafka cluster.
 ---
 
 # materialize_connection_kafka (Resource)
 
-The connection resource allows you to manage connections in Materialize.
+A Kafka connection establishes a link to a Kafka cluster.
 
 ## Example Usage
 
@@ -81,15 +81,15 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 ### Optional
 
-- `database_name` (String) The identifier for the connection database.
+- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
 - `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
 - `sasl_password` (Block List, Max: 1) The SASL password for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_password))
-- `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_username))
-- `schema_name` (String) The identifier for the connection schema.
+- `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))
+- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Kafka broker. (see [below for nested schema](#nestedblock--ssh_tunnel))
-- `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_certificate))
-- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_key))
 
 ### Read-Only
@@ -142,8 +142,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The sasl_username secret value. (see [below for nested schema](#nestedblock--sasl_username--secret))
-- `text` (String) The sasl_username text value.
+- `secret` (Block List, Max: 1) The `sasl_username` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--sasl_username--secret))
+- `text` (String) The `sasl_username` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--sasl_username--secret"></a>
 ### Nested Schema for `sasl_username.secret`
@@ -177,8 +177,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The ssl_certificate secret value. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
-- `text` (String) The ssl_certificate text value.
+- `secret` (Block List, Max: 1) The `ssl_certificate` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
+- `text` (String) The `ssl_certificate` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate--secret"></a>
 ### Nested Schema for `ssl_certificate.secret`
@@ -199,8 +199,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The ssl_certificate_authority secret value. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
-- `text` (String) The ssl_certificate_authority text value.
+- `secret` (Block List, Max: 1) The `ssl_certificate_authority` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
+- `text` (String) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate_authority--secret"></a>
 ### Nested Schema for `ssl_certificate_authority.secret`

@@ -47,8 +47,8 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 	},
-	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, true),
-	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, true),
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false),
 	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Kafka broker.", false),
 	"sasl_mechanisms": {
 		Description:  "The SASL mechanism for the Kafka broker.",
@@ -57,14 +57,14 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		ValidateFunc: validation.StringInSlice(saslMechanisms, true),
 		RequiredWith: []string{"sasl_username", "sasl_password"},
 	},
-	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, true),
+	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password": IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
 	"ssh_tunnel":    IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
 }
 
 func ConnectionKafka() *schema.Resource {
 	return &schema.Resource{
-		Description: "The connection resource allows you to manage connections in Materialize.",
+		Description: "A Kafka connection establishes a link to a Kafka cluster.",
 
 		CreateContext: connectionKafkaCreate,
 		ReadContext:   connectionRead,

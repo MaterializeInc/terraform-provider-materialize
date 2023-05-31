@@ -3,12 +3,12 @@
 page_title: "materialize_connection_confluent_schema_registry Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The connection resource allows you to manage connections in Materialize.
+  A Confluent Schema Registry connection establishes a link to a Confluent Schema Registry server.
 ---
 
 # materialize_connection_confluent_schema_registry (Resource)
 
-The connection resource allows you to manage connections in Materialize.
+A Confluent Schema Registry connection establishes a link to a Confluent Schema Registry server.
 
 ## Example Usage
 
@@ -45,14 +45,14 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 ### Optional
 
 - `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--aws_privatelink))
-- `database_name` (String) The identifier for the connection database.
+- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `password` (Block List, Max: 1) The password for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--password))
-- `schema_name` (String) The identifier for the connection schema.
+- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssh_tunnel))
-- `ssl_certificate` (Block List, Max: 1) The client certificate for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssl_certificate))
-- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssl_key))
-- `username` (Block List, Max: 1) The username for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--username))
+- `username` (Block List, Max: 1) The username for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--username))
 
 ### Read-Only
 
@@ -103,8 +103,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The ssl_certificate secret value. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
-- `text` (String) The ssl_certificate text value.
+- `secret` (Block List, Max: 1) The `ssl_certificate` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
+- `text` (String) The `ssl_certificate` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate--secret"></a>
 ### Nested Schema for `ssl_certificate.secret`
@@ -125,8 +125,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The ssl_certificate_authority secret value. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
-- `text` (String) The ssl_certificate_authority text value.
+- `secret` (Block List, Max: 1) The `ssl_certificate_authority` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
+- `text` (String) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate_authority--secret"></a>
 ### Nested Schema for `ssl_certificate_authority.secret`
@@ -160,8 +160,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The username secret value. (see [below for nested schema](#nestedblock--username--secret))
-- `text` (String) The username text value.
+- `secret` (Block List, Max: 1) The `username` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--username--secret))
+- `text` (String) The `username` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--username--secret"></a>
 ### Nested Schema for `username.secret`

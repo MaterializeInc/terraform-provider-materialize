@@ -3,12 +3,12 @@
 page_title: "materialize_connection_postgres Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The connection resource allows you to manage connections in Materialize.
+  A Postgres connection establishes a link to a single database of a PostgreSQL server.
 ---
 
 # materialize_connection_postgres (Resource)
 
-The connection resource allows you to manage connections in Materialize.
+A Postgres connection establishes a link to a single database of a PostgreSQL server.
 
 ## Example Usage
 
@@ -50,18 +50,18 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 - `database` (String) The target Postgres database.
 - `host` (String) The Postgres database hostname.
 - `name` (String) The identifier for the connection.
-- `user` (Block List, Min: 1, Max: 1) The Postgres database username. (see [below for nested schema](#nestedblock--user))
+- `user` (Block List, Min: 1, Max: 1) The Postgres database username.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--user))
 
 ### Optional
 
 - `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the Postgres database. (see [below for nested schema](#nestedblock--aws_privatelink))
-- `database_name` (String) The identifier for the connection database.
+- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `password` (Block List, Max: 1) The Postgres database password. (see [below for nested schema](#nestedblock--password))
 - `port` (Number) The Postgres database port.
-- `schema_name` (String) The identifier for the connection schema.
+- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Postgres database. (see [below for nested schema](#nestedblock--ssh_tunnel))
-- `ssl_certificate` (Block List, Max: 1) The client certificate for the Postgres database. (see [below for nested schema](#nestedblock--ssl_certificate))
-- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Postgres database. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_certificate` (Block List, Max: 1) The client certificate for the Postgres database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Postgres database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Postgres database. (see [below for nested schema](#nestedblock--ssl_key))
 - `ssl_mode` (String) The SSL mode for the Postgres database.
 
@@ -75,8 +75,8 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 Optional:
 
-- `secret` (Block List, Max: 1) The user secret value. (see [below for nested schema](#nestedblock--user--secret))
-- `text` (String) The user text value.
+- `secret` (Block List, Max: 1) The `user` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--user--secret))
+- `text` (String) The `user` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--user--secret"></a>
 ### Nested Schema for `user.secret`
@@ -136,8 +136,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The ssl_certificate secret value. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
-- `text` (String) The ssl_certificate text value.
+- `secret` (Block List, Max: 1) The `ssl_certificate` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
+- `text` (String) The `ssl_certificate` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate--secret"></a>
 ### Nested Schema for `ssl_certificate.secret`
@@ -158,8 +158,8 @@ Optional:
 
 Optional:
 
-- `secret` (Block List, Max: 1) The ssl_certificate_authority secret value. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
-- `text` (String) The ssl_certificate_authority text value.
+- `secret` (Block List, Max: 1) The `ssl_certificate_authority` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
+- `text` (String) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate_authority--secret"></a>
 ### Nested Schema for `ssl_certificate_authority.secret`

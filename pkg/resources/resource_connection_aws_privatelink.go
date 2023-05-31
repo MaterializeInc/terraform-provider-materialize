@@ -39,7 +39,7 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 
 func ConnectionAwsPrivatelink() *schema.Resource {
 	return &schema.Resource{
-		Description: "The connection resource allows you to manage connections in Materialize.",
+		Description: "An AWS PrivateLink connection establishes a link to an AWS PrivateLink service.",
 
 		CreateContext: connectionAwsPrivatelinkCreate,
 		ReadContext:   connectionAwsPrivatelinkRead,

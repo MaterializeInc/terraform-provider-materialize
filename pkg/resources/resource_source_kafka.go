@@ -131,7 +131,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 
 func SourceKafka() *schema.Resource {
 	return &schema.Resource{
-		Description: "A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.",
+		Description: "A Kafka source describes a Kafka cluster you want Materialize to read data from.",
 
 		CreateContext: sourceKafkaCreate,
 		ReadContext:   sourceRead,

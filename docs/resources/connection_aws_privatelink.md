@@ -3,12 +3,12 @@
 page_title: "materialize_connection_aws_privatelink Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The connection resource allows you to manage connections in Materialize.
+  An AWS PrivateLink connection establishes a link to an AWS PrivateLink service.
 ---
 
 # materialize_connection_aws_privatelink (Resource)
 
-The connection resource allows you to manage connections in Materialize.
+An AWS PrivateLink connection establishes a link to an AWS PrivateLink service.
 
 ## Example Usage
 
@@ -40,8 +40,8 @@ resource "materialize_connection_aws_privatelink" "example_privatelink_connectio
 
 ### Optional
 
-- `database_name` (String) The identifier for the connection database.
-- `schema_name` (String) The identifier for the connection schema.
+- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 
 ### Read-Only
 

@@ -3,12 +3,12 @@
 page_title: "materialize_source_kafka Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.
+  A Kafka source describes a Kafka cluster you want Materialize to read data from.
 ---
 
 # materialize_source_kafka (Resource)
 
-A source describes an external system you want Materialize to read data from, and provides details about how to decode and interpret that data.
+A Kafka source describes a Kafka cluster you want Materialize to read data from.
 
 ## Example Usage
 
@@ -55,7 +55,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
-- `database_name` (String) The identifier for the source database.
+- `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
@@ -65,7 +65,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `primary_key` (List of String) Declare a set of columns as a primary key.
-- `schema_name` (String) The identifier for the source schema.
+- `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set "START OFFSET" based on the Kafka timestamp.
