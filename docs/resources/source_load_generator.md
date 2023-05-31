@@ -36,7 +36,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 ### Required
 
-- `load_generator_type` (String) The load generator types: [AUCTION COUNTER TPCH].
+- `load_generator_type` (String) The load generator types: [AUCTION MARKETING COUNTER TPCH].
 - `name` (String) The identifier for the source.
 
 ### Optional
@@ -45,6 +45,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
 - `counter_options` (Block List) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `marketing_options` (Block List) Marketing Options. (see [below for nested schema](#nestedblock--marketing_options))
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `tpch_options` (Block List) TPCH Options. (see [below for nested schema](#nestedblock--tpch_options))
@@ -84,6 +85,28 @@ Optional:
 - `max_cardinality` (Number) Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.
 - `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
+
+
+<a id="nestedblock--marketing_options"></a>
+### Nested Schema for `marketing_options`
+
+Optional:
+
+- `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
+- `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--marketing_options--table))
+- `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
+
+<a id="nestedblock--marketing_options--table"></a>
+### Nested Schema for `marketing_options.table`
+
+Required:
+
+- `name` (String) The name of the table.
+
+Optional:
+
+- `alias` (String) The alias of the table.
+
 
 
 <a id="nestedblock--tpch_options"></a>

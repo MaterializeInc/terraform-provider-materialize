@@ -93,7 +93,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Optional:     true,
 		MinItems:     1,
 		ForceNew:     true,
-		ExactlyOneOf: []string{"counter_options", "auction_options", "tpch_options"},
+		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
 	"auction_options": {
 		Description: "Auction Options.",
@@ -108,7 +108,22 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Optional:     true,
 		MinItems:     1,
 		ForceNew:     true,
-		ExactlyOneOf: []string{"counter_options", "auction_options", "tpch_options"},
+		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
+	},
+	"marketing_options": {
+		Description: "Marketing Options.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"tick_interval": tick_interval,
+				"scale_factor":  scale_factor,
+				"table":         table,
+			},
+		},
+		Optional:     true,
+		MinItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
 	"tpch_options": {
 		Description: "TPCH Options.",
@@ -123,7 +138,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Optional:     true,
 		MinItems:     1,
 		ForceNew:     true,
-		ExactlyOneOf: []string{"counter_options", "auction_options", "tpch_options"},
+		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
 }
 
@@ -171,6 +186,11 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	if v, ok := d.GetOk("auction_options"); ok {
 		o := materialize.GetAuctionOptionsStruct(v)
 		b.AuctionOptions(o)
+	}
+
+	if v, ok := d.GetOk("marketing_options"); ok {
+		o := materialize.GetMarketingOptionsStruct(v)
+		b.MarketingOptions(o)
 	}
 
 	if v, ok := d.GetOk("tpch_options"); ok {

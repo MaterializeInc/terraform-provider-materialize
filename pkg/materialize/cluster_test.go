@@ -10,16 +10,20 @@ import (
 
 func TestClusterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS ();`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		NewClusterBuilder(db, "cluster").Create()
+		if err := NewClusterBuilder(db, "cluster").Create(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
-func TestClusteDrop(t *testing.T) {
+func TestClusterDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CLUSTER "cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		NewClusterBuilder(db, "cluster").Drop()
+		if err := NewClusterBuilder(db, "cluster").Drop(); err != nil {
+			t.Fatal(err)
+		}
 	})
 }

@@ -82,7 +82,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(s.TableName.String, s.SchemaName.String, s.DatabaseName.String)
+	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.TableName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

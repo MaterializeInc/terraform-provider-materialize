@@ -8,22 +8,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestTableCreate(t *testing.T) {
+func TestTypeCreateList(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" \(column_1 int, column_2 text NOT NULL\);`,
+			`CREATE TYPE "database"."schema"."type" AS LIST \(ELEMENT TYPE = int4\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewTableBuilder(db, "table", "schema", "database")
-		b.Column([]TableColumn{
+		b := NewTypeBuilder(db, "type", "schema", "database")
+		b.ListProperties([]ListProperties{
 			{
-				ColName: "column_1",
-				ColType: "int",
-			},
-			{
-				ColName: "column_2",
-				ColType: "text",
-				NotNull: true,
+				ElementType: "int4",
 			},
 		})
 
@@ -33,25 +27,33 @@ func TestTableCreate(t *testing.T) {
 	})
 }
 
-func TestTableRename(t *testing.T) {
+func TestTypeCreateMap(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
+			`CREATE TYPE "database"."schema"."type" AS MAP \(KEY TYPE text, VALUE TYPE = int\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewTableBuilder(db, "table", "schema", "database").Rename("new_table"); err != nil {
+		b := NewTypeBuilder(db, "type", "schema", "database")
+		b.MapProperties([]MapProperties{
+			{
+				KeyType:   "text",
+				ValueType: "int",
+			},
+		})
+
+		if err := b.Create(); err != nil {
 			t.Fatal(err)
 		}
 	})
 }
 
-func TestTableDrop(t *testing.T) {
+func TestTypeDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`DROP TABLE "database"."schema"."table";`,
+			`DROP TYPE "database"."schema"."type";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewTableBuilder(db, "table", "schema", "database").Drop(); err != nil {
+		if err := NewTypeBuilder(db, "type", "schema", "database").Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})
