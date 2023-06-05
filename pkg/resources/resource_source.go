@@ -24,7 +24,10 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	i := d.Id()
 
 	s, err := materialize.ScanSource(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
