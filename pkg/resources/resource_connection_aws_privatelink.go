@@ -65,7 +65,10 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 	i := d.Id()
 
 	s, err := materialize.ScanConnectionAwsPrivatelink(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 

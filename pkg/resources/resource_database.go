@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -34,7 +35,10 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	i := d.Id()
 
 	s, err := materialize.ScanDatabase(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
