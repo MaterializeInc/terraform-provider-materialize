@@ -3,11 +3,11 @@ page_title: "Provider: Materialize"
 description: Manage Materialize with Terraform.
 ---
 
-# Materialize Provider
+# Materialize provider
 
 This repository contains a Terraform provider for managing resources in a [Materialize](https://materialize.com/) account.
 
-## Example Provider Configuration
+## Example provider configuration
 
 Configure the provider by adding the following block to your Terraform project:
 
@@ -34,11 +34,11 @@ provider "materialize" {
 - `testing` (Boolean) Enable to test the provider locally
 - `username` (String) Materialize username. Can also come from the `MZ_USER` environment variable.
 
-## Order Precedence
+## Order precedence
 
 The Materialize provider will use the following order of precedence when determining which credentials to use:
-1) Provider Configuration
-2) Environment Variables
+1) Provider configuration
+2) Environment variables
 
 ## Modules
 
@@ -49,6 +49,6 @@ To help with your projects, you can use these Materialize maintained Terraform m
 * [EC2 SSH Bastion](https://registry.terraform.io/modules/MaterializeInc/ec2-ssh-bastion/aws/latest)
 * [RDS Postgres](https://registry.terraform.io/modules/MaterializeInc/rds-postgres/aws/latest)
 
-## Helpful Links/Information
+## Getting support
 
-* [Report Bugs](https://github.com/MaterializeInc/terraform-provider-materialize/issues)
+If you run into a snag or need support as you try out the Materialize Terraform provider, join the Materialize [Slack community](https://materialize.com/s/chat) or [open an issue](https://github.com/MaterializeInc/terraform-provider-materialize/issues)!
