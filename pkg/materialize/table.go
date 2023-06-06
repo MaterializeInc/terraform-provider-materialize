@@ -90,6 +90,7 @@ type TableParams struct {
 	TableName    sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Privileges   sql.NullString `db:"privileges"`
 }
 
 var tableQuery = NewBaseQuery(`
@@ -97,7 +98,8 @@ var tableQuery = NewBaseQuery(`
 		mz_tables.id,
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
-		mz_databases.name AS database_name
+		mz_databases.name AS database_name,
+		mz_tables.privileges
 	FROM mz_tables
 	JOIN mz_schemas
 		ON mz_tables.schema_id = mz_schemas.id

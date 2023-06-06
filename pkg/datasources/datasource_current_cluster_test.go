@@ -27,5 +27,4 @@ func TestCurrentClusterDatasource(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

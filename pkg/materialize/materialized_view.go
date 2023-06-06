@@ -70,6 +70,7 @@ type MaterializedViewParams struct {
 	SchemaName           sql.NullString `db:"schema_name"`
 	DatabaseName         sql.NullString `db:"database_name"`
 	Cluster              sql.NullString `db:"cluster_name"`
+	Privileges           sql.NullString `db:"privileges"`
 }
 
 var materializedViewQuery = NewBaseQuery(`
@@ -78,7 +79,8 @@ var materializedViewQuery = NewBaseQuery(`
 		mz_materialized_views.name AS materialized_view_name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_clusters.name AS cluster_name
+		mz_clusters.name AS cluster_name,
+		mz_materialized_views.privileges
 	FROM mz_materialized_views
 	JOIN mz_schemas
 		ON mz_materialized_views.schema_id = mz_schemas.id

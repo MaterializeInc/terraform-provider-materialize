@@ -55,6 +55,7 @@ type ViewParams struct {
 	ViewName     sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Privileges   sql.NullString `db:"privileges"`
 }
 
 var viewQuery = NewBaseQuery(`
@@ -62,7 +63,8 @@ var viewQuery = NewBaseQuery(`
 		mz_views.id,
 		mz_views.name,
 		mz_schemas.name AS schema_name,
-		mz_databases.name AS database_name
+		mz_databases.name AS database_name,
+		mz_views.privileges
 	FROM mz_views
 	JOIN mz_schemas
 		ON mz_views.schema_id = mz_schemas.id

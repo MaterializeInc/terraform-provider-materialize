@@ -41,13 +41,15 @@ type SchemaParams struct {
 	SchemaId     sql.NullString `db:"id"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Privileges   sql.NullString `db:"privileges"`
 }
 
 var schemaQuery = NewBaseQuery(`
 	SELECT
 		mz_schemas.id,
 		mz_schemas.name AS schema_name,
-		mz_databases.name AS database_name
+		mz_databases.name AS database_name,
+		mz_schemas.privileges
 	FROM mz_schemas JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id`)
 

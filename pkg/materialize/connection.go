@@ -60,6 +60,7 @@ type ConnectionParams struct {
 	SchemaName     sql.NullString `db:"schema_name"`
 	DatabaseName   sql.NullString `db:"database_name"`
 	ConnectionType sql.NullString `db:"connection_type"`
+	Privileges     sql.NullString `db:"privileges"`
 }
 
 var connectionQuery = NewBaseQuery(`
@@ -68,7 +69,8 @@ var connectionQuery = NewBaseQuery(`
 		mz_connections.name AS connection_name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_connections.type AS connection_type
+		mz_connections.type AS connection_type,
+		mz_connections.privileges
 	FROM mz_connections
 	JOIN mz_schemas
 		ON mz_connections.schema_id = mz_schemas.id

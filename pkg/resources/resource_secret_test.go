@@ -19,19 +19,6 @@ var inSecret = map[string]interface{}{
 	"value":         "value",
 }
 
-var readSecret string = `
-SELECT
-	mz_secrets.id,
-	mz_secrets.name,
-	mz_schemas.name AS schema_name,
-	mz_databases.name AS database_name
-FROM mz_secrets
-JOIN mz_schemas
-	ON mz_secrets.schema_id = mz_schemas.id
-JOIN mz_databases
-	ON mz_schemas.database_id = mz_databases.id
-WHERE mz_secrets.id = 'u1';`
-
 func TestResourceSecretCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
@@ -44,33 +31,17 @@ func TestResourceSecretCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("u1", "secret", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_secrets.id,
-				mz_secrets.name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_secrets
-			JOIN mz_schemas
-				ON mz_secrets.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema'
-			AND mz_secrets.name = 'secret';`).WillReturnRows(ir)
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_secrets.name = 'secret'`
+		testhelpers.MockSecretScan(mock, ip)
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("u1", "secret", "schema", "database")
-		mock.ExpectQuery(readSecret).WillReturnRows(ip)
+		pp := `WHERE mz_secrets.id = 'u1'`
+		testhelpers.MockSecretScan(mock, pp)
 
 		if err := secretCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceSecretUpdate(t *testing.T) {
@@ -88,15 +59,13 @@ func TestResourceSecretUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER SECRET "database"."schema"."old_secret" RENAME TO "database"."schema"."secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"name", "schema_name", "database_name"}).
-			AddRow("secret", "schema", "database")
-		mock.ExpectQuery(readSecret).WillReturnRows(ip)
+		pp := `WHERE mz_secrets.id = 'u1'`
+		testhelpers.MockSecretScan(mock, pp)
 
 		if err := secretUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceSecretDelete(t *testing.T) {
@@ -118,5 +87,4 @@ func TestResourceSecretDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

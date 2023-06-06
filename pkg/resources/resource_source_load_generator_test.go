@@ -37,40 +37,15 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-			AddRow("u1", "source", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
-		mock.ExpectQuery(`
-			SELECT
-				mz_sources.id,
-				mz_sources.name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name,
-				mz_sources.type AS source_type,
-				mz_sources.size,
-				mz_sources.envelope_type,
-				mz_connections.name as connection_name,
-				mz_clusters.name as cluster_name
-			FROM mz_sources
-			JOIN mz_schemas
-				ON mz_sources.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			LEFT JOIN mz_connections
-				ON mz_sources.connection_id = mz_connections.id
-			LEFT JOIN mz_clusters
-				ON mz_sources.cluster_id = mz_clusters.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema'
-			AND mz_sources.name = 'source';`).WillReturnRows(ir)
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sources.name = 'source'`
+		testhelpers.MockSourceScan(mock, ip)
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-			AddRow("u1", "source", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
-		mock.ExpectQuery(readSource).WillReturnRows(ip)
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
 
 		if err := sourceLoadgenCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }

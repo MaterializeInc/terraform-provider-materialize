@@ -39,9 +39,10 @@ func (b *ClusterBuilder) Drop() error {
 type ClusterParams struct {
 	ClusterId   sql.NullString `db:"id"`
 	ClusterName sql.NullString `db:"name"`
+	Privileges  sql.NullString `db:"privileges"`
 }
 
-var clusterQuery = NewBaseQuery(`SELECT id, name FROM mz_clusters`)
+var clusterQuery = NewBaseQuery(`SELECT id, name, privileges FROM mz_clusters`)
 
 func ClusterId(conn *sqlx.DB, clusterName string) (string, error) {
 	q := clusterQuery.QueryPredicate(map[string]string{"name": clusterName})

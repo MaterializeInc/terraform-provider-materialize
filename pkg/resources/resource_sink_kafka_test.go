@@ -39,40 +39,15 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-			AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
-		mock.ExpectQuery(`
-			SELECT
-				mz_sinks.id,
-				mz_sinks.name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name,
-				mz_sinks.type AS sink_type,
-				mz_sinks.size,
-				mz_sinks.envelope_type,
-				mz_connections.name as connection_name,
-				mz_clusters.name as cluster_name
-			FROM mz_sinks
-			JOIN mz_schemas
-				ON mz_sinks.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			LEFT JOIN mz_connections
-				ON mz_sinks.connection_id = mz_connections.id
-			LEFT JOIN mz_clusters
-				ON mz_sinks.cluster_id = mz_clusters.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema'
-			AND mz_sinks.name = 'sink';`).WillReturnRows(ir)
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sinks.name = 'sink'`
+		testhelpers.MockSinkScan(mock, ip)
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-			AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
-		mock.ExpectQuery(readSink).WillReturnRows(ip)
+		pp := `WHERE mz_sinks.id = 'u1'`
+		testhelpers.MockSinkScan(mock, pp)
 
 		if err := sinkKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }

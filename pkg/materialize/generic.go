@@ -15,6 +15,7 @@ const (
 	Database         EntityType = "DATABASE"
 	Index            EntityType = "INDEX"
 	MaterializedView EntityType = "MATERIALIZED VIEW"
+	Privilege        EntityType = "PRIVILEGE"
 	Ownership        EntityType = "OWNERSHIP"
 	Role             EntityType = "ROLE"
 	Schema           EntityType = "SCHEMA"

@@ -28,18 +28,17 @@ func TestResourceDatabaseCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id", "database_name"}).AddRow("u1", "database")
-		mock.ExpectQuery(`SELECT id, name AS database_name FROM mz_databases WHERE name = 'database'`).WillReturnRows(ir)
+		ip := `WHERE name = 'database'`
+		testhelpers.MockDatabaseScan(mock, ip)
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "database_name"}).AddRow("u1", "database")
-		mock.ExpectQuery(`SELECT id, name AS database_name FROM mz_databases WHERE id = 'u1';`).WillReturnRows(ip)
+		pp := `WHERE id = 'u1'`
+		testhelpers.MockDatabaseScan(mock, pp)
 
 		if err := databaseCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceDatabaseDelete(t *testing.T) {
@@ -58,5 +57,4 @@ func TestResourceDatabaseDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

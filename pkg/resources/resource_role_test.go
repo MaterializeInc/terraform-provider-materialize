@@ -20,17 +20,6 @@ var inRole = map[string]interface{}{
 	"create_cluster": true,
 }
 
-var readRole string = `
-SELECT
-	id,
-	name AS role_name,
-	inherit,
-	create_role,
-	create_db,
-	create_cluster
-FROM mz_roles
-WHERE mz_roles.id = 'u1';`
-
 func TestResourceRoleCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
@@ -43,29 +32,17 @@ func TestResourceRoleCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).
-			AddRow("u1")
-		mock.ExpectQuery(`
-			SELECT
-				id,
-				name AS role_name,
-				inherit,
-				create_role,
-				create_db,
-				create_cluster
-			FROM mz_roles
-			WHERE mz_roles.name = 'role'`).WillReturnRows(ir)
+		ip := `WHERE mz_roles.name = 'role'`
+		testhelpers.MockRoleScan(mock, ip)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"role_name", "inherit", "create_role", "create_db", "create_cluster"}).
-			AddRow("role", true, true, false, true)
-		mock.ExpectQuery(readRole).WillReturnRows(ip)
+		pp := `WHERE mz_roles.id = 'u1'`
+		testhelpers.MockRoleScan(mock, pp)
 
 		if err := roleCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceRoleUpdate(t *testing.T) {
@@ -85,15 +62,13 @@ func TestResourceRoleUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER ROLE "role" CREATECLUSTER;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"role_name", "inherit", "create_role", "create_db", "create_cluster"}).
-			AddRow("role", true, true, false, true)
-		mock.ExpectQuery(readRole).WillReturnRows(ip)
+		pp := `WHERE mz_roles.id = 'u1'`
+		testhelpers.MockRoleScan(mock, pp)
 
 		if err := roleUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceRoleDelete(t *testing.T) {
@@ -109,5 +84,4 @@ func TestResourceRoleDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }
