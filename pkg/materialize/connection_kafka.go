@@ -19,8 +19,8 @@ func GetKafkaBrokersStruct(databaseName, schemaName string, v interface{}) []Kaf
 	for _, broker := range v.([]interface{}) {
 		b := broker.(map[string]interface{})
 		privateLinkConn := IdentifierSchemaStruct{}
-		if b["private_link_connection"] != nil {
-			privateLinkConn = GetIdentifierSchemaStruct(databaseName, schemaName, b["private_link_connection"].([]interface{}))
+		if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
+			privateLinkConn = GetIdentifierSchemaStruct(databaseName, schemaName, b["privatelink_connection"].([]interface{}))
 		}
 		brokers = append(brokers, KafkaBroker{
 			Broker:                b["broker"].(string),
