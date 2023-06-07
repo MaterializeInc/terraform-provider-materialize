@@ -13,13 +13,19 @@ Configure the provider by adding the following block to your Terraform project:
 
 {{tffile "examples/provider/provider.tf"}}
 
-{{ .SchemaMarkdown | trimspace }}
+## Schema
+
+* `host` (String) Materialize host. Can also come from the `MZ_HOST` environment variable.
+* `username` (String) Materialize username. Can also come from the `MZ_USER` environment variable.
+* `password` (String, Sensitive) Materialize host. Can also come from the `MZ_PW` environment variable.
+* `port` (Number) The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.
+* `database` (String) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
 
 ## Order precedence
 
 The Materialize provider will use the following order of precedence when determining which credentials to use:
-1) Provider configuration
-2) Environment variables
+1. Provider configuration
+2. Environment variables
 
 ## Modules
 
