@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.7 - 2022-06-07
+
+### Features
+
+### BugFixes
+
+* Handle missing resources on refresh [#176](https://github.com/MaterializeInc/terraform-provider-materialize/pull/176)
+* Typo in Privatelink Connection [#182](https://github.com/MaterializeInc/terraform-provider-materialize/pull/182)
+
+### Misc
+
 ## 0.0.6 - 2022-05-31
 
 ### Features
