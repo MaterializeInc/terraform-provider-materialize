@@ -29,7 +29,6 @@ provider "materialize" {
 * `password` (String, Sensitive) Materialize host. Can also come from the `MZ_PW` environment variable.
 * `port` (Number) The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.
 * `database` (String) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
-* `testing` (Boolean) Enable to test the provider locally
 
 ## Order precedence
 
