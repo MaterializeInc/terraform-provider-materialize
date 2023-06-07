@@ -27,6 +27,7 @@ provider "materialize" {
 
 ### Optional
 
+- `application_name` (String) The application name to include in the connection string
 - `database` (String) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
 - `host` (String) Materialize host. Can also come from the `MZ_HOST` environment variable.
 - `password` (String, Sensitive) Materialize host. Can also come from the `MZ_PW` environment variable.
