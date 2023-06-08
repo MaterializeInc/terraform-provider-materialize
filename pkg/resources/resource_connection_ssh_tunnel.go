@@ -26,6 +26,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The user of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"port": {
 		Description: "The port of the SSH tunnel.",
