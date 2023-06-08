@@ -134,7 +134,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	b := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
-	if d.HasChange("name") {
+	if d.HasChange("name") || d.HasChange("user") {
 		_, newConnectionName := d.GetChange("name")
 		b.Rename(newConnectionName.(string))
 	}
