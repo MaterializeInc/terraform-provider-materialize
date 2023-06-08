@@ -48,6 +48,12 @@ func Provider() *schema.Provider {
 				Description: "The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
 			},
+			"application_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "terraform-provider-materialize",
+				Description: "The application name to include in the connection string",
+			},
 			"testing": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -102,7 +108,7 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host, username, password string, port int, database string, testing bool) string {
+func connectionString(host, username, password string, port int, database string, testing bool, application string) string {
 	c := strings.Builder{}
 	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
 
@@ -111,6 +117,8 @@ func connectionString(host, username, password string, port int, database string
 	} else {
 		c.WriteString("?sslmode=require")
 	}
+
+	c.WriteString(fmt.Sprintf("&application_name=%s", application))
 
 	return c.String()
 }
@@ -121,9 +129,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	password := d.Get("password").(string)
 	port := d.Get("port").(int)
 	database := d.Get("database").(string)
+	application := d.Get("application_name").(string)
 	testing := d.Get("testing").(bool)
 
-	connStr := connectionString(host, username, password, port, database, testing)
+	connStr := connectionString(host, username, password, port, database, testing, application)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("pgx", connStr)
