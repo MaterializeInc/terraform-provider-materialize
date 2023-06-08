@@ -20,6 +20,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The host of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"user": {
 		Description: "The user of the SSH tunnel.",
@@ -30,16 +31,19 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The port of the SSH tunnel.",
 		Type:        schema.TypeInt,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"public_key_1": {
 		Description: "The first public key associated with the SSH tunnel.",
 		Type:        schema.TypeString,
 		Computed:    true,
+		ForceNew:    true,
 	},
 	"public_key_2": {
 		Description: "The second public key associated with the SSH tunnel.",
 		Type:        schema.TypeString,
 		Computed:    true,
+		ForceNew:    true,
 	},
 }
 
