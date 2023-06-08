@@ -21,6 +21,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeList,
 		Required:    true,
 		MinItems:    1,
+		ForceNew:    true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"broker": {
@@ -46,6 +47,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
 		Type:        schema.TypeString,
 		Optional:    true,
+		ForceNew:    true,
 	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false),
@@ -56,6 +58,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Optional:     true,
 		ValidateFunc: validation.StringInSlice(saslMechanisms, true),
 		RequiredWith: []string{"sasl_username", "sasl_password"},
+		ForceNew:     true,
 	},
 	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password": IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
