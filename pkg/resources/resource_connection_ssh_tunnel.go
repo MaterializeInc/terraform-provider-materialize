@@ -25,6 +25,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The user of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"port": {
 		Description: "The port of the SSH tunnel.",
@@ -134,7 +135,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	b := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
-	if d.HasChange("name") || d.HasChange("user") {
+	if d.HasChange("name") {
 		_, newConnectionName := d.GetChange("name")
 		b.Rename(newConnectionName.(string))
 	}
