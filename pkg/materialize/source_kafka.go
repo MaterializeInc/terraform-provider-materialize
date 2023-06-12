@@ -38,9 +38,9 @@ type SourceKafkaBuilder struct {
 	includePartition bool
 	includeOffset    bool
 	includeTimestamp bool
-	format           FormatSpecStruct
-	keyFormat        FormatSpecStruct
-	valueFormat      FormatSpecStruct
+	format           SourceFormatSpecStruct
+	keyFormat        SourceFormatSpecStruct
+	valueFormat      SourceFormatSpecStruct
 	envelope         KafkaSourceEnvelopeStruct
 	primaryKey       []string
 	startOffset      []int
@@ -99,7 +99,7 @@ func (b *SourceKafkaBuilder) IncludeTimestamp() *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) Format(f FormatSpecStruct) *SourceKafkaBuilder {
+func (b *SourceKafkaBuilder) Format(f SourceFormatSpecStruct) *SourceKafkaBuilder {
 	b.format = f
 	return b
 }
@@ -109,12 +109,12 @@ func (b *SourceKafkaBuilder) Envelope(e KafkaSourceEnvelopeStruct) *SourceKafkaB
 	return b
 }
 
-func (b *SourceKafkaBuilder) KeyFormat(k FormatSpecStruct) *SourceKafkaBuilder {
+func (b *SourceKafkaBuilder) KeyFormat(k SourceFormatSpecStruct) *SourceKafkaBuilder {
 	b.keyFormat = k
 	return b
 }
 
-func (b *SourceKafkaBuilder) ValueFormat(v FormatSpecStruct) *SourceKafkaBuilder {
+func (b *SourceKafkaBuilder) ValueFormat(v SourceFormatSpecStruct) *SourceKafkaBuilder {
 	b.valueFormat = v
 	return b
 }
