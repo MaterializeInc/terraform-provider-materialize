@@ -28,3 +28,12 @@ func TestProvider(t *testing.T) {
 func TestProvider_impl(t *testing.T) {
 	var _ *schema.Provider = Provider()
 }
+
+var testAccProvider = Provider()
+var testAccProviderFactories = map[string]func() (*schema.Provider, error){
+	"materialize": func() (*schema.Provider, error) { return testAccProvider, nil },
+}
+
+func testAccPreCheck(t *testing.T) {
+
+}

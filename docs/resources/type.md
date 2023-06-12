@@ -47,5 +47,3 @@ Required:
 
 - `key_type` (String) Creates a custom map whose keys are of `KEY TYPE`. `KEY TYPE` must resolve to text.
 - `value_type` (String) Creates a custom map whose values are of `VALUE TYPE`.
-
-

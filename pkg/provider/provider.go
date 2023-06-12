@@ -57,7 +57,7 @@ func Provider() *schema.Provider {
 			"testing": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
+				DefaultFunc: schema.EnvDefaultFunc("MZ_TESTING", false),
 				Description: "Enable to test the provider locally",
 			},
 		},

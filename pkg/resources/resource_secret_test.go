@@ -84,8 +84,8 @@ func TestResourceSecretUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SECRET "database"."schema"."" RENAME TO "secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SECRET "database"."schema"."old_secret" AS 'value';`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SECRET "database"."schema"."old_secret" RENAME TO "database"."schema"."secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		ip := sqlmock.NewRows([]string{"name", "schema_name", "database_name"}).
