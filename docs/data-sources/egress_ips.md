@@ -27,5 +27,3 @@ output "ips" {
 
 - `egress_ips` (List of String) The egress IPs in the account
 - `id` (String) The ID of this resource.
-
-
