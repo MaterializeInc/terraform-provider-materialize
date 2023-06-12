@@ -82,7 +82,7 @@ func GetFormatSpecStruc(v interface{}) FormatSpecStruct {
 			Header:      csv["header"].([]string),
 		}
 	}
-	if v, ok := u["json"]; ok {
+	if v, ok := u["bytes"]; ok {
 		format.Bytes = v.(bool)
 	}
 	if v, ok := u["text"]; ok {
