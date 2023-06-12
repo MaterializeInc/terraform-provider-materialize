@@ -48,5 +48,3 @@ Read-Only:
 - `name` (String)
 - `schema_name` (String)
 - `type` (String)
-
-
