@@ -66,6 +66,15 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional: true,
 		MinItems: 1,
 		ForceNew: true,
+		ConflictsWith: []string{"schema"},
+	},
+	"schema": {
+		Description: "Creates subsources for specific schemas.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
+		ConflictsWith: []string{"table"},
 	},
 }
 
@@ -110,12 +119,16 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		b.Publication(v.(string))
 	}
 
+	if v, ok := d.GetOk("textColumns"); ok {
+		b.TextColumns(v.([]string))
+	}
+
 	if v, ok := d.GetOk("table"); ok {
 		tables := materialize.GetTableStruct(v.([]interface{}))
 		b.Table(tables)
 	}
 
-	if v, ok := d.GetOk("textColumns"); ok {
+	if v, ok := d.GetOk("schema"); ok {
 		b.TextColumns(v.([]string))
 	}
 

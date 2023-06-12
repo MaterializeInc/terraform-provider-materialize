@@ -68,7 +68,7 @@ var typeSchema = map[string]*schema.Schema{
 
 func Type() *schema.Resource {
 	return &schema.Resource{
-		Description: "A custom types, which let you create named versions of anonymous types.",
+		Description: "A custom type, which lets you create named versions of anonymous types.",
 
 		CreateContext: typeCreate,
 		ReadContext:   typeRead,
