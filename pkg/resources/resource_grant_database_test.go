@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResourceGrantCreate(t *testing.T) {
+func TestResourceGrantDatabaseCreate(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
 		"role_name": "joe",
 		"privilege": "CREATE",
-		"object":    []interface{}{map[string]interface{}{"type": "DATABASE", "name": "materialize"}},
+		"object":    []interface{}{map[string]interface{}{"name": "materialize"}},
 	}
-	d := schema.TestResourceDataRaw(t, Grant().Schema, in)
+	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -40,7 +40,7 @@ func TestResourceGrantCreate(t *testing.T) {
 		pp := `WHERE id = 'u1'`
 		testhelpers.MockDatabaseScan(mock, pp)
 
-		if err := grantCreate(context.TODO(), d, db); err != nil {
+		if err := grantDatabaseCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 
@@ -50,21 +50,21 @@ func TestResourceGrantCreate(t *testing.T) {
 	})
 }
 
-func TestResourceGrantDelete(t *testing.T) {
+func TestResourceGrantDatabaseDelete(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
 		"role_name": "joe",
 		"privilege": "CREATE",
-		"object":    []interface{}{map[string]interface{}{"type": "DATABASE", "name": "materialize"}},
+		"object":    []interface{}{map[string]interface{}{"name": "materialize"}},
 	}
-	d := schema.TestResourceDataRaw(t, Grant().Schema, in)
+	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := grantDelete(context.TODO(), d, db); err != nil {
+		if err := grantDatabaseDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

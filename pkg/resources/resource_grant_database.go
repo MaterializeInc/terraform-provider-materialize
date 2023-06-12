@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var grantSchema = map[string]*schema.Schema{
+var grantDatabaseSchema = map[string]*schema.Schema{
 	"role_name": {
 		Description: "The name of the role to grant privilege to.",
 		Type:        schema.TypeString,
@@ -18,34 +18,20 @@ var grantSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"privilege": {
-		Description: "The privilege to grant to the object.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
+		Description:  "The privilege to grant to the object.",
+		Type:         schema.TypeString,
+		Required:     true,
+		ForceNew:     true,
+		ValidateFunc: validPrivileges("DATABASE"),
 	},
 	"object": {
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"type": {
-					Description: "The type of object that is being granted on.",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
 				"name": {
-					Description: "The object name.",
+					Description: "The database name.",
 					Type:        schema.TypeString,
 					Required:    true,
-				},
-				"schema_name": {
-					Description: "The object schema name if applicable.",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
-				"database_name": {
-					Description: "The object database name if applicable.",
-					Type:        schema.TypeString,
-					Optional:    true,
 				},
 			},
 		},
@@ -57,23 +43,23 @@ var grantSchema = map[string]*schema.Schema{
 	},
 }
 
-func Grant() *schema.Resource {
+func GrantDatabase() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the privileges on Materailize objects for roles.",
+		Description: "Manages the privileges on a Materailize database for roles.",
 
-		CreateContext: grantCreate,
-		ReadContext:   grantRead,
-		DeleteContext: grantDelete,
+		CreateContext: grantDatabaseCreate,
+		ReadContext:   grantDatabaseRead,
+		DeleteContext: grantDatabaseDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: grantSchema,
+		Schema: grantDatabaseSchema,
 	}
 }
 
-func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func grantDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
 	ie := strings.Split(i, "|")
@@ -90,23 +76,21 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	privilege := d.Get("privilege").(string)
 
 	if !materialize.HasPriviledge(priviledgeMap[roleId], privilege) {
-		return diag.Errorf("Object does not contain privilege: %s", privilege)
+		return diag.Errorf("object does not contain privilege: %s", privilege)
 	}
 
 	return nil
 }
 
-func grantCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 
 	o := d.Get("object").([]interface{})[0].(map[string]interface{})
 
 	obj := materialize.PriviledgeObjectStruct{
-		Type:         o["type"].(string),
-		Name:         o["name"].(string),
-		SchemaName:   o["schema_name"].(string),
-		DatabaseName: o["database_name"].(string),
+		Type: "DATABASE",
+		Name: o["name"].(string),
 	}
 
 	b := materialize.NewPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege, obj)
@@ -128,10 +112,10 @@ func grantCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 	d.SetId(i)
 
-	return grantRead(ctx, d, meta)
+	return grantDatabaseRead(ctx, d, meta)
 }
 
-func grantDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 
@@ -142,10 +126,8 @@ func grantDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		roleName,
 		privilege,
 		materialize.PriviledgeObjectStruct{
-			Type:         o["type"].(string),
-			Name:         o["name"].(string),
-			SchemaName:   o["schema_name"].(string),
-			DatabaseName: o["database_name"].(string),
+			Type: "DATABASE",
+			Name: o["name"].(string),
 		},
 	)
 
