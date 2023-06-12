@@ -21,7 +21,7 @@ type FormatSpecStruct struct {
 	Avro     *AvroFormatSpec
 	Protobuf *ProtobufFormatSpec
 	Csv      *CsvFormatSpec
-	Json     bool
+	Bytes    bool
 	Text     bool
 }
 
@@ -83,7 +83,7 @@ func GetFormatSpecStruc(v interface{}) FormatSpecStruct {
 		}
 	}
 	if v, ok := u["json"]; ok {
-		format.Json = v.(bool)
+		format.Bytes = v.(bool)
 	}
 	if v, ok := u["text"]; ok {
 		format.Text = v.(bool)

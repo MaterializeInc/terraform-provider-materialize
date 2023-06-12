@@ -188,8 +188,8 @@ func (b *SourceKafkaBuilder) Create() error {
 		}
 	}
 
-	if b.format.Json {
-		q.WriteString(` FORMAT JSON`)
+	if b.format.Bytes {
+		q.WriteString(` FORMAT BYTES`)
 	}
 
 	if b.format.Text {
@@ -232,8 +232,8 @@ func (b *SourceKafkaBuilder) Create() error {
 		}
 	}
 
-	if b.keyFormat.Json {
-		q.WriteString(` KEY FORMAT JSON`)
+	if b.keyFormat.Bytes {
+		q.WriteString(` KEY FORMAT BYTES`)
 	}
 
 	if b.keyFormat.Text {
@@ -276,8 +276,8 @@ func (b *SourceKafkaBuilder) Create() error {
 		}
 	}
 
-	if b.valueFormat.Json {
-		q.WriteString(` VALUE FORMAT JSON`)
+	if b.valueFormat.Bytes {
+		q.WriteString(` VALUE FORMAT BYTES`)
 	}
 
 	if b.valueFormat.Text {
