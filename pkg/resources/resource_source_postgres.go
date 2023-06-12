@@ -22,6 +22,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional:     true,
 		Computed:     true,
 		ExactlyOneOf: []string{"cluster_name", "size"},
+		ForceNew:     true,
 	},
 	"size": {
 		Description:  "The size of the source.",

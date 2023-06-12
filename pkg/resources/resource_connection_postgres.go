@@ -19,17 +19,20 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Description: "The target Postgres database.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"host": {
 		Description: "The Postgres database hostname.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"port": {
 		Description: "The Postgres database port.",
 		Type:        schema.TypeInt,
 		Optional:    true,
 		Default:     5432,
+		ForceNew:    true,
 	},
 	"user":                      ValueSecretSchema("user", "The Postgres database username.", true),
 	"password":                  IdentifierSchema("password", "The Postgres database password.", false),
@@ -41,6 +44,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		Description: "The SSL mode for the Postgres database.",
 		Type:        schema.TypeString,
 		Optional:    true,
+		ForceNew:    true,
 	},
 	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false),
 }
