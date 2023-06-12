@@ -77,7 +77,7 @@ func testAccCheckSecretExists(name string) resource.TestCheckFunc {
 func testAccCheckSecretDisappears(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf("DROP SECRET %s", name))
+		_, err := db.Exec(fmt.Sprintf(`DROP SECRET "%s";`, name))
 		return err
 	}
 }

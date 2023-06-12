@@ -42,7 +42,7 @@ resource "materialize_cluster" "test" {
 }
 
 resource "materialize_cluster_replica" "test" {
-	cluster_name = "%[1]s"
+	cluster_name = materialize_cluster.test.name
 	name = "%[2]s"
 	size = "1"
 }
