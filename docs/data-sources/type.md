@@ -35,5 +35,3 @@ Read-Only:
 - `id` (String)
 - `name` (String)
 - `schema_name` (String)
-
-

@@ -48,5 +48,3 @@ Read-Only:
 - `obj_database` (String)
 - `obj_name` (String)
 - `obj_schema` (String)
-
-

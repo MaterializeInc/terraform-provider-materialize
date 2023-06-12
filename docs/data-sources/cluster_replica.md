@@ -34,5 +34,3 @@ Read-Only:
 - `id` (String)
 - `name` (String)
 - `size` (String)
-
-

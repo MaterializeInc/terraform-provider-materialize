@@ -40,5 +40,3 @@ Read-Only:
 - `database_name` (String)
 - `id` (String)
 - `name` (String)
-
-
