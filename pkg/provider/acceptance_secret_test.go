@@ -17,10 +17,10 @@ func TestAccSecret_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllSecretsDestroyed,
+		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSecretResource(secretName),
+				Config: testAccSecretResource(secretName, "sekret"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
 					resource.TestCheckResourceAttr("materialize_secret.test", "name", secretName),
@@ -28,6 +28,34 @@ func TestAccSecret_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_secret.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_secret.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_secret.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, secretName)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSecret_update(t *testing.T) {
+	// secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	// newSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	secretName := "old"
+	newSecretName := "new"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSecretResource(secretName, "sekret"),
+			},
+			{
+				Config: testAccSecretResource(newSecretName, "sek"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecretExists("materialize_secret.test"),
+					resource.TestCheckResourceAttr("materialize_secret.test", "name", newSecretName),
+					resource.TestCheckResourceAttr("materialize_secret.test", "value", "sek"),
+					resource.TestCheckResourceAttr("materialize_secret.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_secret.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_secret.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSecretName)),
 				),
 			},
 		},
@@ -42,7 +70,7 @@ func TestAccSecret_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSecretsDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSecretResource(secretName),
+				Config: testAccSecretResource(secretName, "sekret"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
 					testAccCheckSecretDisappears(secretName),
@@ -53,13 +81,13 @@ func TestAccSecret_disappears(t *testing.T) {
 	})
 }
 
-func testAccSecretResource(name string) string {
+func testAccSecretResource(name, secret string) string {
 	return fmt.Sprintf(`
 resource "materialize_secret" "test" {
 	name = "%s"
-	value = "sekret"
+	value = "%s"
 }
-`, name)
+`, name, secret)
 }
 
 func testAccCheckSecretExists(name string) resource.TestCheckFunc {

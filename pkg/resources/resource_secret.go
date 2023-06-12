@@ -105,16 +105,24 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), secretName, schemaName, databaseName)
+	// Name changes should occur first
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
 
-	if d.HasChange("value") {
-		_, newValue := d.GetChange("value")
-		b.UpdateValue(newValue.(string))
+		b := materialize.NewSecretBuilder(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-		b.Rename(newName.(string))
+	if d.HasChange("value") {
+		b := materialize.NewSecretBuilder(meta.(*sqlx.DB), secretName, schemaName, databaseName)
+
+		_, newValue := d.GetChange("value")
+		if err := b.UpdateValue(newValue.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return secretRead(ctx, d, meta)
