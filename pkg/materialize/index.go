@@ -10,7 +10,6 @@ import (
 
 type IndexColumn struct {
 	Field string
-	Val   string
 }
 
 func GetIndexColumnStruct(v []interface{}) []IndexColumn {
@@ -19,7 +18,6 @@ func GetIndexColumnStruct(v []interface{}) []IndexColumn {
 		c := column.(map[string]interface{})
 		i = append(i, IndexColumn{
 			Field: c["field"].(string),
-			Val:   c["val"].(string),
 		})
 	}
 	return i
@@ -89,7 +87,7 @@ func (b *IndexBuilder) Create() error {
 		for _, c := range b.colExpr {
 			s := strings.Builder{}
 
-			s.WriteString(fmt.Sprintf(`%s %s`, c.Field, c.Val))
+			s.WriteString(c.Field)
 			o := s.String()
 			columns = append(columns, o)
 
