@@ -67,7 +67,7 @@ func TestAccConnSshTunnel_disappears(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllConnSshTunnelsDestroyed,
+		CheckDestroy:      testAccCheckAllConnSshTunnelDestroyed,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConnSshTunnelResource(connectionName),
@@ -113,7 +113,7 @@ func testAccCheckConnSshTunnelDisappears(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckAllConnSshTunnelsDestroyed(s *terraform.State) error {
+func testAccCheckAllConnSshTunnelDestroyed(s *terraform.State) error {
 	db := testAccProvider.Meta().(*sqlx.DB)
 
 	for _, r := range s.RootModule().Resources {

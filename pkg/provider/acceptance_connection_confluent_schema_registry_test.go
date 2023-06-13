@@ -72,7 +72,7 @@ func TestAccConnConfluentSchemaRegistry_disappears(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllConnConfluentSchemaRegistrysDestroyed,
+		CheckDestroy:      testAccCheckAllConnConfluentSchemaRegistryDestroyed,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConnConfluentSchemaRegistryResource(connectionName),
@@ -115,7 +115,7 @@ func testAccCheckConnConfluentSchemaRegistryDisappears(name string) resource.Tes
 	}
 }
 
-func testAccCheckAllConnConfluentSchemaRegistrysDestroyed(s *terraform.State) error {
+func testAccCheckAllConnConfluentSchemaRegistryDestroyed(s *terraform.State) error {
 	db := testAccProvider.Meta().(*sqlx.DB)
 
 	for _, r := range s.RootModule().Resources {

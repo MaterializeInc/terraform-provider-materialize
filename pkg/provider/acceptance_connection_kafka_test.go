@@ -64,7 +64,7 @@ func TestAccConnKafka_disappears(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllConnKafkasDestroyed,
+		CheckDestroy:      testAccCheckAllConnKafkaDestroyed,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConnKafkaResource(connectionName),
@@ -109,7 +109,7 @@ func testAccCheckConnKafkaDisappears(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckAllConnKafkasDestroyed(s *terraform.State) error {
+func testAccCheckAllConnKafkaDestroyed(s *terraform.State) error {
 	db := testAccProvider.Meta().(*sqlx.DB)
 
 	for _, r := range s.RootModule().Resources {

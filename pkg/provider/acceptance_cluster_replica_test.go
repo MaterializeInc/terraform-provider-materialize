@@ -37,12 +37,12 @@ func TestAccClusterReplica_basic(t *testing.T) {
 
 func testAccClusterReplicaResource(clusterName, replicaName string) string {
 	return fmt.Sprintf(`
-resource "materialize_cluster" "test" {
+resource "materialize_cluster" "replica_cluster" {
 	name = "%[1]s"
 }
 
 resource "materialize_cluster_replica" "test" {
-	cluster_name = materialize_cluster.test.name
+	cluster_name = materialize_cluster.replica_cluster.name
 	name = "%[2]s"
 	size = "1"
 }
