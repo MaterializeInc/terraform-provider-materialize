@@ -46,7 +46,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 
 		// Query Id
 		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-			AddRow("u1", "source", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
+			AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster")
 		mock.ExpectQuery(`
 			SELECT
 				mz_sources.id,
@@ -73,7 +73,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 
 		// Query Params
 		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-			AddRow("u1", "source", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
+			AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster")
 		mock.ExpectQuery(readSource).WillReturnRows(ip)
 
 		if err := sourceKafkaCreate(context.TODO(), d, db); err != nil {

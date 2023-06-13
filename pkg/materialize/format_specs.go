@@ -17,11 +17,11 @@ type CsvFormatSpec struct {
 	Header      []string
 }
 
-type FormatSpecStruct struct {
+type SourceFormatSpecStruct struct {
 	Avro     *AvroFormatSpec
 	Protobuf *ProtobufFormatSpec
 	Csv      *CsvFormatSpec
-	Json     bool
+	Bytes    bool
 	Text     bool
 }
 
@@ -36,8 +36,8 @@ type SinkFormatSpecStruct struct {
 	Json bool
 }
 
-func GetFormatSpecStruc(v interface{}) FormatSpecStruct {
-	var format FormatSpecStruct
+func GetFormatSpecStruc(v interface{}) SourceFormatSpecStruct {
+	var format SourceFormatSpecStruct
 	var databaseName string
 	var schemaName string
 
@@ -82,8 +82,8 @@ func GetFormatSpecStruc(v interface{}) FormatSpecStruct {
 			Header:      csv["header"].([]string),
 		}
 	}
-	if v, ok := u["json"]; ok {
-		format.Json = v.(bool)
+	if v, ok := u["bytes"]; ok {
+		format.Bytes = v.(bool)
 	}
 	if v, ok := u["text"]; ok {
 		format.Text = v.(bool)

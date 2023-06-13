@@ -105,8 +105,8 @@ Optional:
 Optional:
 
 - `avro` (Block List, Max: 1) Avro format. (see [below for nested schema](#nestedblock--format--avro))
+- `bytes` (Boolean) BYTES format.
 - `csv` (Block List, Max: 2) CSV format. (see [below for nested schema](#nestedblock--format--csv))
-- `json` (Boolean) JSON format.
 - `protobuf` (Block List, Max: 1) Protobuf format. (see [below for nested schema](#nestedblock--format--protobuf))
 - `text` (Boolean) Text format.
 
@@ -175,8 +175,8 @@ Optional:
 Optional:
 
 - `avro` (Block List, Max: 1) Avro format. (see [below for nested schema](#nestedblock--key_format--avro))
+- `bytes` (Boolean) BYTES format.
 - `csv` (Block List, Max: 2) CSV format. (see [below for nested schema](#nestedblock--key_format--csv))
-- `json` (Boolean) JSON format.
 - `protobuf` (Block List, Max: 1) Protobuf format. (see [below for nested schema](#nestedblock--key_format--protobuf))
 - `text` (Boolean) Text format.
 
@@ -245,8 +245,8 @@ Optional:
 Optional:
 
 - `avro` (Block List, Max: 1) Avro format. (see [below for nested schema](#nestedblock--value_format--avro))
+- `bytes` (Boolean) BYTES format.
 - `csv` (Block List, Max: 2) CSV format. (see [below for nested schema](#nestedblock--value_format--csv))
-- `json` (Boolean) JSON format.
 - `protobuf` (Block List, Max: 1) Protobuf format. (see [below for nested schema](#nestedblock--value_format--protobuf))
 - `text` (Boolean) Text format.
 

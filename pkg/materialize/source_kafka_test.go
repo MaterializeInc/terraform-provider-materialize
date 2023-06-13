@@ -18,7 +18,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 		b.Size("xsmall")
 		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
 		b.Topic("events")
-		b.Format(FormatSpecStruct{Avro: &AvroFormatSpec{SchemaRegistryConnection: IdentifierSchemaStruct{Name: "csr_connection", DatabaseName: "database", SchemaName: "schema"}}})
+		b.Format(SourceFormatSpecStruct{Avro: &AvroFormatSpec{SchemaRegistryConnection: IdentifierSchemaStruct{Name: "csr_connection", DatabaseName: "database", SchemaName: "schema"}}})
 		b.IncludeKey()
 		b.IncludeHeaders()
 		b.IncludePartition()
