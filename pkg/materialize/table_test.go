@@ -36,7 +36,7 @@ func TestTableCreate(t *testing.T) {
 func TestTableRename(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
+			`ALTER TABLE "database"."schema"."table" RENAME TO "new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := NewTableBuilder(db, "table", "schema", "database").Rename("new_table"); err != nil {
