@@ -35,6 +35,26 @@ func TestAccClusterReplica_basic(t *testing.T) {
 	})
 }
 
+// func TestAccClusterReplica_disappears(t *testing.T) {
+// 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+// 	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+// 	resource.ParallelTest(t, resource.TestCase{
+// 		PreCheck:          func() { testAccPreCheck(t) },
+// 		ProviderFactories: testAccProviderFactories,
+// 		CheckDestroy:      testAccCheckAllClusterReplicasDestroyed,
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccClusterReplicaResource(clusterName, replicaName),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
+// 					testAccCheckClusterReplicaDisappears(clusterName, replicaName),
+// 				),
+// 				ExpectNonEmptyPlan: true,
+// 			},
+// 		},
+// 	})
+// }
+
 func testAccClusterReplicaResource(clusterName, replicaName string) string {
 	return fmt.Sprintf(`
 resource "materialize_cluster" "replica_cluster" {
@@ -60,3 +80,30 @@ func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {
 		return err
 	}
 }
+
+// func testAccCheckClusterReplicaDisappears(clusterName, replicaName string) resource.TestCheckFunc {
+// 	return func(s *terraform.State) error {
+// 		db := testAccProvider.Meta().(*sqlx.DB)
+// 		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER REPLICA "%s"."%s";`, clusterName, replicaName))
+// 		return err
+// 	}
+// }
+
+// func testAccCheckAllClusterReplicasDestroyed(s *terraform.State) error {
+// 	db := testAccProvider.Meta().(*sqlx.DB)
+
+// 	for _, r := range s.RootModule().Resources {
+// 		if r.Type != "materialize_cluster_replica" {
+// 			continue
+// 		}
+
+// 		_, err := materialize.ScanClusterReplica(db, r.Primary.ID)
+// 		if err == nil {
+// 			return fmt.Errorf("cluster replica %v still exists", r.Primary.ID)
+// 		} else if err != sql.ErrNoRows {
+// 			return err
+// 		}
+// 	}
+
+// 	return nil
+// }
