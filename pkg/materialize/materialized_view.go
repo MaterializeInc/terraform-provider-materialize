@@ -55,7 +55,7 @@ func (b *MaterializedViewBuilder) Create() error {
 
 func (b *MaterializedViewBuilder) Rename(newMaterializedViewName string) error {
 	old := b.QualifiedName()
-	new := QualifiedName(b.databaseName, b.schemaName, newMaterializedViewName)
+	new := QualifiedName(newMaterializedViewName)
 	return b.ddl.rename(old, new)
 }
 
