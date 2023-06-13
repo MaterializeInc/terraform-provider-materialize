@@ -130,14 +130,14 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
