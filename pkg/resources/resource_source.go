@@ -70,12 +70,16 @@ func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 
 	if d.HasChange("size") {
 		_, newSize := d.GetChange("size")
-		b.Resize(newSize.(string))
+		if err := b.Resize(newSize.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("name") {
-		_, newSinkName := d.GetChange("name")
-		b.Rename(newSinkName.(string))
+		_, newName := d.GetChange("name")
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return sourceRead(ctx, d, meta)

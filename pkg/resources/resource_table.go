@@ -130,7 +130,9 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
-		b.Rename(newName.(string))
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return tableRead(ctx, d, meta)
