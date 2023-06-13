@@ -122,8 +122,10 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), materializedViewName, schemaName, databaseName)
 
 	if d.HasChange("name") {
-		_, newMaterializedViewName := d.GetChange("name")
-		b.Rename(newMaterializedViewName.(string))
+		_, newName := d.GetChange("name")
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return materializedViewRead(ctx, d, meta)

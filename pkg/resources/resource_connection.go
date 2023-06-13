@@ -52,8 +52,10 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	b := materialize.NewConnection(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
 
 	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		b.Rename(newConnectionName.(string))
+		_, newName := d.GetChange("name")
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return connectionRead(ctx, d, meta)
