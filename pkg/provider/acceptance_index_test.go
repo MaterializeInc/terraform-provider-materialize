@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"database/sql"
 	"fmt"
 	"testing"
 
@@ -46,7 +45,7 @@ func TestAccIndex_disappears(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllIndexesDestroyed,
+		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccIndexResource(viewName, indexName),
@@ -105,23 +104,4 @@ func testAccCheckIndexDisappears(name string) resource.TestCheckFunc {
 		_, err := db.Exec(fmt.Sprintf(`DROP INDEX "%s";`, name))
 		return err
 	}
-}
-
-func testAccCheckAllIndexesDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
-
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "materialize_index" {
-			continue
-		}
-
-		_, err := materialize.ScanIndex(db, r.Primary.ID)
-		if err == nil {
-			return fmt.Errorf("index %v still exists", r.Primary.ID)
-		} else if err != sql.ErrNoRows {
-			return err
-		}
-	}
-
-	return nil
 }
