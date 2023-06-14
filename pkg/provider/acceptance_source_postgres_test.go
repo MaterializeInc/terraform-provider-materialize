@@ -13,9 +13,9 @@ import (
 )
 
 func TestAccSourcePostgres_basic(t *testing.T) {
-	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -44,7 +44,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 }
 
 func TestAccSourcePostgres_update(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlphaNum)
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	secretName := fmt.Sprintf("secret_%s", slug)
 	connName := fmt.Sprintf("conn_%s", slug)
 
@@ -80,9 +80,9 @@ func TestAccSourcePostgres_update(t *testing.T) {
 }
 
 func TestAccSourcePostgres_disappears(t *testing.T) {
-	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -107,7 +107,7 @@ func testAccSourcePostgresResource(secretName string, connName string, sourceNam
 		name          = "%s"
 		value         = "c2VjcmV0Cg=="
 	}
-	
+
 	resource "materialize_connection_postgres" "test" {
 		name = "%s"
 		host = "postgres"
