@@ -103,15 +103,15 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("schema_name", s.Object.String); err != nil {
+	if err := d.Set("schema_name", s.ObjectSchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
+	if err := d.Set("database_name", s.ObjectDatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
-	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.IndexName.String)
+	qn := materialize.QualifiedName(s.ObjectDatabaseName.String, s.ObjectSchemaName.String, s.IndexName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}

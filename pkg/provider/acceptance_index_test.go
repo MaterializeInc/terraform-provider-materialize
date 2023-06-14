@@ -31,6 +31,7 @@ func TestAccIndex_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_index.test", "obj_name.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_index.test", "col_expr.#", "1"),
 					resource.TestCheckResourceAttr("materialize_index.test", "col_expr.0.field", "id"),
+					resource.TestCheckResourceAttr("materialize_index.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_index.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_index.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, indexName)),
 				),
@@ -61,7 +62,7 @@ func TestAccIndex_disappears(t *testing.T) {
 
 func testAccIndexResource(view, index string) string {
 	return fmt.Sprintf(`
-resource "materialize_materialized_view" "test" {
+resource "materialize_view" "test" {
 	name = "%s"
 
 	statement = <<SQL
@@ -74,9 +75,9 @@ resource "materialize_index" "test" {
 	name = "%s"
 
 	obj_name {
-		name = materialize_materialized_view.test.name
-		schema_name = materialize_materialized_view.test.schema_name
-		database_name = materialize_materialized_view.test.database_name
+		name = materialize_view.test.name
+		schema_name = materialize_view.test.schema_name
+		database_name = materialize_view.test.database_name
 	}
 
 	col_expr {
@@ -101,7 +102,7 @@ func testAccCheckIndexExists(name string) resource.TestCheckFunc {
 func testAccCheckIndexDisappears(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP INDEX "%s";`, name))
+		_, err := db.Exec(fmt.Sprintf(`DROP INDEX "%s" RESTRICT;`, name))
 		return err
 	}
 }
