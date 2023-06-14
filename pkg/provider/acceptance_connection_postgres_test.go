@@ -94,7 +94,7 @@ resource "materialize_secret" "postgres_password" {
 	name          = "%s"
 	value         = "c2VjcmV0Cg=="
 }
-	
+
 resource "materialize_connection_postgres" "test" {
 	name = "%s"
 	host = "postgres"
@@ -108,7 +108,7 @@ resource "materialize_connection_postgres" "test" {
 		database_name = materialize_secret.postgres_password.database_name
 	}
 	database = "postgres"
-	}
+}
 `, secret, name)
 }
 
