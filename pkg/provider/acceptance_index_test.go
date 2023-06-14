@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccIndex_basic(t *testing.T) {
-	view := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -21,19 +21,19 @@ func TestAccIndex_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIndexResource(view, indexName),
+				Config: testAccIndexResource(viewName, indexName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIndexExists("materialize_index.test"),
 					resource.TestCheckResourceAttr("materialize_index.test", "name", indexName),
 					resource.TestCheckResourceAttr("materialize_index.test", "method", "ARRANGEMENT"),
-					// TODO: Disable
-					// resource.TestCheckResourceAttr("materialize_index.test", "obj_name", "index_view"),
-					// resource.TestCheckResourceAttr("materialize_index.test", "obj.0.schema_name", "public"),
-					// resource.TestCheckResourceAttr("materialize_index.test", "obj.0.database_name", "materialize"),
-					// resource.TestCheckResourceAttr("materialize_index.test", "col_expr.0.field", "column"),
-					// resource.TestCheckResourceAttr("materialize_index.test", "database_name", "materialize"),
-					// resource.TestCheckResourceAttr("materialize_index.test", "schema_name", "public"),
-					// resource.TestCheckResourceAttr("materialize_index.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, indexName)),
+					resource.TestCheckResourceAttr("materialize_index.test", "obj_name.#", "1"),
+					resource.TestCheckResourceAttr("materialize_index.test", "obj_name.0.name", viewName),
+					resource.TestCheckResourceAttr("materialize_index.test", "obj_name.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_index.test", "obj_name.0.database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_index.test", "col_expr.#", "1"),
+					resource.TestCheckResourceAttr("materialize_index.test", "col_expr.0.field", "id"),
+					resource.TestCheckResourceAttr("materialize_index.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_index.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, indexName)),
 				),
 			},
 		},
@@ -41,7 +41,7 @@ func TestAccIndex_basic(t *testing.T) {
 }
 
 func TestAccIndex_disappears(t *testing.T) {
-	view := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -49,7 +49,7 @@ func TestAccIndex_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllIndexesDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIndexResource(view, indexName),
+				Config: testAccIndexResource(viewName, indexName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIndexExists("materialize_index.test"),
 					testAccCheckIndexDisappears(indexName),

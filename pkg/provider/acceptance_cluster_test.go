@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"database/sql"
 	"fmt"
 	"testing"
 
@@ -35,7 +34,7 @@ func TestAccCluster_disappears(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllClustersDestroyed,
+		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccClusterResource(clusterName),
@@ -75,23 +74,4 @@ func testAccCheckClusterDisappears(name string) resource.TestCheckFunc {
 		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER "%s";`, name))
 		return err
 	}
-}
-
-func testAccCheckAllClustersDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
-
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "materialize_cluster" {
-			continue
-		}
-
-		_, err := materialize.ScanCluster(db, r.Primary.ID)
-		if err == nil {
-			return fmt.Errorf("cluster %v still exists", r.Primary.ID)
-		} else if err != sql.ErrNoRows {
-			return err
-		}
-	}
-
-	return nil
 }

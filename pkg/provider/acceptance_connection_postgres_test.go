@@ -25,6 +25,13 @@ func TestAccConnPostgres_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "user.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "user.0.text", "postgres"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "password.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "password.0.name", secretName),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "password.0.database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "password.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "database", "postgres"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),

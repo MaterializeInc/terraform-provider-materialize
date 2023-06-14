@@ -24,6 +24,8 @@ func TestAccConnKafka_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.broker", "redpanda:9092"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
