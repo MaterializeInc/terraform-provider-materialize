@@ -76,7 +76,10 @@ func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 	}
 
 	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewSource(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}

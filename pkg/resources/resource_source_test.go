@@ -45,7 +45,7 @@ func TestResourceSourceUpdate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" SET \(SIZE = 'small'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" RENAME TO "database"."schema"."source";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name"}).

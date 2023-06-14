@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccMaterializedView_basic(t *testing.T) {
-	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -24,6 +24,10 @@ func TestAccMaterializedView_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, viewName)),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "statement", fmt.Sprintf(`SELECT 1 AS id`)),
 				),
 			},
 		},
@@ -46,6 +50,10 @@ func TestAccMaterializedView_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", newViewName),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newViewName)),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "statement", fmt.Sprintf(`SELECT 1 AS id`)),
 				),
 			},
 		},
@@ -53,7 +61,7 @@ func TestAccMaterializedView_update(t *testing.T) {
 }
 
 func TestAccMaterializedView_disappears(t *testing.T) {
-	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

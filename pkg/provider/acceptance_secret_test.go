@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccSecret_basic(t *testing.T) {
-	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -35,7 +35,7 @@ func TestAccSecret_basic(t *testing.T) {
 }
 
 func TestAccSecret_update(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlphaNum)
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	secretName := fmt.Sprintf("old_%s", slug)
 	newSecretName := fmt.Sprintf("new_%s", slug)
 	resource.Test(t, resource.TestCase{
@@ -62,7 +62,7 @@ func TestAccSecret_update(t *testing.T) {
 }
 
 func TestAccSecret_disappears(t *testing.T) {
-	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
