@@ -24,6 +24,10 @@ func TestAccView_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckViewExists("materialize_view.test"),
 					resource.TestCheckResourceAttr("materialize_view.test", "name", viewName),
+					resource.TestCheckResourceAttr("materialize_view.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_view.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, viewName)),
+					resource.TestCheckResourceAttr("materialize_view.test", "statement", fmt.Sprintf(`SELECT 1 AS id`)),
 				),
 			},
 		},
@@ -46,6 +50,10 @@ func TestAccView_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckViewExists("materialize_view.test"),
 					resource.TestCheckResourceAttr("materialize_view.test", "name", newViewName),
+					resource.TestCheckResourceAttr("materialize_view.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_view.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newViewName)),
+					resource.TestCheckResourceAttr("materialize_view.test", "statement", fmt.Sprintf(`SELECT 1 AS id`)),
 				),
 			},
 		},

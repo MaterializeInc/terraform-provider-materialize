@@ -24,6 +24,10 @@ func TestAccTable_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
+					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
 				),
 			},
 		},
@@ -46,6 +50,10 @@ func TestAccTable_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", newTableName),
+					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newTableName)),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
 				),
 			},
 		},
@@ -64,6 +72,10 @@ func TestAccTable_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
+					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
 					testAccCheckTableDisappears(tableName),
 				),
 				ExpectNonEmptyPlan: true,

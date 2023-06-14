@@ -24,6 +24,13 @@ func TestAccSourceLoadGenerator_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceLoadGeneratorName),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceLoadGeneratorName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "COUNTER"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.scale_factor", "0.1"),
 				),
 			},
 		},
@@ -42,6 +49,13 @@ func TestAccSourceLoadGenerator_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceLoadGeneratorName),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceLoadGeneratorName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "COUNTER"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.scale_factor", "0.1"),
 					testAccCheckSourceLoadGeneratorDisappears(sourceLoadGeneratorName),
 				),
 				ExpectNonEmptyPlan: true,
@@ -58,8 +72,8 @@ resource "materialize_source_load_generator" "test" {
 	size = "1"
 	load_generator_type = "COUNTER"
 	counter_options {
-		tick_interval       = "500ms"
-		scale_factor        = 0.01
+		tick_interval       = "1000ms"
+		scale_factor        = 0.1
 	}
 }
 `, name)
