@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccConnConfluentSchemaRegistry_basic(t *testing.T) {
-	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -35,7 +35,7 @@ func TestAccConnConfluentSchemaRegistry_basic(t *testing.T) {
 }
 
 func TestAccConnConfluentSchemaRegistry_update(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlphaNum)
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connectionName := fmt.Sprintf("old_%s", slug)
 	newConnectionName := fmt.Sprintf("new_%s", slug)
 	resource.Test(t, resource.TestCase{
@@ -61,7 +61,7 @@ func TestAccConnConfluentSchemaRegistry_update(t *testing.T) {
 }
 
 func TestAccConnConfluentSchemaRegistry_disappears(t *testing.T) {
-	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

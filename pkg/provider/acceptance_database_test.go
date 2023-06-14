@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccDatabase_basic(t *testing.T) {
-	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -31,7 +31,7 @@ func TestAccDatabase_basic(t *testing.T) {
 }
 
 func TestAccDatabase_disappears(t *testing.T) {
-	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccTable_basic(t *testing.T) {
-	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -61,7 +61,7 @@ func TestAccTable_update(t *testing.T) {
 }
 
 func TestAccTable_disappears(t *testing.T) {
-	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

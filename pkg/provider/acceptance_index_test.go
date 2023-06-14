@@ -12,8 +12,8 @@ import (
 )
 
 func TestAccIndex_basic(t *testing.T) {
-	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -40,8 +40,8 @@ func TestAccIndex_basic(t *testing.T) {
 }
 
 func TestAccIndex_disappears(t *testing.T) {
-	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

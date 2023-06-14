@@ -13,8 +13,8 @@ import (
 )
 
 func TestAccSourceKafka_basic(t *testing.T) {
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -42,7 +42,7 @@ func TestAccSourceKafka_basic(t *testing.T) {
 }
 
 func TestAccSourceKafka_update(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlphaNum)
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connName := fmt.Sprintf("conn_%s", slug)
 
 	sourceName := fmt.Sprintf("old_%s", slug)
@@ -76,8 +76,8 @@ func TestAccSourceKafka_update(t *testing.T) {
 }
 
 func TestAccSourceKafka_disappears(t *testing.T) {
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

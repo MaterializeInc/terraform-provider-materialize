@@ -13,9 +13,9 @@ import (
 )
 
 func TestAccSinkKafka_basic(t *testing.T) {
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	sinkName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sinkName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -39,7 +39,7 @@ func TestAccSinkKafka_basic(t *testing.T) {
 }
 
 func TestAccSinkKafka_update(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlphaNum)
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connName := fmt.Sprintf("conn_%s", slug)
 	tableName := fmt.Sprintf("table_%s", slug)
 	sinkName := fmt.Sprintf("old_%s", slug)
@@ -70,9 +70,9 @@ func TestAccSinkKafka_update(t *testing.T) {
 }
 
 func TestAccSinkKafka_disappears(t *testing.T) {
-	sinkName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	sinkName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

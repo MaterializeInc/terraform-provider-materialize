@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccView_basic(t *testing.T) {
-	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -61,7 +61,7 @@ func TestAccView_update(t *testing.T) {
 }
 
 func TestAccView_disappears(t *testing.T) {
-	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

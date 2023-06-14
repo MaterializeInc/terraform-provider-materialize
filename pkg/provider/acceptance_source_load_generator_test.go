@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccSourceLoadGenerator_basic(t *testing.T) {
-	sourceLoadGeneratorName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	sourceLoadGeneratorName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -38,7 +38,7 @@ func TestAccSourceLoadGenerator_basic(t *testing.T) {
 }
 
 func TestAccSourceLoadGenerator_disappears(t *testing.T) {
-	sourceLoadGeneratorName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	sourceLoadGeneratorName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

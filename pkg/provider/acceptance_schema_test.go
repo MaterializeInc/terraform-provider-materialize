@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccSchema_basic(t *testing.T) {
-	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -33,7 +33,7 @@ func TestAccSchema_basic(t *testing.T) {
 }
 
 func TestAccSchema_disappears(t *testing.T) {
-	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
