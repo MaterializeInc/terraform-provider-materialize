@@ -11,7 +11,7 @@ import (
 func TestIndexCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(Column LONG\);`,
+			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(column\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewIndexBuilder(db, "index", false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
@@ -19,8 +19,7 @@ func TestIndexCreate(t *testing.T) {
 		b.Method("ARRANGEMENT")
 		b.ColExpr([]IndexColumn{
 			{
-				Field: "Column",
-				Val:   "LONG",
+				Field: "column",
 			},
 		})
 

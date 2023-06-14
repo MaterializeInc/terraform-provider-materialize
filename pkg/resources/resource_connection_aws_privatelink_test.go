@@ -70,7 +70,7 @@ func TestResourceConnectionAwsPrivatelinkUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" RENAME TO "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		ip := sqlmock.NewRows([]string{"connection_name", "schema_name", "database_name", "principal"}).AddRow("conn", "schema", "database", "principal")

@@ -35,14 +35,34 @@ func TestAccClusterReplica_basic(t *testing.T) {
 	})
 }
 
+func TestAccClusterReplica_disappears(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterReplicaResource(clusterName, replicaName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
+					testAccCheckClusterReplicaDisappears(clusterName, replicaName),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccClusterReplicaResource(clusterName, replicaName string) string {
 	return fmt.Sprintf(`
-resource "materialize_cluster" "test" {
+resource "materialize_cluster" "replica_cluster" {
 	name = "%[1]s"
 }
 
 resource "materialize_cluster_replica" "test" {
-	cluster_name = materialize_cluster.test.name
+	cluster_name = materialize_cluster.replica_cluster.name
 	name = "%[2]s"
 	size = "1"
 }
@@ -57,6 +77,14 @@ func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("cluster replica not found: %s", name)
 		}
 		_, err := materialize.ScanClusterReplica(db, r.Primary.ID)
+		return err
+	}
+}
+
+func testAccCheckClusterReplicaDisappears(clusterName, replicaName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		db := testAccProvider.Meta().(*sqlx.DB)
+		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER REPLICA "%s"."%s";`, clusterName, replicaName))
 		return err
 	}
 }

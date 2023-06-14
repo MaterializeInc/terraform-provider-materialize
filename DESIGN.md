@@ -49,9 +49,13 @@ Complex Materialize resources are separated out into more specific provider reso
 The names of resources should exactly match Materialize. For example the load generator source should be named `materialize_source_load_generator` to match the [SQL statement](https://materialize.com/docs/sql/create-source/load-generator/).
 
 ### Testing
-Unit tests are spread across the packages:
+**Unit tests** are spread across the packages:
 * `datasources` - Should use the `TestResourceDataRaw` to ensure the parameters are properly executed by the mock database for data sources.
-* `materialize` - Should ensure the builder properly generates SQL for all valid permutations of the object.
+* `materialize` - Should ensure the builder properly executes SQL for all valid permutations of the object.
 * `resources` - Should use the `TestResourceDataRaw` to ensure the parameters are properly executed by the mock database for resources.
 
-Integration tests go in the `integration` directory. This will spin up a simple docker compose using the `materialized` and surrounding kafka and database dependencies. All resources are applied and destroyed as part of the same terraform project. Any new resources or permutations should be added to the integration tests.
+Being the most lightweight the unit tests should cover the wide of SQL variations that exist with each resource.
+
+**Acceptance tests** use the Terraform `acctest` package to execute Terraform commands in a certain order. These tests are used to ensure the applys, updates and destroys work as expected for each resource. These tests should not cover every SQL permutation but ensure that high level Terraform commands execute against the Materialize image. These tests rely on the docker compose.
+
+**Integration tests** consist of an entire Terraform package in the `integration` directory. This will spin up a docker compose using the `materialized` and surrounding kafka and database dependencies. All resources are applied and destroyed as part of the same terraform project. Any new resources or permutations should be added to the integration tests.

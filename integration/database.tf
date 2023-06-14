@@ -1,5 +1,5 @@
 resource "materialize_database" "database" {
-  name = "example"
+  name = "example_database"
 }
 
 data "materialize_database" "all" {}
