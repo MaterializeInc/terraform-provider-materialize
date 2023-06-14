@@ -75,9 +75,9 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 		indexMap["id"] = p.IndexId.String
 		indexMap["name"] = p.IndexName.String
-		indexMap["obj_name"] = p.Object.String
-		indexMap["obj_schema"] = p.SchemaName.String
-		indexMap["obj_database"] = p.DatabaseName.String
+		indexMap["obj_name"] = p.ObjectName.String
+		indexMap["obj_schema"] = p.ObjectSchemaName.String
+		indexMap["obj_database"] = p.ObjectDatabaseName.String
 
 		indexFormats = append(indexFormats, indexMap)
 	}

@@ -108,11 +108,11 @@ func (b *IndexBuilder) Drop() error {
 }
 
 type IndexParams struct {
-	IndexId      sql.NullString `db:"id"`
-	IndexName    sql.NullString `db:"index_name"`
-	Object       sql.NullString `db:"obj_name"`
-	SchemaName   sql.NullString `db:"obj_schema_name"`
-	DatabaseName sql.NullString `db:"obj_database_name"`
+	IndexId            sql.NullString `db:"id"`
+	IndexName          sql.NullString `db:"index_name"`
+	ObjectName         sql.NullString `db:"obj_name"`
+	ObjectSchemaName   sql.NullString `db:"obj_schema_name"`
+	ObjectDatabaseName sql.NullString `db:"obj_database_name"`
 }
 
 var indexQuery = NewBaseQuery(`
