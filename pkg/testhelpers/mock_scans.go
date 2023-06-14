@@ -269,7 +269,7 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate)
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "JSON", "conn", "cluster", "{u18=UC/u18}")
+		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "{u18=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

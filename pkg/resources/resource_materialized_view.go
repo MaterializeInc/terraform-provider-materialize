@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -50,7 +51,10 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 	i := d.Id()
 
 	s, err := materialize.ScanMaterializedView(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -111,15 +115,17 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	materializedViewName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), materializedViewName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newMaterializedViewName := d.GetChange("name")
-		b.Rename(newMaterializedViewName.(string))
+		oldMaterializedViewName, newMaterializedViewName := d.GetChange("name")
+
+		b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), oldMaterializedViewName.(string), schemaName, databaseName)
+
+		if err := b.Rename(newMaterializedViewName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return materializedViewRead(ctx, d, meta)

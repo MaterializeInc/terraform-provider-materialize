@@ -1,0 +1,26 @@
+name: acceptance
+on:
+  pull_request:
+    paths:
+      - pkg/**
+  schedule:
+    - cron: 0 11 * * 0
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Docker Compose Up
+        run: docker compose up --build -d
+
+      - name: make testacc
+        run: make testacc
+        env:
+            MZ_HOST: localhost
+            MZ_USER: materialize
+            MZ_TESTING: "true"
+
+      - name: Docker Compose Down
+        run: docker compose down

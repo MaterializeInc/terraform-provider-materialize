@@ -35,7 +35,26 @@ make docs
 
 ### Running the unit tests
 
-To run the full suite of acceptance tests, run:
+To run the unit tests run:
+
+```bash
+make test
+```
+
+#### Running the accpetance tests
+
+To run the acceptance tests which will simulate running Terraform commands you will need to set the necessary envrionment variables and start the docker compose:
+
+```bash
+export MZ_HOST=localhost
+export MZ_USER=materialize
+export MZ_TESTING="true"
+
+# Start all containers
+docker-compose up -d --build
+```
+
+You can then run the acceptance tests:
 
 ```bash
 make testacc
@@ -43,7 +62,7 @@ make testacc
 
 ### Running the integration tests
 
-To run the full suite of integration tests run:
+To run the full integration project tests run:
 
 ```bash
 # Start all containers

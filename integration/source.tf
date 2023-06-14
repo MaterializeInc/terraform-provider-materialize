@@ -58,6 +58,20 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   }
 }
 
+resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
+  name = "source_kafka_bytes"
+  size = "2"
+  kafka_connection {
+    name          = materialize_connection_kafka.kafka_connection.name
+    schema_name   = materialize_connection_kafka.kafka_connection.schema_name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+  }
+  topic = "topic1"
+  format {
+    bytes = true
+  }
+}
+
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   name = "source_kafka_avro"
   size = "2"

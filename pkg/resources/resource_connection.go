@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -14,7 +15,10 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	i := d.Id()
 
 	s, err := materialize.ScanConnection(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -41,15 +45,17 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 }
 
 func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnection(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		b.Rename(newConnectionName.(string))
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewConnection(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return connectionRead(ctx, d, meta)

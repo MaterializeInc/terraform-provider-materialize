@@ -40,7 +40,7 @@ func TestSecretCreateEscapedValue(t *testing.T) {
 func TestSecretRename(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`ALTER SECRET "database"."schema"."secret" RENAME TO "database"."schema"."new_secret";`,
+			`ALTER SECRET "database"."schema"."secret" RENAME TO "new_secret";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSecretBuilder(db, "secret", "schema", "database")

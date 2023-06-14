@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -14,7 +15,10 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	i := d.Id()
 
 	s, err := materialize.ScanSink(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -57,12 +61,16 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if d.HasChange("size") {
 		_, newSize := d.GetChange("size")
-		b.Resize(newSize.(string))
+		if err := b.Resize(newSize.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("name") {
-		_, newSinkName := d.GetChange("name")
-		b.Rename(newSinkName.(string))
+		_, newName := d.GetChange("name")
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return sinkRead(ctx, d, meta)

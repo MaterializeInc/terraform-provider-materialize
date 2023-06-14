@@ -22,9 +22,13 @@ install:
 	mkdir -p ${PLUGIN_PATH}
 	go build -o ${PLUGIN_PATH}/${BINARY}
 
+.PHONY: test
+test:
+	go test ./... -v $(TESTARGS) -timeout 120m
+
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m -run TestAcc
 
 .PHONY: docs
 docs:

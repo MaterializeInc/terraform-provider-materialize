@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -64,7 +65,10 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	i := d.Id()
 
 	s, err := materialize.ScanTable(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -126,7 +130,9 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	if d.HasChange("name") {
 		_, newName := d.GetChange("name")
-		b.Rename(newName.(string))
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return tableRead(ctx, d, meta)

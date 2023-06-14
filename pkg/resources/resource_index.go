@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -41,7 +42,7 @@ var indexSchema = map[string]*schema.Schema{
 	"cluster_name": {
 		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 	},
 	"method": {
@@ -62,16 +63,11 @@ var indexSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 				},
-				"val": {
-					Description: "The value for the option.",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
 			},
 		},
-		Optional:     true,
-		ForceNew:     true,
-		ExactlyOneOf: []string{"name", "default", "col_expr"},
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"default"},
 	},
 }
 
@@ -94,7 +90,10 @@ func Index() *schema.Resource {
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 	s, err := materialize.ScanIndex(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 

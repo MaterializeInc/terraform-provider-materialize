@@ -199,8 +199,8 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 						},
 					},
 				},
-				"json": {
-					Description: "JSON format.",
+				"bytes": {
+					Description: "BYTES format.",
 					Type:        schema.TypeBool,
 					Optional:    true,
 					ForceNew:    true,

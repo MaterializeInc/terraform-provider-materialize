@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -35,6 +36,7 @@ type Builder struct {
 func (b *Builder) exec(statement string) error {
 	_, err := b.conn.Exec(statement)
 	if err != nil {
+		log.Printf("[DEBUG] error executing: %s", statement)
 		return err
 	}
 

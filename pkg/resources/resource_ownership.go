@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -92,7 +93,10 @@ func ownershipRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	i := d.Id()
 
 	s, err := materialize.ScanOwnership(meta.(*sqlx.DB), i, objectType)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 

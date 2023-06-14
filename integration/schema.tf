@@ -1,5 +1,5 @@
 resource "materialize_schema" "schema" {
-  name          = "example"
+  name          = "example_schema"
   database_name = materialize_database.database.name
 }
 

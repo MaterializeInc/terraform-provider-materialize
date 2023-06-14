@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -19,26 +20,31 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The host of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"user": {
 		Description: "The user of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"port": {
 		Description: "The port of the SSH tunnel.",
 		Type:        schema.TypeInt,
 		Required:    true,
+		ForceNew:    true,
 	},
 	"public_key_1": {
 		Description: "The first public key associated with the SSH tunnel.",
 		Type:        schema.TypeString,
 		Computed:    true,
+		ForceNew:    true,
 	},
 	"public_key_2": {
 		Description: "The second public key associated with the SSH tunnel.",
 		Type:        schema.TypeString,
 		Computed:    true,
+		ForceNew:    true,
 	},
 }
 
@@ -63,7 +69,10 @@ func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta i
 	i := d.Id()
 
 	s, err := materialize.ScanConnectionSshTunnel(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -124,15 +133,17 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		b.Rename(newConnectionName.(string))
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewConnectionSshTunnelBuilder(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return connectionSshTunnelRead(ctx, d, meta)

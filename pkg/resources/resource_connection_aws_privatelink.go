@@ -65,7 +65,10 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 	i := d.Id()
 
 	s, err := materialize.ScanConnectionAwsPrivatelink(meta.(*sqlx.DB), i)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -127,15 +130,17 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newConnectionName := d.GetChange("name")
-		b.Rename(newConnectionName.(string))
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewConnectionAwsPrivatelinkBuilder(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return connectionAwsPrivatelinkRead(ctx, d, meta)

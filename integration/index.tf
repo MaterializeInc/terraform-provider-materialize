@@ -9,6 +9,20 @@ resource "materialize_index" "loadgen_index" {
   }
 }
 
+resource "materialize_index" "materialized_view_index" {
+  name = "simple"
+
+  obj_name {
+    name          = materialize_materialized_view.simple_materialized_view.name
+    schema_name   = materialize_materialized_view.simple_materialized_view.schema_name
+    database_name = materialize_materialized_view.simple_materialized_view.database_name
+  }
+
+  col_expr {
+    field = "id"
+  }
+}
+
 output "qualified_index" {
   value = materialize_index.loadgen_index.qualified_sql_name
 }
