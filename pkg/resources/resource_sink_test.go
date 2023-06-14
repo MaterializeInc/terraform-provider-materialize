@@ -45,7 +45,7 @@ func TestResourceSinkUpdate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" SET \(SIZE = 'small'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" RENAME TO "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SINK "database"."schema"."" RENAME TO "sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).

@@ -25,9 +25,9 @@ func (s *Sink) QualifiedName() string {
 	return QualifiedName(s.DatabaseName, s.SchemaName, s.SinkName)
 }
 
-func (b *Sink) Rename(newConnectionName string) error {
+func (b *Sink) Rename(newName string) error {
 	old := b.QualifiedName()
-	new := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	new := QualifiedName(newName)
 	return b.ddl.rename(old, new)
 }
 
