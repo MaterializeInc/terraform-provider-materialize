@@ -85,6 +85,7 @@ func testAccMaterializedViewResource(name string) string {
 resource "materialize_materialized_view" "test" {
 	name = "%s"
 	statement = "SELECT 1 AS id"
+	cluster_name = "default"
 }
 `, name)
 }

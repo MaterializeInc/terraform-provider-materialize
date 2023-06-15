@@ -8,9 +8,9 @@ terraform {
 
 provider "materialize" {
   host     = "materialized"
-  username = "materialize"
+  username = "mz_system"
   password = "password"
-  port     = 6875
+  port     = 6877
   database = "materialize"
   testing  = true
 }

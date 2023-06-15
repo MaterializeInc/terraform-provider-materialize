@@ -73,6 +73,7 @@ resource "materialize_view" "test" {
 
 resource "materialize_index" "test" {
 	name = "%s"
+	cluster_name = "default"
 
 	obj_name {
 		name = materialize_view.test.name
