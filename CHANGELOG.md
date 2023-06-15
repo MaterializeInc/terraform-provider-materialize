@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.8 - 2022-06-15
+
+### Features
+
+* Include acceptance tests ([#177](https://github.com/MaterializeInc/terraform-provider-materialize/pull/177), [#198](https://github.com/MaterializeInc/terraform-provider-materialize/pull/198), [#200](https://github.com/MaterializeInc/terraform-provider-materialize/pull/200), [#201](https://github.com/MaterializeInc/terraform-provider-materialize/pull/201))
+
+### BugFixes
+
+* Fixes for resource updates (included as part of acceptance test coverage)
+* Correct schema index read [#202](https://github.com/MaterializeInc/terraform-provider-materialize/pull/202)
+* Attributes missing force new ([#188](https://github.com/MaterializeInc/terraform-provider-materialize/pull/188), [#189](https://github.com/MaterializeInc/terraform-provider-materialize/pull/189))
+
+### Misc
+* Include `application_name` in connection string [#184](https://github.com/MaterializeInc/terraform-provider-materialize/pull/184)
+
 ## 0.0.7 - 2022-06-07
 
 ### Features
