@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.8 - 2022-06-15
+## 0.0.8 - 2023-06-15
 
 ### Features
 
@@ -15,7 +15,7 @@
 ### Misc
 * Include `application_name` in connection string [#184](https://github.com/MaterializeInc/terraform-provider-materialize/pull/184)
 
-## 0.0.7 - 2022-06-07
+## 0.0.7 - 2023-06-07
 
 ### Features
 
@@ -26,7 +26,7 @@
 
 ### Misc
 
-## 0.0.6 - 2022-05-31
+## 0.0.6 - 2023-05-31
 
 ### Features
 
@@ -40,7 +40,7 @@
 * Refactor of `materialize` package ([#164](https://github.com/MaterializeInc/terraform-provider-materialize/pull/164), [#161](https://github.com/MaterializeInc/terraform-provider-materialize/pull/161), [#158](https://github.com/MaterializeInc/terraform-provider-materialize/pull/158))
 * Improvements to documentation
 
-## 0.0.5 - 2022-05-18
+## 0.0.5 - 2023-05-18
 
 ### Features
 
@@ -55,7 +55,7 @@
 
 * Update index queries to use `mz_objects`
 
-## 0.0.4 - 2022-05-01
+## 0.0.4 - 2023-05-01
 
 ### Features
 
@@ -69,7 +69,7 @@
 
 ### Misc
 
-## 0.0.3 - 2022-04-20
+## 0.0.3 - 2023-04-20
 
 ### Features
 
@@ -82,7 +82,7 @@
 * Remove unnecessary type property
 * Dependabot updates
 
-## 0.0.2 - 2022-04-18
+## 0.0.2 - 2023-04-18
 
 ### Features
 
@@ -93,6 +93,6 @@
 ### Misc
 * Change the Go import path
 
-## 0.0.1 - 2022-04-06
+## 0.0.1 - 2023-04-06
 
 Initial release.
