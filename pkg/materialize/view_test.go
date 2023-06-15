@@ -26,7 +26,7 @@ func TestViewCreate(t *testing.T) {
 func TestViewRename(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`ALTER VIEW "database"."schema"."view" RENAME TO "database"."schema"."new_view";`,
+			`ALTER VIEW "database"."schema"."view" RENAME TO "new_view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := NewViewBuilder(db, "view", "schema", "database").Rename("new_view"); err != nil {

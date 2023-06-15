@@ -45,7 +45,7 @@ func (s *Source) QualifiedName() string {
 
 func (b *Source) Rename(newConnectionName string) error {
 	old := b.QualifiedName()
-	new := QualifiedName(b.DatabaseName, b.SchemaName, newConnectionName)
+	new := QualifiedName(newConnectionName)
 	return b.ddl.rename(old, new)
 }
 

@@ -40,7 +40,7 @@ func (b *ViewBuilder) Create() error {
 }
 
 func (b *ViewBuilder) Rename(newName string) error {
-	n := QualifiedName(b.databaseName, b.schemaName, newName)
+	n := QualifiedName(newName)
 	return b.ddl.rename(b.QualifiedName(), n)
 }
 

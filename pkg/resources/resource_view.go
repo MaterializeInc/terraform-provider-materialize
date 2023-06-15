@@ -101,15 +101,15 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	viewName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewViewBuilder(meta.(*sqlx.DB), viewName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-		if err := b.Rename(newName.(string)); err != nil {
+		oldViewName, newViewName := d.GetChange("name")
+
+		b := materialize.NewViewBuilder(meta.(*sqlx.DB), oldViewName.(string), schemaName, databaseName)
+
+		if err := b.Rename(newViewName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

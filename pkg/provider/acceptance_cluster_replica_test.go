@@ -12,8 +12,8 @@ import (
 )
 
 func TestAccClusterReplica_basic(t *testing.T) {
-	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -36,8 +36,8 @@ func TestAccClusterReplica_basic(t *testing.T) {
 }
 
 func TestAccClusterReplica_disappears(t *testing.T) {
-	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

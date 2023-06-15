@@ -53,7 +53,7 @@ func TestResourceTableUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER TABLE "database"."schema"."old_table" RENAME TO "database"."schema"."table";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER TABLE "database"."schema"."" RENAME TO "table";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`

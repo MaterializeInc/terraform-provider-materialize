@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccCluster_basic(t *testing.T) {
-	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -30,7 +30,7 @@ func TestAccCluster_basic(t *testing.T) {
 }
 
 func TestAccCluster_disappears(t *testing.T) {
-	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

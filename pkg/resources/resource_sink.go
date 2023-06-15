@@ -67,7 +67,10 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewSink(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}

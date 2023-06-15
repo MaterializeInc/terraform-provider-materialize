@@ -33,8 +33,8 @@ var tableSchema = map[string]*schema.Schema{
 				},
 				"nullable": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:        schema.TypeBool,
-					Optional:    true,
+					Type:     schema.TypeBool,
+					Optional: true,
 				},
 			},
 		},
@@ -122,14 +122,14 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 }
 
 func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewTableBuilder(meta.(*sqlx.DB), tableName, schemaName, databaseName)
-
 	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
+		oldName, newName := d.GetChange("name")
+
+		b := materialize.NewTableBuilder(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
