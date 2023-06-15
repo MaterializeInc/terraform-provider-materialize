@@ -24,22 +24,11 @@ var grantDatabaseSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validPrivileges("DATABASE"),
 	},
-	"object": {
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The database name.",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
-			},
-		},
+	"database_name": {
+		Description: "The database that is being granted on.",
+		Type:        schema.TypeString,
 		Required:    true,
-		MinItems:    1,
-		MaxItems:    1,
 		ForceNew:    true,
-		Description: "The object that is being granted on.",
 	},
 }
 
@@ -85,12 +74,11 @@ func grantDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interfa
 func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
-
-	o := d.Get("object").([]interface{})[0].(map[string]interface{})
+	databaseName := d.Get("database_name").(string)
 
 	obj := materialize.PriviledgeObjectStruct{
 		Type: "DATABASE",
-		Name: o["name"].(string),
+		Name: databaseName,
 	}
 
 	b := materialize.NewPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege, obj)
@@ -118,8 +106,7 @@ func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta inter
 func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
-
-	o := d.Get("object").([]interface{})[0].(map[string]interface{})
+	databaseName := d.Get("database_name").(string)
 
 	b := materialize.NewPrivilegeBuilder(
 		meta.(*sqlx.DB),
@@ -127,7 +114,7 @@ func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		privilege,
 		materialize.PriviledgeObjectStruct{
 			Type: "DATABASE",
-			Name: o["name"].(string),
+			Name: databaseName,
 		},
 	)
 

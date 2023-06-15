@@ -15,9 +15,9 @@ func TestResourceGrantDatabaseCreate(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"role_name": "joe",
-		"privilege": "CREATE",
-		"object":    []interface{}{map[string]interface{}{"name": "materialize"}},
+		"role_name":     "joe",
+		"privilege":     "CREATE",
+		"database_name": "materialize",
 	}
 	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
@@ -54,9 +54,9 @@ func TestResourceGrantDatabaseDelete(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"role_name": "joe",
-		"privilege": "CREATE",
-		"object":    []interface{}{map[string]interface{}{"name": "materialize"}},
+		"role_name":     "joe",
+		"privilege":     "CREATE",
+		"database_name": "materialize",
 	}
 	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
