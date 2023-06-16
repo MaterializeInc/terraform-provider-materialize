@@ -27,5 +27,4 @@ func TestCurrentDatabaseDatasource(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

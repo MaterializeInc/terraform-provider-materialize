@@ -20,13 +20,10 @@ func TestClusterDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := mock.NewRows([]string{"id", "name"}).
-			AddRow("u1", "cluster")
-		mock.ExpectQuery(`SELECT id, name FROM mz_clusters;`).WillReturnRows(ir)
+		testhelpers.MockClusterScan(mock, "")
 
 		if err := clusterRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }

@@ -29,36 +29,17 @@ func TestResourceSchemaCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).AddRow("u1")
-		mock.ExpectQuery(`
-			SELECT
-				mz_schemas.id,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_schemas JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema';
-		`).WillReturnRows(ir)
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
+		testhelpers.MockSchemaScan(mock, ip)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"schema_name", "database_name"}).
-			AddRow("schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_schemas.id,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_schemas JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_schemas.id = 'u1';		
-		`).WillReturnRows(ip)
+		pp := `WHERE mz_schemas.id = 'u1'`
+		testhelpers.MockSchemaScan(mock, pp)
 
 		if err := schemaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceSchemaDelete(t *testing.T) {
@@ -78,5 +59,4 @@ func TestResourceSchemaDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

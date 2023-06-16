@@ -36,9 +36,10 @@ func (b *DatabaseBuilder) Drop() error {
 type DatabaseParams struct {
 	DatabaseId   sql.NullString `db:"id"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Privileges   sql.NullString `db:"privileges"`
 }
 
-var databaseQuery = NewBaseQuery("SELECT id, name AS database_name FROM mz_databases")
+var databaseQuery = NewBaseQuery("SELECT id, name AS database_name, privileges FROM mz_databases")
 
 func DatabaseId(conn *sqlx.DB, databaseName string) (string, error) {
 	q := databaseQuery.QueryPredicate(map[string]string{"name": databaseName})

@@ -10,59 +10,46 @@ var Permissions = map[string]string{
 }
 
 type ObjectType struct {
-	Permissions  []string
-	CatalogTable string
+	Permissions []string
 }
 
 // https://materialize.com/docs/sql/grant-privilege/#details
 var ObjectPermissions = map[string]ObjectType{
 	"DATABASE": {
-		Permissions:  []string{"U", "C"},
-		CatalogTable: "mz_databases",
+		Permissions: []string{"U", "C"},
 	},
 	"SCHEMA": {
-		Permissions:  []string{"U", "C"},
-		CatalogTable: "mz_schemas",
+		Permissions: []string{"U", "C"},
 	},
 	"TABLE": {
-		Permissions:  []string{"a", "r", "w", "d"},
-		CatalogTable: "mz_tables",
+		Permissions: []string{"a", "r", "w", "d"},
 	},
 	"VIEW": {
-		Permissions:  []string{"r"},
-		CatalogTable: "mz_views",
+		Permissions: []string{"r"},
 	},
 	"MATERIALIZED VIEW": {
-		Permissions:  []string{"r"},
-		CatalogTable: "mz_materialized_views",
+		Permissions: []string{"r"},
 	},
 	"INDEX": {
-		Permissions:  []string{},
-		CatalogTable: "mz_indexes",
+		Permissions: []string{},
 	},
 	"TYPE": {
-		Permissions:  []string{"U"},
-		CatalogTable: "mz_types",
+		Permissions: []string{"U"},
 	},
 	"SOURCE": {
-		Permissions:  []string{"r"},
-		CatalogTable: "mz_sources",
+		Permissions: []string{"r"},
 	},
 	"SINK": {
-		Permissions:  []string{},
-		CatalogTable: "mz_sinks",
+		Permissions: []string{},
 	},
 	"CONNECTION": {
-		Permissions:  []string{"U"},
-		CatalogTable: "mz_connections",
+		Permissions: []string{"U"},
 	},
 	"SECRET": {
-		Permissions:  []string{"U"},
-		CatalogTable: "mz_secrets",
+		Permissions: []string{"U"},
 	},
 	"CLUSTER": {
-		Permissions:  []string{"U", "C"},
-		CatalogTable: "mz_clusters",
+		Permissions: []string{"U", "C"},
 	},
 }
 

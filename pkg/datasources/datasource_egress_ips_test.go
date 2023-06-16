@@ -28,5 +28,4 @@ func TestEgressIpsDatasource(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

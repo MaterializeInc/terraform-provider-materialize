@@ -19,19 +19,6 @@ var inTable = map[string]interface{}{
 	"column":        []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true}},
 }
 
-var readTable string = `
-SELECT
-	mz_tables.id,
-	mz_tables.name,
-	mz_schemas.name AS schema_name,
-	mz_databases.name AS database_name
-FROM mz_tables
-JOIN mz_schemas
-	ON mz_tables.schema_id = mz_schemas.id
-JOIN mz_databases
-	ON mz_schemas.database_id = mz_databases.id
-WHERE mz_tables.id = 'u1';`
-
 func TestResourceTableCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
@@ -42,27 +29,12 @@ func TestResourceTableCreate(t *testing.T) {
 		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("u1", "table", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_tables.id,
-				mz_tables.name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_tables
-			JOIN mz_schemas
-				ON mz_tables.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema'
-			AND mz_tables.name = 'table';`).WillReturnRows(ir)
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		testhelpers.MockTableScan(mock, ip)
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("u1", "table", "schema", "database")
-		mock.ExpectQuery(readTable).WillReturnRows(ip)
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockTableScan(mock, pp)
 
 		if err := tableCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -84,9 +56,8 @@ func TestResourceTableUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."" RENAME TO "table";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("u1", "table", "schema", "database")
-		mock.ExpectQuery(readTable).WillReturnRows(ip)
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockTableScan(mock, pp)
 
 		if err := tableUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

@@ -19,19 +19,6 @@ var inView = map[string]interface{}{
 	"statement":     "SELECT 1 FROM 1",
 }
 
-var readView string = `
-SELECT
-	mz_views.id,
-	mz_views.name,
-	mz_schemas.name AS schema_name,
-	mz_databases.name AS database_name
-FROM mz_views
-JOIN mz_schemas
-	ON mz_views.schema_id = mz_schemas.id
-JOIN mz_databases
-	ON mz_schemas.database_id = mz_databases.id
-WHERE mz_views.id = 'u1';`
-
 func TestResourceViewCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, View().Schema, inView)
@@ -42,33 +29,17 @@ func TestResourceViewCreate(t *testing.T) {
 		mock.ExpectExec(`CREATE VIEW "database"."schema"."view" AS SELECT 1 FROM 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id"}).AddRow("u1")
-		mock.ExpectQuery(`
-			SELECT
-				mz_views.id,
-				mz_views.name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_views
-			JOIN mz_schemas
-				ON mz_views.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema'
-			AND mz_views.name = 'view';
-		`).WillReturnRows(ir)
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_views.name = 'view'`
+		testhelpers.MockViewScan(mock, ip)
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("id", "view", "schema", "database")
-		mock.ExpectQuery(readView).WillReturnRows(ip)
+		pp := `WHERE mz_views.id = 'u1'`
+		testhelpers.MockViewScan(mock, pp)
 
 		if err := viewCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceViewUpdate(t *testing.T) {
@@ -84,15 +55,13 @@ func TestResourceViewUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER VIEW "database"."schema"."" RENAME TO "view";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
-		ip := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("id", "view", "schema", "database")
-		mock.ExpectQuery(readView).WillReturnRows(ip)
+		pp := `WHERE mz_views.id = 'u1'`
+		testhelpers.MockViewScan(mock, pp)
 
 		if err := viewUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceViewDelete(t *testing.T) {
@@ -113,5 +82,4 @@ func TestResourceViewDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

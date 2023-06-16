@@ -68,6 +68,7 @@ type SourceParams struct {
 	EnvelopeType   sql.NullString `db:"envelope_type"`
 	ConnectionName sql.NullString `db:"connection_name"`
 	ClusterName    sql.NullString `db:"cluster_name"`
+	Privileges     sql.NullString `db:"privileges"`
 }
 
 var sourceQuery = NewBaseQuery(`
@@ -80,7 +81,8 @@ var sourceQuery = NewBaseQuery(`
 			mz_sources.size,
 			mz_sources.envelope_type,
 			mz_connections.name as connection_name,
-			mz_clusters.name as cluster_name
+			mz_clusters.name as cluster_name,
+			mz_sources.privileges
 		FROM mz_sources
 		JOIN mz_schemas
 			ON mz_sources.schema_id = mz_schemas.id

@@ -24,18 +24,17 @@ func TestResourceClusterCreate(t *testing.T) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ir := mock.NewRows([]string{"id", "name"}).AddRow("u1", "cluster")
-		mock.ExpectQuery(`SELECT id, name FROM mz_clusters WHERE name = 'cluster';`).WillReturnRows(ir)
+		ip := `WHERE name = 'cluster'`
+		testhelpers.MockClusterScan(mock, ip)
 
 		// Query Params
-		ip := mock.NewRows([]string{"id", "name"}).AddRow("u1", "cluster")
-		mock.ExpectQuery(`SELECT id, name FROM mz_clusters WHERE id = 'u1';`).WillReturnRows(ip)
+		pp := `WHERE id = 'u1'`
+		testhelpers.MockClusterScan(mock, pp)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
-
 }
 
 func TestResourceClusterDelete(t *testing.T) {
@@ -54,5 +53,4 @@ func TestResourceClusterDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

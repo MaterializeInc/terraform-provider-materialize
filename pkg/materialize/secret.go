@@ -60,6 +60,7 @@ type SecretParams struct {
 	SecretName   sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Privileges   sql.NullString `db:"privileges"`
 }
 
 var secretQuery = NewBaseQuery(`
@@ -67,7 +68,8 @@ var secretQuery = NewBaseQuery(`
 		mz_secrets.id,
 		mz_secrets.name,
 		mz_schemas.name AS schema_name,
-		mz_databases.name AS database_name
+		mz_databases.name AS database_name,
+		mz_secrets.privileges
 	FROM mz_secrets
 	JOIN mz_schemas
 		ON mz_secrets.schema_id = mz_schemas.id

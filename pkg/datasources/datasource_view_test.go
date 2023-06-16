@@ -23,21 +23,8 @@ func TestViewDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name"}).
-			AddRow("id", "view", "schema", "database")
-		mock.ExpectQuery(`
-			SELECT
-				mz_views.id,
-				mz_views.name,
-				mz_schemas.name AS schema_name,
-				mz_databases.name AS database_name
-			FROM mz_views
-			JOIN mz_schemas
-				ON mz_views.schema_id = mz_schemas.id
-			JOIN mz_databases
-				ON mz_schemas.database_id = mz_databases.id
-			WHERE mz_databases.name = 'database'
-			AND mz_schemas.name = 'schema';`).WillReturnRows(ir)
+		p := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
+		testhelpers.MockViewScan(mock, p)
 
 		if err := viewRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

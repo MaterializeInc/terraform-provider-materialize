@@ -20,17 +20,7 @@ func TestRoleDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := mock.NewRows([]string{"id", "role_name", "inherit", "create_role", "create_db", "create_cluster"}).
-			AddRow("u1", "role", true, true, true, true)
-		mock.ExpectQuery(`
-			SELECT
-				id,
-				name AS role_name,
-				inherit,
-				create_role,
-				create_db,
-				create_cluster
-			FROM mz_roles;`).WillReturnRows(ir)
+		testhelpers.MockRoleScan(mock, "")
 
 		if err := roleRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

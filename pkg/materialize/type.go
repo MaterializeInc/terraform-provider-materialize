@@ -112,6 +112,7 @@ type TypeParams struct {
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
 	Category     sql.NullString `db:"category"`
+	Privileges   sql.NullString `db:"privileges"`
 }
 
 var typeQuery = NewBaseQuery(`
@@ -120,7 +121,8 @@ var typeQuery = NewBaseQuery(`
 		mz_types.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_types.category
+		mz_types.category,
+		mz_types.privileges
 	FROM mz_types
 	JOIN mz_schemas
 		ON mz_types.schema_id = mz_schemas.id
