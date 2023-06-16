@@ -7,6 +7,59 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var Permissions = map[string]string{
+	"r": "SELECT",
+	"a": "INSERT",
+	"w": "UPDATE",
+	"d": "DELETE",
+	"C": "CREATE",
+	"U": "USAGE",
+}
+
+type ObjectType struct {
+	Permissions []string
+}
+
+// https://materialize.com/docs/sql/grant-privilege/#details
+var ObjectPermissions = map[string]ObjectType{
+	"DATABASE": {
+		Permissions: []string{"U", "C"},
+	},
+	"SCHEMA": {
+		Permissions: []string{"U", "C"},
+	},
+	"TABLE": {
+		Permissions: []string{"a", "r", "w", "d"},
+	},
+	"VIEW": {
+		Permissions: []string{"r"},
+	},
+	"MATERIALIZED VIEW": {
+		Permissions: []string{"r"},
+	},
+	"INDEX": {
+		Permissions: []string{},
+	},
+	"TYPE": {
+		Permissions: []string{"U"},
+	},
+	"SOURCE": {
+		Permissions: []string{"r"},
+	},
+	"SINK": {
+		Permissions: []string{},
+	},
+	"CONNECTION": {
+		Permissions: []string{"U"},
+	},
+	"SECRET": {
+		Permissions: []string{"U"},
+	},
+	"CLUSTER": {
+		Permissions: []string{"U", "C"},
+	},
+}
+
 func ParsePriviledges(priviledges string) map[string][]string {
 	o := map[string][]string{}
 
@@ -102,13 +155,27 @@ func NewPrivilegeBuilder(conn *sqlx.DB, role, priviledge string, object Priviled
 	}
 }
 
+// https://materialize.com/docs/sql/grant-privilege/#compatibility
+func objectCompatibility(objectType string) string {
+	compatibility := []string{"SOURCE", "VIEW", "MATERIALIZED VIEW"}
+
+	for _, c := range compatibility {
+		if c == objectType {
+			return "TABLE"
+		}
+	}
+	return objectType
+}
+
 func (b *PrivilegeBuilder) Grant() error {
-	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.priviledge, b.object.Type, b.object.QualifiedName(), b.role)
+	t := objectCompatibility(b.object.Type)
+	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.priviledge, t, b.object.QualifiedName(), b.role)
 	return b.ddl.exec(q)
 }
 
 func (b *PrivilegeBuilder) Revoke() error {
-	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.priviledge, b.object.Type, b.object.QualifiedName(), b.role)
+	t := objectCompatibility(b.object.Type)
+	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.priviledge, t, b.object.QualifiedName(), b.role)
 	return b.ddl.exec(q)
 }
 
