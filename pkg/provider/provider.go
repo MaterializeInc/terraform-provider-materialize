@@ -70,8 +70,9 @@ func Provider() *schema.Provider {
 			"materialize_connection_postgres":                  resources.ConnectionPostgres(),
 			"materialize_connection_ssh_tunnel":                resources.ConnectionSshTunnel(),
 			"materialize_database":                             resources.Database(),
-			"materialize_index":                                resources.Index(),
 			// TODO Expose RBAC resources when ready
+			// "materialize_grant_database": resources.GrantDatabase(),
+			"materialize_index": resources.Index(),
 			// "materialize_ownership":                            resources.Ownership(),
 			"materialize_materialized_view": resources.MaterializedView(),
 			// "materialize_role":                                 resources.Role(),
@@ -112,14 +113,20 @@ func connectionString(host, username, password string, port int, database string
 	c := strings.Builder{}
 	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
 
+	params := []string{}
+
 	if testing {
-		c.WriteString("?sslmode=disable")
+		params = append(params, "sslmode=disable")
+		params = append(params, "enable_rbac_checks=true")
+		params = append(params, "enable_ld_rbac_checks=true")
 	} else {
-		c.WriteString("?sslmode=require")
+		params = append(params, "sslmode=require")
 	}
 
-	c.WriteString(fmt.Sprintf("&application_name=%s", application))
+	params = append(params, fmt.Sprintf("application_name=%s", application))
+	p := strings.Join(params[:], "&")
 
+	c.WriteString(fmt.Sprintf("?%s", p))
 	return c.String()
 }
 

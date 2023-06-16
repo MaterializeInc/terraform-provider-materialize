@@ -19,8 +19,9 @@ jobs:
         run: make testacc
         env:
             MZ_HOST: localhost
-            MZ_USER: materialize
+            MZ_USER: mz_system
             MZ_TESTING: "true"
+            MZ_PORT: 6877
 
       - name: Docker Compose Down
         run: docker compose down

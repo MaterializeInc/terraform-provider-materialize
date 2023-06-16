@@ -33,8 +33,8 @@ var tableSchema = map[string]*schema.Schema{
 				},
 				"nullable": {
 					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
-					Type:     schema.TypeBool,
-					Optional: true,
+					Type:        schema.TypeBool,
+					Optional:    true,
 				},
 			},
 		},
