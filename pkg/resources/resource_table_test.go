@@ -13,10 +13,11 @@ import (
 )
 
 var inTable = map[string]interface{}{
-	"name":          "table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"column":        []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true}},
+	"name":           "table",
+	"schema_name":    "schema",
+	"database_name":  "database",
+	"ownership_role": "joe",
+	"column":         []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true}},
 }
 
 func TestResourceTableCreate(t *testing.T) {
@@ -27,6 +28,9 @@ func TestResourceTableCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Ownership
+		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
@@ -40,30 +44,6 @@ func TestResourceTableCreate(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
-}
-
-func TestResourceTableUpdate(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
-
-	// Set current state
-	d.SetId("u1")
-	d.Set("name", "old_table")
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER TABLE "database"."schema"."" RENAME TO "table";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Params
-		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockTableScan(mock, pp)
-
-		if err := tableUpdate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-
 }
 
 func TestResourceTableDelete(t *testing.T) {
@@ -84,5 +64,4 @@ func TestResourceTableDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-
 }

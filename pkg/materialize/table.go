@@ -35,12 +35,12 @@ type TableBuilder struct {
 	column       []TableColumn
 }
 
-func NewTableBuilder(conn *sqlx.DB, tableName, schemaName, databaseName string) *TableBuilder {
+func NewTableBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *TableBuilder {
 	return &TableBuilder{
 		ddl:          Builder{conn, Table},
-		tableName:    tableName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		tableName:    obj.Name,
+		schemaName:   obj.SchemaName,
+		databaseName: obj.DatabaseName,
 	}
 }
 
@@ -90,6 +90,7 @@ type TableParams struct {
 	TableName    sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	OwnerId      sql.NullString `db:"owner_id"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
@@ -99,6 +100,7 @@ var tableQuery = NewBaseQuery(`
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_tables.owner_id,
 		mz_tables.privileges
 	FROM mz_tables
 	JOIN mz_schemas
@@ -106,11 +108,11 @@ var tableQuery = NewBaseQuery(`
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id`)
 
-func TableId(conn *sqlx.DB, tableName, schemaName, databaseName string) (string, error) {
+func TableId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_tables.name":    tableName,
-		"mz_schemas.name":   schemaName,
-		"mz_databases.name": databaseName,
+		"mz_tables.name":    obj.Name,
+		"mz_schemas.name":   obj.SchemaName,
+		"mz_databases.name": obj.DatabaseName,
 	}
 	q := tableQuery.QueryPredicate(p)
 

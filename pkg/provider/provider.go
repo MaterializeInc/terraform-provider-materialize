@@ -72,8 +72,7 @@ func Provider() *schema.Provider {
 			"materialize_database":                             resources.Database(),
 			// TODO Expose RBAC resources when ready
 			// "materialize_grant_database": resources.GrantDatabase(),
-			"materialize_index": resources.Index(),
-			// "materialize_ownership":                            resources.Ownership(),
+			"materialize_index":             resources.Index(),
 			"materialize_materialized_view": resources.MaterializedView(),
 			// "materialize_role":                                 resources.Role(),
 			"materialize_schema":                resources.Schema(),
