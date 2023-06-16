@@ -54,6 +54,8 @@ func (b *RoleBuilder) Create() error {
 
 	var p []string
 
+	// NOINHERIT currently not supported
+	// https://materialize.com/docs/sql/create-role/#details
 	if b.inherit {
 		p = append(p, ` INHERIT`)
 	}
