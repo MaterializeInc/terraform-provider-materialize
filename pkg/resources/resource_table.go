@@ -157,11 +157,18 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("owernship_role") {
 		_, newRole := d.GetChange("owernship_role")
 
-		o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TABLE", o)
+		// Cannot revoke ownership, if set to null by user, remove from state
+		if newRole == "" {
+			if err := d.Set("owernship_role", ""); err != nil {
+				return diag.FromErr(err)
+			}
+		} else {
+			o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+			b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TABLE", o)
 
-		if err := b.Alter(newRole.(string)); err != nil {
-			return diag.FromErr(err)
+			if err := b.Alter(newRole.(string)); err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
