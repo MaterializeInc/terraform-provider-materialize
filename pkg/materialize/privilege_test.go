@@ -33,6 +33,16 @@ func TestHasPriviledge(t *testing.T) {
 	}
 }
 
+func TestObjectCompatibility(t *testing.T) {
+	if objectCompatibility("CLUSTER") != "CLUSTER" {
+		t.Fatal("expected cluster object compatibility to be 'CLUSTER")
+	}
+
+	if objectCompatibility("SOURCE") != "TABLE" {
+		t.Fatal("expected source object compatibility to be 'TABLE")
+	}
+}
+
 func TestPrivilegeGrant(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`GRANT CREATE ON DATABASE "materialize" TO joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
