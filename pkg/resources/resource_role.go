@@ -12,14 +12,12 @@ import (
 )
 
 var roleSchema = map[string]*schema.Schema{
-	"name":               NameSchema("role", true, false),
+	"name":               NameSchema("role", true, true),
 	"qualified_sql_name": QualifiedNameSchema("role"),
 	"inherit": {
-		Description: "Grants the role the ability to inheritance of privileges of other roles.",
+		Description: "Grants the role the ability to inheritance of privileges of other roles. Unlike PostgreSQL, Materialize does not currently support `NOINHERIT`",
 		Type:        schema.TypeBool,
-		Optional:    true,
-		Default:     false,
-		ForceNew:    true,
+		Computed:    true,
 	},
 	"create_role": {
 		Description: "Grants the role the ability to create, alter, delete roles and the ability to grant and revoke role membership.",
