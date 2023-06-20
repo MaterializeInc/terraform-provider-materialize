@@ -280,17 +280,19 @@ func MockTableScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_tables.owner_id,
+		mz_roles.name AS owner_name,
 		mz_tables.privileges
 	FROM mz_tables
 	JOIN mz_schemas
 		ON mz_tables.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_tables.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_id", "privileges"}).
-		AddRow("u1", "table", "schema", "database", "u1", "{u18=UC/u18}")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
+		AddRow("u1", "table", "schema", "database", "materialize", "{u18=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

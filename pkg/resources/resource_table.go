@@ -42,8 +42,7 @@ var tableSchema = map[string]*schema.Schema{
 		MinItems: 1,
 		ForceNew: true,
 	},
-	"ownership_role": OwernshipRole(),
-	"ownership_id":   OwernshipId(),
+	"ownership_role": OwnershipRole(),
 }
 
 func Table() *schema.Resource {
@@ -88,7 +87,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("ownership_id", s.OwnerId.String); err != nil {
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -139,7 +138,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 }
 
 func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tableName := d.Get("table_name").(string)
+	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
@@ -154,21 +153,14 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-	if d.HasChange("owernship_role") {
-		_, newRole := d.GetChange("owernship_role")
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
 
-		// Cannot revoke ownership, if set to null by user, remove from state
-		if newRole == "" {
-			if err := d.Set("owernship_role", ""); err != nil {
-				return diag.FromErr(err)
-			}
-		} else {
-			o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-			b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TABLE", o)
+		o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TABLE", o)
 
-			if err := b.Alter(newRole.(string)); err != nil {
-				return diag.FromErr(err)
-			}
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 

@@ -26,6 +26,7 @@ func TestAccTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
 					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
 					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
 				),
@@ -35,8 +36,9 @@ func TestAccTable_basic(t *testing.T) {
 }
 
 func TestAccTable_update(t *testing.T) {
-	tableName := "old_table"
-	newTableName := "new_table"
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
+	tableName := fmt.Sprintf("old_%s", slug)
+	newTableName := fmt.Sprintf("new_%s", slug)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
