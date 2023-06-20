@@ -66,7 +66,7 @@ func grantMaterializedViewCreate(ctx context.Context, d *schema.ResourceData, me
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.PriviledgeObjectStruct{
+	obj := materialize.PrivilegeObjectStruct{
 		Type:         "MATERIALIZED VIEW",
 		Name:         mviewName,
 		SchemaName:   schemaName,
@@ -106,7 +106,7 @@ func grantMaterializedViewDelete(ctx context.Context, d *schema.ResourceData, me
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.PriviledgeObjectStruct{
+		materialize.PrivilegeObjectStruct{
 			Type:         "MATERIALIZED VIEW",
 			Name:         mviewName,
 			SchemaName:   schemaName,
