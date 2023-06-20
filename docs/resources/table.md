@@ -52,7 +52,6 @@ resource "materialize_table" "simple_table" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `ownership_id` (String) The owernship id of the object.
 - `qualified_sql_name` (String) The fully qualified name of the table.
 
 <a id="nestedblock--column"></a>
