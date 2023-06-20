@@ -9,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var grantDatabaseSchema = map[string]*schema.Schema{
+var grantSecretSchema = map[string]*schema.Schema{
 	"role_name": {
 		Description: "The name of the role to grant privilege to.",
 		Type:        schema.TypeString,
@@ -21,40 +21,56 @@ var grantDatabaseSchema = map[string]*schema.Schema{
 		Type:         schema.TypeString,
 		Required:     true,
 		ForceNew:     true,
-		ValidateFunc: validPrivileges("DATABASE"),
+		ValidateFunc: validPrivileges("SECRET"),
+	},
+	"secret_name": {
+		Description: "The secret that is being granted on.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+	"schema_name": {
+		Description: "The schema that the secret being to.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
 	},
 	"database_name": {
-		Description: "The database that is being granted on.",
+		Description: "The database that the secret belongs to.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
 	},
 }
 
-func GrantDatabase() *schema.Resource {
+func GrantSecret() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the privileges on a Materailize database for roles.",
+		Description: "Manages the privileges on a Materailize secret for roles.",
 
-		CreateContext: grantDatabaseCreate,
+		CreateContext: grantSecretCreate,
 		ReadContext:   grantRead,
-		DeleteContext: grantDatabaseDelete,
+		DeleteContext: grantSecretDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: grantDatabaseSchema,
+		Schema: grantSecretSchema,
 	}
 }
 
-func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func grantSecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
+	secretName := d.Get("secret_name").(string)
+	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	obj := materialize.PriviledgeObjectStruct{
-		Type: "DATABASE",
-		Name: databaseName,
+		Type:         "SECRET",
+		Name:         secretName,
+		SchemaName:   schemaName,
+		DatabaseName: databaseName,
 	}
 
 	b := materialize.NewPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege, obj)
@@ -79,9 +95,11 @@ func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	return grantRead(ctx, d, meta)
 }
 
-func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func grantSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
+	secretName := d.Get("secret_name").(string)
+	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	b := materialize.NewPrivilegeBuilder(
@@ -89,8 +107,10 @@ func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		roleName,
 		privilege,
 		materialize.PriviledgeObjectStruct{
-			Type: "DATABASE",
-			Name: databaseName,
+			Type:         "SECRET",
+			Name:         secretName,
+			SchemaName:   schemaName,
+			DatabaseName: databaseName,
 		},
 	)
 
