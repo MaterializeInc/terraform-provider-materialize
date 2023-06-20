@@ -14,13 +14,15 @@ import (
 
 func TestAccTable_basic(t *testing.T) {
 	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	tableRoleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTableResource(tableName),
+				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
@@ -29,6 +31,9 @@ func TestAccTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
 					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					testAccCheckTableExists("materialize_table.test_role"),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -39,23 +44,29 @@ func TestAccTable_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	tableName := fmt.Sprintf("old_%s", slug)
 	newTableName := fmt.Sprintf("new_%s", slug)
+	tableRoleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTableResource(tableName),
+				Config: testAccTableResource(roleName, tableName, tableRoleName, "mz_system"),
 			},
 			{
-				Config: testAccTableResource(newTableName),
+				Config: testAccTableResource(roleName, newTableName, tableRoleName, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", newTableName),
 					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newTableName)),
 					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					testAccCheckTableExists("materialize_table.test_role"),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -64,13 +75,15 @@ func TestAccTable_update(t *testing.T) {
 
 func TestAccTable_disappears(t *testing.T) {
 	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	tableRoleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllTablesDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTableResource(tableName),
+				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
@@ -86,8 +99,12 @@ func TestAccTable_disappears(t *testing.T) {
 	})
 }
 
-func testAccTableResource(name string) string {
+func testAccTableResource(roleName, tableName, tableRoleName, tableOwnership string) string {
 	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%s"
+}
+
 resource "materialize_table" "test" {
 	name = "%s"
 	column {
@@ -104,7 +121,19 @@ resource "materialize_table" "test" {
 		nullable = true
 	}
 }
-`, name)
+
+resource "materialize_table" "test_role" {
+	name = "%s"
+	ownership_role = "%s"
+
+	column {
+		name = "column_1"
+		type = "text"
+	}
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, tableName, tableRoleName, tableOwnership)
 }
 
 func testAccCheckTableExists(name string) resource.TestCheckFunc {
