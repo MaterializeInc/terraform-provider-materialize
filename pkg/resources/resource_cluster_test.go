@@ -31,11 +31,11 @@ func TestResourceClusterCreate(t *testing.T) {
 		mock.ExpectExec(`ALTER CLUSTER "cluster" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ip := `WHERE name = 'cluster'`
+		ip := `WHERE mz_clusters.name = 'cluster'`
 		testhelpers.MockClusterScan(mock, ip)
 
 		// Query Params
-		pp := `WHERE id = 'u1'`
+		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {

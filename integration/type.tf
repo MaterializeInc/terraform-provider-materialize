@@ -19,6 +19,14 @@ resource "materialize_type" "map_type" {
   }
 }
 
+resource "materialize_grant_type" "database_type_usage" {
+  role_name     = materialize_role.role_1.name
+  privilege     = "USAGE"
+  type_name     = materialize_type.list_type.name
+  schema_name   = materialize_type.list_type.schema_name
+  database_name = materialize_type.list_type.database_name
+}
+
 output "qualified_type" {
   value = materialize_type.list_type.qualified_sql_name
 }

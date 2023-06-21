@@ -96,6 +96,14 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
+resource "materialize_grant_source" "source_grant_select" {
+  role_name     = materialize_role.role_1.name
+  privilege     = "SELECT"
+  source_name   = materialize_source_load_generator.load_generator.name
+  schema_name   = materialize_source_load_generator.load_generator.schema_name
+  database_name = materialize_source_load_generator.load_generator.database_name
+}
+
 output "qualified_load_generator" {
   value = materialize_source_load_generator.load_generator.qualified_sql_name
 }

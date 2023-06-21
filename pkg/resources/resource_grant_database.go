@@ -52,7 +52,7 @@ func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	privilege := d.Get("privilege").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.PriviledgeObjectStruct{
+	obj := materialize.PrivilegeObjectStruct{
 		Type: "DATABASE",
 		Name: databaseName,
 	}
@@ -88,7 +88,7 @@ func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.PriviledgeObjectStruct{
+		materialize.PrivilegeObjectStruct{
 			Type: "DATABASE",
 			Name: databaseName,
 		},

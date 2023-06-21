@@ -66,7 +66,7 @@ func grantConnectionCreate(ctx context.Context, d *schema.ResourceData, meta int
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.PriviledgeObjectStruct{
+	obj := materialize.PrivilegeObjectStruct{
 		Type:         "CONNECTION",
 		Name:         connectionName,
 		SchemaName:   schemaName,
@@ -106,7 +106,7 @@ func grantConnectionDelete(ctx context.Context, d *schema.ResourceData, meta int
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.PriviledgeObjectStruct{
+		materialize.PrivilegeObjectStruct{
 			Type:         "CONNECTION",
 			Name:         connectionName,
 			SchemaName:   schemaName,

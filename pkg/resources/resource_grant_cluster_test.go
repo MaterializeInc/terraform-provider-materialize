@@ -33,11 +33,11 @@ func TestResourceGrantClusterCreate(t *testing.T) {
 		testhelpers.MockRoleScan(mock, rp)
 
 		// Query Grant Id
-		gp := `WHERE name = 'materialize'`
+		gp := `WHERE mz_clusters.name = 'materialize'`
 		testhelpers.MockClusterScan(mock, gp)
 
 		// Query Params
-		pp := `WHERE id = 'u1'`
+		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
 
 		if err := grantClusterCreate(context.TODO(), d, db); err != nil {
