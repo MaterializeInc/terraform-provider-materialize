@@ -39,9 +39,19 @@ func MockClusterReplicaScan(mock sqlmock.Sqlmock, predicate string) {
 }
 
 func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
-	q := mockQueryBuilder(`SELECT id, name, privileges FROM mz_clusters`, predicate)
-	ir := mock.NewRows([]string{"id", "name", "privileges"}).
-		AddRow("u1", "cluster", "{u1=UC/u18}")
+	b := `
+	SELECT
+		mz_clusters.id,
+		mz_clusters.name,
+		mz_roles.name AS owner_name,
+		mz_clusters.privileges
+	FROM mz_clusters
+	JOIN mz_roles
+		ON mz_clusters.owner_id = mz_roles.id`
+
+	q := mockQueryBuilder(b, predicate)
+	ir := mock.NewRows([]string{"id", "name", "owner_name", "privileges"}).
+		AddRow("u1", "cluster", "joe", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

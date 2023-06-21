@@ -12,7 +12,8 @@ import (
 )
 
 var clusterSchema = map[string]*schema.Schema{
-	"name": NameSchema("cluster", true, true),
+	"name":           NameSchema("cluster", true, true),
+	"ownership_role": OwnershipRole(),
 }
 
 func Cluster() *schema.Resource {
@@ -21,6 +22,7 @@ func Cluster() *schema.Resource {
 
 		CreateContext: clusterCreate,
 		ReadContext:   clusterRead,
+		UpdateContext: clusterUpdate,
 		DeleteContext: clusterDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -47,21 +49,35 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), clusterName)
+	o := materialize.ObjectSchemaStruct{Name: clusterName}
+	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.ClusterId(meta.(*sqlx.DB), clusterName)
+	i, err := materialize.ClusterId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -70,10 +86,28 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return clusterRead(ctx, d, meta)
 }
 
+func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterName := d.Get("name").(string)
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+
+		o := materialize.ObjectSchemaStruct{Name: clusterName}
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER", o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return clusterRead(ctx, d, meta)
+}
+
 func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), clusterName)
+	o := materialize.ObjectSchemaStruct{Name: clusterName}
+	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

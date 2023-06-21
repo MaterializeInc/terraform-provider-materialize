@@ -23,6 +23,7 @@ func TestAccCluster_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "ownership_role", "mz_system"),
 				),
 			},
 		},
