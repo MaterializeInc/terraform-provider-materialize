@@ -25,6 +25,10 @@ resource "materialize_cluster" "example_cluster" {
 
 - `name` (String) The identifier for the cluster.
 
+### Optional
+
+- `ownership_role` (String) The owernship role of the object.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
