@@ -81,7 +81,7 @@ func testAccCheckGrantDatabaseExists(grantName, roleName, databaseName, privileg
 			return fmt.Errorf("grant not found")
 		}
 
-		databaseId, err := materialize.DatabaseId(db, databaseName)
+		id, err := materialize.DatabaseId(db, databaseName)
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func testAccCheckGrantDatabaseExists(grantName, roleName, databaseName, privileg
 			return err
 		}
 
-		g, err := materialize.ScanPrivileges(db, "DATABASE", databaseId)
+		g, err := materialize.ScanPrivileges(db, "DATABASE", id)
 		if err != nil {
 			return err
 		}

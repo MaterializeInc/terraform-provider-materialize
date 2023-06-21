@@ -10,6 +10,14 @@ SQL
 
 }
 
+resource "materialize_grant_view" "database_view_select" {
+  role_name     = materialize_role.role_1.name
+  privilege     = "SELECT"
+  view_name     = materialize_view.simple_view.name
+  schema_name   = materialize_view.simple_view.schema_name
+  database_name = materialize_view.simple_view.database_name
+}
+
 output "qualified_view" {
   value = materialize_view.simple_view.qualified_sql_name
 }

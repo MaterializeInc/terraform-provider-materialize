@@ -90,7 +90,7 @@ func testAccCheckGrantSchemaExists(grantName, roleName, schemaName, databaseName
 			return fmt.Errorf("grant not found")
 		}
 
-		schemaId, err := materialize.SchemaId(db, schemaName, databaseName)
+		id, err := materialize.SchemaId(db, schemaName, databaseName)
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func testAccCheckGrantSchemaExists(grantName, roleName, schemaName, databaseName
 			return err
 		}
 
-		g, err := materialize.ScanPrivileges(db, "SCHEMA", schemaId)
+		g, err := materialize.ScanPrivileges(db, "SCHEMA", id)
 		if err != nil {
 			return err
 		}

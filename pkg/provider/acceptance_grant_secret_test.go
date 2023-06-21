@@ -11,10 +11,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestAccGrantTable_basic(t *testing.T) {
-	privilege := randomPrivilege("TABLE")
+func TestAccGrantSecret_basic(t *testing.T) {
+	privilege := randomPrivilege("SECRET")
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -23,24 +23,24 @@ func TestAccGrantTable_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGrantTableResource(roleName, tableName, schemaName, databaseName, privilege),
+				Config: testAccGrantSecretResource(roleName, secretName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantTableExists("materialize_grant_table.table_grant", roleName, tableName, schemaName, databaseName, privilege),
-					resource.TestCheckResourceAttr("materialize_grant_table.table_grant", "role_name", roleName),
-					resource.TestCheckResourceAttr("materialize_grant_table.table_grant", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_grant_table.table_grant", "table_name", tableName),
-					resource.TestCheckResourceAttr("materialize_grant_table.table_grant", "schema_name", schemaName),
-					resource.TestCheckResourceAttr("materialize_grant_table.table_grant", "database_name", databaseName),
+					testAccCheckGrantSecretExists("materialize_grant_secret.secret_grant", roleName, secretName, schemaName, databaseName, privilege),
+					resource.TestCheckResourceAttr("materialize_grant_secret.secret_grant", "role_name", roleName),
+					resource.TestCheckResourceAttr("materialize_grant_secret.secret_grant", "privilege", privilege),
+					resource.TestCheckResourceAttr("materialize_grant_secret.secret_grant", "secret_name", secretName),
+					resource.TestCheckResourceAttr("materialize_grant_secret.secret_grant", "schema_name", schemaName),
+					resource.TestCheckResourceAttr("materialize_grant_secret.secret_grant", "database_name", databaseName),
 				),
 			},
 		},
 	})
 }
 
-func TestAccGrantTable_disappears(t *testing.T) {
-	privilege := randomPrivilege("TABLE")
+func TestAccGrantSecret_disappears(t *testing.T) {
+	privilege := randomPrivilege("SECRET")
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -49,10 +49,10 @@ func TestAccGrantTable_disappears(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGrantTableResource(roleName, tableName, schemaName, databaseName, privilege),
+				Config: testAccGrantSecretResource(roleName, secretName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantTableExists("materialize_grant_table.table_grant", roleName, tableName, schemaName, databaseName, privilege),
-					testAccCheckGrantTableRevoked(roleName, tableName, schemaName, databaseName, privilege),
+					testAccCheckGrantSecretExists("materialize_grant_secret.secret_grant", roleName, secretName, schemaName, databaseName, privilege),
+					testAccCheckGrantSecretRevoked(roleName, secretName, schemaName, databaseName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -61,7 +61,7 @@ func TestAccGrantTable_disappears(t *testing.T) {
 	})
 }
 
-func testAccGrantTableResource(roleName, tableName, schemaName, databaseName, privilege string) string {
+func testAccGrantSecretResource(roleName, secretName, schemaName, databaseName, privilege string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%s"
@@ -76,28 +76,25 @@ resource "materialize_schema" "test" {
 	database_name = materialize_database.test.name
 }
 
-resource "materialize_table" "test" {
+resource "materialize_secret" "test" {
 	name          = "%s"
 	schema_name   = materialize_schema.test.name
 	database_name = materialize_database.test.name
-  
-	column {
-	  name = "column_1"
-	  type = "text"
-	}
+
+	value = "c2VjcmV0Cg=="
 }
 
-resource "materialize_grant_table" "table_grant" {
+resource "materialize_grant_secret" "secret_grant" {
 	role_name     = materialize_role.test.name
 	privilege     = "%s"
 	database_name = materialize_database.test.name
 	schema_name   = materialize_schema.test.name
-	table_name    = materialize_table.test.name
+	secret_name   = materialize_secret.test.name
 }
-`, roleName, databaseName, schemaName, tableName, privilege)
+`, roleName, databaseName, schemaName, secretName, privilege)
 }
 
-func testAccCheckGrantTableExists(grantName, roleName, tableName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
+func testAccCheckGrantSecretExists(grantName, roleName, secretName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
 		_, ok := s.RootModule().Resources[grantName]
@@ -105,7 +102,7 @@ func testAccCheckGrantTableExists(grantName, roleName, tableName, schemaName, da
 			return fmt.Errorf("grant not found")
 		}
 
-		id, err := materialize.TableId(db, tableName, schemaName, databaseName)
+		id, err := materialize.SecretId(db, secretName, schemaName, databaseName)
 		if err != nil {
 			return err
 		}
@@ -115,23 +112,23 @@ func testAccCheckGrantTableExists(grantName, roleName, tableName, schemaName, da
 			return err
 		}
 
-		g, err := materialize.ScanPrivileges(db, "TABLE", id)
+		g, err := materialize.ScanPrivileges(db, "SECRET", id)
 		if err != nil {
 			return err
 		}
 
 		privilegeMap := materialize.ParsePrivileges(g)
 		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("schema object %s does not include privilege %s", g, privilege)
+			return fmt.Errorf("secret object %s does not include privilege %s", g, privilege)
 		}
 		return nil
 	}
 }
 
-func testAccCheckGrantTableRevoked(roleName, tableName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
+func testAccCheckGrantSecretRevoked(roleName, secretName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %s ON TABLE "%s"."%s"."%s" FROM "%s";`, privilege, databaseName, schemaName, tableName, roleName))
+		_, err := db.Exec(fmt.Sprintf(`REVOKE %s ON SECRET "%s"."%s"."%s" FROM "%s";`, privilege, databaseName, schemaName, secretName, roleName))
 		return err
 	}
 }
