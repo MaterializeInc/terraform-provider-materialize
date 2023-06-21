@@ -72,6 +72,14 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
   database = "postgres"
 }
 
+resource "materialize_grant_connection" "connection_grant_usage" {
+  role_name       = materialize_role.role_1.name
+  privilege       = "USAGE"
+  connection_name = materialize_connection_postgres.postgres_connection.name
+  schema_name     = materialize_connection_postgres.postgres_connection.schema_name
+  database_name   = materialize_connection_postgres.postgres_connection.database_name
+}
+
 output "qualified_ssh_connection" {
   value = materialize_connection_ssh_tunnel.ssh_connection.qualified_sql_name
 }

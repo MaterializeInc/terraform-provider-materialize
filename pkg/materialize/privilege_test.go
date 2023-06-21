@@ -9,8 +9,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestParsePriviledges(t *testing.T) {
-	o := ParsePriviledges("{u2=r/u18,u3=r/u18,u18=arwd/u18}")
+func TestParsePrivileges(t *testing.T) {
+	o := ParsePrivileges("{u2=r/u18,u3=r/u18,u18=arwd/u18}")
 	e := map[string][]string{
 		"u2":  {"SELECT"},
 		"u3":  {"SELECT"},
@@ -21,14 +21,14 @@ func TestParsePriviledges(t *testing.T) {
 	}
 }
 
-func TestHasPriviledge(t *testing.T) {
+func TestHasPrivilege(t *testing.T) {
 	p := []string{"SELECT", "INSERT", "UPDATE"}
 
-	if !HasPriviledge(p, "INSERT") {
+	if !HasPrivilege(p, "INSERT") {
 		t.Fatalf("expected priviledge %s to contain 'INSERT'", p)
 	}
 
-	if HasPriviledge(p, "DELETE") {
+	if HasPrivilege(p, "DELETE") {
 		t.Fatalf("expected priviledge %s to not contain 'DELETE", p)
 	}
 }
@@ -47,7 +47,7 @@ func TestPrivilegeGrant(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`GRANT CREATE ON DATABASE "materialize" TO joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewPrivilegeBuilder(db, "joe", "CREATE", PriviledgeObjectStruct{Type: "DATABASE", Name: "materialize"})
+		b := NewPrivilegeBuilder(db, "joe", "CREATE", PrivilegeObjectStruct{Type: "DATABASE", Name: "materialize"})
 		if err := b.Grant(); err != nil {
 			t.Fatal(err)
 		}
@@ -58,7 +58,7 @@ func TestPrivilegeRevoke(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewPrivilegeBuilder(db, "joe", "CREATE", PriviledgeObjectStruct{Type: "DATABASE", Name: "materialize"})
+		b := NewPrivilegeBuilder(db, "joe", "CREATE", PrivilegeObjectStruct{Type: "DATABASE", Name: "materialize"})
 		if err := b.Revoke(); err != nil {
 			t.Fatal(err)
 		}
@@ -67,7 +67,7 @@ func TestPrivilegeRevoke(t *testing.T) {
 
 func TestResourceDatabaseCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		o := PriviledgeObjectStruct{Type: "DATABASE", Name: "materialize"}
+		o := PrivilegeObjectStruct{Type: "DATABASE", Name: "materialize"}
 
 		// Query Id
 		ip := `WHERE name = 'materialize'`

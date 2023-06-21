@@ -60,48 +60,48 @@ var ObjectPermissions = map[string]ObjectType{
 	},
 }
 
-func ParsePriviledges(priviledges string) map[string][]string {
+func ParsePrivileges(privileges string) map[string][]string {
 	o := map[string][]string{}
 
-	priviledges = strings.TrimPrefix(priviledges, "{")
-	priviledges = strings.TrimSuffix(priviledges, "}")
+	privileges = strings.TrimPrefix(privileges, "{")
+	privileges = strings.TrimSuffix(privileges, "}")
 
-	for _, p := range strings.Split(priviledges, ",") {
+	for _, p := range strings.Split(privileges, ",") {
 		e := strings.Split(p, "=")
 
 		roleId := e[0]
-		rolePriviledges := strings.Split(e[1], "/")[0]
+		roleprivileges := strings.Split(e[1], "/")[0]
 
-		priviledgeMap := []string{}
-		for _, rp := range strings.Split(rolePriviledges, "") {
+		privilegeMap := []string{}
+		for _, rp := range strings.Split(roleprivileges, "") {
 			v := Permissions[rp]
-			priviledgeMap = append(priviledgeMap, v)
+			privilegeMap = append(privilegeMap, v)
 		}
 
-		o[roleId] = priviledgeMap
+		o[roleId] = privilegeMap
 	}
 
 	return o
 }
 
-func HasPriviledge(priviledges []string, checkPriviledge string) bool {
-	for _, v := range priviledges {
-		if v == checkPriviledge {
+func HasPrivilege(privileges []string, checkPrivilege string) bool {
+	for _, v := range privileges {
+		if v == checkPrivilege {
 			return true
 		}
 	}
 	return false
 }
 
-type PriviledgeObjectStruct struct {
+type PrivilegeObjectStruct struct {
 	Type         string
 	Name         string
 	SchemaName   string
 	DatabaseName string
 }
 
-func GetPriviledgeObjectStruct(databaseName string, schemaName string, v interface{}) PriviledgeObjectStruct {
-	var p PriviledgeObjectStruct
+func GetPrivilegeObjectStruct(databaseName string, schemaName string, v interface{}) PrivilegeObjectStruct {
+	var p PrivilegeObjectStruct
 	u := v.([]interface{})[0].(map[string]interface{})
 
 	if v, ok := u["type"]; ok {
@@ -123,7 +123,7 @@ func GetPriviledgeObjectStruct(databaseName string, schemaName string, v interfa
 	return p
 }
 
-func (i *PriviledgeObjectStruct) QualifiedName() string {
+func (i *PrivilegeObjectStruct) QualifiedName() string {
 	p := []string{}
 
 	if i.DatabaseName != "" {
@@ -140,18 +140,18 @@ func (i *PriviledgeObjectStruct) QualifiedName() string {
 
 // DDL
 type PrivilegeBuilder struct {
-	ddl        Builder
-	role       string
-	priviledge string
-	object     PriviledgeObjectStruct
+	ddl       Builder
+	role      string
+	privilege string
+	object    PrivilegeObjectStruct
 }
 
-func NewPrivilegeBuilder(conn *sqlx.DB, role, priviledge string, object PriviledgeObjectStruct) *PrivilegeBuilder {
+func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object PrivilegeObjectStruct) *PrivilegeBuilder {
 	return &PrivilegeBuilder{
-		ddl:        Builder{conn, Privilege},
-		role:       role,
-		priviledge: priviledge,
-		object:     object,
+		ddl:       Builder{conn, Privilege},
+		role:      role,
+		privilege: privilege,
+		object:    object,
 	}
 }
 
@@ -169,17 +169,17 @@ func objectCompatibility(objectType string) string {
 
 func (b *PrivilegeBuilder) Grant() error {
 	t := objectCompatibility(b.object.Type)
-	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.priviledge, t, b.object.QualifiedName(), b.role)
+	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
 	return b.ddl.exec(q)
 }
 
 func (b *PrivilegeBuilder) Revoke() error {
 	t := objectCompatibility(b.object.Type)
-	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.priviledge, t, b.object.QualifiedName(), b.role)
+	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
 	return b.ddl.exec(q)
 }
 
-func PrivilegeId(conn *sqlx.DB, object PriviledgeObjectStruct, roleId, privilege string) (string, error) {
+func PrivilegeId(conn *sqlx.DB, object PrivilegeObjectStruct, roleId, privilege string) (string, error) {
 	var id string
 
 	switch t := object.Type; t {

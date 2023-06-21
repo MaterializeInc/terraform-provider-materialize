@@ -23,10 +23,10 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	priviledgeMap := materialize.ParsePriviledges(s)
+	priviledgeMap := materialize.ParsePrivileges(s)
 	privilege := d.Get("privilege").(string)
 
-	if !materialize.HasPriviledge(priviledgeMap[roleId], privilege) {
+	if !materialize.HasPrivilege(priviledgeMap[roleId], privilege) {
 		return diag.Errorf("%s: object does not contain privilege: %s", i, privilege)
 	}
 
