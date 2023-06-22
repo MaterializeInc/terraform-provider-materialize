@@ -56,6 +56,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 
 - `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the Postgres database. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `ownership_role` (String) The owernship role of the object.
 - `password` (Block List, Max: 1) The Postgres database password. (see [below for nested schema](#nestedblock--password))
 - `port` (Number) The Postgres database port.
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.

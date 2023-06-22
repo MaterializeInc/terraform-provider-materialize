@@ -63,6 +63,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
+- `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the sink schema. Defaults to `public`.
 - `size` (String) The size of the sink.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.

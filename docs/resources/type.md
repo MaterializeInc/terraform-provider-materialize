@@ -24,6 +24,7 @@ A custom types, which let you create named versions of anonymous types.
 - `database_name` (String) The identifier for the type database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `list_properties` (Block List, Max: 1) List properties. (see [below for nested schema](#nestedblock--list_properties))
 - `map_properties` (Block List, Max: 1) Map properties. (see [below for nested schema](#nestedblock--map_properties))
+- `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the type schema. Defaults to `public`.
 
 ### Read-Only

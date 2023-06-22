@@ -49,6 +49,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 
 - `cluster_name` (String) The cluster to maintain the materialized view. If not specified, defaults to the default cluster.
 - `database_name` (String) The identifier for the materialized view database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the materialized view schema. Defaults to `public`.
 
 ### Read-Only

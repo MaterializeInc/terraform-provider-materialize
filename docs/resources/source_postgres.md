@@ -49,6 +49,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--table))

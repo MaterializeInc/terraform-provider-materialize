@@ -29,6 +29,7 @@ resource "materialize_schema" "example_schema" {
 ### Optional
 
 - `database_name` (String) The identifier for the schema database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `ownership_role` (String) The owernship role of the object.
 
 ### Read-Only
 
