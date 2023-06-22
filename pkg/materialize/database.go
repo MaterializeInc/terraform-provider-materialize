@@ -12,10 +12,10 @@ type DatabaseBuilder struct {
 	databaseName string
 }
 
-func NewDatabaseBuilder(conn *sqlx.DB, databaseName string) *DatabaseBuilder {
+func NewDatabaseBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *DatabaseBuilder {
 	return &DatabaseBuilder{
 		ddl:          Builder{conn, Database},
-		databaseName: databaseName,
+		databaseName: obj.Name,
 	}
 }
 
@@ -36,13 +36,22 @@ func (b *DatabaseBuilder) Drop() error {
 type DatabaseParams struct {
 	DatabaseId   sql.NullString `db:"id"`
 	DatabaseName sql.NullString `db:"database_name"`
+	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
-var databaseQuery = NewBaseQuery("SELECT id, name AS database_name, privileges FROM mz_databases")
+var databaseQuery = NewBaseQuery(`
+	SELECT
+		mz_databases.id,
+		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
+		mz_databases.privileges
+	FROM mz_databases
+	JOIN mz_roles
+		ON mz_databases.owner_id = mz_roles.id`)
 
-func DatabaseId(conn *sqlx.DB, databaseName string) (string, error) {
-	q := databaseQuery.QueryPredicate(map[string]string{"name": databaseName})
+func DatabaseId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.name": obj.Name})
 
 	var c DatabaseParams
 	if err := conn.Get(&c, q); err != nil {
@@ -53,7 +62,7 @@ func DatabaseId(conn *sqlx.DB, databaseName string) (string, error) {
 }
 
 func ScanDatabase(conn *sqlx.DB, id string) (DatabaseParams, error) {
-	q := databaseQuery.QueryPredicate(map[string]string{"id": id})
+	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.id": id})
 
 	var c DatabaseParams
 	if err := conn.Get(&c, q); err != nil {

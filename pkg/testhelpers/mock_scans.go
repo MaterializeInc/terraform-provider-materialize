@@ -27,14 +27,17 @@ func MockClusterReplicaScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_cluster_replicas.name AS replica_name,
 		mz_clusters.name AS cluster_name,
 		mz_cluster_replicas.size,
-		mz_cluster_replicas.availability_zone
+		mz_cluster_replicas.availability_zone,
+		mz_roles.name AS owner_name
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
-		ON mz_cluster_replicas.cluster_id = mz_clusters.id`
+		ON mz_cluster_replicas.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_cluster_replicas.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone"}).
-		AddRow("u1", "replica", "cluster", "small", "use1-az2")
+	ir := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone", "owner_name"}).
+		AddRow("u1", "replica", "cluster", "small", "use1-az2", "joe")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -63,16 +66,19 @@ func MockConnectionScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_connections.type AS connection_type,
+		mz_roles.name AS owner_name,
 		mz_connections.privileges
 	FROM mz_connections
 	JOIN mz_schemas
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_connections.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "connection_name", "schema_name", "database_name", "connection_type", "privileges"}).
-		AddRow("u1", "connection", "schema", "database", "kafka", "{u1=U/u18}")
+	ir := mock.NewRows([]string{"id", "connection_name", "schema_name", "database_name", "connection_type", "owner_name", "privileges"}).
+		AddRow("u1", "connection", "schema", "database", "kafka", "joe", "{u1=U/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -83,14 +89,17 @@ func MockConnectionAwsPrivatelinkScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_connections.name AS connection_name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_aws_privatelink_connections.principal
+		mz_aws_privatelink_connections.principal,
+		mz_roles.name AS owner_name
 	FROM mz_connections
 	JOIN mz_schemas
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	LEFT JOIN mz_aws_privatelink_connections
-		ON mz_connections.id = mz_aws_privatelink_connections.id`
+		ON mz_connections.id = mz_aws_privatelink_connections.id
+	JOIN mz_roles
+		ON mz_connections.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
 	ir := mock.NewRows([]string{"id", "connection_name", "schema_name", "database_name", "principal"}).
@@ -106,14 +115,17 @@ func MockConnectionSshTunnelScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_ssh_tunnel_connections.public_key_1,
-		mz_ssh_tunnel_connections.public_key_2
+		mz_ssh_tunnel_connections.public_key_2,
+		mz_roles.name AS owner_name
 	FROM mz_connections
 	JOIN mz_schemas
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	LEFT JOIN mz_ssh_tunnel_connections
-		ON mz_connections.id = mz_ssh_tunnel_connections.id`
+		ON mz_connections.id = mz_ssh_tunnel_connections.id
+	JOIN mz_roles
+		ON mz_connections.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
 	ir := mock.NewRows([]string{"id", "connection_name", "schema_name", "database_name", "public_key_1", "public_key_2"}).
@@ -122,9 +134,19 @@ func MockConnectionSshTunnelScan(mock sqlmock.Sqlmock, predicate string) {
 }
 
 func MockDatabaseScan(mock sqlmock.Sqlmock, predicate string) {
-	q := mockQueryBuilder(`SELECT id, name AS database_name, privileges FROM mz_databases`, predicate)
-	ir := mock.NewRows([]string{"id", "database_name", "privileges"}).
-		AddRow("u1", "database", "{u1=UC/u18}")
+	b := `
+	SELECT
+		mz_databases.id,
+		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
+		mz_databases.privileges
+	FROM mz_databases
+	JOIN mz_roles
+		ON mz_databases.owner_id = mz_roles.id`
+
+	q := mockQueryBuilder(b, predicate)
+	ir := mock.NewRows([]string{"id", "database_name", "owner_name", "privileges"}).
+		AddRow("u1", "database", "joe", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -158,6 +180,7 @@ func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_clusters.name AS cluster_name,
+		mz_roles.name AS owner_name,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
 	JOIN mz_schemas
@@ -165,11 +188,13 @@ func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	LEFT JOIN mz_clusters
-		ON mz_materialized_views.cluster_id = mz_clusters.id`
+		ON mz_materialized_views.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_materialized_views.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "materialized_view_name", "schema_name", "database_name", "cluster_name", "privileges"}).
-		AddRow("u1", "view", "schema", "database", "cluster", "{u1=r/u18}")
+	ir := mock.NewRows([]string{"id", "materialized_view_name", "schema_name", "database_name", "cluster_name", "owner_name", "privileges"}).
+		AddRow("u1", "view", "schema", "database", "cluster", "joe", "{u1=r/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -196,13 +221,16 @@ func MockSchemaScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.id,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
 		mz_schemas.privileges
 	FROM mz_schemas JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_schemas.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "schema_name", "database_name", "privileges"}).
-		AddRow("u1", "schema", "database", "{u1=UC/u18}")
+	ir := mock.NewRows([]string{"id", "schema_name", "database_name", "owner_name", "privileges"}).
+		AddRow("u1", "schema", "database", "joe", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -213,16 +241,19 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_secrets.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
 		mz_secrets.privileges
 	FROM mz_secrets
 	JOIN mz_schemas
 		ON mz_secrets.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_secrets.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "privileges"}).
-		AddRow("u1", "secret", "schema", "database", "{u1=U/u18}")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
+		AddRow("u1", "secret", "schema", "database", "joe", "{u1=U/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -237,7 +268,8 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_sinks.size,
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
-		mz_clusters.name as cluster_name
+		mz_clusters.name as cluster_name,
+		mz_roles.name AS owner_name
 	FROM mz_sinks
 	JOIN mz_schemas
 		ON mz_sinks.schema_id = mz_schemas.id
@@ -246,11 +278,13 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 	LEFT JOIN mz_connections
 		ON mz_sinks.connection_id = mz_connections.id
 	LEFT JOIN mz_clusters
-		ON mz_sinks.cluster_id = mz_clusters.id`
+		ON mz_sinks.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_sinks.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name"}).
-		AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name"}).
+		AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster", "joe")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -266,6 +300,7 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_sources.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,
+		mz_roles.name AS owner_name,
 		mz_sources.privileges
 	FROM mz_sources
 	JOIN mz_schemas
@@ -275,11 +310,13 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 	LEFT JOIN mz_connections
 		ON mz_sources.connection_id = mz_connections.id
 	LEFT JOIN mz_clusters
-		ON mz_sources.cluster_id = mz_clusters.id`
+		ON mz_sources.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_sources.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "{u1=r/u18}")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
+		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", "{u1=r/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -314,16 +351,19 @@ func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_types.category,
+		mz_roles.name AS owner_name,
 		mz_types.privileges
 	FROM mz_types
 	JOIN mz_schemas
 		ON mz_types.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_types.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "category", "privileges"}).
-		AddRow("u1", "type", "schema", "database", "category", "{u1=U/u18}")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "category", "owner_name", "privileges"}).
+		AddRow("u1", "type", "schema", "database", "category", "joe", "{u1=U/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -334,15 +374,18 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_views.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
 		mz_views.privileges
 	FROM mz_views
 	JOIN mz_schemas
 		ON mz_views.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_views.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate)
-	ir := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name", "privileges"}).
-		AddRow("u1", "view", "schema", "database", "{u1=r/u18}")
+	ir := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
+		AddRow("u1", "view", "schema", "database", "joe", "{u1=r/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }

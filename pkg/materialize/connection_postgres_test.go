@@ -8,13 +8,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var connPostgres = ObjectSchemaStruct{Name: "postgres_conn", SchemaName: "schema", DatabaseName: "database"}
+
 func TestConnectionPostgresCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "database"."schema"."password", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionPostgresBuilder(db, "postgres_conn", "schema", "database")
+		b := NewConnectionPostgresBuilder(db, connPostgres)
 		b.PostgresHost("postgres_host")
 		b.PostgresPort(5432)
 		b.PostgresUser(ValueSecretStruct{Text: "user"})
@@ -33,7 +35,7 @@ func TestConnectionPostgresSshCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "database"."schema"."password", SSH TUNNEL "database"."schema"."ssh_conn", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionPostgresBuilder(db, "postgres_conn", "schema", "database")
+		b := NewConnectionPostgresBuilder(db, connPostgres)
 		b.PostgresHost("postgres_host")
 		b.PostgresPort(5432)
 		b.PostgresUser(ValueSecretStruct{Text: "user"})
@@ -53,7 +55,7 @@ func TestConnectionPostgresPrivateLinkCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "database"."schema"."password", AWS PRIVATELINK "database"."schema"."private_link", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionPostgresBuilder(db, "postgres_conn", "schema", "database")
+		b := NewConnectionPostgresBuilder(db, connPostgres)
 		b.PostgresHost("postgres_host")
 		b.PostgresPort(5432)
 		b.PostgresUser(ValueSecretStruct{Text: "user"})
@@ -73,7 +75,7 @@ func TestConnectionPostgresSslCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER SECRET "database"."schema"."user", PASSWORD SECRET "database"."schema"."password", SSL MODE 'verify-full', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."root", SSL CERTIFICATE SECRET "database"."schema"."cert", SSL KEY SECRET "database"."schema"."key", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionPostgresBuilder(db, "postgres_conn", "schema", "database")
+		b := NewConnectionPostgresBuilder(db, connPostgres)
 		b.PostgresHost("postgres_host")
 		b.PostgresPort(5432)
 		b.PostgresUser(ValueSecretStruct{Secret: IdentifierSchemaStruct{Name: "user", SchemaName: "schema", DatabaseName: "database"}})

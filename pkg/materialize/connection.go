@@ -30,12 +30,12 @@ type Connection struct {
 	DatabaseName   string
 }
 
-func NewConnection(conn *sqlx.DB, connectionName, schemaName, databaseName string) *Connection {
+func NewConnection(conn *sqlx.DB, obj ObjectSchemaStruct) *Connection {
 	return &Connection{
 		ddl:            Builder{conn, BaseConnection},
-		ConnectionName: connectionName,
-		SchemaName:     schemaName,
-		DatabaseName:   databaseName,
+		ConnectionName: obj.Name,
+		SchemaName:     obj.SchemaName,
+		DatabaseName:   obj.DatabaseName,
 	}
 }
 
@@ -59,6 +59,7 @@ type ConnectionParams struct {
 	SchemaName     sql.NullString `db:"schema_name"`
 	DatabaseName   sql.NullString `db:"database_name"`
 	ConnectionType sql.NullString `db:"connection_type"`
+	OwnerName      sql.NullString `db:"owner_name"`
 	Privileges     sql.NullString `db:"privileges"`
 }
 
@@ -69,18 +70,21 @@ var connectionQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_connections.type AS connection_type,
+		mz_roles.name AS owner_name,
 		mz_connections.privileges
 	FROM mz_connections
 	JOIN mz_schemas
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`)
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_connections.owner_id = mz_roles.id`)
 
-func ConnectionId(conn *sqlx.DB, connectionName, schemaName, databaseName string) (string, error) {
+func ConnectionId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_connections.name": connectionName,
-		"mz_databases.name":   databaseName,
-		"mz_schemas.name":     schemaName,
+		"mz_connections.name": obj.Name,
+		"mz_databases.name":   obj.DatabaseName,
+		"mz_schemas.name":     obj.SchemaName,
 	}
 	q := connectionQuery.QueryPredicate(p)
 

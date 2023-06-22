@@ -14,7 +14,8 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source" FROM KAFKA CONNECTION "database"."schema"."kafka_connection" \(TOPIC 'events'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_connection" INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewSourceKafkaBuilder(db, "source", "schema", "database")
+		o := ObjectSchemaStruct{Name: "source", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSourceKafkaBuilder(db, o)
 		b.Size("xsmall")
 		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
 		b.Topic("events")

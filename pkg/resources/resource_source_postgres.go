@@ -67,6 +67,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		MinItems: 1,
 		ForceNew: true,
 	},
+	"ownership_role": OwnershipRole(),
 }
 
 func SourcePostgres() *schema.Resource {
@@ -91,7 +92,8 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewSourcePostgresBuilder(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSourcePostgresBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
@@ -124,8 +126,17 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.SourceId(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

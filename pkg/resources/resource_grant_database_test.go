@@ -33,11 +33,11 @@ func TestResourceGrantDatabaseCreate(t *testing.T) {
 		testhelpers.MockRoleScan(mock, rp)
 
 		// Query Grant Id
-		gp := `WHERE name = 'materialize'`
+		gp := `WHERE mz_databases.name = 'materialize'`
 		testhelpers.MockDatabaseScan(mock, gp)
 
 		// Query Params
-		pp := `WHERE id = 'u1'`
+		pp := `WHERE mz_databases.id = 'u1'`
 		testhelpers.MockDatabaseScan(mock, pp)
 
 		if err := grantDatabaseCreate(context.TODO(), d, db); err != nil {

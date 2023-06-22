@@ -14,7 +14,8 @@ func TestTypeCreateList(t *testing.T) {
 			`CREATE TYPE "database"."schema"."type" AS LIST \(ELEMENT TYPE = int4\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewTypeBuilder(db, "type", "schema", "database")
+		o := ObjectSchemaStruct{Name: "type", SchemaName: "schema", DatabaseName: "database"}
+		b := NewTypeBuilder(db, o)
 		b.ListProperties([]ListProperties{
 			{
 				ElementType: "int4",
@@ -33,7 +34,8 @@ func TestTypeCreateMap(t *testing.T) {
 			`CREATE TYPE "database"."schema"."type" AS MAP \(KEY TYPE text, VALUE TYPE = int\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewTypeBuilder(db, "type", "schema", "database")
+		o := ObjectSchemaStruct{Name: "type", SchemaName: "schema", DatabaseName: "database"}
+		b := NewTypeBuilder(db, o)
 		b.MapProperties([]MapProperties{
 			{
 				KeyType:   "text",
@@ -53,7 +55,8 @@ func TestTypeDrop(t *testing.T) {
 			`DROP TYPE "database"."schema"."type";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewTypeBuilder(db, "type", "schema", "database").Drop(); err != nil {
+		o := ObjectSchemaStruct{Name: "type", SchemaName: "schema", DatabaseName: "database"}
+		if err := NewTypeBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})

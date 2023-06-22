@@ -47,10 +47,10 @@ type SourceKafkaBuilder struct {
 	startTimestamp   int
 }
 
-func NewSourceKafkaBuilder(conn *sqlx.DB, sourceName, schemaName, databaseName string) *SourceKafkaBuilder {
+func NewSourceKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourceKafkaBuilder {
 	b := Builder{conn, BaseSink}
 	return &SourceKafkaBuilder{
-		Source: Source{b, sourceName, schemaName, databaseName},
+		Source: Source{b, obj.Name, obj.SchemaName, obj.DatabaseName},
 	}
 }
 

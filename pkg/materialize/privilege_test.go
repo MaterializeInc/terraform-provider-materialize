@@ -65,12 +65,12 @@ func TestPrivilegeRevoke(t *testing.T) {
 	})
 }
 
-func TestResourceDatabaseCreate(t *testing.T) {
+func TestPrivilegeId(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		o := PrivilegeObjectStruct{Type: "DATABASE", Name: "materialize"}
 
 		// Query Id
-		ip := `WHERE name = 'materialize'`
+		ip := `WHERE mz_databases.name = 'materialize'`
 		testhelpers.MockDatabaseScan(mock, ip)
 
 		i, err := PrivilegeId(db, o, "u10", "SELECT")
@@ -87,7 +87,7 @@ func TestResourceDatabaseCreate(t *testing.T) {
 func TestScanPrivileges(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Query Id
-		ip := `WHERE id = 'u1'`
+		ip := `WHERE mz_databases.id = 'u1'`
 		testhelpers.MockDatabaseScan(mock, ip)
 
 		p, err := ScanPrivileges(db, "DATABASE", "u1")

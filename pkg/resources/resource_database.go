@@ -12,7 +12,8 @@ import (
 )
 
 var databaseSchema = map[string]*schema.Schema{
-	"name": NameSchema("database", true, true),
+	"name":           NameSchema("database", true, true),
+	"ownership_role": OwnershipRole(),
 }
 
 func Database() *schema.Resource {
@@ -21,6 +22,7 @@ func Database() *schema.Resource {
 
 		CreateContext: databaseCreate,
 		ReadContext:   databaseRead,
+		UpdateContext: databaseUpdate,
 		DeleteContext: databaseDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -48,21 +50,35 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
 func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
-	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), databaseName)
+	o := materialize.ObjectSchemaStruct{Name: databaseName}
+	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), o)
 
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "DATABASE", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.DatabaseId(meta.(*sqlx.DB), databaseName)
+	i, err := materialize.DatabaseId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,10 +87,28 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	return databaseRead(ctx, d, meta)
 }
 
+func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	databaseName := d.Get("name").(string)
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+
+		o := materialize.ObjectSchemaStruct{Name: databaseName}
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "DATABASE", o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return databaseRead(ctx, d, meta)
+}
+
 func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
-	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), databaseName)
+	o := materialize.ObjectSchemaStruct{Name: databaseName}
+	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

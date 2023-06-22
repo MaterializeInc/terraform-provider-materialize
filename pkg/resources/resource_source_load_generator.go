@@ -141,6 +141,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
+	"ownership_role": OwnershipRole(),
 }
 
 func SourceLoadgen() *schema.Resource {
@@ -165,7 +166,8 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewSourceLoadgenBuilder(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSourceLoadgenBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
@@ -204,8 +206,17 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.SourceId(meta.(*sqlx.DB), sourceName, schemaName, databaseName)
+	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

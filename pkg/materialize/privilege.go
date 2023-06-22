@@ -184,14 +184,16 @@ func PrivilegeId(conn *sqlx.DB, object PrivilegeObjectStruct, roleId, privilege 
 
 	switch t := object.Type; t {
 	case "DATABASE":
-		i, err := DatabaseId(conn, object.Name)
+		o := ObjectSchemaStruct{Name: object.Name}
+		i, err := DatabaseId(conn, o)
 		if err != nil {
 			return "", err
 		}
 		id = i
 
 	case "SCHEMA":
-		i, err := SchemaId(conn, object.Name, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, DatabaseName: object.DatabaseName}
+		i, err := SchemaId(conn, o)
 		if err != nil {
 			return "", err
 		}
@@ -206,42 +208,48 @@ func PrivilegeId(conn *sqlx.DB, object PrivilegeObjectStruct, roleId, privilege 
 		id = i
 
 	case "VIEW":
-		i, err := ViewId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := ViewId(conn, o)
 		if err != nil {
 			return "", err
 		}
 		id = i
 
 	case "MATERIALIZED VIEW":
-		i, err := MaterializedViewId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := MaterializedViewId(conn, o)
 		if err != nil {
 			return "", err
 		}
 		id = i
 
 	case "TYPE":
-		i, err := TypeId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := TypeId(conn, o)
 		if err != nil {
 			return "", err
 		}
 		id = i
 
 	case "SOURCE":
-		i, err := SourceId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := SourceId(conn, o)
 		if err != nil {
 			return "", err
 		}
 		id = i
 
 	case "CONNECTION":
-		i, err := ConnectionId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := ConnectionId(conn, o)
 		if err != nil {
 			return "", err
 		}
 		id = i
 
 	case "SECRET":
-		i, err := SecretId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := SecretId(conn, o)
 		if err != nil {
 			return "", err
 		}

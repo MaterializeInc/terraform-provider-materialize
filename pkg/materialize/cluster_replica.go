@@ -20,11 +20,11 @@ type ClusterReplicaBuilder struct {
 	idleArrangementMergeEffort int
 }
 
-func NewClusterReplicaBuilder(conn *sqlx.DB, replicaName, clusterName string) *ClusterReplicaBuilder {
+func NewClusterReplicaBuilder(conn *sqlx.DB, obj ClusterReplicaStruct) *ClusterReplicaBuilder {
 	return &ClusterReplicaBuilder{
 		ddl:         Builder{conn, ClusterReplica},
-		replicaName: replicaName,
-		clusterName: clusterName,
+		replicaName: obj.Name,
+		clusterName: obj.ClusterName,
 	}
 }
 
@@ -108,6 +108,7 @@ type ClusterReplicaParams struct {
 	ClusterName      sql.NullString `db:"cluster_name"`
 	Size             sql.NullString `db:"size"`
 	AvailabilityZone sql.NullString `db:"availability_zone"`
+	OwnerName        sql.NullString `db:"owner_name"`
 }
 
 var clusterReplicaQuery = NewBaseQuery(`
@@ -116,15 +117,18 @@ var clusterReplicaQuery = NewBaseQuery(`
 		mz_cluster_replicas.name AS replica_name,
 		mz_clusters.name AS cluster_name,
 		mz_cluster_replicas.size,
-		mz_cluster_replicas.availability_zone
+		mz_cluster_replicas.availability_zone,
+		mz_roles.name AS owner_name
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
-		ON mz_cluster_replicas.cluster_id = mz_clusters.id`)
+		ON mz_cluster_replicas.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_cluster_replicas.owner_id = mz_roles.id`)
 
-func ClusterReplicaId(conn *sqlx.DB, replciaName, clusterName string) (string, error) {
+func ClusterReplicaId(conn *sqlx.DB, obj ClusterReplicaStruct) (string, error) {
 	p := map[string]string{
-		"mz_cluster_replicas.name": replciaName,
-		"mz_clusters.name":         clusterName,
+		"mz_cluster_replicas.name": obj.Name,
+		"mz_clusters.name":         obj.ClusterName,
 	}
 	q := clusterReplicaQuery.QueryPredicate(p)
 

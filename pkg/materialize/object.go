@@ -1,6 +1,11 @@
 package materialize
 
-// Any Materialize Object. Will contain name and optionally database and schema
+type ClusterReplicaStruct struct {
+	Name        string
+	ClusterName string
+}
+
+// Any Materialize Database Object. Will contain name and optionally database and schema
 type ObjectSchemaStruct struct {
 	Name         string
 	SchemaName   string

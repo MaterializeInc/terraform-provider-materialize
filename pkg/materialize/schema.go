@@ -14,11 +14,11 @@ type SchemaBuilder struct {
 	databaseName string
 }
 
-func NewSchemaBuilder(conn *sqlx.DB, schemaName, databaseName string) *SchemaBuilder {
+func NewSchemaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SchemaBuilder {
 	return &SchemaBuilder{
 		ddl:          Builder{conn, Schema},
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		schemaName:   obj.Name,
+		databaseName: obj.DatabaseName,
 	}
 }
 
@@ -41,6 +41,7 @@ type SchemaParams struct {
 	SchemaId     sql.NullString `db:"id"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
@@ -49,14 +50,18 @@ var schemaQuery = NewBaseQuery(`
 		mz_schemas.id,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
 		mz_schemas.privileges
-	FROM mz_schemas JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`)
+	FROM mz_schemas
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_schemas.owner_id = mz_roles.id`)
 
-func SchemaId(conn *sqlx.DB, schemaName, databaseName string) (string, error) {
+func SchemaId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_schemas.name":   schemaName,
-		"mz_databases.name": databaseName,
+		"mz_schemas.name":   obj.Name,
+		"mz_databases.name": obj.DatabaseName,
 	}
 	q := schemaQuery.QueryPredicate(p)
 

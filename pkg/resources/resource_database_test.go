@@ -28,11 +28,11 @@ func TestResourceDatabaseCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ip := `WHERE name = 'database'`
+		ip := `WHERE mz_databases.name = 'database'`
 		testhelpers.MockDatabaseScan(mock, ip)
 
 		// Query Params
-		pp := `WHERE id = 'u1'`
+		pp := `WHERE mz_databases.id = 'u1'`
 		testhelpers.MockDatabaseScan(mock, pp)
 
 		if err := databaseCreate(context.TODO(), d, db); err != nil {

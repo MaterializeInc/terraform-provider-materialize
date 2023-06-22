@@ -14,7 +14,8 @@ func TestViewCreate(t *testing.T) {
 			`CREATE VIEW "database"."schema"."view" AS SELECT 1 FROM t1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewViewBuilder(db, "view", "schema", "database")
+		o := ObjectSchemaStruct{Name: "view", SchemaName: "schema", DatabaseName: "database"}
+		b := NewViewBuilder(db, o)
 		b.SelectStmt("SELECT 1 FROM t1")
 
 		if err := b.Create(); err != nil {
@@ -29,7 +30,8 @@ func TestViewRename(t *testing.T) {
 			`ALTER VIEW "database"."schema"."view" RENAME TO "new_view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewViewBuilder(db, "view", "schema", "database").Rename("new_view"); err != nil {
+		o := ObjectSchemaStruct{Name: "view", SchemaName: "schema", DatabaseName: "database"}
+		if err := NewViewBuilder(db, o).Rename("new_view"); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -41,7 +43,8 @@ func TestViewDrop(t *testing.T) {
 			`DROP VIEW "database"."schema"."view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewViewBuilder(db, "view", "schema", "database").Drop(); err != nil {
+		o := ObjectSchemaStruct{Name: "view", SchemaName: "schema", DatabaseName: "database"}
+		if err := NewViewBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})

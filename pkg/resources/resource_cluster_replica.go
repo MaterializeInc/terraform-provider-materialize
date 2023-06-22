@@ -47,6 +47,7 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"ownership_role": OwnershipRole(),
 }
 
 func ClusterReplica() *schema.Resource {
@@ -94,6 +95,10 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -101,7 +106,8 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
+	o := materialize.ClusterReplicaStruct{Name: replicaName, ClusterName: clusterName}
+	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("size"); ok {
 		b.Size(v.(string))
@@ -129,7 +135,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	// set id
-	i, err := materialize.ClusterReplicaId(meta.(*sqlx.DB), replicaName, clusterName)
+	i, err := materialize.ClusterReplicaId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -142,7 +148,8 @@ func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), replicaName, clusterName)
+	o := materialize.ClusterReplicaStruct{Name: replicaName, ClusterName: clusterName}
+	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

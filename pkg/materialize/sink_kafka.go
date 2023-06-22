@@ -36,10 +36,10 @@ type SinkKafkaBuilder struct {
 	snapshot        bool
 }
 
-func NewSinkKafkaBuilder(conn *sqlx.DB, sinkName, schemaName, databaseName string) *SinkKafkaBuilder {
+func NewSinkKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SinkKafkaBuilder {
 	b := Builder{conn, BaseSink}
 	return &SinkKafkaBuilder{
-		Sink: Sink{b, sinkName, schemaName, databaseName},
+		Sink: Sink{b, obj.Name, obj.SchemaName, obj.DatabaseName},
 	}
 }
 

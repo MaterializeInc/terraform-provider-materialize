@@ -14,7 +14,8 @@ func TestClusterReplicaCreate(t *testing.T) {
 			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewClusterReplicaBuilder(db, "replica", "cluster")
+		o := ClusterReplicaStruct{Name: "replica", ClusterName: "cluster"}
+		b := NewClusterReplicaBuilder(db, o)
 		b.Size("xsmall")
 		b.AvailabilityZone("us-east-1")
 		b.IntrospectionInterval("1s")
@@ -31,7 +32,8 @@ func TestClusterReplicaDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CLUSTER REPLICA "cluster"."replica";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewClusterReplicaBuilder(db, "replica", "cluster").Drop(); err != nil {
+		o := ClusterReplicaStruct{Name: "replica", ClusterName: "cluster"}
+		if err := NewClusterReplicaBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})

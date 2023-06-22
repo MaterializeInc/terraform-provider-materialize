@@ -49,12 +49,12 @@ type Type struct {
 	mapProperties  []MapProperties
 }
 
-func NewTypeBuilder(conn *sqlx.DB, typeName, schemaName, databaseName string) *Type {
+func NewTypeBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *Type {
 	return &Type{
 		ddl:          Builder{conn, BaseType},
-		typeName:     typeName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		typeName:     obj.Name,
+		schemaName:   obj.SchemaName,
+		databaseName: obj.DatabaseName,
 	}
 }
 
@@ -112,6 +112,7 @@ type TypeParams struct {
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
 	Category     sql.NullString `db:"category"`
+	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
@@ -122,18 +123,21 @@ var typeQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_types.category,
+		mz_roles.name AS owner_name,
 		mz_types.privileges
 	FROM mz_types
 	JOIN mz_schemas
 		ON mz_types.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`)
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_types.owner_id = mz_roles.id`)
 
-func TypeId(conn *sqlx.DB, typeName, schemaName, databaseName string) (string, error) {
+func TypeId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_types.name":     typeName,
-		"mz_schemas.name":   schemaName,
-		"mz_databases.name": databaseName,
+		"mz_types.name":     obj.Name,
+		"mz_schemas.name":   obj.SchemaName,
+		"mz_databases.name": obj.DatabaseName,
 	}
 	q := typeQuery.QueryPredicate(p)
 

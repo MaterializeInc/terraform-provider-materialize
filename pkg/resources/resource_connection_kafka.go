@@ -60,9 +60,10 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		RequiredWith: []string{"sasl_username", "sasl_password"},
 		ForceNew:     true,
 	},
-	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
-	"sasl_password": IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
-	"ssh_tunnel":    IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
+	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
+	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
+	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
+	"ownership_role": OwnershipRole(),
 }
 
 func ConnectionKafka() *schema.Resource {
@@ -87,7 +88,8 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionKafkaBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewConnectionKafkaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
 		brokers := materialize.GetKafkaBrokersStruct(databaseName, schemaName, v)
@@ -137,8 +139,17 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.ConnectionId(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	i, err := materialize.ConnectionId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
