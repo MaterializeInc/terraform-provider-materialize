@@ -1,15 +1,11 @@
 package materialize
 
-type ClusterReplicaStruct struct {
-	Name        string
-	ClusterName string
-}
-
 // Any Materialize Database Object. Will contain name and optionally database and schema
 type ObjectSchemaStruct struct {
 	Name         string
 	SchemaName   string
 	DatabaseName string
+	ClusterName  string
 }
 
 func GetObjectSchemaStruct(v interface{}) ObjectSchemaStruct {
@@ -31,12 +27,16 @@ func GetObjectSchemaStruct(v interface{}) ObjectSchemaStruct {
 func (g *ObjectSchemaStruct) QualifiedName() string {
 	fields := []string{}
 
-	if g.DatabaseName != "" {
-		fields = append(fields, g.DatabaseName)
-	}
+	if g.ClusterName != "" {
+		fields = append(fields, g.ClusterName)
+	} else {
+		if g.DatabaseName != "" {
+			fields = append(fields, g.DatabaseName)
+		}
 
-	if g.SchemaName != "" {
-		fields = append(fields, g.SchemaName)
+		if g.SchemaName != "" {
+			fields = append(fields, g.SchemaName)
+		}
 	}
 
 	fields = append(fields, g.Name)

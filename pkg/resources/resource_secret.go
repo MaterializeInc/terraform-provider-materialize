@@ -96,6 +96,15 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SECRET", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.SecretId(meta.(*sqlx.DB), o)
 	if err != nil {

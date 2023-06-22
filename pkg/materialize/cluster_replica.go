@@ -20,7 +20,7 @@ type ClusterReplicaBuilder struct {
 	idleArrangementMergeEffort int
 }
 
-func NewClusterReplicaBuilder(conn *sqlx.DB, obj ClusterReplicaStruct) *ClusterReplicaBuilder {
+func NewClusterReplicaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ClusterReplicaBuilder {
 	return &ClusterReplicaBuilder{
 		ddl:         Builder{conn, ClusterReplica},
 		replicaName: obj.Name,
@@ -125,7 +125,7 @@ var clusterReplicaQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_cluster_replicas.owner_id = mz_roles.id`)
 
-func ClusterReplicaId(conn *sqlx.DB, obj ClusterReplicaStruct) (string, error) {
+func ClusterReplicaId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
 		"mz_cluster_replicas.name": obj.Name,
 		"mz_clusters.name":         obj.ClusterName,

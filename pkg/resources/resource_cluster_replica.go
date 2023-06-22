@@ -56,6 +56,7 @@ func ClusterReplica() *schema.Resource {
 
 		CreateContext: clusterReplicaCreate,
 		ReadContext:   clusterReplicaRead,
+		UpdateContext: clusterReplicaUpdate,
 		DeleteContext: clusterReplicaDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -106,7 +107,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	o := materialize.ClusterReplicaStruct{Name: replicaName, ClusterName: clusterName}
+	o := materialize.ObjectSchemaStruct{Name: replicaName, ClusterName: clusterName}
 	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("size"); ok {
@@ -134,6 +135,15 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER REPLICA", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.ClusterReplicaId(meta.(*sqlx.DB), o)
 	if err != nil {
@@ -144,11 +154,29 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return clusterReplicaRead(ctx, d, meta)
 }
 
+func clusterReplicaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	replicaName := d.Get("name").(string)
+	clusterName := d.Get("cluster_name").(string)
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+
+		o := materialize.ObjectSchemaStruct{Name: replicaName, ClusterName: clusterName}
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER REPLICA", o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return clusterReplicaRead(ctx, d, meta)
+}
+
 func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	o := materialize.ClusterReplicaStruct{Name: replicaName, ClusterName: clusterName}
+	o := materialize.ObjectSchemaStruct{Name: replicaName, ClusterName: clusterName}
 	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
