@@ -82,7 +82,8 @@ func testAccCheckGrantClusterExists(grantName, roleName, clusterName, privilege 
 			return fmt.Errorf("grant not found")
 		}
 
-		id, err := materialize.ClusterId(db, clusterName)
+		o := materialize.ObjectSchemaStruct{Name: clusterName}
+		id, err := materialize.ClusterId(db, o)
 		if err != nil {
 			return err
 		}

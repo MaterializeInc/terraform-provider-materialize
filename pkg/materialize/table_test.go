@@ -14,7 +14,8 @@ func TestTableCreate(t *testing.T) {
 			`CREATE TABLE "database"."schema"."table" \(column_1 int, column_2 text NOT NULL\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewTableBuilder(db, "table", "schema", "database")
+		o := ObjectSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
+		b := NewTableBuilder(db, o)
 		b.Column([]TableColumn{
 			{
 				ColName: "column_1",
@@ -39,7 +40,8 @@ func TestTableRename(t *testing.T) {
 			`ALTER TABLE "database"."schema"."table" RENAME TO "new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewTableBuilder(db, "table", "schema", "database").Rename("new_table"); err != nil {
+		o := ObjectSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
+		if err := NewTableBuilder(db, o).Rename("new_table"); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -51,7 +53,8 @@ func TestTableDrop(t *testing.T) {
 			`DROP TABLE "database"."schema"."table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewTableBuilder(db, "table", "schema", "database").Drop(); err != nil {
+		o := ObjectSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
+		if err := NewTableBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})

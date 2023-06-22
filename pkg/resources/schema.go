@@ -44,6 +44,15 @@ func DatabaseNameSchema(resource string, required bool) *schema.Schema {
 	}
 }
 
+func OwnershipRole() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeString,
+		Description: "The owernship role of the object.",
+		Optional:    true,
+		Computed:    true,
+	}
+}
+
 func QualifiedNameSchema(resource string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,

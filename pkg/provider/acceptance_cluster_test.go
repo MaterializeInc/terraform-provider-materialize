@@ -13,16 +13,51 @@ import (
 
 func TestAccCluster_basic(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(clusterName),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "ownership_role", "mz_system"),
+					testAccCheckClusterExists("materialize_cluster.test_role"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_role", "name", cluster2Name),
+					resource.TestCheckResourceAttr("materialize_cluster.test_role", "ownership_role", roleName),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCluster_update(t *testing.T) {
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
+	oldClusterName := fmt.Sprintf("old_%s", slug)
+	newClusterName := fmt.Sprintf("new_%s", slug)
+	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system"),
+			},
+			{
+				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists("materialize_cluster.test"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "ownership_role", "mz_system"),
+					testAccCheckClusterExists("materialize_cluster.test_role"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_role", "name", cluster2Name),
+					resource.TestCheckResourceAttr("materialize_cluster.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -31,13 +66,15 @@ func TestAccCluster_basic(t *testing.T) {
 
 func TestAccCluster_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(clusterName),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					testAccCheckClusterDisappears(clusterName),
@@ -48,12 +85,23 @@ func TestAccCluster_disappears(t *testing.T) {
 	})
 }
 
-func testAccClusterResource(clusterName string) string {
+func testAccClusterResource(roleName, cluster1Name, cluster2Name, cluster2Owner string) string {
 	return fmt.Sprintf(`
-resource "materialize_cluster" "test" {
+resource "materialize_role" "test" {
 	name = "%[1]s"
 }
-`, clusterName)
+
+resource "materialize_cluster" "test" {
+	name = "%[2]s"
+}
+
+resource "materialize_cluster" "test_role" {
+	name = "%[3]s"
+	ownership_role = "%[4]s"
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, cluster1Name, cluster2Name, cluster2Owner)
 }
 
 func testAccCheckClusterExists(name string) resource.TestCheckFunc {

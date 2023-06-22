@@ -198,7 +198,8 @@ func PrivilegeId(conn *sqlx.DB, object PrivilegeObjectStruct, roleId, privilege 
 		id = i
 
 	case "TABLE":
-		i, err := TableId(conn, object.Name, object.SchemaName, object.DatabaseName)
+		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
+		i, err := TableId(conn, o)
 		if err != nil {
 			return "", err
 		}
@@ -247,7 +248,8 @@ func PrivilegeId(conn *sqlx.DB, object PrivilegeObjectStruct, roleId, privilege 
 		id = i
 
 	case "CLUSTER":
-		i, err := ClusterId(conn, object.Name)
+		o := ObjectSchemaStruct{Name: object.Name}
+		i, err := ClusterId(conn, o)
 		if err != nil {
 			return "", err
 		}

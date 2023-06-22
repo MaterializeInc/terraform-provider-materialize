@@ -42,6 +42,7 @@ var tableSchema = map[string]*schema.Schema{
 		MinItems: 1,
 		ForceNew: true,
 	},
+	"ownership_role": OwnershipRole(),
 }
 
 func Table() *schema.Resource {
@@ -86,6 +87,10 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.TableName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
@@ -99,7 +104,8 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewTableBuilder(meta.(*sqlx.DB), tableName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewTableBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("column"); ok {
 		columns := materialize.GetTableColumnStruct(v.([]interface{}))
@@ -111,26 +117,49 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TABLE", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.TableId(meta.(*sqlx.DB), tableName, schemaName, databaseName)
+	i, err := materialize.TableId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	d.SetId(i)
 
 	return tableRead(ctx, d, meta)
 }
 
 func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 
-		b := materialize.NewTableBuilder(meta.(*sqlx.DB), oldName.(string), schemaName, databaseName)
+		o := materialize.ObjectSchemaStruct{Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewTableBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+
+		o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TABLE", o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
@@ -143,7 +172,8 @@ func tableDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Dia
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewTableBuilder(meta.(*sqlx.DB), tableName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewTableBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

@@ -46,6 +46,7 @@ resource "materialize_table" "simple_table" {
 
 - `column` (Block List) Column of the table. (see [below for nested schema](#nestedblock--column))
 - `database_name` (String) The identifier for the table database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the table schema. Defaults to `public`.
 
 ### Read-Only

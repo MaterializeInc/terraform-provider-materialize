@@ -13,10 +13,10 @@ type ClusterBuilder struct {
 	clusterName string
 }
 
-func NewClusterBuilder(conn *sqlx.DB, clusterName string) *ClusterBuilder {
+func NewClusterBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ClusterBuilder {
 	return &ClusterBuilder{
 		ddl:         Builder{conn, Cluster},
-		clusterName: clusterName,
+		clusterName: obj.Name,
 	}
 }
 
@@ -39,13 +39,22 @@ func (b *ClusterBuilder) Drop() error {
 type ClusterParams struct {
 	ClusterId   sql.NullString `db:"id"`
 	ClusterName sql.NullString `db:"name"`
+	OwnerName   sql.NullString `db:"owner_name"`
 	Privileges  sql.NullString `db:"privileges"`
 }
 
-var clusterQuery = NewBaseQuery(`SELECT id, name, privileges FROM mz_clusters`)
+var clusterQuery = NewBaseQuery(`
+	SELECT
+		mz_clusters.id,
+		mz_clusters.name,
+		mz_roles.name AS owner_name,
+		mz_clusters.privileges
+	FROM mz_clusters
+	JOIN mz_roles
+		ON mz_clusters.owner_id = mz_roles.id`)
 
-func ClusterId(conn *sqlx.DB, clusterName string) (string, error) {
-	q := clusterQuery.QueryPredicate(map[string]string{"name": clusterName})
+func ClusterId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+	q := clusterQuery.QueryPredicate(map[string]string{"mz_clusters.name": obj.Name})
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
@@ -56,7 +65,7 @@ func ClusterId(conn *sqlx.DB, clusterName string) (string, error) {
 }
 
 func ScanCluster(conn *sqlx.DB, id string) (ClusterParams, error) {
-	q := clusterQuery.QueryPredicate(map[string]string{"id": id})
+	q := clusterQuery.QueryPredicate(map[string]string{"mz_clusters.id": id})
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
