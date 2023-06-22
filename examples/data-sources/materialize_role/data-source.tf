@@ -1,0 +1,1 @@
+data "materialize_role" "all" {}
