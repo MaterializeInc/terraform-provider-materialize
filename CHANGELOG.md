@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.9 - 2023-06-23
+
+### Features
+
+* Resource type `grants` ([#191](https://github.com/MaterializeInc/terraform-provider-materialize/pull/191), [#205](https://github.com/MaterializeInc/terraform-provider-materialize/pull/205), [#209](https://github.com/MaterializeInc/terraform-provider-materialize/pull/209))
+* Enable resource and data source `roles` [#206](https://github.com/MaterializeInc/terraform-provider-materialize/pull/206)
+* Add attribute `ownership_role` to existing resources ([#208](https://github.com/MaterializeInc/terraform-provider-materialize/pull/208), [#211](https://github.com/MaterializeInc/terraform-provider-materialize/pull/211))
+
+### BugFixes
+
+### Misc
+
 ## 0.0.8 - 2023-06-15
 
 ### Features
