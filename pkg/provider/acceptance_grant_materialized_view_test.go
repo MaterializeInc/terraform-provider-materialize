@@ -106,7 +106,8 @@ func testAccCheckGrantMaterializedViewExists(grantName, roleName, materializedVi
 			return fmt.Errorf("grant not found")
 		}
 
-		id, err := materialize.MaterializedViewId(db, materializedViewName, schemaName, databaseName)
+		o := materialize.ObjectSchemaStruct{Name: materializedViewName, SchemaName: schemaName, DatabaseName: databaseName}
+		id, err := materialize.MaterializedViewId(db, o)
 		if err != nil {
 			return err
 		}

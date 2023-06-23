@@ -47,6 +47,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false),
+	"ownership_role":  OwnershipRole(),
 }
 
 func ConnectionPostgres() *schema.Resource {
@@ -71,7 +72,8 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionPostgresBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewConnectionPostgresBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("connection_type"); ok {
 		b.ConnectionType(v.(string))
@@ -133,8 +135,17 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.ConnectionId(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	i, err := materialize.ConnectionId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

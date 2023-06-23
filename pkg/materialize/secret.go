@@ -16,12 +16,12 @@ type SecretBuilder struct {
 	value        string
 }
 
-func NewSecretBuilder(conn *sqlx.DB, secretName, schemaName, databaseName string) *SecretBuilder {
+func NewSecretBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SecretBuilder {
 	return &SecretBuilder{
 		ddl:          Builder{conn, Secret},
-		secretName:   secretName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		secretName:   obj.Name,
+		schemaName:   obj.SchemaName,
+		databaseName: obj.DatabaseName,
 	}
 }
 
@@ -60,6 +60,7 @@ type SecretParams struct {
 	SecretName   sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
@@ -69,18 +70,21 @@ var secretQuery = NewBaseQuery(`
 		mz_secrets.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
 		mz_secrets.privileges
 	FROM mz_secrets
 	JOIN mz_schemas
 		ON mz_secrets.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`)
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_secrets.owner_id = mz_roles.id`)
 
-func SecretId(conn *sqlx.DB, secretName, schemaName, databaseName string) (string, error) {
+func SecretId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_secrets.name":   secretName,
-		"mz_schemas.name":   schemaName,
-		"mz_databases.name": databaseName,
+		"mz_secrets.name":   obj.Name,
+		"mz_schemas.name":   obj.SchemaName,
+		"mz_databases.name": obj.DatabaseName,
 	}
 	q := secretQuery.QueryPredicate(p)
 

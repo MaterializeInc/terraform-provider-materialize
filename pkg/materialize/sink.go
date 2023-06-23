@@ -13,12 +13,12 @@ type Sink struct {
 	DatabaseName string
 }
 
-func NewSink(conn *sqlx.DB, sinkName, schemaName, databaseName string) *Sink {
+func NewSink(conn *sqlx.DB, obj ObjectSchemaStruct) *Sink {
 	return &Sink{
 		ddl:          Builder{conn, BaseSink},
-		SinkName:     sinkName,
-		SchemaName:   schemaName,
-		DatabaseName: databaseName,
+		SinkName:     obj.Name,
+		SchemaName:   obj.SchemaName,
+		DatabaseName: obj.DatabaseName,
 	}
 }
 func (s *Sink) QualifiedName() string {
@@ -50,6 +50,7 @@ type SinkParams struct {
 	EnvelopeType   sql.NullString `db:"envelope_type"`
 	ConnectionName sql.NullString `db:"connection_name"`
 	ClusterName    sql.NullString `db:"cluster_name"`
+	OwnerName      sql.NullString `db:"owner_name"`
 }
 
 var sinkQuery = NewBaseQuery(`
@@ -62,7 +63,8 @@ var sinkQuery = NewBaseQuery(`
 		mz_sinks.size,
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
-		mz_clusters.name as cluster_name
+		mz_clusters.name as cluster_name,
+		mz_roles.name AS owner_name
 	FROM mz_sinks
 	JOIN mz_schemas
 		ON mz_sinks.schema_id = mz_schemas.id
@@ -71,13 +73,15 @@ var sinkQuery = NewBaseQuery(`
 	LEFT JOIN mz_connections
 		ON mz_sinks.connection_id = mz_connections.id
 	LEFT JOIN mz_clusters
-		ON mz_sinks.cluster_id = mz_clusters.id`)
+		ON mz_sinks.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_sinks.owner_id = mz_roles.id`)
 
-func SinkId(conn *sqlx.DB, sinkName, schemaName, databaseName string) (string, error) {
+func SinkId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_sinks.name":     sinkName,
-		"mz_schemas.name":   schemaName,
-		"mz_databases.name": databaseName,
+		"mz_sinks.name":     obj.Name,
+		"mz_schemas.name":   obj.SchemaName,
+		"mz_databases.name": obj.DatabaseName,
 	}
 	q := sinkQuery.QueryPredicate(p)
 

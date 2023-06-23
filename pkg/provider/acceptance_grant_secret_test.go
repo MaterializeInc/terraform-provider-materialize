@@ -102,7 +102,8 @@ func testAccCheckGrantSecretExists(grantName, roleName, secretName, schemaName, 
 			return fmt.Errorf("grant not found")
 		}
 
-		id, err := materialize.SecretId(db, secretName, schemaName, databaseName)
+		o := materialize.ObjectSchemaStruct{Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
+		id, err := materialize.SecretId(db, o)
 		if err != nil {
 			return err
 		}

@@ -8,13 +8,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var connKafka = ObjectSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"}
+
 func TestConnectionKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker: "localhost:9092",
@@ -37,7 +39,7 @@ func TestConnectionKafkaMultipleBrokersCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092', 'localhost:9093'\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker: "localhost:9092",
@@ -63,7 +65,7 @@ func TestConnectionKafkaSshCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092' USING SSH TUNNEL "database"."schema"."ssh_conn"\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker: "localhost:9092",
@@ -87,7 +89,7 @@ func TestConnectionKafkaBrokersCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092', 'localhost:9093'\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker: "localhost:9092",
@@ -113,7 +115,7 @@ func TestConnectionKafkaBrokersSshCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092' USING SSH TUNNEL "database"."schema"."ssh_conn",'localhost:9093' USING SSH TUNNEL "database"."schema"."ssh_conn"\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker: "localhost:9092",
@@ -140,7 +142,7 @@ func TestConnectionKafkaSslCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET "database"."schema"."ca", SSL CERTIFICATE = SECRET "database"."schema"."cert", SSL KEY = SECRET "database"."schema"."key"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker: "localhost:9092",
@@ -163,7 +165,7 @@ func TestConnectionKafkaAwsPrivatelinkCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9001, AVAILABILITY ZONE 'use1-az1'\), 'b-1.hostname-1:9097' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9002, AVAILABILITY ZONE 'use1-az2'\)\), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewConnectionKafkaBuilder(db, "kafka_conn", "schema", "database")
+		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
 				Broker:                "b-1.hostname-1:9096",

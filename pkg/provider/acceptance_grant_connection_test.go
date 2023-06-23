@@ -104,7 +104,8 @@ func testAccCheckGrantConnectionExists(grantName, roleName, connectionName, sche
 			return fmt.Errorf("grant not found")
 		}
 
-		id, err := materialize.ConnectionId(db, connectionName, schemaName, databaseName)
+		o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+		id, err := materialize.ConnectionId(db, o)
 		if err != nil {
 			return err
 		}

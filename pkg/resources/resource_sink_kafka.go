@@ -80,6 +80,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Default:     true,
 	},
+	"ownership_role": OwnershipRole(),
 }
 
 func SinkKafka() *schema.Resource {
@@ -104,7 +105,8 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewSinkKafkaBuilder(meta.(*sqlx.DB), sinkName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSinkKafkaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
@@ -152,8 +154,17 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SINK", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.SinkId(meta.(*sqlx.DB), sinkName, schemaName, databaseName)
+	i, err := materialize.SinkId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -45,10 +45,10 @@ type ConnectionKafkaBuilder struct {
 	kafkaSSHTunnel      IdentifierSchemaStruct
 }
 
-func NewConnectionKafkaBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionKafkaBuilder {
+func NewConnectionKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionKafkaBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionKafkaBuilder{
-		Connection: Connection{b, connectionName, schemaName, databaseName},
+		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},
 	}
 }
 

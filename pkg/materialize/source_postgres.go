@@ -17,10 +17,10 @@ type SourcePostgresBuilder struct {
 	table              []TableStruct
 }
 
-func NewSourcePostgresBuilder(conn *sqlx.DB, sourceName, schemaName, databaseName string) *SourcePostgresBuilder {
+func NewSourcePostgresBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourcePostgresBuilder {
 	b := Builder{conn, BaseSource}
 	return &SourcePostgresBuilder{
-		Source: Source{b, sourceName, schemaName, databaseName},
+		Source: Source{b, obj.Name, obj.SchemaName, obj.DatabaseName},
 	}
 }
 

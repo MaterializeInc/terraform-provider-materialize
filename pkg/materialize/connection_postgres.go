@@ -23,10 +23,10 @@ type ConnectionPostgresBuilder struct {
 	postgresAWSPrivateLink IdentifierSchemaStruct
 }
 
-func NewConnectionPostgresBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionPostgresBuilder {
+func NewConnectionPostgresBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionPostgresBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionPostgresBuilder{
-		Connection: Connection{b, connectionName, schemaName, databaseName},
+		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},
 	}
 }
 

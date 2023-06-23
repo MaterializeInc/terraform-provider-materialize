@@ -16,12 +16,12 @@ type ViewBuilder struct {
 	selectStmt   string
 }
 
-func NewViewBuilder(conn *sqlx.DB, viewName, schemaName, databaseName string) *ViewBuilder {
+func NewViewBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ViewBuilder {
 	return &ViewBuilder{
 		ddl:          Builder{conn, View},
-		viewName:     viewName,
-		schemaName:   schemaName,
-		databaseName: databaseName,
+		viewName:     obj.Name,
+		schemaName:   obj.SchemaName,
+		databaseName: obj.DatabaseName,
 	}
 }
 
@@ -55,6 +55,7 @@ type ViewParams struct {
 	ViewName     sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
@@ -64,18 +65,21 @@ var viewQuery = NewBaseQuery(`
 		mz_views.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_roles.name AS owner_name,
 		mz_views.privileges
 	FROM mz_views
 	JOIN mz_schemas
 		ON mz_views.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`)
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_views.owner_id = mz_roles.id`)
 
-func ViewId(conn *sqlx.DB, viewName, schemaName, databaseName string) (string, error) {
+func ViewId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_views.name":     viewName,
-		"mz_schemas.name":   schemaName,
-		"mz_databases.name": databaseName,
+		"mz_views.name":     obj.Name,
+		"mz_schemas.name":   obj.SchemaName,
+		"mz_databases.name": obj.DatabaseName,
 	}
 	q := viewQuery.QueryPredicate(p)
 

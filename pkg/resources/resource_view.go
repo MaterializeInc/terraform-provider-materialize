@@ -22,6 +22,7 @@ var viewSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"ownership_role": OwnershipRole(),
 }
 
 func View() *schema.Resource {
@@ -66,6 +67,10 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.ViewName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
@@ -79,7 +84,8 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewViewBuilder(meta.(*sqlx.DB), viewName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
 		b.SelectStmt(v.(string))
@@ -90,8 +96,17 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "VIEW", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.ViewId(meta.(*sqlx.DB), viewName, schemaName, databaseName)
+	i, err := materialize.ViewId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,15 +116,28 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	viewName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
 	if d.HasChange("name") {
 		oldViewName, newViewName := d.GetChange("name")
 
-		b := materialize.NewViewBuilder(meta.(*sqlx.DB), oldViewName.(string), schemaName, databaseName)
+		o := materialize.ObjectSchemaStruct{Name: oldViewName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Rename(newViewName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+
+		o := materialize.ObjectSchemaStruct{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "VIEW", o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
@@ -122,7 +150,8 @@ func viewDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewViewBuilder(meta.(*sqlx.DB), viewName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

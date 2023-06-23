@@ -27,6 +27,7 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false),
 	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false),
 	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
+	"ownership_role":            OwnershipRole(),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {
@@ -51,7 +52,8 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	b := materialize.NewConnectionConfluentSchemaRegistryBuilder(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewConnectionConfluentSchemaRegistryBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("url"); ok {
 		b.ConfluentSchemaRegistryUrl(v.(string))
@@ -97,8 +99,17 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
-	i, err := materialize.ConnectionId(meta.(*sqlx.DB), connectionName, schemaName, databaseName)
+	i, err := materialize.ConnectionId(meta.(*sqlx.DB), o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

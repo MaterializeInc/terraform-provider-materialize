@@ -12,7 +12,8 @@ func TestDatabaseCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE DATABASE "database";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewDatabaseBuilder(db, "database").Create(); err != nil {
+		o := ObjectSchemaStruct{Name: "database"}
+		if err := NewDatabaseBuilder(db, o).Create(); err != nil {
 			t.Fatal(err)
 		}
 	})

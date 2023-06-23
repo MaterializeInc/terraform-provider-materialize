@@ -25,6 +25,10 @@ resource "materialize_database" "example_database" {
 
 - `name` (String) The identifier for the database.
 
+### Optional
+
+- `ownership_role` (String) The owernship role of the object.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

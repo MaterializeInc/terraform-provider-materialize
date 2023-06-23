@@ -19,10 +19,10 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	confluentSchemaRegistryAWSPrivateLink IdentifierSchemaStruct
 }
 
-func NewConnectionConfluentSchemaRegistryBuilder(conn *sqlx.DB, connectionName, schemaName, databaseName string) *ConnectionConfluentSchemaRegistryBuilder {
+func NewConnectionConfluentSchemaRegistryBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionConfluentSchemaRegistryBuilder{
-		Connection: Connection{b, connectionName, schemaName, databaseName},
+		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},
 	}
 }
 

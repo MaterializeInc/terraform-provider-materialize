@@ -104,7 +104,8 @@ func testAccCheckGrantTypeExists(grantName, roleName, typeName, schemaName, data
 			return fmt.Errorf("grant not found")
 		}
 
-		id, err := materialize.TypeId(db, typeName, schemaName, databaseName)
+		o := materialize.ObjectSchemaStruct{Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+		id, err := materialize.TypeId(db, o)
 		if err != nil {
 			return err
 		}

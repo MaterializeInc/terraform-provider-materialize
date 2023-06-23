@@ -8,12 +8,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var secret = ObjectSchemaStruct{Name: "secret", SchemaName: "schema", DatabaseName: "database"}
+
 func TestSecretCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SECRET "database"."schema"."secret" AS 'c2VjcmV0Cg';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
-		b := NewSecretBuilder(db, "secret", "schema", "database")
+
+		b := NewSecretBuilder(db, secret)
 		b.Value(`c2VjcmV0Cg`)
 
 		if err := b.Create(); err != nil {
@@ -28,7 +31,7 @@ func TestSecretCreateEscapedValue(t *testing.T) {
 			`CREATE SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cg';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewSecretBuilder(db, "secret", "schema", "database")
+		b := NewSecretBuilder(db, secret)
 		b.Value(`c2Vjcm'V0Cg`)
 
 		if err := b.Create(); err != nil {
@@ -43,7 +46,7 @@ func TestSecretRename(t *testing.T) {
 			`ALTER SECRET "database"."schema"."secret" RENAME TO "new_secret";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewSecretBuilder(db, "secret", "schema", "database")
+		b := NewSecretBuilder(db, secret)
 
 		if err := b.Rename("new_secret"); err != nil {
 			t.Fatal(err)
@@ -57,7 +60,7 @@ func TestSecretUpdateValue(t *testing.T) {
 			`ALTER SECRET "database"."schema"."secret" AS 'c2VjcmV0Cgdd';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewSecretBuilder(db, "secret", "schema", "database")
+		b := NewSecretBuilder(db, secret)
 
 		if err := b.UpdateValue(`c2VjcmV0Cgdd`); err != nil {
 			t.Fatal(err)
@@ -71,7 +74,7 @@ func TestSecretUpdateEscapedValue(t *testing.T) {
 			`ALTER SECRET "database"."schema"."secret" AS 'c2Vjcm''V0Cgdd';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewSecretBuilder(db, "secret", "schema", "database")
+		b := NewSecretBuilder(db, secret)
 
 		if err := b.UpdateValue(`c2Vjcm'V0Cgdd`); err != nil {
 			t.Fatal(err)
@@ -85,7 +88,7 @@ func TestSecretDrop(t *testing.T) {
 			`DROP SECRET "database"."schema"."secret";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewSecretBuilder(db, "secret", "schema", "database").Drop(); err != nil {
+		if err := NewSecretBuilder(db, secret).Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})

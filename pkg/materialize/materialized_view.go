@@ -17,12 +17,12 @@ type MaterializedViewBuilder struct {
 	selectStmt           string
 }
 
-func NewMaterializedViewBuilder(conn *sqlx.DB, materializedViewName, schemaName, databaseName string) *MaterializedViewBuilder {
+func NewMaterializedViewBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *MaterializedViewBuilder {
 	return &MaterializedViewBuilder{
 		ddl:                  Builder{conn, MaterializedView},
-		materializedViewName: materializedViewName,
-		schemaName:           schemaName,
-		databaseName:         databaseName,
+		materializedViewName: obj.Name,
+		schemaName:           obj.SchemaName,
+		databaseName:         obj.DatabaseName,
 	}
 }
 
@@ -70,6 +70,7 @@ type MaterializedViewParams struct {
 	SchemaName           sql.NullString `db:"schema_name"`
 	DatabaseName         sql.NullString `db:"database_name"`
 	Cluster              sql.NullString `db:"cluster_name"`
+	OwnerName            sql.NullString `db:"owner_name"`
 	Privileges           sql.NullString `db:"privileges"`
 }
 
@@ -80,6 +81,7 @@ var materializedViewQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_clusters.name AS cluster_name,
+		mz_roles.name AS owner_name,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
 	JOIN mz_schemas
@@ -87,13 +89,15 @@ var materializedViewQuery = NewBaseQuery(`
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	LEFT JOIN mz_clusters
-		ON mz_materialized_views.cluster_id = mz_clusters.id`)
+		ON mz_materialized_views.cluster_id = mz_clusters.id
+	JOIN mz_roles
+		ON mz_materialized_views.owner_id = mz_roles.id`)
 
-func MaterializedViewId(conn *sqlx.DB, materializedViewName, schemaName, databaseName string) (string, error) {
+func MaterializedViewId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
 	p := map[string]string{
-		"mz_materialized_views.name": materializedViewName,
-		"mz_schemas.name":            schemaName,
-		"mz_databases.name":          databaseName,
+		"mz_materialized_views.name": obj.Name,
+		"mz_schemas.name":            obj.SchemaName,
+		"mz_databases.name":          obj.DatabaseName,
 	}
 	q := materializedViewQuery.QueryPredicate(p)
 
