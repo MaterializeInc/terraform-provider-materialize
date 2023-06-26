@@ -45,6 +45,7 @@ type SourceKafkaBuilder struct {
 	primaryKey       []string
 	startOffset      []int
 	startTimestamp   int
+	exposeProgress   string
 }
 
 func NewSourceKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourceKafkaBuilder {
@@ -131,6 +132,11 @@ func (b *SourceKafkaBuilder) StartOffset(s []int) *SourceKafkaBuilder {
 
 func (b *SourceKafkaBuilder) StartTimestamp(s int) *SourceKafkaBuilder {
 	b.startTimestamp = s
+	return b
+}
+
+func (b *SourceKafkaBuilder) ExposeProgress(s string) *SourceKafkaBuilder {
+	b.exposeProgress = s
 	return b
 }
 
@@ -334,6 +340,10 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.envelope.None {
 		q.WriteString(` ENVELOPE NONE`)
+	}
+
+	if b.exposeProgress != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress))
 	}
 
 	if b.size != "" {

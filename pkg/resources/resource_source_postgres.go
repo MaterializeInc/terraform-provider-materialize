@@ -67,6 +67,12 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		MinItems: 1,
 		ForceNew: true,
 	},
+	"expose_progress": {
+		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"ownership_role": OwnershipRole(),
 }
 
@@ -115,6 +121,10 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	if v, ok := d.GetOk("table"); ok {
 		tables := materialize.GetTableStruct(v.([]interface{}))
 		b.Table(tables)
+	}
+
+	if v, ok := d.GetOk("expose_progress"); ok {
+		b.ExposeProgress(v.(string))
 	}
 
 	if v, ok := d.GetOk("textColumns"); ok {
