@@ -31,6 +31,7 @@ func TestAccTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
 					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),

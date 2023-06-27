@@ -14,13 +14,15 @@ import (
 
 func TestAccConnKafka_basic(t *testing.T) {
 	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connection2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConnKafkaResource(connectionName),
+				Config: testAccConnKafkaResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "name", connectionName),
@@ -29,6 +31,10 @@ func TestAccConnKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ownership_role", "mz_system"),
+					testAccCheckConnKafkaExists("materialize_connection_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "name", connection2Name),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -39,22 +45,26 @@ func TestAccConnKafka_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connectionName := fmt.Sprintf("old_%s", slug)
 	newConnectionName := fmt.Sprintf("new_%s", slug)
+	connection2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConnKafkaResource(connectionName),
+				Config: testAccConnKafkaResource(roleName, connectionName, connection2Name, "mz_system"),
 			},
 			{
-				Config: testAccConnKafkaResource(newConnectionName),
+				Config: testAccConnKafkaResource(roleName, newConnectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "name", newConnectionName),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newConnectionName)),
+					testAccCheckConnKafkaExists("materialize_connection_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -63,13 +73,15 @@ func TestAccConnKafka_update(t *testing.T) {
 
 func TestAccConnKafka_disappears(t *testing.T) {
 	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connection2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllConnKafkaDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConnKafkaResource(connectionName),
+				Config: testAccConnKafkaResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					testAccCheckConnKafkaDisappears(connectionName),
@@ -80,15 +92,29 @@ func TestAccConnKafka_disappears(t *testing.T) {
 	})
 }
 
-func testAccConnKafkaResource(name string) string {
+func testAccConnKafkaResource(roleName, connectionName, connection2Name, connectionOwner string) string {
 	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%[1]s"
+}
+
 resource "materialize_connection_kafka" "test" {
-	name = "%s"
+	name = "%[2]s"
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
 }
-`, name)
+
+resource "materialize_connection_kafka" "test_role" {
+	name = "%[3]s"
+	kafka_broker {
+		broker = "redpanda:9092"
+	}
+	ownership_role = "%[4]s"
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, connectionName, connection2Name, connectionOwner)
 }
 
 func testAccCheckConnKafkaExists(name string) resource.TestCheckFunc {

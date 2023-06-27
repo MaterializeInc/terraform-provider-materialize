@@ -14,16 +14,22 @@ import (
 
 func TestAccDatabase_basic(t *testing.T) {
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	database2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatabaseResource(databaseName),
+				Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatabaseExists("materialize_database.test"),
 					resource.TestCheckResourceAttr("materialize_database.test", "name", databaseName),
+					resource.TestCheckResourceAttr("materialize_database.test", "ownership_role", "mz_system"),
+					testAccCheckDatabaseExists("materialize_database.test_role"),
+					resource.TestCheckResourceAttr("materialize_database.test_role", "name", database2Name),
+					resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -32,13 +38,15 @@ func TestAccDatabase_basic(t *testing.T) {
 
 func TestAccDatabase_disappears(t *testing.T) {
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	database2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllDatabasesDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatabaseResource(databaseName),
+				Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatabaseExists("materialize_database.test"),
 					testAccCheckDatabaseDisappears(databaseName),
@@ -49,12 +57,23 @@ func TestAccDatabase_disappears(t *testing.T) {
 	})
 }
 
-func testAccDatabaseResource(name string) string {
+func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner string) string {
 	return fmt.Sprintf(`
-resource "materialize_database" "test" {
-	name = "%s"
+resource "materialize_role" "test" {
+	name = "%[1]s"
 }
-`, name)
+
+resource "materialize_database" "test" {
+	name = "%[2]s"
+}
+
+resource "materialize_database" "test_role" {
+	name = "%[3]s"
+	ownership_role = "%[4]s"
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, databaseName, databse2Name, databaseOwner)
 }
 
 func testAccCheckDatabaseExists(name string) resource.TestCheckFunc {

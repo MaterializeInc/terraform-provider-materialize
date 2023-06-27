@@ -13,8 +13,10 @@ import (
 )
 
 func TestAccSinkKafka_basic(t *testing.T) {
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	sinkName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sink2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -22,7 +24,7 @@ func TestAccSinkKafka_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSinkKafkaResource(connName, sinkName, tableName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "name", sinkName),
@@ -32,6 +34,10 @@ func TestAccSinkKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "topic", "sink_topic"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "envelope.0.debezium", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.json", "true"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "ownership_role", "mz_system"),
+					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "name", sink2Name),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -40,20 +46,22 @@ func TestAccSinkKafka_basic(t *testing.T) {
 
 func TestAccSinkKafka_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
-	connName := fmt.Sprintf("conn_%s", slug)
-	tableName := fmt.Sprintf("table_%s", slug)
 	sinkName := fmt.Sprintf("old_%s", slug)
 	newSinkName := fmt.Sprintf("new_%s", slug)
+	sink2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSinkKafkaResource(connName, sinkName, tableName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, "mz_system"),
 			},
 			{
-				Config: testAccSinkKafkaResource(connName, newSinkName, tableName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, newSinkName, sink2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "name", newSinkName),
@@ -63,6 +71,8 @@ func TestAccSinkKafka_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "topic", "sink_topic"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "envelope.0.debezium", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.json", "true"),
+					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -71,6 +81,8 @@ func TestAccSinkKafka_update(t *testing.T) {
 
 func TestAccSinkKafka_disappears(t *testing.T) {
 	sinkName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sink2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -79,7 +91,7 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSinkKafkaDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSinkKafkaResource(connName, sinkName, tableName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					testAccCheckSinkKafkaDisappears(sinkName),
@@ -90,17 +102,21 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 	})
 }
 
-func testAccSinkKafkaResource(connName string, sinkName string, tableName string) string {
+func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, sinkOwner string) string {
 	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%[1]s"
+}
+
 resource "materialize_connection_kafka" "test" {
-	name = "%s"
+	name = "%[2]s"
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
 }
 
 resource "materialize_table" "test" {
-	name = "%s"
+	name = "%[3]s"
 	column {
 		name = "column_1"
 		type = "text"
@@ -117,7 +133,7 @@ resource "materialize_table" "test" {
 }
 
 resource "materialize_sink_kafka" "test" {
-	name = "%s"
+	name = "%[4]s"
 	kafka_connection {
 		name = materialize_connection_kafka.test.name
 	}
@@ -133,7 +149,28 @@ resource "materialize_sink_kafka" "test" {
 		debezium = true
 	}
 }
-`, connName, tableName, sinkName)
+
+resource "materialize_sink_kafka" "test_role" {
+	name = "%[5]s"
+	kafka_connection {
+		name = materialize_connection_kafka.test.name
+	}
+	from {
+		name = materialize_table.test.name
+	}
+	size  = "1"
+	topic = "sink_topic"
+	format {
+		json = true
+	}
+	envelope {
+		debezium = true
+	}
+	ownership_role = "%[6]s"
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner)
 }
 
 func testAccCheckSinkKafkaExists(name string) resource.TestCheckFunc {
