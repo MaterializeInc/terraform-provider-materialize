@@ -9,6 +9,7 @@ import (
 type BaseQuery struct {
 	statement       string
 	customPredicate []string
+	order           string
 }
 
 func NewBaseQuery(statement string) *BaseQuery {
@@ -17,6 +18,11 @@ func NewBaseQuery(statement string) *BaseQuery {
 
 func (b *BaseQuery) CustomPredicate(c []string) *BaseQuery {
 	b.customPredicate = c
+	return b
+}
+
+func (b *BaseQuery) Order(c string) *BaseQuery {
+	b.order = c
 	return b
 }
 
@@ -41,6 +47,10 @@ func (b *BaseQuery) QueryPredicate(predicate map[string]string) string {
 		sort.Strings(p)
 		f := strings.Join(p, " AND ")
 		q.WriteString(fmt.Sprintf(` WHERE %s`, f))
+	}
+
+	if b.order != "" {
+		q.WriteString(fmt.Sprintf(` ORDER BY %s`, b.order))
 	}
 
 	q.WriteString(";")

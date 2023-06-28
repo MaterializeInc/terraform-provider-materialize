@@ -21,7 +21,7 @@ func GetTableColumnStruct(v []interface{}) []TableColumn {
 		columns = append(columns, TableColumn{
 			ColName: c["name"].(string),
 			ColType: c["type"].(string),
-			NotNull: c["nullable"].(bool),
+			NotNull: !c["nullable"].(bool),
 		})
 	}
 	return columns

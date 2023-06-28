@@ -114,7 +114,7 @@ resource "materialize_table" "test" {
 	}
 	column {
 		name = "column_2"
-		type = "int"
+		type = "integer"
 	}
 	column {
 		name     = "column_3"
