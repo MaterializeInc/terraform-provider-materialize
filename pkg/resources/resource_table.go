@@ -30,6 +30,13 @@ var tableSchema = map[string]*schema.Schema{
 					Description: "The data type of the column indicated by name.",
 					Type:        schema.TypeString,
 					Required:    true,
+					StateFunc: func(val any) string {
+						alias, ok := aliases[val.(string)]
+						if ok {
+							return alias
+						}
+						return val.(string)
+					},
 				},
 				"nullable": {
 					Description: "Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
