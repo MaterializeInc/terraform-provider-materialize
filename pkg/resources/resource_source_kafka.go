@@ -128,6 +128,12 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"expose_progress": {
+		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"ownership_role": OwnershipRole(),
 }
 
@@ -225,6 +231,10 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 	if v, ok := d.GetOk("start_timestamp"); ok {
 		b.StartTimestamp(v.(int))
+	}
+
+	if v, ok := d.GetOk("expose_progress"); ok {
+		b.ExposeProgress(v.(string))
 	}
 
 	// create resource

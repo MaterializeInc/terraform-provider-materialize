@@ -15,6 +15,7 @@ type SourcePostgresBuilder struct {
 	publication        string
 	textColumns        []string
 	table              []TableStruct
+	exposeProgress     string
 }
 
 func NewSourcePostgresBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourcePostgresBuilder {
@@ -54,6 +55,11 @@ func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	return b
 }
 
+func (b *SourcePostgresBuilder) ExposeProgress(e string) *SourcePostgresBuilder {
+	b.exposeProgress = e
+	return b
+}
+
 func (b *SourcePostgresBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
@@ -88,6 +94,10 @@ func (b *SourcePostgresBuilder) Create() error {
 		q.WriteString(`)`)
 	} else {
 		q.WriteString(` FOR ALL TABLES`)
+	}
+
+	if b.exposeProgress != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress))
 	}
 
 	if b.size != "" {
