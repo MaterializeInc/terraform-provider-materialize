@@ -13,24 +13,60 @@ import (
 )
 
 func TestAccSourceLoadGenerator_basic(t *testing.T) {
-	sourceLoadGeneratorName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceLoadGeneratorResource(sourceLoadGeneratorName),
+				Config: testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceLoadGeneratorName),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceLoadGeneratorName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "1"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "COUNTER"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.scale_factor", "0.1"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "ownership_role", "mz_system"),
+					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "name", source2Name),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", roleName),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceLoadGenerator_update(t *testing.T) {
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
+	sourceName := fmt.Sprintf("old_%s", slug)
+	newSourceName := fmt.Sprintf("new_%s", slug)
+	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, "mz_system"),
+			},
+			{
+				Config: testAccSourceLoadGeneratorResource(roleName, newSourceName, source2Name, roleName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", newSourceName),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
+					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -38,25 +74,19 @@ func TestAccSourceLoadGenerator_basic(t *testing.T) {
 }
 
 func TestAccSourceLoadGenerator_disappears(t *testing.T) {
-	sourceLoadGeneratorName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllSourceLoadGeneratorsDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceLoadGeneratorResource(sourceLoadGeneratorName),
+				Config: testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceLoadGeneratorName),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceLoadGeneratorName)),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "1"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "COUNTER"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.scale_factor", "0.1"),
-					testAccCheckSourceLoadGeneratorDisappears(sourceLoadGeneratorName),
+					testAccCheckSourceLoadGeneratorDisappears(sourceName),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -64,10 +94,14 @@ func TestAccSourceLoadGenerator_disappears(t *testing.T) {
 	})
 }
 
-func testAccSourceLoadGeneratorResource(name string) string {
+func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, sourceOwner string) string {
 	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%[1]s"
+}
+
 resource "materialize_source_load_generator" "test" {
-	name = "%s"
+	name = "%[2]s"
 	schema_name = "public"
 	size = "1"
 	load_generator_type = "COUNTER"
@@ -76,7 +110,21 @@ resource "materialize_source_load_generator" "test" {
 		scale_factor        = 0.1
 	}
 }
-`, name)
+
+resource "materialize_source_load_generator" "test_role" {
+	name = "%[3]s"
+	schema_name = "public"
+	size = "1"
+	load_generator_type = "COUNTER"
+	counter_options {
+		tick_interval       = "1000ms"
+		scale_factor        = 0.1
+	}
+	ownership_role = "%[4]s"
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, sourceName, source2Name, sourceOwner)
 }
 
 func testAccCheckSourceLoadGeneratorExists(name string) resource.TestCheckFunc {

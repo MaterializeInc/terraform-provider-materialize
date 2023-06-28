@@ -13,16 +13,17 @@ import (
 )
 
 func TestAccSourceKafka_basic(t *testing.T) {
-	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-
+	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceKafkaResource(connName, sourceName),
+				Config: testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "name", sourceName),
@@ -35,6 +36,10 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.none", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.debezium", "false"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert", "false"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "ownership_role", "mz_system"),
+					testAccCheckSourceKafkaExists("materialize_source_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test_role", "name", source2Name),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -43,20 +48,21 @@ func TestAccSourceKafka_basic(t *testing.T) {
 
 func TestAccSourceKafka_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
-	connName := fmt.Sprintf("conn_%s", slug)
-
 	sourceName := fmt.Sprintf("old_%s", slug)
 	newSourceName := fmt.Sprintf("new_%s", slug)
+	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceKafkaResource(connName, sourceName),
+				Config: testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, "mz_system"),
 			},
 			{
-				Config: testAccSourceKafkaResource(connName, newSourceName),
+				Config: testAccSourceKafkaResource(roleName, connName, newSourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "name", newSourceName),
@@ -69,6 +75,8 @@ func TestAccSourceKafka_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.none", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.debezium", "false"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert", "false"),
+					testAccCheckSourceKafkaExists("materialize_source_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test_role", "ownership_role", roleName),
 				),
 			},
 		},
@@ -77,15 +85,16 @@ func TestAccSourceKafka_update(t *testing.T) {
 
 func TestAccSourceKafka_disappears(t *testing.T) {
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllSourceKafkaDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceKafkaResource(connName, sourceName),
+				Config: testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
 					testAccCheckSourceKafkaDisappears(sourceName),
@@ -96,17 +105,21 @@ func TestAccSourceKafka_disappears(t *testing.T) {
 	})
 }
 
-func testAccSourceKafkaResource(connName string, sourceName string) string {
+func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sourceOwner string) string {
 	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%[1]s"
+}
+
 resource "materialize_connection_kafka" "test" {
-	name = "%s"
+	name = "%[2]s"
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
 }
 
 resource "materialize_source_kafka" "test" {
-	name = "%s"
+	name = "%[3]s"
 	kafka_connection {
 		name = materialize_connection_kafka.test.name
 	}
@@ -123,7 +136,29 @@ resource "materialize_source_kafka" "test" {
 		none = true
 	}
 }
-`, connName, sourceName)
+
+resource "materialize_source_kafka" "test_role" {
+	name = "%[4]s"
+	kafka_connection {
+		name = materialize_connection_kafka.test.name
+	}
+
+	size  = "1"
+	topic = "topic1"
+	key_format {
+		text = true
+	}
+	value_format {
+		text = true
+	}
+	envelope {
+		none = true
+	}
+	ownership_role = "%[5]s"
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, connName, sourceName, source2Name, sourceOwner)
 }
 
 func testAccCheckSourceKafkaExists(name string) resource.TestCheckFunc {

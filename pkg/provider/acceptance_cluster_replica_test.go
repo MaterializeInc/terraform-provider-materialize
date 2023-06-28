@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -31,6 +32,7 @@ func TestAccClusterReplica_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_debugging", "false"),
 					resource.TestCheckNoResourceAttr("materialize_cluster_replica.test", "idle_arrangement_merge_effort"),
+					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "ownership_role", "mz_system"),
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test_role"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test_role", "name", replica2Name),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test_role", "ownership_role", roleName),
@@ -48,7 +50,7 @@ func TestAccClusterReplica_disappears(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
+		CheckDestroy:      testAccCheckAllClusterReplicaDestroyed,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccClusterReplicaResource(roleName, clusterName, replicaName, replica2Name, roleName),
@@ -107,4 +109,23 @@ func testAccCheckClusterReplicaDisappears(clusterName, replicaName string) resou
 		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER REPLICA "%s"."%s";`, clusterName, replicaName))
 		return err
 	}
+}
+
+func testAccCheckAllClusterReplicaDestroyed(s *terraform.State) error {
+	db := testAccProvider.Meta().(*sqlx.DB)
+
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "materialize_cluster_replica" {
+			continue
+		}
+
+		_, err := materialize.ScanClusterReplica(db, r.Primary.ID)
+		if err == nil {
+			return fmt.Errorf("Cluster replica %v still exists", r.Primary.ID)
+		} else if err != sql.ErrNoRows {
+			return err
+		}
+	}
+
+	return nil
 }
