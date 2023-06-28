@@ -27,7 +27,6 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 
 - `cluster_name` (String) The cluster whose resources you want to create an additional computation of.
 - `name` (String) The identifier for the replica.
-- `size` (String) The size of the replica.
 
 ### Optional
 
@@ -36,6 +35,7 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.
+- `size` (String) The size of the replica.
 
 ### Read-Only
 

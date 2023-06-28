@@ -28,6 +28,8 @@ resource "materialize_cluster" "example_cluster" {
 ### Optional
 
 - `ownership_role` (String) The owernship role of the object.
+- `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
+- `size` (String) The size of the cluster.
 
 ### Read-Only
 
