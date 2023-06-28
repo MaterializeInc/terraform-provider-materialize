@@ -15,6 +15,12 @@ import (
 var clusterSchema = map[string]*schema.Schema{
 	"name":           NameSchema("cluster", true, true),
 	"ownership_role": OwnershipRole(),
+	"replication_factor": {
+		Description: "The number of replicas of each dataflow-powered object to maintain.",
+		Type:        schema.TypeInt,
+		Optional:    true,
+	},
+	"size": SizeSchema("cluster"),
 }
 
 func Cluster() *schema.Resource {
@@ -54,6 +60,14 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("replication_factor", s.ReplicationFactor.Int64); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", s.Size.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -62,6 +76,16 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	o := materialize.ObjectSchemaStruct{Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+
+	// replication factor
+	if v, ok := d.GetOk("replication_factor"); ok {
+		b.ReplicationFactor(v.(int))
+
+		// size
+		if v, ok := d.GetOk("size"); ok {
+			b.Size(v.(string))
+		}
+	}
 
 	// create resource
 	if err := b.Create(); err != nil {
