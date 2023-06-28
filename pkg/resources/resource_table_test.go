@@ -27,7 +27,7 @@ func TestResourceTableCreate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))

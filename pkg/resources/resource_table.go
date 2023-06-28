@@ -104,7 +104,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 	var tc []interface{}
 	for _, t := range tableColumns {
-		column := map[string]interface{}{"name": t.Name.String, "type": t.Type.String, "nullable": t.Nullable.Bool}
+		column := map[string]interface{}{"name": t.Name.String, "type": t.Type.String, "nullable": !t.Nullable.Bool}
 		tc = append(tc, column)
 	}
 	if err := d.Set("column", tc); err != nil {
