@@ -64,3 +64,18 @@ var strategy = []string{
 	"ID",
 	"LATEST",
 }
+
+var aliases = map[string]string{
+	"int8":    "bigint",
+	"bool":    "boolean",
+	"float":   "double precision",
+	"float8":  "double precision",
+	"double":  "double precision",
+	"int":     "integer",
+	"int4":    "integer",
+	"json":    "jsonb",
+	"decimal": "numeric",
+	"real":    "float4",
+	"int2":    "smallint",
+	"uint":    "uint4",
+}

@@ -40,6 +40,10 @@ func TestResourceTableCreate(t *testing.T) {
 		pp := `WHERE mz_tables.id = 'u1'`
 		testhelpers.MockTableScan(mock, pp)
 
+		// Query Columns
+		cp := `WHERE mz_columns.id = 'u1'`
+		testhelpers.MockColumnScan(mock, cp)
+
 		if err := tableCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
