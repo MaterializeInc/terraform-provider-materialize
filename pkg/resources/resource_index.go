@@ -65,9 +65,8 @@ var indexSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"default"},
+		Required: true,
+		ForceNew: true,
 	},
 }
 
@@ -121,13 +120,16 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	var ic []interface{}
-	for _, i := range indexColumns {
-		column := map[string]interface{}{"field": i.Name.String}
-		ic = append(ic, column)
-	}
-	if err := d.Set("col_expr", ic); err != nil {
-		return diag.FromErr(err)
+
+	if len(indexColumns) > 0 {
+		var ic []interface{}
+		for _, i := range indexColumns {
+			column := map[string]interface{}{"field": i.Name.String}
+			ic = append(ic, column)
+		}
+		if err := d.Set("col_expr", ic); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return nil

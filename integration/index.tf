@@ -7,6 +7,10 @@ resource "materialize_index" "loadgen_index" {
     schema_name   = materialize_source_load_generator.load_generator_cluster.schema_name
     database_name = materialize_source_load_generator.load_generator_cluster.database_name
   }
+
+  col_expr {
+    field = "counter"
+  }
 }
 
 resource "materialize_index" "materialized_view_index" {
