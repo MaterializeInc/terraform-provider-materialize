@@ -116,6 +116,20 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
+	// Index columns
+	indexColumns, err := materialize.ListIndexColumns(meta.(*sqlx.DB), i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var ic []interface{}
+	for _, i := range indexColumns {
+		column := map[string]interface{}{"field": i.Name.String}
+		ic = append(ic, column)
+	}
+	if err := d.Set("col_expr", ic); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 

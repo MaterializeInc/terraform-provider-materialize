@@ -6,7 +6,38 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ColumnParams struct {
+type TableColumnParams struct {
+	Id       sql.NullString `db:"id"`
+	Name     sql.NullString `db:"name"`
+	Position sql.NullString `db:"position"`
+	Nullable sql.NullBool   `db:"nullable"`
+	Type     sql.NullString `db:"type"`
+	Default  sql.NullString `db:"default"`
+}
+
+var tableColumnQuery = NewBaseQuery(`
+	SELECT
+		mz_columns.id,
+		mz_columns.name,
+		mz_columns.position,
+		mz_columns.nullable,
+		mz_columns.type,
+		mz_columns.default
+	FROM mz_columns`).Order("mz_columns.position")
+
+func ListTableColumns(conn *sqlx.DB, objectId string) ([]TableColumnParams, error) {
+	p := map[string]string{"mz_columns.id": objectId}
+	q := tableColumnQuery.QueryPredicate(p)
+
+	var c []TableColumnParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+type IndexColumnParams struct {
 	Id            sql.NullString `db:"id"`
 	Name          sql.NullString `db:"name"`
 	Position      sql.NullString `db:"position"`
@@ -18,7 +49,7 @@ type ColumnParams struct {
 	IndexId       sql.NullString `db:"index_id"`
 }
 
-var columnQuery = NewBaseQuery(`
+var indexColumnQuery = NewBaseQuery(`
 	SELECT
 		mz_columns.id,
 		mz_columns.name,
@@ -36,11 +67,13 @@ var columnQuery = NewBaseQuery(`
 		ON mz_index_columns.index_id = mz_indexes.id
 		AND mz_index_columns.index_position = mz_columns.position`).Order("mz_columns.position")
 
-func ListColumns(conn *sqlx.DB, objectId string) ([]ColumnParams, error) {
-	p := map[string]string{"mz_columns.id": objectId}
-	q := columnQuery.QueryPredicate(p)
+func ListIndexColumns(conn *sqlx.DB, indexiId string) ([]IndexColumnParams, error) {
+	p := map[string]string{
+		"mz_indexes.id": indexiId,
+	}
+	q := indexColumnQuery.QueryPredicate(p)
 
-	var c []ColumnParams
+	var c []IndexColumnParams
 	if err := conn.Select(&c, q); err != nil {
 		return c, err
 	}

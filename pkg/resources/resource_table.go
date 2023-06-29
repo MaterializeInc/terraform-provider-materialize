@@ -105,7 +105,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// Table columns
-	tableColumns, err := materialize.ListColumns(meta.(*sqlx.DB), i)
+	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), i)
 	if err != nil {
 		return diag.FromErr(err)
 	}
