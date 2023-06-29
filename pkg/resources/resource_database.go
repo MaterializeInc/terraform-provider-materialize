@@ -74,9 +74,8 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "DATABASE", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
-			// drop object if ownership fails
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
 			b.Drop()
-			log.Printf("[DEBUG] drop object: %s", o.Name)
 			return diag.FromErr(err)
 		}
 	}
