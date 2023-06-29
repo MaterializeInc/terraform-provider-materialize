@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -73,6 +74,9 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "DATABASE", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			// drop object if ownership fails
+			b.Drop()
+			log.Printf("[DEBUG] drop object: %s", o.Name)
 			return diag.FromErr(err)
 		}
 	}
