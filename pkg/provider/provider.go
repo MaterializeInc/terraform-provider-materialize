@@ -126,6 +126,7 @@ func connectionString(host, username, password string, port int, database string
 		params = append(params, "sslmode=disable")
 		params = append(params, "enable_rbac_checks=true")
 		params = append(params, "enable_ld_rbac_checks=true")
+		params = append(params, "enable_managed_clusters=true")
 	} else {
 		params = append(params, "sslmode=require")
 	}
