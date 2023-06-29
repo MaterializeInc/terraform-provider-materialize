@@ -160,5 +160,17 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return nil, diags
 	}
 
+	if testing {
+		_, err := db.Exec("ALTER SYSTEM SET enable_managed_clusters = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable managed clusters",
+				Detail:   "Unable to enable managed clusters for authenticated Materialize client",
+			})
+			return nil, diags
+		}
+	}
+
 	return db, diags
 }
