@@ -127,6 +127,30 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		}
 	}
 
+	if d.HasChange("size") {
+		_, newSize := d.GetChange("size")
+
+		o := materialize.ObjectSchemaStruct{Name: clusterName}
+		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Resize(newSize.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+
+	}
+
+	// ResizeReplicationFactor
+	if d.HasChange("replication_factor") {
+		_, newReplicationFactor := d.GetChange("replication_factor")
+
+		o := materialize.ObjectSchemaStruct{Name: clusterName}
+		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.ResizeReplicationFactor(newReplicationFactor.(int)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	return clusterRead(ctx, d, meta)
 }
 

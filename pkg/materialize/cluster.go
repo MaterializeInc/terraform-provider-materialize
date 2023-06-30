@@ -51,6 +51,16 @@ func (b *ClusterBuilder) Drop() error {
 	return b.ddl.drop(qn)
 }
 
+func (b *ClusterBuilder) Resize(newSize string) error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (SIZE '%s');`, b.QualifiedName(), newSize)
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) ResizeReplicationFactor(newReplicationFactor int) error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (REPLICATION FACTOR %d);`, b.QualifiedName(), newReplicationFactor)
+	return b.ddl.exec(q)
+}
+
 // DML
 type ClusterParams struct {
 	ClusterId         sql.NullString `db:"id"`

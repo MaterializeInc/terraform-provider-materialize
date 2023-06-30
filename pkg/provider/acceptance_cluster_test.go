@@ -30,6 +30,9 @@ func TestAccCluster_basic(t *testing.T) {
 					testAccCheckClusterExists("materialize_cluster.test_role"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_role", "name", cluster2Name),
 					resource.TestCheckResourceAttr("materialize_cluster.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "managed", "f"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", ""),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", ""),
 				),
 			},
 		},
@@ -102,6 +105,7 @@ resource "materialize_cluster" "test_role" {
 
 	depends_on = [materialize_role.test]
 }
+
 `, roleName, cluster1Name, cluster2Name, cluster2Owner)
 }
 
