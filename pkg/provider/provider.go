@@ -73,6 +73,7 @@ func Provider() *schema.Provider {
 			"materialize_grant_cluster":                        resources.GrantCluster(),
 			"materialize_grant_connection":                     resources.GrantConnection(),
 			"materialize_grant_database":                       resources.GrantDatabase(),
+			"materialize_grant_default_privilege":              resources.GrantDefaultPrivilege(),
 			"materialize_grant_materialized_view":              resources.GrantMaterializedView(),
 			"materialize_grant_schema":                         resources.GrantSchema(),
 			"materialize_grant_secret":                         resources.GrantSecret(),

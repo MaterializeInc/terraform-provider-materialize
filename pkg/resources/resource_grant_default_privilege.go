@@ -23,7 +23,7 @@ var grantDefaultPrivilegeSchema = map[string]*schema.Schema{
 		Type:         schema.TypeString,
 		Required:     true,
 		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice([]string{"TABLES", "TYPES", "SECRETS", "CONNECTIONS", "DATABASES", "SCHEMAS", "CLUSTERS"}, true),
+		ValidateFunc: validation.StringInSlice([]string{"TABLE", "TYPE", "SECRET", "CONNECTION", "DATABASE", "SCHEMA", "CLUSTER"}, true),
 	},
 	"privilege": {
 		Description: "The privilege to grant to the object.",
@@ -73,8 +73,11 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	ie := strings.Split(i, "|")
 	objType := ie[1]
 	granteeId := ie[2]
+	targetRoleId := ie[3]
+	databaseId := ie[4]
+	schemaId := ie[5]
 
-	s, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), objType, granteeId)
+	s, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), objType, granteeId, targetRoleId, databaseId, schemaId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,16 +99,22 @@ func grantDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, me
 
 	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), objectType, privilege, granteenName)
 
+	var targetRoleName string
 	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
-		b.TargetRole(v.(string))
+		targetRoleName = v.(string)
+		b.TargetRole(targetRoleName)
 	}
 
-	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
-		b.SchemaName(v.(string))
-	}
-
+	var databaseName string
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
-		b.DatabaseName(v.(string))
+		databaseName = v.(string)
+		b.DatabaseName(databaseName)
+	}
+
+	var schemaName string
+	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
+		schemaName = v.(string)
+		b.SchemaName(schemaName)
 	}
 
 	// create resource
@@ -114,7 +123,7 @@ func grantDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	// set id
-	i, err := materialize.DefaultPrivilegeId(meta.(*sqlx.DB), objectType, granteenName, privilege)
+	i, err := materialize.DefaultPrivilegeId(meta.(*sqlx.DB), objectType, granteenName, targetRoleName, databaseName, schemaName, privilege)
 	if err != nil {
 		return diag.FromErr(err)
 	}

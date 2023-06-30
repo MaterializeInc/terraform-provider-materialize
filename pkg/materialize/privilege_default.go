@@ -71,7 +71,7 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 		grantDirection = "FROM"
 	}
 
-	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]s %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.grantee))
+	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.grantee))
 
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
@@ -88,8 +88,8 @@ func (b *DefaultPrivilegeBuilder) Revoke() error {
 type DefaultPrivilegeParams struct {
 	GranteeId    sql.NullString `db:"grantee_id"`
 	TargetRoleId sql.NullString `db:"role_id"`
-	SchemaName   sql.NullString `db:"schema_name"`
-	DatabaseName sql.NullString `db:"database_name"`
+	SchemaId     sql.NullString `db:"schema_id"`
+	DatabaseId   sql.NullString `db:"database_id"`
 	ObjectType   sql.NullString `db:"object_type"`
 	Privileges   sql.NullString `db:"privileges"`
 }
@@ -98,42 +98,68 @@ var defaultPrivilegeQuery = NewBaseQuery(`
 	SELECT
 		mz_default_privileges.grantee AS grantee_id,
 		mz_default_privileges.role_id,
-		mz_schemas.name AS schema_name,
-		mz_databases.name AS database_name,
+		mz_default_privileges.schema_id AS schema_id,
+		mz_default_privileges.database_id AS database_id,
 		mz_default_privileges.object_type,
 		mz_default_privileges.privileges
 	FROM mz_default_privileges
 	LEFT JOIN mz_schemas
 		ON mz_default_privileges.schema_id = mz_schemas.id
 	LEFT JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`)
+		ON mz_default_privileges.database_id = mz_databases.id`)
 
-func DefaultPrivilegeId(conn *sqlx.DB, objectType, grantee, privilege string) (string, error) {
-	granteeId, err := RoleId(conn, grantee)
+func DefaultPrivilegeId(conn *sqlx.DB, objectType, granteeName, targetRoleName, databaseName, schemaName, privilege string) (string, error) {
+	g, err := RoleId(conn, granteeName)
 	if err != nil {
 		return "", err
 	}
 
-	p := map[string]string{
-		"mz_default_privileges.object_type": objectType,
-		"mz_default_privileges.grantee":     granteeId,
-	}
-	q := defaultPrivilegeQuery.QueryPredicate(p)
-
-	var c DefaultPrivilegeParams
-	if err := conn.Get(&c, q); err != nil {
-		return "", err
+	var t string
+	if targetRoleName != "" {
+		t, err = RoleId(conn, targetRoleName)
+		if err != nil {
+			return "", err
+		}
 	}
 
-	f := fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s`, objectType, granteeId, privilege)
+	var d string
+	if databaseName != "" {
+		d, err = DatabaseId(conn, ObjectSchemaStruct{Name: databaseName})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	var s string
+	if schemaName != "" {
+		s, err = SchemaId(conn, ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	f := fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s`, objectType, g, t, d, s, privilege)
 	return f, nil
 }
 
-func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId string) (DefaultPrivilegeParams, error) {
+func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, databaseId, schemaId string) (DefaultPrivilegeParams, error) {
 	p := map[string]string{
 		"mz_default_privileges.object_type": objectType,
 		"mz_default_privileges.grantee":     granteeId,
 	}
+
+	if targetRoleId != "" {
+		p["mz_default_privileges.role_id"] = targetRoleId
+	}
+
+	if databaseId != "" {
+		p["mz_default_privileges.database_id"] = databaseId
+	}
+
+	if schemaId != "" {
+		p["mz_default_privileges.schema_id"] = schemaId
+	}
+
 	q := defaultPrivilegeQuery.QueryPredicate(p)
 
 	var c DefaultPrivilegeParams
