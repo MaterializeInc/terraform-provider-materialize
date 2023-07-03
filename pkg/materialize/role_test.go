@@ -11,13 +11,10 @@ import (
 func TestRoleCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT CREATEROLE CREATEDB CREATECLUSTER;`,
+			`CREATE ROLE "role" INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 		b := NewRoleBuilder(db, "role")
 		b.Inherit()
-		b.CreateRole()
-		b.CreateDb()
-		b.CreateCluster()
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -28,10 +25,10 @@ func TestRoleCreate(t *testing.T) {
 func TestRoleAlter(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`ALTER ROLE "role" CREATECLUSTER;`,
+			`ALTER ROLE "role" INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewRoleBuilder(db, "role").Alter("CREATECLUSTER"); err != nil {
+		if err := NewRoleBuilder(db, "role").Alter("INHERIT"); err != nil {
 			t.Fatal(err)
 		}
 	})
