@@ -177,7 +177,7 @@ func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate string) {
 	LEFT JOIN mz_databases
 		ON mz_default_privileges.database_id = mz_databases.id`
 
-	q := mockQueryBuilder(b, predicate)
+	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"grantee_id", "role_id", "schema_id", "database_id", "object_type", "privileges"}).
 		AddRow("u1", "u1", "u1", "u1", "TABLES", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
