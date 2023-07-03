@@ -30,11 +30,19 @@ var tableSchema = map[string]*schema.Schema{
 					Description: "The data type of the column indicated by name.",
 					Type:        schema.TypeString,
 					Required:    true,
+					StateFunc: func(val any) string {
+						alias, ok := aliases[val.(string)]
+						if ok {
+							return alias
+						}
+						return val.(string)
+					},
 				},
 				"nullable": {
-					Description: "	Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
+					Description: "Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
 					Type:        schema.TypeBool,
 					Optional:    true,
+					Default:     false,
 				},
 			},
 		},
@@ -93,6 +101,20 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String, s.TableName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Table columns
+	tableColumns, err := materialize.ListColumns(meta.(*sqlx.DB), i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var tc []interface{}
+	for _, t := range tableColumns {
+		column := map[string]interface{}{"name": t.Name.String, "type": t.Type.String, "nullable": !t.Nullable.Bool}
+		tc = append(tc, column)
+	}
+	if err := d.Set("column", tc); err != nil {
 		return diag.FromErr(err)
 	}
 
