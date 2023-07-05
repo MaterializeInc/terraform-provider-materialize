@@ -19,24 +19,6 @@ var roleSchema = map[string]*schema.Schema{
 		Type:        schema.TypeBool,
 		Computed:    true,
 	},
-	"create_role": {
-		Description: "Grants the role the ability to create, alter, delete roles and the ability to grant and revoke role membership.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		Default:     false,
-	},
-	"create_db": {
-		Description: "Grants the role the ability to create databases.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		Default:     false,
-	},
-	"create_cluster": {
-		Description: "Grants the role the ability to create clusters..",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		Default:     false,
-	},
 }
 
 func Role() *schema.Resource {
@@ -45,7 +27,6 @@ func Role() *schema.Resource {
 
 		CreateContext: roleCreate,
 		ReadContext:   roleRead,
-		UpdateContext: roleUpdate,
 		DeleteContext: roleDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -76,18 +57,6 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("create_role", s.CreateRole.Bool); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("create_db", s.CreateDatabase.Bool); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("create_cluster", s.CreateCluster.Bool); err != nil {
-		return diag.FromErr(err)
-	}
-
 	qn := materialize.QualifiedName(s.RoleName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
@@ -105,18 +74,6 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		b.Inherit()
 	}
 
-	if v, ok := d.GetOk("create_role"); ok && v.(bool) {
-		b.CreateRole()
-	}
-
-	if v, ok := d.GetOk("create_db"); ok && v.(bool) {
-		b.CreateDb()
-	}
-
-	if v, ok := d.GetOk("create_cluster"); ok && v.(bool) {
-		b.CreateCluster()
-	}
-
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
@@ -128,44 +85,6 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 	d.SetId(i)
-
-	return roleRead(ctx, d, meta)
-}
-
-func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	roleName := d.Get("name").(string)
-
-	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), roleName)
-
-	if d.HasChange("create_role") {
-		_, nr := d.GetChange("create_role")
-
-		if nr.(bool) {
-			b.Alter("CREATEROLE")
-		} else {
-			b.Alter("NOCREATEROLE")
-		}
-	}
-
-	if d.HasChange("create_db") {
-		_, nd := d.GetChange("create_db")
-
-		if nd.(bool) {
-			b.Alter("CREATEDB")
-		} else {
-			b.Alter("NOCREATEDB")
-		}
-	}
-
-	if d.HasChange("create_cluster") {
-		_, nc := d.GetChange("create_cluster")
-
-		if nc.(bool) {
-			b.Alter("CREATECLUSTER")
-		} else {
-			b.Alter("NOCREATECLUSTER")
-		}
-	}
 
 	return roleRead(ctx, d, meta)
 }

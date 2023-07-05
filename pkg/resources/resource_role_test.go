@@ -13,11 +13,8 @@ import (
 )
 
 var inRole = map[string]interface{}{
-	"name":           "role",
-	"inherit":        true,
-	"create_role":    true,
-	"create_db":      false,
-	"create_cluster": true,
+	"name":    "role",
+	"inherit": true,
 }
 
 func TestResourceRoleCreate(t *testing.T) {
@@ -28,7 +25,7 @@ func TestResourceRoleCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT CREATEROLE CREATECLUSTER;`,
+			`CREATE ROLE "role" INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -40,32 +37,6 @@ func TestResourceRoleCreate(t *testing.T) {
 		testhelpers.MockRoleScan(mock, pp)
 
 		if err := roleCreate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func TestResourceRoleUpdate(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
-
-	// Set current state
-	d.SetId("u1")
-	d.Set("inherit", true)
-	d.Set("create_role", false)
-	d.Set("create_db", false)
-	d.Set("create_cluster", false)
-	r.NotNil(d)
-
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER ROLE "role" CREATEROLE;`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER ROLE "role" CREATECLUSTER;`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Params
-		pp := `WHERE mz_roles.id = 'u1'`
-		testhelpers.MockRoleScan(mock, pp)
-
-		if err := roleUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

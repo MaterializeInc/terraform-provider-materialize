@@ -20,50 +20,11 @@ func TestAccRole_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleResource(roleName, "false", "false", "true"),
+				Config: testAccRoleResource(roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists("materialize_role.test"),
 					resource.TestCheckResourceAttr("materialize_role.test", "name", roleName),
 					resource.TestCheckResourceAttr("materialize_role.test", "inherit", "true"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_role", "false"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_db", "false"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_cluster", "true"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccRole_update(t *testing.T) {
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccRoleResource(roleName, "false", "false", "true"),
-			},
-			{
-				Config: testAccRoleResource(roleName, "true", "false", "false"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckRoleExists("materialize_role.test"),
-					resource.TestCheckResourceAttr("materialize_role.test", "name", roleName),
-					resource.TestCheckResourceAttr("materialize_role.test", "inherit", "true"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_role", "true"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_db", "false"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_cluster", "false"),
-				),
-			},
-			{
-				Config: testAccRoleResource(roleName, "false", "false", "false"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckRoleExists("materialize_role.test"),
-					resource.TestCheckResourceAttr("materialize_role.test", "name", roleName),
-					resource.TestCheckResourceAttr("materialize_role.test", "inherit", "true"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_role", "false"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_db", "false"),
-					resource.TestCheckResourceAttr("materialize_role.test", "create_cluster", "false"),
 				),
 			},
 		},
@@ -78,7 +39,7 @@ func TestAccRole_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllRolesDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRoleResource(roleName, "true", "true", "true"),
+				Config: testAccRoleResource(roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists("materialize_role.test"),
 					testAccCheckRoleDisappears(roleName),
@@ -89,15 +50,12 @@ func TestAccRole_disappears(t *testing.T) {
 	})
 }
 
-func testAccRoleResource(roleName, createRole, createDB, createCluster string) string {
+func testAccRoleResource(roleName string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%s"
-	create_role    = %s
-	create_db      = %s
-	create_cluster = %s
 }
-`, roleName, createRole, createDB, createCluster)
+`, roleName)
 }
 
 func testAccCheckRoleExists(name string) resource.TestCheckFunc {

@@ -232,15 +232,12 @@ func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 	SELECT
 		id,
 		name AS role_name,
-		inherit,
-		create_role,
-		create_db,
-		create_cluster
+		inherit
 	FROM mz_roles`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "role_name", "inherit", "create_role", "create_db", "create_cluster"}).
-		AddRow("u1", "joe", true, true, true, true)
+	ir := mock.NewRows([]string{"id", "role_name", "inherit"}).
+		AddRow("u1", "joe", true)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
