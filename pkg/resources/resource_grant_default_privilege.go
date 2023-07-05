@@ -13,12 +13,6 @@ import (
 )
 
 var grantDefaultPrivilegeSchema = map[string]*schema.Schema{
-	"grantee_name": {
-		Description: "The role name that will gain the default privilege. Use the `PUBLIC` pseudo-role to grant privileges to all roles.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
 	"object_type": {
 		Description:  "The type of object.",
 		Type:         schema.TypeString,
@@ -26,8 +20,8 @@ var grantDefaultPrivilegeSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice([]string{"TABLE", "TYPE", "SECRET", "CONNECTION", "DATABASE", "SCHEMA", "CLUSTER"}, true),
 	},
-	"privilege": {
-		Description: "The privilege to grant to the object.",
+	"grantee_name": {
+		Description: "The role name that will gain the default privilege. Use the `PUBLIC` pseudo-role to grant privileges to all roles.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
@@ -38,16 +32,22 @@ var grantDefaultPrivilegeSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"database_name": {
+		Description: "The default privilege will apply only to objects created in this database, if specified.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"schema_name": {
 		Description: "The default privilege will apply only to objects created in this schema, if specified.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"database_name": {
-		Description: "The default privilege will apply only to objects created in this database, if specified.",
+	"privilege": {
+		Description: "The privilege to grant to the object.",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 		ForceNew:    true,
 	},
 }
@@ -72,8 +72,8 @@ type DefaultPrivilege struct {
 	objectType   string
 	granteeId    string
 	targetRoleId string
-	schemaId     string
 	databaseId   string
+	schemaId     string
 }
 
 func parseDefaultPrivilegeId(id string) (DefaultPrivilege, error) {
@@ -87,8 +87,8 @@ func parseDefaultPrivilegeId(id string) (DefaultPrivilege, error) {
 		objectType:   ie[1],
 		granteeId:    ie[2],
 		targetRoleId: ie[3],
-		schemaId:     ie[4],
-		databaseId:   ie[5],
+		databaseId:   ie[4],
+		schemaId:     ie[5],
 	}, nil
 }
 
@@ -116,27 +116,24 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func grantDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	granteenName := d.Get("grantee_name").(string)
 	objectType := d.Get("object_type").(string)
+	granteenName := d.Get("grantee_name").(string)
+	targetRoleName := d.Get("target_role_name").(string)
+	databaseName := d.Get("database_name").(string)
+	schemaName := d.Get("schema_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), objectType, privilege, granteenName)
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), objectType, granteenName, privilege)
 
-	var targetRoleName string
-	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
-		targetRoleName = v.(string)
+	if targetRoleName != "" {
 		b.TargetRole(targetRoleName)
 	}
 
-	var databaseName string
-	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
-		databaseName = v.(string)
+	if databaseName != "" {
 		b.DatabaseName(databaseName)
 	}
 
-	var schemaName string
-	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
-		schemaName = v.(string)
+	if schemaName != "" {
 		b.SchemaName(schemaName)
 	}
 
@@ -160,7 +157,7 @@ func grantDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, me
 	objectType := d.Get("object_type").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), objectType, privilege, granteenName)
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), objectType, granteenName, privilege)
 
 	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
 		b.TargetRole(v.(string))

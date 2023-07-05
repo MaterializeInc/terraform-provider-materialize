@@ -12,45 +12,46 @@ import (
 )
 
 func TestParseDefaultPrivilegeId(t *testing.T) {
-
 	i, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1||||SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if i.objectType != "TABLE" {
-		t.Fatalf("%s: does not match expected TABLE", i.objectType)
+		t.Fatalf("object type %s: does not match expected TABLE", i.objectType)
 	}
 	if i.granteeId != "u1" {
-		t.Fatalf("%s: does not match expected u1", i.granteeId)
+		t.Fatalf("grantee id %s: does not match expected u1", i.granteeId)
 	}
 	if i.targetRoleId != "" {
-		t.Fatalf("%s: expected to be empty string", i.targetRoleId)
-	}
-	if i.schemaId != "" {
-		t.Fatalf("%s: expected to be empty string", i.schemaId)
+		t.Fatalf("role id %s: expected to be empty string", i.targetRoleId)
 	}
 	if i.databaseId != "" {
-		t.Fatalf("%s: expected to be empty string", i.databaseId)
+		t.Fatalf("database id %s: expected to be empty string", i.databaseId)
 	}
+	if i.schemaId != "" {
+		t.Fatalf("schema id %s: expected to be empty string", i.schemaId)
+	}
+}
 
-	k, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
+func TestParseDefaultPrivilegeIdComplex(t *testing.T) {
+	i, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if k.objectType != "TABLE" {
-		t.Fatalf("%s: does not match expected TABLE", k.objectType)
+	if i.objectType != "TABLE" {
+		t.Fatalf("object type %s: does not match expected TABLE", i.objectType)
 	}
-	if k.granteeId != "u1" {
-		t.Fatalf("%s: does not match expected u1", k.granteeId)
+	if i.granteeId != "u1" {
+		t.Fatalf("grantee id %s: does not match expected u1", i.granteeId)
 	}
-	if k.targetRoleId != "u2" {
-		t.Fatalf("%s: expected to be empty string", k.targetRoleId)
+	if i.targetRoleId != "u2" {
+		t.Fatalf("role id %s: expected u2", i.targetRoleId)
 	}
-	if k.schemaId != "u3" {
-		t.Fatalf("%s: expected to be empty string", k.schemaId)
+	if i.databaseId != "u3" {
+		t.Fatalf("database id %s: expected u3", i.databaseId)
 	}
-	if k.databaseId != "u4" {
-		t.Fatalf("%s: expected to be empty string", k.databaseId)
+	if i.schemaId != "u4" {
+		t.Fatalf("schema id %s: expected to u4", i.schemaId)
 	}
 }
 
@@ -63,7 +64,6 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 		"object_type":      "SECRET",
 		"privilege":        "USAGE",
 		"database_name":    "database",
-		"schema_name":      "schema",
 	}
 	d := schema.TestResourceDataRaw(t, GrantDefaultPrivilege().Schema, in)
 	r.NotNil(d)
@@ -71,7 +71,7 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`ALTER DEFAULT PRIVILEGES FOR ROLE developers IN SCHEMA "database"."schema" GRANT USAGE ON SECRETS TO project_managers;`,
+			`ALTER DEFAULT PRIVILEGES FOR ROLE developers IN DATABASE "database" GRANT USAGE ON SECRETS TO project_managers;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// DefaultPrivilegeId - Query grantee role
@@ -86,24 +86,19 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 		dp := `WHERE mz_databases.name = 'database'`
 		testhelpers.MockDatabaseScan(mock, dp)
 
-		// DefaultPrivilegeId - Query schema
-		sp := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
-		testhelpers.MockSchemaScan(mock, sp)
-
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.database_id = 'u1'
 			AND mz_default_privileges.grantee = 'u1'
 			AND mz_default_privileges.object_type = 'SECRET'
-			AND mz_default_privileges.role_id = 'u1'
-			AND mz_default_privileges.schema_id = 'u1'`
+			AND mz_default_privileges.role_id = 'u1'`
 		testhelpers.MockDefaultPrivilegeScan(mock, qp)
 
 		if err := grantDefaultPrivilegeCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 
-		if d.Id() != "GRANT DEFAULT|SECRET|u1|u1|u1|u1|USAGE" {
+		if d.Id() != "GRANT DEFAULT|SECRET|u1|u1|u1||USAGE" {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
 	})

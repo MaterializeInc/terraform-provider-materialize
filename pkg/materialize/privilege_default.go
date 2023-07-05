@@ -18,7 +18,7 @@ type DefaultPrivilegeBuilder struct {
 	databaseName string
 }
 
-func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType, privilege, grantee string) *DefaultPrivilegeBuilder {
+func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType, grantee, privilege string) *DefaultPrivilegeBuilder {
 	return &DefaultPrivilegeBuilder{
 		ddl:        Builder{conn, Privilege},
 		objectType: objectType,
@@ -86,11 +86,11 @@ func (b *DefaultPrivilegeBuilder) Revoke() error {
 }
 
 type DefaultPrivilegeParams struct {
+	ObjectType   sql.NullString `db:"object_type"`
 	GranteeId    sql.NullString `db:"grantee_id"`
 	TargetRoleId sql.NullString `db:"role_id"`
-	SchemaId     sql.NullString `db:"schema_id"`
 	DatabaseId   sql.NullString `db:"database_id"`
-	ObjectType   sql.NullString `db:"object_type"`
+	SchemaId     sql.NullString `db:"schema_id"`
 	Privileges   sql.NullString `db:"privileges"`
 }
 
@@ -114,7 +114,7 @@ func DefaultPrivilegeId(conn *sqlx.DB, objectType, granteeName, targetRoleName, 
 		return "", err
 	}
 
-	var t string
+	var t, d, s string
 	if targetRoleName != "" {
 		t, err = RoleId(conn, targetRoleName)
 		if err != nil {
@@ -122,7 +122,6 @@ func DefaultPrivilegeId(conn *sqlx.DB, objectType, granteeName, targetRoleName, 
 		}
 	}
 
-	var d string
 	if databaseName != "" {
 		d, err = DatabaseId(conn, ObjectSchemaStruct{Name: databaseName})
 		if err != nil {
@@ -130,7 +129,6 @@ func DefaultPrivilegeId(conn *sqlx.DB, objectType, granteeName, targetRoleName, 
 		}
 	}
 
-	var s string
 	if schemaName != "" {
 		s, err = SchemaId(conn, ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName})
 		if err != nil {
