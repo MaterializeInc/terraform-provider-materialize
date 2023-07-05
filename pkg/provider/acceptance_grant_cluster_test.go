@@ -59,7 +59,6 @@ func testAccGrantClusterResource(roleName, clusterName, privilege string) string
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%s"
-	create_cluster = true
 }
 
 resource "materialize_cluster" "cluster" {

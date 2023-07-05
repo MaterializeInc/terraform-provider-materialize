@@ -28,12 +28,6 @@ resource "materialize_role" "example_role" {
 
 - `name` (String) The identifier for the role.
 
-### Optional
-
-- `create_cluster` (Boolean) Grants the role the ability to create clusters..
-- `create_db` (Boolean) Grants the role the ability to create databases.
-- `create_role` (Boolean) Grants the role the ability to create, alter, delete roles and the ability to grant and revoke role membership.
-
 ### Read-Only
 
 - `id` (String) The ID of this resource.
