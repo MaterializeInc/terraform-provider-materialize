@@ -11,6 +11,49 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestParseDefaultPrivilegeId(t *testing.T) {
+
+	i, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1||||SELECT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if i.objectType != "TABLE" {
+		t.Fatalf("%s: does not match expected TABLE", i.objectType)
+	}
+	if i.granteeId != "u1" {
+		t.Fatalf("%s: does not match expected u1", i.granteeId)
+	}
+	if i.targetRoleId != "" {
+		t.Fatalf("%s: expected to be empty string", i.targetRoleId)
+	}
+	if i.schemaId != "" {
+		t.Fatalf("%s: expected to be empty string", i.schemaId)
+	}
+	if i.databaseId != "" {
+		t.Fatalf("%s: expected to be empty string", i.databaseId)
+	}
+
+	k, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if k.objectType != "TABLE" {
+		t.Fatalf("%s: does not match expected TABLE", k.objectType)
+	}
+	if k.granteeId != "u1" {
+		t.Fatalf("%s: does not match expected u1", k.granteeId)
+	}
+	if k.targetRoleId != "u2" {
+		t.Fatalf("%s: expected to be empty string", k.targetRoleId)
+	}
+	if k.schemaId != "u3" {
+		t.Fatalf("%s: expected to be empty string", k.schemaId)
+	}
+	if k.databaseId != "u4" {
+		t.Fatalf("%s: expected to be empty string", k.databaseId)
+	}
+}
+
 func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 	r := require.New(t)
 

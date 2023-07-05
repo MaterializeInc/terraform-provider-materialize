@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -67,17 +68,39 @@ func GrantDefaultPrivilege() *schema.Resource {
 	}
 }
 
+type DefaultPrivilege struct {
+	objectType   string
+	granteeId    string
+	targetRoleId string
+	schemaId     string
+	databaseId   string
+}
+
+func parseDefaultPrivilegeId(id string) (DefaultPrivilege, error) {
+	ie := strings.Split(id, "|")
+
+	if len(ie) != 7 {
+		return DefaultPrivilege{}, fmt.Errorf("%s cannot be parsed correctly", id)
+	}
+
+	return DefaultPrivilege{
+		objectType:   ie[1],
+		granteeId:    ie[2],
+		targetRoleId: ie[3],
+		schemaId:     ie[4],
+		databaseId:   ie[5],
+	}, nil
+}
+
 func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	ie := strings.Split(i, "|")
-	objType := ie[1]
-	granteeId := ie[2]
-	targetRoleId := ie[3]
-	databaseId := ie[4]
-	schemaId := ie[5]
+	dp, err := parseDefaultPrivilegeId(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	s, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), objType, granteeId, targetRoleId, databaseId, schemaId)
+	s, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), dp.objectType, dp.granteeId, dp.targetRoleId, dp.databaseId, dp.schemaId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -85,7 +108,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	priviledgeMap := materialize.ParsePrivileges(s.Privileges.String)
 	privilege := d.Get("privilege").(string)
 
-	if !materialize.HasPrivilege(priviledgeMap[granteeId], privilege) {
+	if !materialize.HasPrivilege(priviledgeMap[dp.granteeId], privilege) {
 		return diag.Errorf("%s: default privilege privilege: %s not set", i, privilege)
 	}
 
