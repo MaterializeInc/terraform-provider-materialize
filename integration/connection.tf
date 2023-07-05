@@ -26,16 +26,17 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   kafka_broker {
     broker = "redpanda:9092"
   }
-  sasl_username {
-    text = "sasl_user"
-  }
-  sasl_password {
-    name          = materialize_secret.kafka_password.name
-    database_name = materialize_secret.kafka_password.database_name
-    schema_name   = materialize_secret.kafka_password.schema_name
-  }
-  sasl_mechanisms = "SCRAM-SHA-256"
-  progress_topic  = "progress_topic"
+  # TODO: Need to set correct password in docker compose
+  # sasl_username {
+  #   text = "sasl_user"
+  # }
+  # sasl_password {
+  #   name          = materialize_secret.kafka_password.name
+  #   database_name = materialize_secret.kafka_password.database_name
+  #   schema_name   = materialize_secret.kafka_password.schema_name
+  # }
+  # sasl_mechanisms = "SCRAM-SHA-256"
+  progress_topic = "progress_topic"
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
@@ -58,11 +59,13 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
   host = "postgres"
   port = 5432
   user {
-    secret {
-      name          = materialize_secret.postgres_password.name
-      database_name = materialize_secret.postgres_password.database_name
-      schema_name   = materialize_secret.postgres_password.schema_name
-    }
+    text = "postgres"
+    # TODO: Correct password
+    # secret {
+    #   name          = materialize_secret.postgres_password.name
+    #   database_name = materialize_secret.postgres_password.database_name
+    #   schema_name   = materialize_secret.postgres_password.schema_name
+    # }
   }
   password {
     name          = materialize_secret.postgres_password.name
