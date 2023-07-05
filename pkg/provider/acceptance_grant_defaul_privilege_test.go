@@ -23,40 +23,39 @@ func TestAccGrantDefaultPrivilege_basic(t *testing.T) {
 			{
 				Config: testAccGrantDefaultPrivilegeResource(granteeName, targetName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantDefaultPrivilegeExists("materialize_grant_default_privilege.materialized_view_grant", granteeName, targetName, privilege),
-					resource.TestCheckResourceAttr("materialize_grant_default_privilege.materialized_view_grant", "grantee_name", granteeName),
-					resource.TestCheckResourceAttr("materialize_grant_default_privilege.materialized_view_grant", "object_type", "TABLE"),
-					resource.TestCheckResourceAttr("materialize_grant_default_privilege.materialized_view_grant", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_grant_default_privilege.materialized_view_grant", "target_role_name", targetName),
-					resource.TestCheckNoResourceAttr("materialize_grant_default_privilege.materialized_view_grant", "schema_name"),
-					resource.TestCheckNoResourceAttr("materialize_grant_default_privilege.materialized_view_grant", "database_name"),
+					resource.TestCheckResourceAttr("materialize_grant_default_privilege.test", "grantee_name", granteeName),
+					resource.TestCheckResourceAttr("materialize_grant_default_privilege.test", "object_type", "TABLE"),
+					resource.TestCheckResourceAttr("materialize_grant_default_privilege.test", "privilege", privilege),
+					resource.TestCheckResourceAttr("materialize_grant_default_privilege.test", "target_role_name", targetName),
+					resource.TestCheckNoResourceAttr("materialize_grant_default_privilege.test", "schema_name"),
+					resource.TestCheckNoResourceAttr("materialize_grant_default_privilege.test", "database_name"),
 				),
 			},
 		},
 	})
 }
 
-// func TestAccGrantDefaultPrivilege_disappears(t *testing.T) {
-// 	privilege := randomPrivilege("TABLE")
-// 	granteeName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-// 	targetName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-// 	resource.ParallelTest(t, resource.TestCase{
-// 		PreCheck:          func() { testAccPreCheck(t) },
-// 		ProviderFactories: testAccProviderFactories,
-// 		CheckDestroy:      nil,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccGrantDefaultPrivilegeResource(granteeName, targetName, privilege),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckGrantDefaultPrivilegeExists("materialize_grant_default_privilege.test", granteeName, targetName, privilege),
-// 					testAccCheckGranDefaultPrivilegeRevoked(granteeName, targetName, privilege),
-// 				),
-// 				PlanOnly:           true,
-// 				ExpectNonEmptyPlan: true,
-// 			},
-// 		},
-// 	})
-// }
+func TestAccGrantDefaultPrivilege_disappears(t *testing.T) {
+	privilege := randomPrivilege("TABLE")
+	granteeName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	targetName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccGrantDefaultPrivilegeResource(granteeName, targetName, privilege),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGrantDefaultPrivilegeExists("materialize_grant_default_privilege.test", granteeName, targetName, privilege),
+					testAccCheckGranDefaultPrivilegeRevoked(granteeName, targetName, privilege),
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
 
 func testAccGrantDefaultPrivilegeResource(granteeName, targetName, privilege string) string {
 	return fmt.Sprintf(`
@@ -69,9 +68,9 @@ resource "materialize_role" "test_target" {
 }
 
 resource "materialize_grant_default_privilege" "test" {
-	grantee_name = materialize_role.test_grantee.name
-	object_type = "TABLE"
-	privilege = "%[3]s"
+	grantee_name     = materialize_role.test_grantee.name
+	object_type      = "TABLE"
+	privilege        = "%[3]s"
 	target_role_name = materialize_role.test_target.name
 }
 `, granteeName, targetName, privilege)

@@ -105,10 +105,13 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
-	priviledgeMap := materialize.ParsePrivileges(s.Privileges.String)
+	o := []string{}
+	for _, p := range strings.Split(s.Privileges.String, "") {
+		o = append(o, materialize.Permissions[p])
+	}
 	privilege := d.Get("privilege").(string)
 
-	if !materialize.HasPrivilege(priviledgeMap[dp.granteeId], privilege) {
+	if !materialize.HasPrivilege(o, privilege) {
 		return diag.Errorf("%s: default privilege privilege: %s not set", i, privilege)
 	}
 

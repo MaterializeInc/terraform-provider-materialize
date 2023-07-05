@@ -96,11 +96,11 @@ type DefaultPrivilegeParams struct {
 
 var defaultPrivilegeQuery = NewBaseQuery(`
 	SELECT
+		mz_default_privileges.object_type,
 		mz_default_privileges.grantee AS grantee_id,
 		mz_default_privileges.role_id,
-		mz_default_privileges.schema_id AS schema_id,
 		mz_default_privileges.database_id AS database_id,
-		mz_default_privileges.object_type,
+		mz_default_privileges.schema_id AS schema_id,
 		mz_default_privileges.privileges
 	FROM mz_default_privileges
 	LEFT JOIN mz_schemas
