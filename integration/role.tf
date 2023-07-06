@@ -23,7 +23,7 @@ resource "materialize_grant_default_privilege" "test_insert" {
 resource "materialize_grant_default_privilege" "test_schema_database" {
   grantee_name     = materialize_role.role_1.name
   object_type      = "TABLE"
-  privilege        = "INSERT"
+  privilege        = "UPDATE"
   target_role_name = materialize_role.role_2.name
   schema_name      = materialize_schema.schema.name
   database_name    = materialize_database.database.name

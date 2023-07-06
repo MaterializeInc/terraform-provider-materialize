@@ -248,6 +248,13 @@ func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+func MockSystemPrivilege(mock sqlmock.Sqlmock) {
+	b := "SELECT privileges FROM mz_system_privileges"
+
+	ir := mock.NewRows([]string{"privileges"}).AddRow("s1=RBN/s1")
+	mock.ExpectQuery(b).WillReturnRows(ir)
+}
+
 func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
@@ -259,6 +266,19 @@ func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "role_name", "inherit"}).
 		AddRow("u1", "joe", true)
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockRoleGrantScan(mock sqlmock.Sqlmock) {
+	q := `
+	SELECT
+		mz_role_members.role_id,
+		mz_role_members.member,
+		mz_role_members.grantor
+	FROM mz_role_members`
+
+	ir := mock.NewRows([]string{"role_id", "member", "grantor"}).
+		AddRow("u1", "u2", "s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -364,6 +384,12 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
 		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", "{u1=r/u18}")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockSystemGrantScan(mock sqlmock.Sqlmock) {
+	q := `SELECT privileges FROM mz_system_privileges`
+	ir := mock.NewRows([]string{"privileges"}).AddRow("u1=B/s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

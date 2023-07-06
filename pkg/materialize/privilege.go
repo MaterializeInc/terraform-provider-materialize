@@ -14,6 +14,9 @@ var Permissions = map[string]string{
 	"d": "DELETE",
 	"C": "CREATE",
 	"U": "USAGE",
+	"R": "CREATEROLE",
+	"B": "CREATEDB",
+	"N": "CREATECLUSTER",
 }
 
 type ObjectType struct {
@@ -57,6 +60,9 @@ var ObjectPermissions = map[string]ObjectType{
 	},
 	"CLUSTER": {
 		Permissions: []string{"U", "C"},
+	},
+	"SYSTEM": {
+		Permissions: []string{"R", "B", "N"},
 	},
 }
 
