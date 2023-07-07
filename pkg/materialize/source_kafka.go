@@ -202,6 +202,10 @@ func (b *SourceKafkaBuilder) Create() error {
 		q.WriteString(` FORMAT TEXT`)
 	}
 
+	if b.format.Json {
+		q.WriteString(` FORMAT JSON`)
+	}
+
 	if b.keyFormat.Avro != nil {
 		if b.keyFormat.Avro.SchemaRegistryConnection.Name != "" {
 			q.WriteString(fmt.Sprintf(` KEY FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.keyFormat.Avro.SchemaRegistryConnection.DatabaseName, b.keyFormat.Avro.SchemaRegistryConnection.SchemaName, b.keyFormat.Avro.SchemaRegistryConnection.Name)))
