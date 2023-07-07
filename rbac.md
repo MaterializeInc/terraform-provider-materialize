@@ -120,16 +120,7 @@ The metadata for system grants is in the mz system catalog `mz_system_privileges
  u2=B/s1
 ```
 
-We convert the privileges to `text` so we can query using `LIKE`
-
-```sql
-> SELECT privileges FROM mz_system_privileges WHERE privileges::text LIKE 'qa_role=%';
- privileges
-------------
- u2=B/s1
-```
-
-Querying the system privileges for the specific role will show all of its privileges. The `ReadContext` for the resource will lookup based on the role name.
+Querying the system privileges for the specific role will show all of its privileges. The `ReadContext` for the resource will query all privileges, there is no filtering.
 
 ### Id
 The id for the system grant is a combination of:
