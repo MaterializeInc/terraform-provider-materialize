@@ -23,6 +23,7 @@ type SourceFormatSpecStruct struct {
 	Csv      *CsvFormatSpec
 	Bytes    bool
 	Text     bool
+	Json     bool
 }
 
 type SinkAvroFormatSpec struct {
@@ -87,6 +88,9 @@ func GetFormatSpecStruc(v interface{}) SourceFormatSpecStruct {
 	}
 	if v, ok := u["text"]; ok {
 		format.Text = v.(bool)
+	}
+	if v, ok := u["json"]; ok {
+		format.Json = v.(bool)
 	}
 	return format
 }
