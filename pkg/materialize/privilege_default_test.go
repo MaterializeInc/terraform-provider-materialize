@@ -1,6 +1,8 @@
 package materialize
 
 import (
+	"database/sql"
+	"reflect"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -8,6 +10,49 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
+
+func TestParseDefaultPrivileges(t *testing.T) {
+	input := []DefaultPrivilegeParams{
+		{
+			ObjectType: sql.NullString{String: "TYPE", Valid: true},
+			GranteeId:  sql.NullString{String: "p", Valid: true},
+			Privileges: sql.NullString{String: "U", Valid: true},
+		},
+		{
+			ObjectType: sql.NullString{String: "CLUSTER", Valid: true},
+			GranteeId:  sql.NullString{String: "s2", Valid: true},
+			Privileges: sql.NullString{String: "U", Valid: true},
+		},
+		{
+			ObjectType: sql.NullString{String: "TABLE", Valid: true},
+			GranteeId:  sql.NullString{String: "u9", Valid: true},
+			Privileges: sql.NullString{String: "ar", Valid: true},
+		},
+		{
+			ObjectType: sql.NullString{String: "TABLE", Valid: true},
+			GranteeId:  sql.NullString{String: "u9", Valid: true},
+			Privileges: sql.NullString{String: "w", Valid: true},
+			DatabaseId: sql.NullString{String: "u3", Valid: true},
+			SchemaId:   sql.NullString{String: "u9", Valid: true},
+		},
+	}
+
+	output, err := ParseDefaultPrivileges(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := map[DefaultPrivilegeMapKey][]string{
+		{GranteeId: "p", ObjectType: "TYPE"}:                                     {"USAGE"},
+		{GranteeId: "s2", ObjectType: "CLUSTER"}:                                 {"USAGE"},
+		{GranteeId: "u9", ObjectType: "TABLE"}:                                   {"INSERT", "SELECT"},
+		{GranteeId: "u9", ObjectType: "TABLE", DatabaseId: "u3", SchemaId: "u9"}: {"UPDATE"},
+	}
+
+	if !reflect.DeepEqual(output, expected) {
+		t.Fatal("ouptut does not equal expected")
+	}
+}
 
 func TestDefaultPrivilegeId(t *testing.T) {
 	r := require.New(t)

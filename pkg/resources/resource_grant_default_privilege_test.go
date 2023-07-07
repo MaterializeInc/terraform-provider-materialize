@@ -12,7 +12,7 @@ import (
 )
 
 func TestParseDefaultPrivilegeId(t *testing.T) {
-	i, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1||||SELECT")
+	i, err := parseDefaultPrivilegeKey("GRANT DEFAULT|TABLE|u1||||SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestParseDefaultPrivilegeId(t *testing.T) {
 }
 
 func TestParseDefaultPrivilegeIdComplex(t *testing.T) {
-	i, err := parseDefaultPrivilegeId("GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
+	i, err := parseDefaultPrivilegeKey("GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,6 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 		"target_role_name": "developers",
 		"object_type":      "SECRET",
 		"privilege":        "USAGE",
-		"database_name":    "database",
 	}
 	d := schema.TestResourceDataRaw(t, GrantDefaultPrivilege().Schema, in)
 	r.NotNil(d)
@@ -71,7 +70,7 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`ALTER DEFAULT PRIVILEGES FOR ROLE developers IN DATABASE "database" GRANT USAGE ON SECRETS TO project_managers;`,
+			`ALTER DEFAULT PRIVILEGES FOR ROLE developers GRANT USAGE ON SECRETS TO project_managers;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// DefaultPrivilegeId - Query grantee role
@@ -82,14 +81,9 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 		tp := `WHERE mz_roles.name = 'developers'`
 		testhelpers.MockRoleScan(mock, tp)
 
-		// DefaultPrivilegeId - Query database
-		dp := `WHERE mz_databases.name = 'database'`
-		testhelpers.MockDatabaseScan(mock, dp)
-
 		// Query Params
 		qp := `
-			WHERE mz_default_privileges.database_id = 'u1'
-			AND mz_default_privileges.grantee = 'u1'
+			WHERE mz_default_privileges.grantee = 'u1'
 			AND mz_default_privileges.object_type = 'SECRET'
 			AND mz_default_privileges.role_id = 'u1'`
 		testhelpers.MockDefaultPrivilegeScan(mock, qp)
@@ -98,7 +92,7 @@ func TestResourceGrantDefaultPrivilegeCreate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if d.Id() != "GRANT DEFAULT|SECRET|u1|u1|u1||USAGE" {
+		if d.Id() != "GRANT DEFAULT|SECRET|u1|u1|||USAGE" {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
 	})

@@ -59,7 +59,7 @@ func RolePrivilegeId(conn *sqlx.DB, roleName, memberName string) (string, error)
 	return f, nil
 }
 
-func ScanRolePrivilege(conn *sqlx.DB, roleId, memberId string) (RolePrivilegeParams, error) {
+func ScanRolePrivilege(conn *sqlx.DB, roleId, memberId string) ([]RolePrivilegeParams, error) {
 	p := map[string]string{
 		"mz_role_members.role_id": roleId,
 		"mz_role_members.member":  memberId,
@@ -67,10 +67,20 @@ func ScanRolePrivilege(conn *sqlx.DB, roleId, memberId string) (RolePrivilegePar
 
 	q := rolePrivilegeQuery.QueryPredicate(p)
 
-	var c RolePrivilegeParams
-	if err := conn.Get(&c, q); err != nil {
+	var c []RolePrivilegeParams
+	if err := conn.Select(&c, q); err != nil {
 		return c, err
 	}
 
 	return c, nil
+}
+
+func ParseRolePrivileges(privileges []RolePrivilegeParams) (map[string][]string, error) {
+	mapping := make(map[string][]string)
+
+	for _, p := range privileges {
+		mapping[p.RoleId.String] = append(mapping[p.RoleId.String], p.Member.String)
+	}
+
+	return mapping, nil
 }

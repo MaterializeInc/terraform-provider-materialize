@@ -140,7 +140,7 @@ func DefaultPrivilegeId(conn *sqlx.DB, objectType, granteeName, targetRoleName, 
 	return f, nil
 }
 
-func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, databaseId, schemaId string) (DefaultPrivilegeParams, error) {
+func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, databaseId, schemaId string) ([]DefaultPrivilegeParams, error) {
 	p := map[string]string{
 		"mz_default_privileges.object_type": objectType,
 		"mz_default_privileges.grantee":     granteeId,
@@ -160,10 +160,40 @@ func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, da
 
 	q := defaultPrivilegeQuery.QueryPredicate(p)
 
-	var c DefaultPrivilegeParams
-	if err := conn.Get(&c, q); err != nil {
+	var c []DefaultPrivilegeParams
+	if err := conn.Select(&c, q); err != nil {
 		return c, err
 	}
 
 	return c, nil
+}
+
+type DefaultPrivilegeMapKey struct {
+	ObjectType string
+	GranteeId  string
+	DatabaseId string
+	SchemaId   string
+}
+
+func ParseDefaultPrivileges(privileges []DefaultPrivilegeParams) (map[DefaultPrivilegeMapKey][]string, error) {
+	mapping := make(map[DefaultPrivilegeMapKey][]string)
+
+	for _, p := range privileges {
+		key := DefaultPrivilegeMapKey{
+			ObjectType: p.ObjectType.String,
+			GranteeId:  p.GranteeId.String,
+			DatabaseId: p.DatabaseId.String,
+			SchemaId:   p.SchemaId.String,
+		}
+
+		parsedPrivileges := []string{}
+		for _, rp := range strings.Split(p.Privileges.String, "") {
+			v := Permissions[rp]
+			parsedPrivileges = append(parsedPrivileges, v)
+		}
+
+		mapping[key] = parsedPrivileges
+	}
+
+	return mapping, nil
 }

@@ -99,9 +99,9 @@ func testAccCheckGrantDefaultPrivilegeExists(grantName, granteeName, targetName,
 			return err
 		}
 
-		privilegeMap := materialize.ParsePrivileges(g.Privileges.String)
+		privilegeMap := materialize.ParsePrivileges(g[0].Privileges.String)
 		if !materialize.HasPrivilege(privilegeMap[granteeId], privilege) {
-			return fmt.Errorf("default privilege %s does not include privilege %s", g.Privileges.String, privilege)
+			return fmt.Errorf("default privilege %s does not include privilege %s", g[0].Privileges.String, privilege)
 		}
 		return nil
 	}

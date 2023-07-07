@@ -179,7 +179,7 @@ func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"object_type", "grantee_id", "role_id", "schema_id", "database_id", "privileges"}).
-		AddRow("TABLE", "u1", "u1", "u1", "u1", "{u1=UC/u18}")
+		AddRow("SECRET", "u1", "u1", nil, nil, "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -278,7 +278,7 @@ func MockRoleGrantScan(mock sqlmock.Sqlmock) {
 	FROM mz_role_members`
 
 	ir := mock.NewRows([]string{"role_id", "member", "grantor"}).
-		AddRow("u1", "u2", "s1")
+		AddRow("u1", "u1", "s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

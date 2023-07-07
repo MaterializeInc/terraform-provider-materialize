@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/exp/slices"
 )
 
 var grantRoleSchema = map[string]*schema.Schema{
@@ -43,35 +44,44 @@ func GrantRole() *schema.Resource {
 	}
 }
 
-type RolePrivilege struct {
+type RolePrivilegeKey struct {
 	roleId   string
 	memberId string
 }
 
-func parseRolePrivilegeId(id string) (RolePrivilege, error) {
+func parseRolePrivilegeKey(id string) (RolePrivilegeKey, error) {
 	ie := strings.Split(id, "|")
 
 	if len(ie) != 3 {
-		return RolePrivilege{}, fmt.Errorf("%s cannot be parsed correctly", id)
+		return RolePrivilegeKey{}, fmt.Errorf("%s cannot be parsed correctly", id)
 	}
 
-	return RolePrivilege{roleId: ie[1], memberId: ie[2]}, nil
+	return RolePrivilegeKey{roleId: ie[1], memberId: ie[2]}, nil
 }
 
 func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	sp, err := parseRolePrivilegeId(i)
+	key, err := parseRolePrivilegeKey(i)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	_, err = materialize.ScanRolePrivilege(meta.(*sqlx.DB), sp.roleId, sp.memberId)
+	// Scan role members
+	roles, err := materialize.ScanRolePrivilege(meta.(*sqlx.DB), key.roleId, key.memberId)
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
 	} else if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Check if role contains member
+	mapping, _ := materialize.ParseRolePrivileges(roles)
+
+	if !slices.Contains(mapping[key.roleId], key.memberId) {
+		d.SetId("")
+		return diag.Errorf("role does contain member %s", key.memberId)
 	}
 
 	d.SetId(i)

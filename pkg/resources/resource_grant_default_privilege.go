@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/exp/slices"
 )
 
 var grantDefaultPrivilegeSchema = map[string]*schema.Schema{
@@ -68,51 +70,66 @@ func GrantDefaultPrivilege() *schema.Resource {
 	}
 }
 
-type DefaultPrivilege struct {
+type DefaultPrivilegeKey struct {
 	objectType   string
 	granteeId    string
 	targetRoleId string
 	databaseId   string
 	schemaId     string
+	privilege    string
 }
 
-func parseDefaultPrivilegeId(id string) (DefaultPrivilege, error) {
+func parseDefaultPrivilegeKey(id string) (DefaultPrivilegeKey, error) {
 	ie := strings.Split(id, "|")
 
 	if len(ie) != 7 {
-		return DefaultPrivilege{}, fmt.Errorf("%s cannot be parsed correctly", id)
+		return DefaultPrivilegeKey{}, fmt.Errorf("%s cannot be parsed correctly", id)
 	}
 
-	return DefaultPrivilege{
+	return DefaultPrivilegeKey{
 		objectType:   ie[1],
 		granteeId:    ie[2],
 		targetRoleId: ie[3],
 		databaseId:   ie[4],
 		schemaId:     ie[5],
+		privilege:    ie[6],
 	}, nil
 }
 
 func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	dp, err := parseDefaultPrivilegeId(i)
+	key, err := parseDefaultPrivilegeKey(i)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	s, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), dp.objectType, dp.granteeId, dp.targetRoleId, dp.databaseId, dp.schemaId)
-	if err != nil {
+	privileges, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), key.objectType, key.granteeId, key.targetRoleId, key.databaseId, key.schemaId)
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
-	o := []string{}
-	for _, p := range strings.Split(s.Privileges.String, "") {
-		o = append(o, materialize.Permissions[p])
-	}
-	privilege := d.Get("privilege").(string)
+	// Check if default privilege has expected privilege
+	mapping, _ := materialize.ParseDefaultPrivileges(privileges)
 
-	if !materialize.HasPrivilege(o, privilege) {
-		return diag.Errorf("%s: default privilege privilege: %s not set", i, privilege)
+	mapKey := materialize.DefaultPrivilegeMapKey{
+		ObjectType: key.objectType, GranteeId: key.granteeId,
+	}
+
+	if key.databaseId != "" {
+		mapKey.DatabaseId = key.databaseId
+	}
+
+	if key.schemaId != "" {
+		mapKey.SchemaId = key.schemaId
+	}
+
+	if !slices.Contains(mapping[mapKey], key.privilege) {
+		d.SetId("")
+		return diag.Errorf("%s: %s default privilege does contain privilege %s", mapping, i, key.privilege)
 	}
 
 	return nil

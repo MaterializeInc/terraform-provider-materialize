@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/exp/slices"
 )
 
 var grantSystemSchema = map[string]*schema.Schema{
@@ -43,39 +45,46 @@ func GrantSystem() *schema.Resource {
 	}
 }
 
-type SystemPrivilege struct {
-	roleId string
+type SystemPrivilegeKey struct {
+	roleId    string
+	privilege string
 }
 
-func parseSystemPrivilegeId(id string) (SystemPrivilege, error) {
+func parseSystemPrivilegeKey(id string) (SystemPrivilegeKey, error) {
 	ie := strings.Split(id, "|")
 
 	if len(ie) != 3 {
-		return SystemPrivilege{}, fmt.Errorf("%s cannot be parsed correctly", id)
+		return SystemPrivilegeKey{}, fmt.Errorf("%s cannot be parsed correctly", id)
 	}
 
-	return SystemPrivilege{roleId: ie[1]}, nil
+	return SystemPrivilegeKey{roleId: ie[1], privilege: ie[2]}, nil
 }
 
 func grantSystemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	sp, err := parseSystemPrivilegeId(i)
+	key, err := parseSystemPrivilegeKey(i)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	privileges, err := materialize.ScanSystemPrivileges(meta.(*sqlx.DB))
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
-	privilegeMap := materialize.ParseSystemPrivileges(privileges)
-	privilege := d.Get("privilege").(string)
+	// Check if system role contains privilege
+	mapping, _ := materialize.ParseSystemPrivileges(privileges)
 
-	if !materialize.HasPrivilege(privilegeMap[sp.roleId], privilege) {
-		return diag.Errorf("%s: default privilege privilege: %s not set", i, privilege)
+	if !slices.Contains(mapping[key.roleId], key.privilege) {
+		d.SetId("")
+		return diag.Errorf("system role does contain privilege %s", key.privilege)
 	}
+
+	d.SetId(i)
 
 	return nil
 }

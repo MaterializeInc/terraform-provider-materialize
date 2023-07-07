@@ -8,25 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func ParseSystemPrivileges(privileges []SytemPrivilegeParams) map[string][]string {
-	o := map[string][]string{}
-	for _, p := range privileges {
-		s := strings.Split(p.Privileges.String, "=")
-
-		roleId := s[0]
-		rolePrivileges := strings.Split(s[1], "/")[0]
-
-		parsedPrivileges := []string{}
-		for _, rp := range strings.Split(rolePrivileges, "") {
-			v := Permissions[rp]
-			parsedPrivileges = append(parsedPrivileges, v)
-		}
-
-		o[roleId] = parsedPrivileges
-	}
-	return o
-}
-
 type SystemPrivilegeBuilder struct {
 	ddl       Builder
 	role      string
@@ -74,4 +55,25 @@ func ScanSystemPrivileges(conn *sqlx.DB) ([]SytemPrivilegeParams, error) {
 	}
 
 	return c, nil
+}
+
+func ParseSystemPrivileges(privileges []SytemPrivilegeParams) (map[string][]string, error) {
+	mapping := make(map[string][]string)
+
+	for _, p := range privileges {
+		s := strings.Split(p.Privileges.String, "=")
+
+		rId := s[0]
+		rPrivileges := strings.Split(s[1], "/")[0]
+
+		parsedPrivileges := []string{}
+		for _, rp := range strings.Split(rPrivileges, "") {
+			v := Permissions[rp]
+			parsedPrivileges = append(parsedPrivileges, v)
+		}
+
+		mapping[rId] = parsedPrivileges
+	}
+
+	return mapping, nil
 }
