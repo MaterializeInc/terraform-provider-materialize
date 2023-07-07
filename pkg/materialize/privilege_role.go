@@ -61,8 +61,8 @@ func RolePrivilegeId(conn *sqlx.DB, roleName, memberName string) (string, error)
 
 func ScanRolePrivilege(conn *sqlx.DB, roleId, memberId string) (RolePrivilegeParams, error) {
 	p := map[string]string{
-		"mz_role_members.role_id,": roleId,
-		"mz_role_members.member":   memberId,
+		"mz_role_members.role_id": roleId,
+		"mz_role_members.member":  memberId,
 	}
 
 	q := rolePrivilegeQuery.QueryPredicate(p)

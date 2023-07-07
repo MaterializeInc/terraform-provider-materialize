@@ -48,7 +48,7 @@ func TestAccGrantDefaultPrivilege_disappears(t *testing.T) {
 				Config: testAccGrantDefaultPrivilegeResource(granteeName, targetName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantDefaultPrivilegeExists("materialize_grant_default_privilege.test", granteeName, targetName, privilege),
-					testAccCheckGranDefaultPrivilegeRevoked(granteeName, targetName, privilege),
+					testAccCheckGrantDefaultPrivilegeRevoked(granteeName, targetName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -107,7 +107,7 @@ func testAccCheckGrantDefaultPrivilegeExists(grantName, granteeName, targetName,
 	}
 }
 
-func testAccCheckGranDefaultPrivilegeRevoked(granteeName, targetName, privilege string) resource.TestCheckFunc {
+func testAccCheckGrantDefaultPrivilegeRevoked(granteeName, targetName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
 		_, err := db.Exec(fmt.Sprintf(`ALTER DEFAULT PRIVILEGES FOR ROLE %[1]s REVOKE %[2]s ON TABLES FROM %[3]s;`, targetName, privilege, granteeName))
