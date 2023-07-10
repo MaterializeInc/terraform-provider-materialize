@@ -86,23 +86,25 @@ func (b *DefaultPrivilegeBuilder) Revoke() error {
 }
 
 type DefaultPrivilegeParams struct {
-	ObjectType   sql.NullString `db:"object_type"`
-	GranteeId    sql.NullString `db:"grantee_id"`
-	TargetRoleId sql.NullString `db:"role_id"`
-	DatabaseId   sql.NullString `db:"database_id"`
-	SchemaId     sql.NullString `db:"schema_id"`
-	Privileges   sql.NullString `db:"privileges"`
+	ObjectType sql.NullString `db:"object_type"`
+	GranteeId  sql.NullString `db:"grantee_id"`
+	TargetRole sql.NullString `db:"role_name"`
+	DatabaseId sql.NullString `db:"database_id"`
+	SchemaId   sql.NullString `db:"schema_id"`
+	Privileges sql.NullString `db:"privileges"`
 }
 
 var defaultPrivilegeQuery = NewBaseQuery(`
 	SELECT
 		mz_default_privileges.object_type,
 		mz_default_privileges.grantee AS grantee_id,
-		mz_default_privileges.role_id,
+		mz_roles.name AS role_name,
 		mz_default_privileges.database_id AS database_id,
 		mz_default_privileges.schema_id AS schema_id,
 		mz_default_privileges.privileges
 	FROM mz_default_privileges
+	LEFT JOIN mz_roles
+		ON mz_default_privileges.role_id = mz_roles.id
 	LEFT JOIN mz_schemas
 		ON mz_default_privileges.schema_id = mz_schemas.id
 	LEFT JOIN mz_databases
