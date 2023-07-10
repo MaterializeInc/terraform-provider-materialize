@@ -11,7 +11,7 @@ These resources handle [granting privileges](https://materialize.com/docs/sql/gr
 
 ### Example
 ```hcl
-resource "materialize_grant_table" "table_grant_select" {
+resource "materialize_table_grant" "table_grant_select" {
   role_name     = "qa_role"
   privilege     = "SELECT"
   database_name = "example_database"
@@ -19,7 +19,7 @@ resource "materialize_grant_table" "table_grant_select" {
   table_name    = "simple_table"
 }
 
-resource "materialize_grant_table" "table_grant_insert" {
+resource "materialize_table_grant" "table_grant_insert" {
   role_name     = "qa_role"
   privilege     = "INSERT"
   database_name = "example_database"
@@ -61,12 +61,12 @@ This resource assigns [one role to another](https://materialize.com/docs/sql/gra
 
 ### Example
 ```hcl
-resource "materialize_grant_role" "qa_role_grant_joe" {
+resource "materialize_role_grant" "qa_role_grant_joe" {
   role_name   = "qa_role"
   member_name = "joe"
 }
 
-resource "materialize_grant_role" "qa_role_grant_emily" {
+resource "materialize_role_grant" "qa_role_grant_emily" {
   role_name   = "qa_role"
   member_name = "emily"
 }
@@ -103,7 +103,7 @@ This resource assigns [system level privileges](https://materialize.com/docs/sql
 
 ### Example
 ```hcl
-resource "materialize_grant_system" "qa_role_system_createdb" {
+resource "materialize_system_privilege_grant" "qa_role_system_createdb" {
   role_name = "qa_role"
   privilege = "CREATEDB"
 }
@@ -128,27 +128,25 @@ The id for the system grant is a combination of:
 * Role Id
 * Privilege
 
-The id for `materialize_grant_system.qa_role_system_createdb` would be:
+The id for `materialize_grant_system_privilege.qa_role_system_createdb` would be:
 ```
 GRANT SYSTEM|u2|CREATEDB
 ```
 
 ## Default Privilege Grant
 
-This resource assigns [privileges to objects created in the future](https://materialize.com/docs/sql/alter-default-privileges/). This is very similar to the grant objects except there is no specific object being used. This resource also has many more optional fields since objects can be filtered to only apply to a particular database or schema.
+These resource assigns [privileges to objects created in the future](https://materialize.com/docs/sql/alter-default-privileges/) on specific object types. This is very similar to the grant objects except. This resource also has many more optional fields since objects can be filtered to only apply to a particular database or schema (where applicable).
 
 ### Example
 ```hcl
-resource "materialize_grant_default_privilege" "test_insert" {
+resource "materialize_table_default_privilege_grant" "test_insert" {
   grantee_name     = "qa_role"
-  object_type      = "TABLE"
   privilege        = "INSERT"
   target_role_name = "dev_role"
 }
 
-resource "materialize_grant_default_privilege" "test_schema_database" {
+resource "materialize_table_default_privilege_grant" "test_schema_database" {
   grantee_name     = "qa_role"
-  object_type      = "TABLE"
   privilege        = "UPDATE"
   target_role_name = "qa_role"
   schema_name      = "example_schema"
@@ -181,12 +179,12 @@ The id for the system grant is a combination of:
 * Schema Id - Optional
 * Privilege
 
-The id for `materialize_grant_default_privilege.test_insert` would be:
+The id for `materialize_table_grant_default_privilege.test_insert` would be:
 ```
 GRANT DEFAULT|TABLE|u2|u7|||INSERT
 ```
 
-The id for `materialize_grant_default_privilege.test_schema_database` would be:
+The id for `materialize_table_grant_default_privilege.test_schema_database` would be:
 ```
 GRANT DEFAULT|TABLE|u2|u7|u9|u3|UPDATE
 ```

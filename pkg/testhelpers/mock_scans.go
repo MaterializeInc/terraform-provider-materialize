@@ -162,7 +162,7 @@ func MockConnectionSshTunnelScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
-func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate string) {
+func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate, objectType string) {
 	b := `
 	SELECT
 		mz_default_privileges.object_type,
@@ -179,7 +179,7 @@ func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"object_type", "grantee_id", "role_id", "schema_id", "database_id", "privileges"}).
-		AddRow("SECRET", "u1", "u1", nil, nil, "{u1=UC/u18}")
+		AddRow(objectType, "u1", "u1", nil, nil, "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

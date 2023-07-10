@@ -75,7 +75,7 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
   database = "postgres"
 }
 
-resource "materialize_grant_connection" "connection_grant_usage" {
+resource "materialize_connection_grant" "connection_grant_usage" {
   role_name       = materialize_role.role_1.name
   privilege       = "USAGE"
   connection_name = materialize_connection_postgres.postgres_connection.name

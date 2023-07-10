@@ -11,20 +11,20 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type GrantPrivilege struct {
+type GrantPrivilegeKey struct {
 	objectType string
 	objectId   string
 	roleId     string
 }
 
-func parsePrivilegeId(id string) (GrantPrivilege, error) {
+func parsePrivilegeKey(id string) (GrantPrivilegeKey, error) {
 	ie := strings.Split(id, "|")
 
 	if len(ie) != 5 {
-		return GrantPrivilege{}, fmt.Errorf("%s cannot be parsed correctly", id)
+		return GrantPrivilegeKey{}, fmt.Errorf("%s cannot be parsed correctly", id)
 	}
 
-	return GrantPrivilege{
+	return GrantPrivilegeKey{
 		objectType: ie[1],
 		objectId:   ie[2],
 		roleId:     ie[3],
@@ -34,20 +34,20 @@ func parsePrivilegeId(id string) (GrantPrivilege, error) {
 func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	dp, err := parsePrivilegeId(i)
+	key, err := parsePrivilegeKey(i)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	s, err := materialize.ScanPrivileges(meta.(*sqlx.DB), dp.objectType, dp.objectId)
+	privileges, err := materialize.ScanPrivileges(meta.(*sqlx.DB), key.objectType, key.objectId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	priviledgeMap := materialize.ParsePrivileges(s)
+	priviledgeMap := materialize.ParsePrivileges(privileges)
 	privilege := d.Get("privilege").(string)
 
-	if !materialize.HasPrivilege(priviledgeMap[dp.roleId], privilege) {
+	if !materialize.HasPrivilege(priviledgeMap[key.roleId], privilege) {
 		return diag.Errorf("%s: object does not contain privilege: %s", i, privilege)
 	}
 
