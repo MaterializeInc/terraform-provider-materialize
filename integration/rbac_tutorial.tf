@@ -65,7 +65,7 @@ resource "materialize_cluster_grant" "dev_role_cluster_grant_create" {
 }
 
 # Step 5. Assign the role to a user
-resource "materialize_grant_role" "dev_role_grant_user" {
+resource "materialize_role_grant" "dev_role_grant_user" {
   role_name   = materialize_role.dev_role.name
   member_name = materialize_role.user.name
 }
@@ -93,7 +93,7 @@ resource "materialize_database_grant" "qa_role_database_grant_create" {
 }
 
 # Step 7. Add inherited privileges
-resource "materialize_grant_role" "qa_role_grant_dev_role" {
+resource "materialize_role_grant" "qa_role_grant_dev_role" {
   role_name   = materialize_role.qa_role.name
   member_name = materialize_role.dev_role.name
 }
