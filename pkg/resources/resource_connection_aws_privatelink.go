@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -130,6 +131,8 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}

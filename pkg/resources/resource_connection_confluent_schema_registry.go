@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -104,6 +105,8 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}
