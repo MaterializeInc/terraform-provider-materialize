@@ -10,7 +10,7 @@ SQL
 
 }
 
-resource "materialize_grant_view" "database_view_select" {
+resource "materialize_view_grant" "database_view_select" {
   role_name     = materialize_role.role_1.name
   privilege     = "SELECT"
   view_name     = materialize_view.simple_view.name

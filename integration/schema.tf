@@ -3,14 +3,14 @@ resource "materialize_schema" "schema" {
   database_name = materialize_database.database.name
 }
 
-resource "materialize_grant_schema" "schema_grant_usage" {
+resource "materialize_schema_grant" "schema_grant_usage" {
   role_name     = materialize_role.role_1.name
   privilege     = "USAGE"
   database_name = materialize_schema.schema.database_name
   schema_name   = materialize_schema.schema.name
 }
 
-resource "materialize_grant_schema" "schema_grant_create" {
+resource "materialize_schema_grant" "schema_grant_create" {
   role_name     = materialize_role.role_2.name
   privilege     = "CREATE"
   database_name = materialize_schema.schema.database_name

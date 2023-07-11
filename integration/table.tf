@@ -19,7 +19,7 @@ resource "materialize_table" "simple_table" {
 
 }
 
-resource "materialize_grant_table" "table_grant_select" {
+resource "materialize_table_grant" "table_grant_select" {
   role_name     = materialize_role.role_1.name
   privilege     = "SELECT"
   database_name = materialize_table.simple_table.database_name
@@ -27,7 +27,7 @@ resource "materialize_grant_table" "table_grant_select" {
   table_name    = materialize_table.simple_table.name
 }
 
-resource "materialize_grant_table" "table_grant_insert" {
+resource "materialize_table_grant" "table_grant_insert" {
   role_name     = materialize_role.role_1.name
   privilege     = "INSERT"
   database_name = materialize_table.simple_table.database_name
@@ -35,7 +35,7 @@ resource "materialize_grant_table" "table_grant_insert" {
   table_name    = materialize_table.simple_table.name
 }
 
-resource "materialize_grant_table" "table_grant_update" {
+resource "materialize_table_grant" "table_grant_update" {
   role_name     = materialize_role.role_2.name
   privilege     = "UPDATE"
   database_name = materialize_table.simple_table.database_name
@@ -43,7 +43,7 @@ resource "materialize_grant_table" "table_grant_update" {
   table_name    = materialize_table.simple_table.name
 }
 
-resource "materialize_grant_table" "table_grant_delete" {
+resource "materialize_table_grant" "table_grant_delete" {
   role_name     = materialize_role.role_2.name
   privilege     = "DELETE"
   database_name = materialize_table.simple_table.database_name

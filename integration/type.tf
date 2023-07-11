@@ -19,12 +19,18 @@ resource "materialize_type" "map_type" {
   }
 }
 
-resource "materialize_grant_type" "database_type_usage" {
+resource "materialize_type_grant" "type_grant_usage" {
   role_name     = materialize_role.role_1.name
   privilege     = "USAGE"
   type_name     = materialize_type.list_type.name
   schema_name   = materialize_type.list_type.schema_name
   database_name = materialize_type.list_type.database_name
+}
+
+resource "materialize_type_grant_default_privilege" "type_grant_default_privilege" {
+  grantee_name     = materialize_role.role_1.name
+  privilege        = "USAGE"
+  target_role_name = materialize_role.role_2.name
 }
 
 output "qualified_type" {
