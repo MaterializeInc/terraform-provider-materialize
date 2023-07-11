@@ -50,6 +50,9 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	SELECT
 		mz_clusters.id,
 		mz_clusters.name,
+		mz_clusters.replication_factor,
+		mz_clusters.size,
+		mz_clusters.managed,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters

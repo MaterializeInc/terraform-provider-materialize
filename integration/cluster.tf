@@ -18,6 +18,12 @@ resource "materialize_cluster_grant" "cluster_grant_create" {
   cluster_name = materialize_cluster.cluster_source.name
 }
 
+resource "materialize_cluster" "managed_cluster" {
+  name               = "managed_cluster"
+  replication_factor = 2
+  size               = "1"
+}
+
 data "materialize_cluster" "all" {}
 
 data "materialize_current_cluster" "default" {}
