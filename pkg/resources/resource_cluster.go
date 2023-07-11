@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -16,11 +17,18 @@ var clusterSchema = map[string]*schema.Schema{
 	"name":           NameSchema("cluster", true, true),
 	"ownership_role": OwnershipRole(),
 	"replication_factor": {
-		Description: "The number of replicas of each dataflow-powered object to maintain.",
-		Type:        schema.TypeInt,
-		Optional:    true,
+		Description:  "The number of replicas of each dataflow-powered object to maintain.",
+		Type:         schema.TypeInt,
+		Optional:     true,
+		RequiredWith: []string{"size"},
 	},
-	"size": ManagedClusterSizeSchema("cluster"),
+	"size": {
+		Description:  "The size of the managed cluster.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
+		RequiredWith: []string{"replication_factor"},
+	},
 }
 
 func Cluster() *schema.Resource {
@@ -77,13 +85,14 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	o := materialize.ObjectSchemaStruct{Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
-	// replication factor
-	if v, ok := d.GetOk("replication_factor"); ok {
-		b.ReplicationFactor(v.(int))
+	// size and replication_factor for managed clusters
+	if replicationFactor, replicationFactorOk := d.GetOk("replication_factor"); replicationFactorOk {
+		if size, sizeOk := d.GetOk("size"); sizeOk {
+			// set replication factor
+			b.ReplicationFactor(replicationFactor.(int))
 
-		// size
-		if v, ok := d.GetOk("size"); ok {
-			b.Size(v.(string))
+			// set size
+			b.Size(size.(string))
 		}
 	}
 

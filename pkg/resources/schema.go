@@ -71,15 +71,6 @@ func SizeSchema(resource string) *schema.Schema {
 	}
 }
 
-func ManagedClusterSizeSchema(resource string) *schema.Schema {
-	return &schema.Schema{
-		Type:         schema.TypeString,
-		Description:  fmt.Sprintf("The size of the %s.", resource),
-		Optional:     true,
-		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
-	}
-}
-
 func IdentifierSchema(elem, description string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
