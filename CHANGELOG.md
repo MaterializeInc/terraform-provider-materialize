@@ -4,6 +4,7 @@
 
 ### Features
 * Revised RBAC resources [#218](https://github.com/MaterializeInc/terraform-provider-materialize/pull/218). A full overview of the Terraform RBAC resources can be found in the `rbac.md`
+* Support Managed Clusters [#216](https://github.com/MaterializeInc/terraform-provider-materialize/pull/216)
 * Support `FORMAT JSON` for sources [#227](https://github.com/MaterializeInc/terraform-provider-materialize/pull/227)
 * Support `EXPOSE PROGRESS` for kafka and postgres sources [#213](https://github.com/MaterializeInc/terraform-provider-materialize/pull/213)
 
