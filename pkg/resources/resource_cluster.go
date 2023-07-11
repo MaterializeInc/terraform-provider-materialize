@@ -20,7 +20,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Type:        schema.TypeInt,
 		Optional:    true,
 	},
-	"size": SizeSchema("cluster"),
+	"size": ManagedClusterSizeSchema("cluster"),
 }
 
 func Cluster() *schema.Resource {

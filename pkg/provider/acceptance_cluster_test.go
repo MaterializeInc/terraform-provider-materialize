@@ -16,13 +16,15 @@ func TestAccCluster_basic(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	clusterSize := "2-2"
+	clusterReplicationFactor := "1"
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, clusterSize, clusterReplicationFactor),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
@@ -30,9 +32,12 @@ func TestAccCluster_basic(t *testing.T) {
 					testAccCheckClusterExists("materialize_cluster.test_role"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_role", "name", cluster2Name),
 					resource.TestCheckResourceAttr("materialize_cluster.test_role", "ownership_role", roleName),
-					resource.TestCheckResourceAttr("materialize_cluster.test", "managed", "f"),
-					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", ""),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "0"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "size", ""),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", clusterName+"_managed"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "2-2"),
 				),
 			},
 		},
@@ -45,16 +50,18 @@ func TestAccCluster_update(t *testing.T) {
 	newClusterName := fmt.Sprintf("new_%s", slug)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	newClusterSize := "2-2"
+	newClusterReplicationFactor := "1"
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system"),
+				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2-1", "2"),
 			},
 			{
-				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName),
+				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, newClusterSize, newClusterReplicationFactor),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
@@ -62,6 +69,12 @@ func TestAccCluster_update(t *testing.T) {
 					testAccCheckClusterExists("materialize_cluster.test_role"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_role", "name", cluster2Name),
 					resource.TestCheckResourceAttr("materialize_cluster.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "0"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", ""),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", newClusterName+"_managed"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "2-2"),
 				),
 			},
 		},
@@ -72,16 +85,20 @@ func TestAccCluster_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	clusterSize := "2-2"
+	clusterReplicationFactor := "1"
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllClusterDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, clusterSize, clusterReplicationFactor),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					testAccCheckClusterDisappears(clusterName),
+					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
+					testAccCheckClusterDisappears(clusterName+"_managed"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -89,7 +106,7 @@ func TestAccCluster_disappears(t *testing.T) {
 	})
 }
 
-func testAccClusterResource(roleName, cluster1Name, cluster2Name, cluster2Owner string) string {
+func testAccClusterResource(roleName, cluster1Name, cluster2Name, cluster2Owner, clusterSize, clusterReplicationFactor string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%[1]s"
@@ -106,7 +123,13 @@ resource "materialize_cluster" "test_role" {
 	depends_on = [materialize_role.test]
 }
 
-`, roleName, cluster1Name, cluster2Name, cluster2Owner)
+resource "materialize_cluster" "test_managed_cluster" {
+	name               = "%[2]s_managed"
+	size               = "%[5]s"
+	replication_factor = %[6]s
+}
+
+`, roleName, cluster1Name, cluster2Name, cluster2Owner, clusterSize, clusterReplicationFactor)
 }
 
 func testAccCheckClusterExists(name string) resource.TestCheckFunc {
@@ -122,6 +145,14 @@ func testAccCheckClusterExists(name string) resource.TestCheckFunc {
 }
 
 func testAccCheckClusterDisappears(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		db := testAccProvider.Meta().(*sqlx.DB)
+		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER "%s";`, name))
+		return err
+	}
+}
+
+func testAccCheckManagedClusterDisappears(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
 		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER "%s";`, name))

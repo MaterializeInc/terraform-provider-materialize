@@ -63,11 +63,19 @@ func QualifiedNameSchema(resource string) *schema.Schema {
 
 func SizeSchema(resource string) *schema.Schema {
 	return &schema.Schema{
-		Type:        schema.TypeString,
-		Description: fmt.Sprintf("The size of the %s.", resource),
-		// Required:     true,
-		Optional:     true,
+		Type:         schema.TypeString,
+		Description:  fmt.Sprintf("The size of the %s.", resource),
+		Required:     true,
 		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
+	}
+}
+
+func ManagedClusterSizeSchema(resource string) *schema.Schema {
+	return &schema.Schema{
+		Type:         schema.TypeString,
+		Description:  fmt.Sprintf("The size of the %s.", resource),
+		Optional:     true,
 		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
 	}
 }
