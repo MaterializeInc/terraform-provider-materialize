@@ -99,11 +99,13 @@ func grantSystemPrivilegeCreate(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	i, err := materialize.SystemPrivilegeId(meta.(*sqlx.DB), roleName, privilege)
+	rId, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	key := b.GrantKey(rId, privilege)
+	d.SetId(key)
 
 	return grantSystemPrivilegeRead(ctx, d, meta)
 }

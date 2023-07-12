@@ -56,10 +56,10 @@ func GrantDatabaseDefaultPrivilege() *schema.Resource {
 }
 
 func grantDatabaseDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	granteenName := d.Get("grantee_name").(string)
+	granteeName := d.Get("grantee_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "DATABASE", granteenName, privilege)
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "DATABASE", granteeName, privilege)
 
 	var targetRole, database string
 	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
@@ -77,12 +77,30 @@ func grantDatabaseDefaultPrivilegeCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	// set id
-	i, err := materialize.DefaultPrivilegeId(meta.(*sqlx.DB), "DATABASE", granteenName, targetRole, database, "", privilege)
+	// Query ids
+	gId, err := materialize.RoleId(meta.(*sqlx.DB), granteeName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	var tId, dId string
+
+	if targetRole != "" {
+		tId, err = materialize.RoleId(meta.(*sqlx.DB), targetRole)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if database != "" {
+		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	key := b.GrantKey("DATABASE", gId, tId, dId, "", privilege)
+	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
 }

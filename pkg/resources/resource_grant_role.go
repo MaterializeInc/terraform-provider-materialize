@@ -99,11 +99,18 @@ func grantRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 
-	i, err := materialize.RolePrivilegeId(meta.(*sqlx.DB), roleName, memberName)
+	rId, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	mId, err := materialize.RoleId(meta.(*sqlx.DB), memberName)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	key := b.GrantKey(rId, mId)
+	d.SetId(key)
 
 	return grantRoleRead(ctx, d, meta)
 }

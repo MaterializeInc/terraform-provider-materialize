@@ -66,8 +66,8 @@ func grantConnectionCreate(ctx context.Context, d *schema.ResourceData, meta int
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.PrivilegeObjectStruct{
-		Type:         "CONNECTION",
+	obj := materialize.ObjectSchemaStruct{
+		ObjectType:   "CONNECTION",
 		Name:         connectionName,
 		SchemaName:   schemaName,
 		DatabaseName: databaseName,
@@ -86,11 +86,13 @@ func grantConnectionCreate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	i, err := materialize.PrivilegeId(meta.(*sqlx.DB), obj, roleId, privilege)
+	i, err := materialize.ObjectId(meta.(*sqlx.DB), obj)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	key := b.GrantKey(i, roleId, privilege)
+	d.SetId(key)
 
 	return grantRead(ctx, d, meta)
 }
@@ -106,8 +108,8 @@ func grantConnectionDelete(ctx context.Context, d *schema.ResourceData, meta int
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.PrivilegeObjectStruct{
-			Type:         "CONNECTION",
+		materialize.ObjectSchemaStruct{
+			ObjectType:   "CONNECTION",
 			Name:         connectionName,
 			SchemaName:   schemaName,
 			DatabaseName: databaseName,

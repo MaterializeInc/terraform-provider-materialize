@@ -85,6 +85,10 @@ func (b *DefaultPrivilegeBuilder) Revoke() error {
 	return b.baseQuery("REVOKE")
 }
 
+func (b *DefaultPrivilegeBuilder) GrantKey(objectType, granteeId, targetRoleId, databaseId, schemaId, privilege string) string {
+	return fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s`, objectType, granteeId, targetRoleId, databaseId, schemaId, privilege)
+}
+
 type DefaultPrivilegeParams struct {
 	ObjectType sql.NullString `db:"object_type"`
 	GranteeId  sql.NullString `db:"grantee_id"`
@@ -109,38 +113,6 @@ var defaultPrivilegeQuery = NewBaseQuery(`
 		ON mz_default_privileges.schema_id = mz_schemas.id
 	LEFT JOIN mz_databases
 		ON mz_default_privileges.database_id = mz_databases.id`)
-
-func DefaultPrivilegeId(conn *sqlx.DB, objectType, granteeName, targetRoleName, databaseName, schemaName, privilege string) (string, error) {
-	g, err := RoleId(conn, granteeName)
-	if err != nil {
-		return "", err
-	}
-
-	var t, d, s string
-	if targetRoleName != "" {
-		t, err = RoleId(conn, targetRoleName)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if databaseName != "" {
-		d, err = DatabaseId(conn, ObjectSchemaStruct{Name: databaseName})
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if schemaName != "" {
-		s, err = SchemaId(conn, ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName})
-		if err != nil {
-			return "", err
-		}
-	}
-
-	f := fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s`, objectType, g, t, d, s, privilege)
-	return f, nil
-}
 
 func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, databaseId, schemaId string) ([]DefaultPrivilegeParams, error) {
 	p := map[string]string{

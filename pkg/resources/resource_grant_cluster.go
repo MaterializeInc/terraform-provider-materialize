@@ -52,9 +52,9 @@ func grantClusterCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	privilege := d.Get("privilege").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	obj := materialize.PrivilegeObjectStruct{
-		Type: "CLUSTER",
-		Name: clusterName,
+	obj := materialize.ObjectSchemaStruct{
+		ObjectType: "CLUSTER",
+		Name:       clusterName,
 	}
 
 	b := materialize.NewPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege, obj)
@@ -70,11 +70,13 @@ func grantClusterCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	i, err := materialize.PrivilegeId(meta.(*sqlx.DB), obj, roleId, privilege)
+	i, err := materialize.ObjectId(meta.(*sqlx.DB), obj)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	key := b.GrantKey(i, roleId, privilege)
+	d.SetId(key)
 
 	return grantRead(ctx, d, meta)
 }
@@ -88,9 +90,9 @@ func grantClusterDelete(ctx context.Context, d *schema.ResourceData, meta interf
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.PrivilegeObjectStruct{
-			Type: "CLUSTER",
-			Name: clusterName,
+		materialize.ObjectSchemaStruct{
+			ObjectType: "CLUSTER",
+			Name:       clusterName,
 		},
 	)
 

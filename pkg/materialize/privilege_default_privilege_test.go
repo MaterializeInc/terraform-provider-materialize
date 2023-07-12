@@ -8,7 +8,6 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseDefaultPrivileges(t *testing.T) {
@@ -52,63 +51,6 @@ func TestParseDefaultPrivileges(t *testing.T) {
 	if !reflect.DeepEqual(output, expected) {
 		t.Fatal("ouptut does not equal expected")
 	}
-}
-
-func TestDefaultPrivilegeId(t *testing.T) {
-	r := require.New(t)
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		gp := `WHERE mz_roles.name = 'grantee'`
-		testhelpers.MockRoleScan(mock, gp)
-
-		i, err := DefaultPrivilegeId(db, "TABLE", "grantee", "", "", "", "SELECT")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		r.Equal(i, `GRANT DEFAULT|TABLE|u1||||SELECT`)
-	})
-}
-
-func TestDefaultPrivilegeIdRole(t *testing.T) {
-	r := require.New(t)
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		gp := `WHERE mz_roles.name = 'grantee'`
-		testhelpers.MockRoleScan(mock, gp)
-
-		tp := `WHERE mz_roles.name = 'target'`
-		testhelpers.MockRoleScan(mock, tp)
-
-		i, err := DefaultPrivilegeId(db, "TABLE", "grantee", "target", "", "", "SELECT")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		r.Equal(i, `GRANT DEFAULT|TABLE|u1|u1|||SELECT`)
-	})
-}
-
-func TestDefaultPrivilegeIdRoleQualified(t *testing.T) {
-	r := require.New(t)
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		gp := `WHERE mz_roles.name = 'grantee'`
-		testhelpers.MockRoleScan(mock, gp)
-
-		tp := `WHERE mz_roles.name = 'target'`
-		testhelpers.MockRoleScan(mock, tp)
-
-		dp := `WHERE mz_databases.name = 'database'`
-		testhelpers.MockDatabaseScan(mock, dp)
-
-		sp := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
-		testhelpers.MockSchemaScan(mock, sp)
-
-		i, err := DefaultPrivilegeId(db, "TABLE", "grantee", "target", "database", "schema", "SELECT")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		r.Equal(i, `GRANT DEFAULT|TABLE|u1|u1|u1|u1|SELECT`)
-	})
 }
 
 func TestDefaultPrivilegeGrantSimple(t *testing.T) {

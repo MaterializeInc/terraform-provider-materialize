@@ -155,9 +155,10 @@ func ScanIndex(conn *sqlx.DB, id string) (IndexParams, error) {
 
 func ListIndexes(conn *sqlx.DB, schemaName, databaseName string) ([]IndexParams, error) {
 	p := map[string]string{
-		"mz_databases.name": databaseName,
 		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
 	}
+
 	q := indexQuery.QueryPredicate(p)
 
 	var c []IndexParams

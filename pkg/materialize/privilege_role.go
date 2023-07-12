@@ -31,6 +31,10 @@ func (b *RolePrivilegeBuilder) Revoke() error {
 	return b.ddl.exec(q)
 }
 
+func (b *RolePrivilegeBuilder) GrantKey(roleId, memberId string) string {
+	return fmt.Sprintf(`ROLE MEMBER|%[1]s|%[2]s`, roleId, memberId)
+}
+
 type RolePrivilegeParams struct {
 	RoleId  sql.NullString `db:"role_id"`
 	Member  sql.NullString `db:"member"`
@@ -43,21 +47,6 @@ var rolePrivilegeQuery = NewBaseQuery(`
 		mz_role_members.member,
 		mz_role_members.grantor
 	FROM mz_role_members`)
-
-func RolePrivilegeId(conn *sqlx.DB, roleName, memberName string) (string, error) {
-	r, err := RoleId(conn, roleName)
-	if err != nil {
-		return "", err
-	}
-
-	m, err := RoleId(conn, memberName)
-	if err != nil {
-		return "", err
-	}
-
-	f := fmt.Sprintf(`ROLE MEMBER|%[1]s|%[2]s`, r, m)
-	return f, nil
-}
 
 func ScanRolePrivilege(conn *sqlx.DB, roleId, memberId string) ([]RolePrivilegeParams, error) {
 	p := map[string]string{
