@@ -19,6 +19,7 @@ func TestConnectionSshTunnelCreate(t *testing.T) {
 		b.SSHHost("localhost")
 		b.SSHPort(123)
 		b.SSHUser("user")
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

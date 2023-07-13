@@ -48,6 +48,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false),
+	"validate":        ValidateConnection(),
 	"ownership_role":  OwnershipRole(),
 }
 
@@ -129,6 +130,10 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		b.PostgresSSHTunnel(conn)
+	}
+
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
 	}
 
 	// create resource

@@ -47,6 +47,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Computed:    true,
 		ForceNew:    true,
 	},
+	"validate":       ValidateConnection(),
 	"ownership_role": OwnershipRole(),
 }
 
@@ -123,6 +124,10 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 	b.SSHHost(d.Get("host").(string))
 	b.SSHUser(d.Get("user").(string))
 	b.SSHPort(d.Get("port").(int))
+
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
+	}
 
 	// create resource
 	if err := b.Create(); err != nil {

@@ -21,6 +21,7 @@ type ConnectionPostgresBuilder struct {
 	postgresSSLKey         IdentifierSchemaStruct
 	postgresSSLMode        string
 	postgresAWSPrivateLink IdentifierSchemaStruct
+	validate               bool
 }
 
 func NewConnectionPostgresBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionPostgresBuilder {
@@ -90,6 +91,11 @@ func (b *ConnectionPostgresBuilder) PostgresAWSPrivateLink(postgresAWSPrivateLin
 	return b
 }
 
+func (b *ConnectionPostgresBuilder) Validate(validate bool) *ConnectionPostgresBuilder {
+	b.validate = validate
+	return b
+}
+
 func (b *ConnectionPostgresBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO POSTGRES (`, b.QualifiedName()))
@@ -132,6 +138,12 @@ func (b *ConnectionPostgresBuilder) Create() error {
 
 	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.postgresDatabase)))
 
-	q.WriteString(`);`)
+	q.WriteString(`)`)
+
+	if !b.validate {
+		q.WriteString(` WITH (VALIDATE = false)`)
+	}
+
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }

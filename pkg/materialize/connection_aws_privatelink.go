@@ -12,6 +12,7 @@ type ConnectionAwsPrivatelinkBuilder struct {
 	Connection
 	privateLinkServiceName       string
 	privateLinkAvailabilityZones []string
+	validate                     bool
 }
 
 func NewConnectionAwsPrivatelinkBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionAwsPrivatelinkBuilder {
@@ -31,6 +32,11 @@ func (b *ConnectionAwsPrivatelinkBuilder) PrivateLinkAvailabilityZones(privateLi
 	return b
 }
 
+func (b *ConnectionAwsPrivatelinkBuilder) Validate(validate bool) *ConnectionAwsPrivatelinkBuilder {
+	b.validate = validate
+	return b
+}
+
 func (b *ConnectionAwsPrivatelinkBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO AWS PRIVATELINK (`, b.QualifiedName()))
@@ -43,8 +49,13 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() error {
 		}
 		q.WriteString(QuoteString(az))
 	}
+	q.WriteString(`))`)
 
-	q.WriteString(`));`)
+	if !b.validate {
+		q.WriteString(` WITH (VALIDATE = false)`)
+	}
+
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
 

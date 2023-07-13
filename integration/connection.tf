@@ -37,6 +37,7 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   # }
   # sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic = "progress_topic"
+  # validate = false
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
@@ -73,6 +74,7 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
     schema_name   = materialize_secret.postgres_password.schema_name
   }
   database = "postgres"
+  # validate = false
 }
 
 resource "materialize_connection_grant" "connection_grant_usage" {

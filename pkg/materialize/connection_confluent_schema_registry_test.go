@@ -20,6 +20,7 @@ func TestConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 		b.ConfluentSchemaRegistryUrl("http://localhost:8081")
 		b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Text: "user"})
 		b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
+		b.Validate(true)
 
 		b.Create()
 	})
@@ -35,6 +36,7 @@ func TestConnectionConfluentSchemaRegistryUsernameSecretCreate(t *testing.T) {
 		b.ConfluentSchemaRegistryUrl("http://localhost:8081")
 		b.ConfluentSchemaRegistryUsername(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "user", DatabaseName: "database"}})
 		b.ConfluentSchemaRegistryPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
