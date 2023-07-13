@@ -44,6 +44,7 @@ resource "materialize_connection_ssh_tunnel" "example_ssh_connection" {
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
+- `validate` (Boolean) If the connection should wait for validation.
 
 ### Read-Only
 
