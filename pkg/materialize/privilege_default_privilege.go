@@ -10,10 +10,10 @@ import (
 
 type DefaultPrivilegeBuilder struct {
 	ddl          Builder
-	grantee      string
+	grantee      MaterializeRole
 	objectType   string
 	privilege    string
-	targetRole   string
+	targetRole   MaterializeRole
 	schemaName   string
 	databaseName string
 }
@@ -23,12 +23,12 @@ func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType, grantee, privilege st
 		ddl:        Builder{conn, Privilege},
 		objectType: objectType,
 		privilege:  privilege,
-		grantee:    grantee,
+		grantee:    MaterializeRole{name: grantee},
 	}
 }
 
 func (b *DefaultPrivilegeBuilder) TargetRole(c string) *DefaultPrivilegeBuilder {
-	b.targetRole = c
+	b.targetRole = MaterializeRole{name: c}
 	return b
 }
 
@@ -47,11 +47,11 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 	q.WriteString(`ALTER DEFAULT PRIVILEGES`)
 
 	// role
-	if b.targetRole != "" && b.targetRole != "ALL" {
-		q.WriteString(fmt.Sprintf(` FOR ROLE %s`, b.targetRole))
+	if b.targetRole.name != "" && b.targetRole.name != "ALL" {
+		q.WriteString(fmt.Sprintf(` FOR ROLE %s`, b.targetRole.QualifiedName()))
 	}
 
-	if b.targetRole == "ALL" {
+	if b.targetRole.name == "ALL" {
 		q.WriteString(" FOR ALL ROLES")
 	}
 
@@ -71,7 +71,7 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 		grantDirection = "FROM"
 	}
 
-	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.grantee))
+	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.grantee.QualifiedName()))
 
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())

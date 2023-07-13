@@ -24,7 +24,7 @@ func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT role TO member;`,
+			`GRANT "role" TO "member";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// RolePrivilegeId - Query role
@@ -59,7 +59,7 @@ func TestResourceGrantRolePrivilegeDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE role FROM member;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE "role" FROM "member";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantRoleDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
