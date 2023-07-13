@@ -9,25 +9,25 @@ import (
 
 type RolePrivilegeBuilder struct {
 	ddl    Builder
-	role   string
-	member string
+	role   MaterializeRole
+	member MaterializeRole
 }
 
 func NewRolePrivilegeBuilder(conn *sqlx.DB, role, member string) *RolePrivilegeBuilder {
 	return &RolePrivilegeBuilder{
 		ddl:    Builder{conn, Privilege},
-		role:   role,
-		member: member,
+		role:   MaterializeRole{name: role},
+		member: MaterializeRole{name: member},
 	}
 }
 
 func (b *RolePrivilegeBuilder) Grant() error {
-	q := fmt.Sprintf(`GRANT %s TO %s;`, b.role, b.member)
+	q := fmt.Sprintf(`GRANT %s TO %s;`, b.role.QualifiedName(), b.member.QualifiedName())
 	return b.ddl.exec(q)
 }
 
 func (b *RolePrivilegeBuilder) Revoke() error {
-	q := fmt.Sprintf(`REVOKE %s FROM %s;`, b.role, b.member)
+	q := fmt.Sprintf(`REVOKE %s FROM %s;`, b.role.QualifiedName(), b.member.QualifiedName())
 	return b.ddl.exec(q)
 }
 

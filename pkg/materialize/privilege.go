@@ -145,9 +145,17 @@ func (i *PrivilegeObjectStruct) QualifiedName() string {
 }
 
 // DDL
+type MaterializeRole struct {
+	name string
+}
+
+func (b *MaterializeRole) QualifiedName() string {
+	return QualifiedName(b.name)
+}
+
 type PrivilegeBuilder struct {
 	ddl       Builder
-	role      string
+	role      MaterializeRole
 	privilege string
 	object    PrivilegeObjectStruct
 }
@@ -155,7 +163,7 @@ type PrivilegeBuilder struct {
 func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object PrivilegeObjectStruct) *PrivilegeBuilder {
 	return &PrivilegeBuilder{
 		ddl:       Builder{conn, Privilege},
-		role:      role,
+		role:      MaterializeRole{name: role},
 		privilege: privilege,
 		object:    object,
 	}
@@ -175,13 +183,13 @@ func objectCompatibility(objectType string) string {
 
 func (b *PrivilegeBuilder) Grant() error {
 	t := objectCompatibility(b.object.Type)
-	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
+	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 
 func (b *PrivilegeBuilder) Revoke() error {
 	t := objectCompatibility(b.object.Type)
-	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
+	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 

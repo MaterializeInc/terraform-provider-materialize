@@ -25,7 +25,7 @@ func TestResourceGrantDatabaseCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT CREATE ON DATABASE "materialize" TO joe;`,
+			`GRANT CREATE ON DATABASE "materialize" TO "joe";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Role Id
@@ -62,7 +62,7 @@ func TestResourceGrantDatabaseDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantDatabaseDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

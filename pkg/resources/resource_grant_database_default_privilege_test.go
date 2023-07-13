@@ -25,7 +25,7 @@ func TestResourceGrantDatabaseDefaultPrivilegeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`ALTER DEFAULT PRIVILEGES FOR ROLE developers GRANT USAGE ON DATABASES TO project_managers;`,
+			`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" GRANT USAGE ON DATABASES TO "project_managers";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// DefaultPrivilegeId - Query grantee role
@@ -65,7 +65,7 @@ func TestResourceGrantDatabaseDefaultPrivilegeDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE developers REVOKE USAGE ON DATABASES FROM project_managers;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" REVOKE USAGE ON DATABASES FROM "project_managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantDatabaseDefaultPrivilegeDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

@@ -24,7 +24,7 @@ func TestResourceGrantSystemPrivilegeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT CREATEDB ON SYSTEM TO role;`,
+			`GRANT CREATEDB ON SYSTEM TO "role";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// SystemPrivilegeId - Query role
@@ -55,7 +55,7 @@ func TestResourceGrantSystemPrivilegeDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE CREATEDB ON SYSTEM FROM role;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE CREATEDB ON SYSTEM FROM "role";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSystemPrivilegeDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

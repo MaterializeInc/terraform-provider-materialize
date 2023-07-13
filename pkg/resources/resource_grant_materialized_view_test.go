@@ -27,7 +27,7 @@ func TestResourceGrantMaterializedViewCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT SELECT ON TABLE "database"."schema"."mview" TO joe;`,
+			`GRANT SELECT ON TABLE "database"."schema"."mview" TO "joe";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Role Id
@@ -66,7 +66,7 @@ func TestResourceGrantMaterializedViewDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE SELECT ON TABLE "database"."schema"."mview" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE SELECT ON TABLE "database"."schema"."mview" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantMaterializedViewDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
