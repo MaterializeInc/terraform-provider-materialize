@@ -135,7 +135,6 @@ func connectionString(host, username, password string, port int, database string
 		params = append(params, "sslmode=disable")
 		params = append(params, "enable_rbac_checks=true")
 		params = append(params, "enable_ld_rbac_checks=true")
-		params = append(params, "enable_connection_validation_syntax=true")
 	} else {
 		params = append(params, "sslmode=require")
 	}
@@ -169,14 +168,25 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return nil, diags
 	}
 
-	// TODO: Remove this once enable_managed_clusters is enabled by default
 	if testing {
-		_, err := db.Exec("ALTER SYSTEM SET enable_managed_clusters = true;")
+		// TODO: Remove this once enable_managed_clusters is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_managed_clusters = true;")
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Unable to enable managed clusters",
 				Detail:   "Unable to enable managed clusters for authenticated Materialize client",
+			})
+			return nil, diags
+		}
+
+		// TODO: Remove this once enable_connection_validation_syntax is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_connection_validation_syntax = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable connection validation",
+				Detail:   "Unable to enable connection validation for authenticated Materialize client",
 			})
 			return nil, diags
 		}

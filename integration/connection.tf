@@ -59,7 +59,6 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
   host = "postgres"
   port = 5432
   user {
-    text = "postgres"
     secret {
       name          = materialize_secret.postgres_password.name
       database_name = materialize_secret.postgres_password.database_name
