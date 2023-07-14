@@ -64,6 +64,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
 	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
+	"validate":       ValidateConnection(),
 	"ownership_role": OwnershipRole(),
 }
 
@@ -133,6 +134,10 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		b.KafkaSSHTunnel(conn)
+	}
+
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
 	}
 
 	// create resource

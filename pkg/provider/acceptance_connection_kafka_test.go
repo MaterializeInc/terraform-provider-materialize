@@ -113,6 +113,8 @@ resource "materialize_connection_kafka" "test_role" {
 	ownership_role = "%[4]s"
 
 	depends_on = [materialize_role.test]
+
+	validate = false
 }
 `, roleName, connectionName, connection2Name, connectionOwner)
 }
