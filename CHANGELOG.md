@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 - 2023-07-14
+
+### Features
+
+### BugFixes
+* Qualify role name in grant resources [#235](https://github.com/MaterializeInc/terraform-provider-materialize/pull/235)
+
+### Misc
+
 ## 0.1.0 - 2023-07-11
 
 ### Features
