@@ -10,10 +10,9 @@ import (
 
 type ConnectionSshTunnelBuilder struct {
 	Connection
-	sshHost  string
-	sshUser  string
-	sshPort  int
-	validate bool
+	sshHost string
+	sshUser string
+	sshPort int
 }
 
 func NewConnectionSshTunnelBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionSshTunnelBuilder {
@@ -38,20 +37,11 @@ func (b *ConnectionSshTunnelBuilder) SSHPort(sshPort int) *ConnectionSshTunnelBu
 	return b
 }
 
-func (b *ConnectionSshTunnelBuilder) Validate(validate bool) *ConnectionSshTunnelBuilder {
-	b.validate = validate
-	return b
-}
-
 func (b *ConnectionSshTunnelBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL`, b.QualifiedName()))
 
 	q.WriteString(fmt.Sprintf(` (HOST %[1]s, USER %[2]s, PORT %[3]d)`, QuoteString(b.sshHost), QuoteString(b.sshUser), b.sshPort))
-
-	if !b.validate {
-		q.WriteString(` WITH (VALIDATE = false)`)
-	}
 
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())

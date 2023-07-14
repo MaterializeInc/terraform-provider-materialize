@@ -135,6 +135,7 @@ func connectionString(host, username, password string, port int, database string
 		params = append(params, "sslmode=disable")
 		params = append(params, "enable_rbac_checks=true")
 		params = append(params, "enable_ld_rbac_checks=true")
+		params = append(params, "enable_connection_validation_syntax=true")
 	} else {
 		params = append(params, "sslmode=require")
 	}

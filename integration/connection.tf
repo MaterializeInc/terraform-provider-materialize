@@ -26,18 +26,17 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   kafka_broker {
     broker = "redpanda:9092"
   }
-  # TODO: Need to set correct password in docker compose
-  # sasl_username {
-  #   text = "sasl_user"
-  # }
-  # sasl_password {
-  #   name          = materialize_secret.kafka_password.name
-  #   database_name = materialize_secret.kafka_password.database_name
-  #   schema_name   = materialize_secret.kafka_password.schema_name
-  # }
-  # sasl_mechanisms = "SCRAM-SHA-256"
+  sasl_username {
+    text = "sasl-user"
+  }
+  sasl_password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+  sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic = "progress_topic"
-  # validate = false
+  validate = false
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
@@ -56,17 +55,16 @@ resource "materialize_connection_postgres" "postgres_connection" {
 }
 
 resource "materialize_connection_postgres" "postgres_connection_with_secret" {
-  name = "postgres_connection_with_secret"
+  name = "postgres-connection-with-secret"
   host = "postgres"
   port = 5432
   user {
     text = "postgres"
-    # TODO: Correct password
-    # secret {
-    #   name          = materialize_secret.postgres_password.name
-    #   database_name = materialize_secret.postgres_password.database_name
-    #   schema_name   = materialize_secret.postgres_password.schema_name
-    # }
+    secret {
+      name          = materialize_secret.postgres_password.name
+      database_name = materialize_secret.postgres_password.database_name
+      schema_name   = materialize_secret.postgres_password.schema_name
+    }
   }
   password {
     name          = materialize_secret.postgres_password.name
@@ -74,7 +72,7 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
     schema_name   = materialize_secret.postgres_password.schema_name
   }
   database = "postgres"
-  # validate = false
+  validate = false
 }
 
 resource "materialize_connection_grant" "connection_grant_usage" {

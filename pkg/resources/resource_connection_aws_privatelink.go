@@ -36,7 +36,6 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Sensitive:   true,
 	},
-	"validate":       ValidateConnection(),
 	"ownership_role": OwnershipRole(),
 }
 
@@ -120,10 +119,6 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	if v, ok := d.GetOk("availability_zones"); ok {
 		azs := materialize.GetSliceValueString(v.([]interface{}))
 		b.PrivateLinkAvailabilityZones(azs)
-	}
-
-	if v, ok := d.GetOk("validate"); ok {
-		b.Validate(v.(bool))
 	}
 
 	// create resource

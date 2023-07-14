@@ -125,10 +125,6 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 	b.SSHUser(d.Get("user").(string))
 	b.SSHPort(d.Get("port").(int))
 
-	if v, ok := d.GetOk("validate"); ok {
-		b.Validate(v.(bool))
-	}
-
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
