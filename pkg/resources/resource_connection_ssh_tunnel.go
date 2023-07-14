@@ -47,7 +47,6 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Computed:    true,
 		ForceNew:    true,
 	},
-	"validate":       ValidateConnection(),
 	"ownership_role": OwnershipRole(),
 }
 
