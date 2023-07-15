@@ -50,6 +50,25 @@ func TestResourceGrantDatabaseCreate(t *testing.T) {
 	})
 }
 
+func TestResourceGrantDatabaseCreateEmail(t *testing.T) {
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":     "joe@materialize.com",
+		"privilege":     "CREATE",
+		"database_name": "materialize",
+	}
+	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`GRANT CREATE ON DATABASE "materialize" TO "joe@materialize.com";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+	})
+}
+
 func TestResourceGrantDatabaseDelete(t *testing.T) {
 	r := require.New(t)
 
