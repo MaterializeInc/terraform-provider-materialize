@@ -12,25 +12,31 @@ import (
 )
 
 func TestAccGrantDatabase_basic(t *testing.T) {
-	privilege := randomPrivilege("DATABASE")
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccGrantDatabaseResource(roleName, databaseName, privilege),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantDatabaseExists("materialize_database_grant.database_grant", roleName, databaseName, privilege),
-					resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "role_name", roleName),
-					resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "database_name", databaseName),
-				),
-			},
-		},
-	})
+	for _, roleName := range []string{
+		acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+		acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + "@materialize.com",
+	} {
+		t.Run(fmt.Sprintf("roleName=%s", roleName), func(t *testing.T) {
+			privilege := randomPrivilege("DATABASE")
+			databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+			resource.ParallelTest(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviderFactories,
+				CheckDestroy:      nil,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccGrantDatabaseResource(roleName, databaseName, privilege),
+						Check: resource.ComposeTestCheckFunc(
+							testAccCheckGrantDatabaseExists("materialize_database_grant.database_grant", roleName, databaseName, privilege),
+							resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "role_name", roleName),
+							resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "privilege", privilege),
+							resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "database_name", databaseName),
+						),
+					},
+				},
+			})
+		})
+	}
 }
 
 func TestAccGrantDatabase_disappears(t *testing.T) {
