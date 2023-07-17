@@ -7,8 +7,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantView_basic(t *testing.T) {
@@ -25,7 +23,13 @@ func TestAccGrantView_basic(t *testing.T) {
 			{
 				Config: testAccGrantViewResource(roleName, viewName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantViewExists("materialize_view_grant.view_grant", roleName, viewName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(
+						materialize.ObjectSchemaStruct{
+							ObjectType:   "VIEW",
+							Name:         viewName,
+							SchemaName:   schemaName,
+							DatabaseName: databaseName,
+						}, "materialize_view_grant.view_grant", roleName, privilege),
 					resource.TestCheckResourceAttr("materialize_view_grant.view_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_view_grant.view_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_view_grant.view_grant", "view_name", viewName),
@@ -43,6 +47,14 @@ func TestAccGrantView_disappears(t *testing.T) {
 	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	o := materialize.ObjectSchemaStruct{
+		ObjectType:   "VIEW",
+		Name:         viewName,
+		SchemaName:   schemaName,
+		DatabaseName: databaseName,
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -51,8 +63,8 @@ func TestAccGrantView_disappears(t *testing.T) {
 			{
 				Config: testAccGrantViewResource(roleName, viewName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantViewExists("materialize_view_grant.view_grant", roleName, viewName, schemaName, databaseName, privilege),
-					testAccCheckGrantViewRevoked(roleName, viewName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(o, "materialize_view_grant.view_grant", roleName, privilege),
+					testAccCheckGrantRevoked(o, roleName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -95,44 +107,4 @@ resource "materialize_view_grant" "view_grant" {
 	view_name     = materialize_view.test.name
 }
 `, roleName, databaseName, schemaName, viewName, privilege)
-}
-
-func testAccCheckGrantViewExists(grantName, roleName, viewName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, ok := s.RootModule().Resources[grantName]
-		if !ok {
-			return fmt.Errorf("grant not found")
-		}
-
-		o := materialize.ObjectSchemaStruct{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
-		id, err := materialize.ViewId(db, o)
-		if err != nil {
-			return err
-		}
-
-		roleId, err := materialize.RoleId(db, roleName)
-		if err != nil {
-			return err
-		}
-
-		g, err := materialize.ScanPrivileges(db, "VIEW", id)
-		if err != nil {
-			return err
-		}
-
-		privilegeMap := materialize.ParsePrivileges(g)
-		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("view object %s does not include privilege %s", g, privilege)
-		}
-		return nil
-	}
-}
-
-func testAccCheckGrantViewRevoked(roleName, viewName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %s ON VIEW "%s"."%s"."%s" FROM "%s";`, privilege, databaseName, schemaName, viewName, roleName))
-		return err
-	}
 }

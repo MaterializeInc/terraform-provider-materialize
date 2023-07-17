@@ -42,7 +42,12 @@ func TestAccRole_disappears(t *testing.T) {
 				Config: testAccRoleResource(roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists("materialize_role.test"),
-					testAccCheckRoleDisappears(roleName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "ROLE",
+							Name:       roleName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -66,14 +71,6 @@ func testAccCheckRoleExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("role not found: %s", name)
 		}
 		_, err := materialize.ScanRole(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckRoleDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP ROLE "%s";`, name))
 		return err
 	}
 }

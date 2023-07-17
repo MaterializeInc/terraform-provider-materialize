@@ -85,7 +85,12 @@ func TestAccConnSshTunnel_disappears(t *testing.T) {
 				Config: testAccConnSshTunnelResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnSshTunnelExists("materialize_connection_ssh_tunnel.test"),
-					testAccCheckConnSshTunnelDisappears(connectionName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "CONNECTION",
+							Name:       connectionName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -128,14 +133,6 @@ func testAccCheckConnSshTunnelExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("connection ssh tunnel not found: %s", name)
 		}
 		_, err := materialize.ScanConnectionSshTunnel(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckConnSshTunnelDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CONNECTION "%s";`, name))
 		return err
 	}
 }

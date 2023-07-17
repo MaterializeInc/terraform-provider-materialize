@@ -102,7 +102,12 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
-					testAccCheckSourcePostgresDisappears(sourceName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "SOURCE",
+							Name:       sourceName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -185,14 +190,6 @@ func testAccCheckSourcePostgresExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("source postgres not found: %s", name)
 		}
 		_, err := materialize.ScanSource(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckSourcePostgresDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP SOURCE "%s";`, name))
 		return err
 	}
 }

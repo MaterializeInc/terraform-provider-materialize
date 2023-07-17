@@ -7,8 +7,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantSource_basic(t *testing.T) {
@@ -25,7 +23,13 @@ func TestAccGrantSource_basic(t *testing.T) {
 			{
 				Config: testAccGrantSourceResource(roleName, sourceName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantSourceExists("materialize_source_grant.source_grant", roleName, sourceName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(
+						materialize.ObjectSchemaStruct{
+							ObjectType:   "SOURCE",
+							Name:         sourceName,
+							SchemaName:   schemaName,
+							DatabaseName: databaseName,
+						}, "materialize_source_grant.source_grant", roleName, privilege),
 					resource.TestCheckResourceAttr("materialize_source_grant.source_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_source_grant.source_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_source_grant.source_grant", "source_name", sourceName),
@@ -43,6 +47,14 @@ func TestAccGrantSource_disappears(t *testing.T) {
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	o := materialize.ObjectSchemaStruct{
+		ObjectType:   "SOURCE",
+		Name:         sourceName,
+		SchemaName:   schemaName,
+		DatabaseName: databaseName,
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -51,8 +63,8 @@ func TestAccGrantSource_disappears(t *testing.T) {
 			{
 				Config: testAccGrantSourceResource(roleName, sourceName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantSourceExists("materialize_source_grant.source_grant", roleName, sourceName, schemaName, databaseName, privilege),
-					testAccCheckGrantSourceRevoked(roleName, sourceName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(o, "materialize_source_grant.source_grant", roleName, privilege),
+					testAccCheckGrantRevoked(o, roleName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -96,44 +108,4 @@ resource "materialize_source_grant" "source_grant" {
 	source_name   = materialize_source_load_generator.test.name
 }
 `, roleName, databaseName, schemaName, sourceName, privilege)
-}
-
-func testAccCheckGrantSourceExists(grantName, roleName, sourceName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, ok := s.RootModule().Resources[grantName]
-		if !ok {
-			return fmt.Errorf("grant not found")
-		}
-
-		o := materialize.ObjectSchemaStruct{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-		id, err := materialize.SourceId(db, o)
-		if err != nil {
-			return err
-		}
-
-		roleId, err := materialize.RoleId(db, roleName)
-		if err != nil {
-			return err
-		}
-
-		g, err := materialize.ScanPrivileges(db, "SOURCE", id)
-		if err != nil {
-			return err
-		}
-
-		privilegeMap := materialize.ParsePrivileges(g)
-		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("source object %s does not include privilege %s", g, privilege)
-		}
-		return nil
-	}
-}
-
-func testAccCheckGrantSourceRevoked(roleName, sourceName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %s ON SOURCE "%s"."%s"."%s" FROM "%s";`, privilege, databaseName, schemaName, sourceName, roleName))
-		return err
-	}
 }

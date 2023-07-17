@@ -55,7 +55,12 @@ func TestAccDatabase_disappears(t *testing.T) {
 				Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatabaseExists("materialize_database.test"),
-					testAccCheckDatabaseDisappears(databaseName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "DATABASE",
+							Name:       databaseName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -90,14 +95,6 @@ func testAccCheckDatabaseExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("database not found: %s", name)
 		}
 		_, err := materialize.ScanDatabase(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckDatabaseDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP DATABASE "%s";`, name))
 		return err
 	}
 }

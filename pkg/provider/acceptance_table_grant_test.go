@@ -7,8 +7,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantTable_basic(t *testing.T) {
@@ -25,7 +23,13 @@ func TestAccGrantTable_basic(t *testing.T) {
 			{
 				Config: testAccGrantTableResource(roleName, tableName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantTableExists("materialize_table_grant.table_grant", roleName, tableName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(
+						materialize.ObjectSchemaStruct{
+							ObjectType:   "TABLE",
+							Name:         tableName,
+							SchemaName:   schemaName,
+							DatabaseName: databaseName,
+						}, "materialize_table_grant.table_grant", roleName, privilege),
 					resource.TestCheckResourceAttr("materialize_table_grant.table_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_table_grant.table_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_table_grant.table_grant", "table_name", tableName),
@@ -43,6 +47,14 @@ func TestAccGrantTable_disappears(t *testing.T) {
 	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	o := materialize.ObjectSchemaStruct{
+		ObjectType:   "TABLE",
+		Name:         tableName,
+		SchemaName:   schemaName,
+		DatabaseName: databaseName,
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -51,8 +63,8 @@ func TestAccGrantTable_disappears(t *testing.T) {
 			{
 				Config: testAccGrantTableResource(roleName, tableName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantTableExists("materialize_table_grant.table_grant", roleName, tableName, schemaName, databaseName, privilege),
-					testAccCheckGrantTableRevoked(roleName, tableName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(o, "materialize_table_grant.table_grant", roleName, privilege),
+					testAccCheckGrantRevoked(o, roleName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -95,44 +107,4 @@ resource "materialize_table_grant" "table_grant" {
 	table_name    = materialize_table.test.name
 }
 `, roleName, databaseName, schemaName, tableName, privilege)
-}
-
-func testAccCheckGrantTableExists(grantName, roleName, tableName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, ok := s.RootModule().Resources[grantName]
-		if !ok {
-			return fmt.Errorf("grant not found")
-		}
-
-		o := materialize.ObjectSchemaStruct{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-		id, err := materialize.TableId(db, o)
-		if err != nil {
-			return err
-		}
-
-		roleId, err := materialize.RoleId(db, roleName)
-		if err != nil {
-			return err
-		}
-
-		g, err := materialize.ScanPrivileges(db, "TABLE", id)
-		if err != nil {
-			return err
-		}
-
-		privilegeMap := materialize.ParsePrivileges(g)
-		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("schema object %s does not include privilege %s", g, privilege)
-		}
-		return nil
-	}
-}
-
-func testAccCheckGrantTableRevoked(roleName, tableName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %s ON TABLE "%s"."%s"."%s" FROM "%s";`, privilege, databaseName, schemaName, tableName, roleName))
-		return err
-	}
 }

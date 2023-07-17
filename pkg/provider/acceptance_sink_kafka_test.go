@@ -94,7 +94,12 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
-					testAccCheckSinkKafkaDisappears(sinkName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "SINK",
+							Name:       sinkName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
