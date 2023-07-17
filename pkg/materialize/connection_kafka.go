@@ -43,6 +43,7 @@ type ConnectionKafkaBuilder struct {
 	kafkaSASLUsername   ValueSecretStruct
 	kafkaSASLPassword   IdentifierSchemaStruct
 	kafkaSSHTunnel      IdentifierSchemaStruct
+	validate            bool
 }
 
 func NewConnectionKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionKafkaBuilder {
@@ -94,6 +95,11 @@ func (b *ConnectionKafkaBuilder) KafkaSASLPassword(kafkaSASLPassword IdentifierS
 
 func (b *ConnectionKafkaBuilder) KafkaSSHTunnel(kafkaSSHTunnel IdentifierSchemaStruct) *ConnectionKafkaBuilder {
 	b.kafkaSSHTunnel = kafkaSSHTunnel
+	return b
+}
+
+func (b *ConnectionKafkaBuilder) Validate(validate bool) *ConnectionKafkaBuilder {
+	b.validate = validate
 	return b
 }
 
@@ -160,6 +166,12 @@ func (b *ConnectionKafkaBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword.QualifiedName()))
 	}
 
-	q.WriteString(`);`)
+	q.WriteString(`)`)
+
+	if !b.validate {
+		q.WriteString(` WITH (VALIDATE = false)`)
+	}
+
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }

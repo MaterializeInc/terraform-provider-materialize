@@ -27,7 +27,7 @@ func TestResourceGrantConnectionCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT USAGE ON CONNECTION "database"."schema"."conn" TO joe;`,
+			`GRANT USAGE ON CONNECTION "database"."schema"."conn" TO "joe";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Role Id
@@ -66,7 +66,7 @@ func TestResourceGrantConnectionDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE USAGE ON CONNECTION "database"."schema"."conn" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE USAGE ON CONNECTION "database"."schema"."conn" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantConnectionDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

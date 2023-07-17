@@ -12,21 +12,27 @@ import (
 )
 
 func TestAccGrantSystemPrivilege_basic(t *testing.T) {
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccGrantSystemPrivilegeResource(roleName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "role_name", roleName),
-					resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "privilege", "CREATEDB"),
-				),
-			},
-		},
-	})
+	for _, roleName := range []string{
+		acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+		acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + "@materialize.com",
+	} {
+		t.Run(fmt.Sprintf("roleName=%s", roleName), func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviderFactories,
+				CheckDestroy:      nil,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccGrantSystemPrivilegeResource(roleName),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "role_name", roleName),
+							resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "privilege", "CREATEDB"),
+						),
+					},
+				},
+			})
+		})
+	}
 }
 
 func TestAccGrantSystemPrivilege_disappears(t *testing.T) {

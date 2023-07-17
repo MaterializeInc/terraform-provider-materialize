@@ -10,25 +10,25 @@ import (
 
 type SystemPrivilegeBuilder struct {
 	ddl       Builder
-	role      string
+	role      MaterializeRole
 	privilege string
 }
 
 func NewSystemPrivilegeBuilder(conn *sqlx.DB, role, privilege string) *SystemPrivilegeBuilder {
 	return &SystemPrivilegeBuilder{
 		ddl:       Builder{conn, Privilege},
-		role:      role,
+		role:      MaterializeRole{name: role},
 		privilege: privilege,
 	}
 }
 
 func (b *SystemPrivilegeBuilder) Grant() error {
-	q := fmt.Sprintf(`GRANT %s ON SYSTEM TO %s;`, b.privilege, b.role)
+	q := fmt.Sprintf(`GRANT %s ON SYSTEM TO %s;`, b.privilege, b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 
 func (b *SystemPrivilegeBuilder) Revoke() error {
-	q := fmt.Sprintf(`REVOKE %s ON SYSTEM FROM %s;`, b.privilege, b.role)
+	q := fmt.Sprintf(`REVOKE %s ON SYSTEM FROM %s;`, b.privilege, b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 

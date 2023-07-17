@@ -39,11 +39,11 @@ func (b *ConnectionSshTunnelBuilder) SSHPort(sshPort int) *ConnectionSshTunnelBu
 
 func (b *ConnectionSshTunnelBuilder) Create() error {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL (`, b.QualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO SSH TUNNEL`, b.QualifiedName()))
 
-	q.WriteString(fmt.Sprintf(`HOST %s, USER %s, PORT %d`, QuoteString(b.sshHost), QuoteString(b.sshUser), b.sshPort))
+	q.WriteString(fmt.Sprintf(` (HOST %[1]s, USER %[2]s, PORT %[3]d)`, QuoteString(b.sshHost), QuoteString(b.sshUser), b.sshPort))
 
-	q.WriteString(`);`)
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
 

@@ -27,7 +27,7 @@ func TestResourceGrantTypeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT USAGE ON TYPE "database"."schema"."type" TO joe;`,
+			`GRANT USAGE ON TYPE "database"."schema"."type" TO "joe";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Role Id
@@ -66,7 +66,7 @@ func TestResourceGrantTypeDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE USAGE ON TYPE "database"."schema"."type" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE USAGE ON TYPE "database"."schema"."type" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantTypeDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

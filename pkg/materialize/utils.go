@@ -4,18 +4,12 @@ import (
 	"strings"
 )
 
-func QuoteString(input string) (output string) {
-	output = "'" + strings.Replace(input, "'", "''", -1) + "'"
-	return
+func QuoteString(input string) string {
+	return "'" + strings.Replace(input, "'", "''", -1) + "'"
 }
 
-func QuoteIdentifier(input string) (output string) {
-	parts := strings.Split(input, ".")
-	for i, p := range parts {
-		parts[i] = `"` + strings.Replace(p, `"`, `""`, -1) + `"`
-	}
-	output = strings.Join(parts, ".")
-	return
+func QuoteIdentifier(input string) string {
+	return `"` + strings.Replace(input, `"`, `""`, -1) + `"`
 }
 
 func QualifiedName(fields ...string) string {

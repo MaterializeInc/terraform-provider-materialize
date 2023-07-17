@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.2 - 2023-07-17
+
+### Features
+* Include `WITH (VALIDATE = false)` for testing [#236](https://github.com/MaterializeInc/terraform-provider-materialize/pull/236)
+
+### BugFixes
+* Fix identifier quoting [#239](https://github.com/MaterializeInc/terraform-provider-materialize/pull/239)
+
+### Misc
+
+## 0.1.1 - 2023-07-14
+
+### Features
+
+### BugFixes
+* Qualify role name in grant resources [#235](https://github.com/MaterializeInc/terraform-provider-materialize/pull/235)
+
+### Misc
+
 ## 0.1.0 - 2023-07-11
 
 ### Features

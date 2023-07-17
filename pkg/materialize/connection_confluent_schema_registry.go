@@ -17,6 +17,7 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	confluentSchemaRegistryPassword       IdentifierSchemaStruct
 	confluentSchemaRegistrySSHTunnel      IdentifierSchemaStruct
 	confluentSchemaRegistryAWSPrivateLink IdentifierSchemaStruct
+	validate                              bool
 }
 
 func NewConnectionConfluentSchemaRegistryBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
@@ -66,6 +67,11 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) ConfluentSchemaRegistryAWSPri
 	return b
 }
 
+func (b *ConnectionConfluentSchemaRegistryBuilder) Validate(validate bool) *ConnectionConfluentSchemaRegistryBuilder {
+	b.validate = validate
+	return b
+}
+
 func (b *ConnectionConfluentSchemaRegistryBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO CONFLUENT SCHEMA REGISTRY (`, b.QualifiedName()))
@@ -102,6 +108,12 @@ func (b *ConnectionConfluentSchemaRegistryBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`, QualifiedName(b.confluentSchemaRegistrySSHTunnel.DatabaseName, b.confluentSchemaRegistrySSHTunnel.SchemaName, b.confluentSchemaRegistrySSHTunnel.Name)))
 	}
 
-	q.WriteString(`);`)
+	q.WriteString(`)`)
+
+	if !b.validate {
+		q.WriteString(` WITH (VALIDATE = false)`)
+	}
+
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }

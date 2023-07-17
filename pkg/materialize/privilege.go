@@ -99,6 +99,31 @@ func HasPrivilege(privileges []string, checkPrivilege string) bool {
 	return false
 }
 
+// DDL
+type MaterializeRole struct {
+	name string
+}
+
+func (b *MaterializeRole) QualifiedName() string {
+	return QualifiedName(b.name)
+}
+
+type PrivilegeBuilder struct {
+	ddl       Builder
+	role      MaterializeRole
+	privilege string
+	object    ObjectSchemaStruct
+}
+
+func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object ObjectSchemaStruct) *PrivilegeBuilder {
+	return &PrivilegeBuilder{
+		ddl:       Builder{conn, Privilege},
+		role:      MaterializeRole{name: role},
+		privilege: privilege,
+		object:    object,
+	}
+}
+
 // https://materialize.com/docs/sql/grant-privilege/#compatibility
 func objectCompatibility(objectType string) string {
 	compatibility := []string{"SOURCE", "VIEW", "MATERIALIZED VIEW"}
@@ -111,32 +136,15 @@ func objectCompatibility(objectType string) string {
 	return objectType
 }
 
-// DDL
-type PrivilegeBuilder struct {
-	ddl       Builder
-	role      string
-	privilege string
-	object    ObjectSchemaStruct
-}
-
-func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object ObjectSchemaStruct) *PrivilegeBuilder {
-	return &PrivilegeBuilder{
-		ddl:       Builder{conn, Privilege},
-		role:      role,
-		privilege: privilege,
-		object:    object,
-	}
-}
-
 func (b *PrivilegeBuilder) Grant() error {
 	t := objectCompatibility(b.object.ObjectType)
-	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
+	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 
 func (b *PrivilegeBuilder) Revoke() error {
 	t := objectCompatibility(b.object.ObjectType)
-	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
+	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 

@@ -28,6 +28,7 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false),
 	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false),
 	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
+	"validate":                  ValidateConnection(),
 	"ownership_role":            OwnershipRole(),
 }
 
@@ -93,6 +94,10 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	if v, ok := d.GetOk("aws_privatelink"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
 		b.ConfluentSchemaRegistryAWSPrivateLink(conn)
+	}
+
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
 	}
 
 	// create resource
