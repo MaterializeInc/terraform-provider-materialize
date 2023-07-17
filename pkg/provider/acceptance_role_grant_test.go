@@ -12,22 +12,36 @@ import (
 )
 
 func TestAccGrantRole_basic(t *testing.T) {
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	granteeName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccGrantRoleResource(roleName, granteeName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("materialize_role_grant.test", "role_name", roleName),
-					resource.TestCheckResourceAttr("materialize_role_grant.test", "member_name", granteeName),
-				),
-			},
+	roleMap := []map[string]string{
+		{
+			"roleName":    acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+			"granteeName": acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
 		},
-	})
+		{
+			"roleName":    acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + "@materialize.com",
+			"granteeName": acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + "@materialize.com",
+		},
+	}
+
+	for _, r := range roleMap {
+		t.Run(fmt.Sprintf("roleName=%[1]s granteeName=%[2]s", r["roleName"], r["granteeName"]), func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviderFactories,
+				CheckDestroy:      nil,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccGrantRoleResource(r["roleName"], r["granteeName"]),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("materialize_role_grant.test", "role_name", r["roleName"]),
+							resource.TestCheckResourceAttr("materialize_role_grant.test", "member_name", r["granteeName"]),
+						),
+					},
+				},
+			})
+		})
+	}
+
 }
 
 func TestAccGrantRole_disappears(t *testing.T) {

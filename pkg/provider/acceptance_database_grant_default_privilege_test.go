@@ -12,25 +12,31 @@ import (
 )
 
 func TestAccGrantDatabaseDefaultPrivilege_basic(t *testing.T) {
-	privilege := randomPrivilege("DATABASE")
-	granteeName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	targetName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccGrantDatabaseDefaultPrivilegeResource(granteeName, targetName, privilege),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "grantee_name", granteeName),
-					resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "target_role_name", targetName),
-					resource.TestCheckNoResourceAttr("materialize_database_grant_default_privilege.test", "database_name"),
-				),
-			},
-		},
-	})
+	for _, granteeName := range []string{
+		acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+		acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + "@materialize.com",
+	} {
+		t.Run(fmt.Sprintf("granteeName=%s", granteeName), func(t *testing.T) {
+			privilege := randomPrivilege("DATABASE")
+			targetName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+			resource.ParallelTest(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviderFactories,
+				CheckDestroy:      nil,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccGrantDatabaseDefaultPrivilegeResource(granteeName, targetName, privilege),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "grantee_name", granteeName),
+							resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "privilege", privilege),
+							resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "target_role_name", targetName),
+							resource.TestCheckNoResourceAttr("materialize_database_grant_default_privilege.test", "database_name"),
+						),
+					},
+				},
+			})
+		})
+	}
 }
 
 func TestAccGrantDatabaseDefaultPrivilege_disappears(t *testing.T) {
