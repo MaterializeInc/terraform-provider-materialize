@@ -97,7 +97,12 @@ func TestAccSourceKafka_disappears(t *testing.T) {
 				Config: testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
-					testAccCheckSourceKafkaDisappears(sourceName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "SOURCE",
+							Name:       sourceName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -169,14 +174,6 @@ func testAccCheckSourceKafkaExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("source kafka not found: %s", name)
 		}
 		_, err := materialize.ScanSource(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckSourceKafkaDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP SOURCE "%s";`, name))
 		return err
 	}
 }

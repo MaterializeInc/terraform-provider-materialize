@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantTableDefaultPrivilege_basic(t *testing.T) {
@@ -46,8 +43,8 @@ func TestAccGrantTableDefaultPrivilege_disappears(t *testing.T) {
 			{
 				Config: testAccGrantTableDefaultPrivilegeResource(granteeName, targetName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantTableDefaultPrivilegeExists("materialize_table_grant_default_privilege.test", granteeName, targetName, privilege),
-					testAccCheckGrantTableDefaultPrivilegeRevoked(granteeName, targetName, privilege),
+					testAccCheckGrantDefaultPrivilegeExists("TABLE", "materialize_table_grant_default_privilege.test", granteeName, targetName, privilege),
+					testAccCheckGrantDefaultPrivilegeRevoked("TABLE", granteeName, targetName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -72,43 +69,4 @@ resource "materialize_table_grant_default_privilege" "test" {
 	target_role_name = materialize_role.test_target.name
 }
 `, granteeName, targetName, privilege)
-}
-
-func testAccCheckGrantTableDefaultPrivilegeExists(grantName, granteeName, targetName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, ok := s.RootModule().Resources[grantName]
-		if !ok {
-			return fmt.Errorf("grant not found")
-		}
-
-		granteeId, err := materialize.RoleId(db, grantName)
-		if err != nil {
-			return err
-		}
-
-		targetId, err := materialize.RoleId(db, targetName)
-		if err != nil {
-			return err
-		}
-
-		g, err := materialize.ScanDefaultPrivilege(db, "TABLE", granteeId, targetId, "", "")
-		if err != nil {
-			return err
-		}
-
-		privilegeMap := materialize.ParsePrivileges(g[0].Privileges.String)
-		if !materialize.HasPrivilege(privilegeMap[granteeId], privilege) {
-			return fmt.Errorf("default privilege %s does not include privilege %s", g[0].Privileges.String, privilege)
-		}
-		return nil
-	}
-}
-
-func testAccCheckGrantTableDefaultPrivilegeRevoked(granteeName, targetName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`ALTER DEFAULT PRIVILEGES FOR ROLE %[1]s REVOKE %[2]s ON TABLES FROM %[3]s;`, targetName, privilege, granteeName))
-		return err
-	}
 }

@@ -7,8 +7,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantConnection_basic(t *testing.T) {
@@ -25,7 +23,14 @@ func TestAccGrantConnection_basic(t *testing.T) {
 			{
 				Config: testAccGrantConnectionResource(roleName, connectionName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantConnectionExists("materialize_connection_grant.connection_grant", roleName, connectionName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(
+						materialize.ObjectSchemaStruct{
+							ObjectType:   "CONNECTION",
+							Name:         connectionName,
+							SchemaName:   schemaName,
+							DatabaseName: databaseName,
+						},
+						"materialize_connection_grant.connection_grant", roleName, privilege),
 					resource.TestCheckResourceAttr("materialize_connection_grant.connection_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_connection_grant.connection_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_connection_grant.connection_grant", "connection_name", connectionName),
@@ -43,6 +48,14 @@ func TestAccGrantConnection_disappears(t *testing.T) {
 	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	o := materialize.ObjectSchemaStruct{
+		ObjectType:   "CONNECTION",
+		Name:         connectionName,
+		SchemaName:   schemaName,
+		DatabaseName: databaseName,
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -51,8 +64,8 @@ func TestAccGrantConnection_disappears(t *testing.T) {
 			{
 				Config: testAccGrantConnectionResource(roleName, connectionName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGrantConnectionExists("materialize_connection_grant.connection_grant", roleName, connectionName, schemaName, databaseName, privilege),
-					testAccCheckGrantConnectionRevoked(roleName, connectionName, schemaName, databaseName, privilege),
+					testAccCheckGrantExists(o, "materialize_connection_grant.connection_grant", roleName, privilege),
+					testAccCheckGrantRevoked(o, roleName, privilege),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
@@ -94,44 +107,4 @@ resource "materialize_connection_grant" "connection_grant" {
 	connection_name = materialize_connection_kafka.test.name
 }
 `, roleName, databaseName, schemaName, connectionName, privilege)
-}
-
-func testAccCheckGrantConnectionExists(grantName, roleName, connectionName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, ok := s.RootModule().Resources[grantName]
-		if !ok {
-			return fmt.Errorf("grant not found")
-		}
-
-		o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
-		id, err := materialize.ConnectionId(db, o)
-		if err != nil {
-			return err
-		}
-
-		roleId, err := materialize.RoleId(db, roleName)
-		if err != nil {
-			return err
-		}
-
-		g, err := materialize.ScanPrivileges(db, "CONNECTION", id)
-		if err != nil {
-			return err
-		}
-
-		privilegeMap := materialize.ParsePrivileges(g)
-		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("connection object %s does not include privilege %s", g, privilege)
-		}
-		return nil
-	}
-}
-
-func testAccCheckGrantConnectionRevoked(roleName, connectionName, schemaName, databaseName, privilege string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %s ON CONNECTION "%s"."%s"."%s" FROM "%s";`, privilege, databaseName, schemaName, connectionName, roleName))
-		return err
-	}
 }

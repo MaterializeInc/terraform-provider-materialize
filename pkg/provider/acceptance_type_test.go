@@ -88,7 +88,12 @@ func TestAccType_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTypeExists("materialize_type.test"),
 					resource.TestCheckResourceAttr("materialize_type.test", "name", typeName),
-					testAccCheckTypeDisappears(typeName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "TYPE",
+							Name:       typeName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -129,14 +134,6 @@ func testAccCheckTypeExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("Type not found: %s", name)
 		}
 		_, err := materialize.ScanType(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckTypeDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP TYPE "%s";`, name))
 		return err
 	}
 }

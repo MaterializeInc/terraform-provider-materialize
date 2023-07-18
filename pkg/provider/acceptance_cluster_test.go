@@ -96,9 +96,9 @@ func TestAccCluster_disappears(t *testing.T) {
 				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, clusterSize, clusterReplicationFactor),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterDisappears(clusterName),
+					testAccCheckObjectDisappears(materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}),
 					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					testAccCheckClusterDisappears(clusterName+"_managed"),
+					testAccCheckObjectDisappears(materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName + "_managed"}),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -140,22 +140,6 @@ func testAccCheckClusterExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("cluster not found: %s", name)
 		}
 		_, err := materialize.ScanCluster(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckClusterDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER "%s";`, name))
-		return err
-	}
-}
-
-func testAccCheckManagedClusterDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER "%s";`, name))
 		return err
 	}
 }

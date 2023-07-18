@@ -53,23 +53,6 @@ func TestSystemPrivilegeRevoke(t *testing.T) {
 	})
 }
 
-func TestSystemPrivilegeId(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		// Query Id
-		ip := `WHERE mz_roles.name = 'joe'`
-		testhelpers.MockRoleScan(mock, ip)
-
-		i, err := SystemPrivilegeId(db, "joe", "CREATECLUSTER")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if i != "GRANT SYSTEM|u1|CREATECLUSTER" {
-			t.Fatalf("unexpected id %s", i)
-		}
-	})
-}
-
 func TestScanSystemPrivileges(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		testhelpers.MockSystemPrivilege(mock)

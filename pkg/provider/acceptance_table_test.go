@@ -92,7 +92,12 @@ func TestAccTable_disappears(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
 					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
-					testAccCheckTableDisappears(tableName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "TABLE",
+							Name:       tableName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -145,14 +150,6 @@ func testAccCheckTableExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("Table not found: %s", name)
 		}
 		_, err := materialize.ScanTable(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckTableDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP TABLE "%s";`, name))
 		return err
 	}
 }

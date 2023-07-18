@@ -32,21 +32,15 @@ func (b *SystemPrivilegeBuilder) Revoke() error {
 	return b.ddl.exec(q)
 }
 
+func (b *SystemPrivilegeBuilder) GrantKey(roleId, privilege string) string {
+	return fmt.Sprintf(`GRANT SYSTEM|%[1]s|%[2]s`, roleId, privilege)
+}
+
 type SytemPrivilegeParams struct {
 	Privileges sql.NullString `db:"privileges"`
 }
 
 var systemPrivilegeQuery = `SELECT privileges FROM mz_system_privileges`
-
-func SystemPrivilegeId(conn *sqlx.DB, roleName, privilege string) (string, error) {
-	r, err := RoleId(conn, roleName)
-	if err != nil {
-		return "", err
-	}
-
-	f := fmt.Sprintf(`GRANT SYSTEM|%[1]s|%[2]s`, r, privilege)
-	return f, nil
-}
 
 func ScanSystemPrivileges(conn *sqlx.DB) ([]SytemPrivilegeParams, error) {
 	var c []SytemPrivilegeParams

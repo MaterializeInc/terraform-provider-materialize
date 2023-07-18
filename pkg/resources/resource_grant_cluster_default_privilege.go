@@ -50,15 +50,26 @@ func GrantClusterDefaultPrivilege() *schema.Resource {
 }
 
 func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	granteenName := d.Get("grantee_name").(string)
+	granteeName := d.Get("grantee_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteenName, privilege)
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteeName, privilege)
 
-	var targetRole string
+	var targetRole, database, schema string
+
 	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
 		targetRole = v.(string)
 		b.TargetRole(targetRole)
+	}
+
+	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
+		database = v.(string)
+		b.DatabaseName(database)
+	}
+
+	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
+		schema = v.(string)
+		b.SchemaName(schema)
 	}
 
 	// create resource
@@ -66,12 +77,37 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	// set id
-	i, err := materialize.DefaultPrivilegeId(meta.(*sqlx.DB), "CLUSTER", granteenName, targetRole, "", "", privilege)
+	// Query ids
+	gId, err := materialize.RoleId(meta.(*sqlx.DB), granteeName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	var tId, dId, sId string
+
+	if targetRole != "" {
+		tId, err = materialize.RoleId(meta.(*sqlx.DB), targetRole)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if database != "" {
+		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if schema != "" {
+		sId, err = materialize.SchemaId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: schema, DatabaseName: database})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	key := b.GrantKey("CLUSTER", gId, tId, dId, sId, privilege)
+	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
 }
