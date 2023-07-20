@@ -66,7 +66,6 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The owernship role of the object.
-- `primary_key` (List of String) Declare a set of columns as a primary key.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `start_offset` (List of Number) Read partitions from the specified offset.
