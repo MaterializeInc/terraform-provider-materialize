@@ -42,7 +42,6 @@ type SourceKafkaBuilder struct {
 	keyFormat        SourceFormatSpecStruct
 	valueFormat      SourceFormatSpecStruct
 	envelope         KafkaSourceEnvelopeStruct
-	primaryKey       []string
 	startOffset      []int
 	startTimestamp   int
 	exposeProgress   string
@@ -117,11 +116,6 @@ func (b *SourceKafkaBuilder) KeyFormat(k SourceFormatSpecStruct) *SourceKafkaBui
 
 func (b *SourceKafkaBuilder) ValueFormat(v SourceFormatSpecStruct) *SourceKafkaBuilder {
 	b.valueFormat = v
-	return b
-}
-
-func (b *SourceKafkaBuilder) PrimaryKey(p []string) *SourceKafkaBuilder {
-	b.primaryKey = p
 	return b
 }
 
@@ -292,12 +286,6 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.valueFormat.Text {
 		q.WriteString(` VALUE FORMAT TEXT`)
-	}
-
-	// Key Constraint
-	if len(b.primaryKey) > 0 {
-		k := strings.Join(b.primaryKey[:], ", ")
-		q.WriteString(fmt.Sprintf(` PRIMARY KEY (%s) NOT ENFORCED`, k))
 	}
 
 	// Time-based Offsets

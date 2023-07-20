@@ -109,13 +109,6 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional: true,
 		ForceNew: true,
 	},
-	"primary_key": {
-		Description: "Declare a set of columns as a primary key.",
-		Type:        schema.TypeList,
-		Elem:        &schema.Schema{Type: schema.TypeString},
-		Optional:    true,
-		ForceNew:    true,
-	},
 	"start_offset": {
 		Description: "Read partitions from the specified offset.",
 		Type:        schema.TypeList,
@@ -218,11 +211,6 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	if v, ok := d.GetOk("envelope"); ok {
 		envelope := materialize.GetSourceKafkaEnelopeStruct(v)
 		b.Envelope(envelope)
-	}
-
-	if v, ok := d.GetOk("primary_key"); ok {
-		pk := materialize.GetSliceValueString(v.([]interface{}))
-		b.PrimaryKey(pk)
 	}
 
 	if v, ok := d.GetOk("start_offset"); ok {
