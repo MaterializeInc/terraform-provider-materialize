@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -48,7 +49,9 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	privilege := d.Get("privilege").(string)
 
 	if !materialize.HasPrivilege(priviledgeMap[key.roleId], privilege) {
-		return diag.Errorf("%s: object does not contain privilege: %s", i, privilege)
+		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, privilege)
+		// Remove id from state
+		d.SetId("")
 	}
 
 	return nil

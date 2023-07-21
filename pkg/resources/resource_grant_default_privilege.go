@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -71,8 +72,9 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	if !slices.Contains(mapping[mapKey], key.privilege) {
+		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
+		// Remove id from state
 		d.SetId("")
-		return diag.Errorf("%s: %s default privilege does contain privilege %s", mapping, i, key.privilege)
 	}
 
 	d.SetId(i)

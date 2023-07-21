@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -80,8 +81,9 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 	mapping, _ := materialize.ParseSystemPrivileges(privileges)
 
 	if !slices.Contains(mapping[key.roleId], key.privilege) {
+		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
+		// Remove id from state
 		d.SetId("")
-		return diag.Errorf("system role does contain privilege %s", key.privilege)
 	}
 
 	d.SetId(i)
