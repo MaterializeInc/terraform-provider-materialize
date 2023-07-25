@@ -39,7 +39,7 @@ func TestResourceGrantTypeDefaultPrivilegeCreate(t *testing.T) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'
-			AND mz_default_privileges.object_type = 'TYPE'
+			AND mz_default_privileges.object_type = 'type'
 			AND mz_default_privileges.role_id = 'u1'`
 		testhelpers.MockDefaultPrivilegeScan(mock, qp, "TYPE")
 
