@@ -39,9 +39,9 @@ func TestResourceGrantSecretDefaultPrivilegeCreate(t *testing.T) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'
-			AND mz_default_privileges.object_type = 'SECRET'
+			AND mz_default_privileges.object_type = 'secret'
 			AND mz_default_privileges.role_id = 'u1'`
-		testhelpers.MockDefaultPrivilegeScan(mock, qp, "SECRET")
+		testhelpers.MockDefaultPrivilegeScan(mock, qp, "secret")
 
 		if err := grantSecretDefaultPrivilegeCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

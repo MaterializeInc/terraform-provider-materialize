@@ -39,9 +39,9 @@ func TestResourceGrantSchemaDefaultPrivilegeCreate(t *testing.T) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'
-			AND mz_default_privileges.object_type = 'SCHEMA'
+			AND mz_default_privileges.object_type = 'schema'
 			AND mz_default_privileges.role_id = 'u1'`
-		testhelpers.MockDefaultPrivilegeScan(mock, qp, "SCHEMA")
+		testhelpers.MockDefaultPrivilegeScan(mock, qp, "schema")
 
 		if err := grantSchemaDefaultPrivilegeCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
