@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.3 - 2023-07-27
+
+### Features
+* Support `INCLUDE KEY AS <name>` for Kafka sources [#250](https://github.com/MaterializeInc/terraform-provider-materialize/pull/250)
+
+### BugFixes
+* Fix Default type grants case sensitivity [#247](https://github.com/MaterializeInc/terraform-provider-materialize/pull/247)
+* Remove Kafka Source Primary Key [#243](https://github.com/MaterializeInc/terraform-provider-materialize/pull/243)
+
+### Misc
+* RBAC Refactor [#234](https://github.com/MaterializeInc/terraform-provider-materialize/pull/234)
+
 ## 0.1.2 - 2023-07-17
 
 ### Features
