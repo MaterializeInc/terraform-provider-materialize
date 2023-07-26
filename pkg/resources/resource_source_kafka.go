@@ -52,6 +52,19 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"include_headers": {
+		Description: "Include message headers.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     false,
+	},
+	"include_headers_alias": {
+		Description: "Provide an alias for the headers column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"include_partition": {
 		Description: "Include a partition column containing the Kafka message partition",
 		Type:        schema.TypeBool,
@@ -216,6 +229,14 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 			b.IncludeTimestampAlias(alias.(string))
 		} else {
 			b.IncludeTimestamp()
+		}
+	}
+
+	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
+		if alias, ok := d.GetOk("include_headers_alias"); ok {
+			b.IncludeHeadersAlias(alias.(string))
+		} else {
+			b.IncludeHeaders()
 		}
 	}
 
