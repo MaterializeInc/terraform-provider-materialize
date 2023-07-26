@@ -333,7 +333,7 @@ func (b *SourceKafkaBuilder) Create() error {
 	var i []string
 
 	if !b.includeKey && b.keyAlias != "" {
-		return fmt.Errorf("key_alias is set but include_key is false")
+		return fmt.Errorf("include_key_alias is set but include_key is false")
 	}
 
 	if b.includeKey {
@@ -357,7 +357,7 @@ func (b *SourceKafkaBuilder) Create() error {
 	}
 
 	if !b.includePartition && b.partitionAlias != "" {
-		return fmt.Errorf("partition_alias is set but include_partition is false")
+		return fmt.Errorf("include_partition_alias is set but include_partition is false")
 	}
 
 	if b.includePartition {
@@ -369,7 +369,7 @@ func (b *SourceKafkaBuilder) Create() error {
 	}
 
 	if !b.includeOffset && b.offsetAlias != "" {
-		return fmt.Errorf("offset_alias is set but include_offset is false")
+		return fmt.Errorf("include_offset_alias is set but include_offset is false")
 	}
 
 	if b.includeOffset {
@@ -381,7 +381,7 @@ func (b *SourceKafkaBuilder) Create() error {
 	}
 
 	if !b.includeTimestamp && b.timestampAlias != "" {
-		return fmt.Errorf("timestamp_alias is set but include_timestamp is false")
+		return fmt.Errorf("include_timestamp_alias is set but include_timestamp is false")
 	}
 
 	if b.includeTimestamp {
