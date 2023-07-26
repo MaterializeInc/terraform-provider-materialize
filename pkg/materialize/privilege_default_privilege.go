@@ -116,7 +116,7 @@ var defaultPrivilegeQuery = NewBaseQuery(`
 
 func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, databaseId, schemaId string) ([]DefaultPrivilegeParams, error) {
 	p := map[string]string{
-		"mz_default_privileges.object_type": objectType,
+		"mz_default_privileges.object_type": strings.ToLower(objectType),
 		"mz_default_privileges.grantee":     granteeId,
 	}
 
