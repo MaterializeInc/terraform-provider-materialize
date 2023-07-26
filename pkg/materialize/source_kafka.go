@@ -38,6 +38,11 @@ type SourceKafkaBuilder struct {
 	includePartition bool
 	includeOffset    bool
 	includeTimestamp bool
+	keyAlias         string
+	headersAlias     string
+	partitionAlias   string
+	offsetAlias      string
+	timestampAlias   string
 	format           SourceFormatSpecStruct
 	keyFormat        SourceFormatSpecStruct
 	valueFormat      SourceFormatSpecStruct
@@ -96,6 +101,36 @@ func (b *SourceKafkaBuilder) IncludeOffset() *SourceKafkaBuilder {
 
 func (b *SourceKafkaBuilder) IncludeTimestamp() *SourceKafkaBuilder {
 	b.includeTimestamp = true
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeKeyAlias(alias string) *SourceKafkaBuilder {
+	b.includeKey = true
+	b.keyAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeHeadersAlias(alias string) *SourceKafkaBuilder {
+	b.includeHeaders = true
+	b.headersAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludePartitionAlias(alias string) *SourceKafkaBuilder {
+	b.includePartition = true
+	b.partitionAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeOffsetAlias(alias string) *SourceKafkaBuilder {
+	b.includeOffset = true
+	b.offsetAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeTimestampAlias(alias string) *SourceKafkaBuilder {
+	b.includeTimestamp = true
+	b.timestampAlias = alias
 	return b
 }
 
@@ -298,23 +333,43 @@ func (b *SourceKafkaBuilder) Create() error {
 	var i []string
 
 	if b.includeKey {
-		i = append(i, "KEY")
+		if b.keyAlias != "" {
+			i = append(i, fmt.Sprintf("KEY AS %s", b.keyAlias))
+		} else {
+			i = append(i, "KEY")
+		}
 	}
 
 	if b.includeHeaders {
-		i = append(i, "HEADERS")
+		if b.headersAlias != "" {
+			i = append(i, fmt.Sprintf("HEADERS AS %s", b.headersAlias))
+		} else {
+			i = append(i, "HEADERS")
+		}
 	}
 
 	if b.includePartition {
-		i = append(i, "PARTITION")
+		if b.partitionAlias != "" {
+			i = append(i, fmt.Sprintf("PARTITION AS %s", b.partitionAlias))
+		} else {
+			i = append(i, "PARTITION")
+		}
 	}
 
 	if b.includeOffset {
-		i = append(i, "OFFSET")
+		if b.offsetAlias != "" {
+			i = append(i, fmt.Sprintf("OFFSET AS %s", b.offsetAlias))
+		} else {
+			i = append(i, "OFFSET")
+		}
 	}
 
 	if b.includeTimestamp {
-		i = append(i, "TIMESTAMP")
+		if b.timestampAlias != "" {
+			i = append(i, fmt.Sprintf("TIMESTAMP AS %s", b.timestampAlias))
+		} else {
+			i = append(i, "TIMESTAMP")
+		}
 	}
 
 	if len(i) > 0 {
