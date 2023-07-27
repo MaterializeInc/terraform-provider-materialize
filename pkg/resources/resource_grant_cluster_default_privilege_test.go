@@ -39,9 +39,9 @@ func TestResourceGrantClusterDefaultPrivilegeCreate(t *testing.T) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'
-			AND mz_default_privileges.object_type = 'CLUSTER'
+			AND mz_default_privileges.object_type = 'cluster'
 			AND mz_default_privileges.role_id = 'u1'`
-		testhelpers.MockDefaultPrivilegeScan(mock, qp, "CLUSTER")
+		testhelpers.MockDefaultPrivilegeScan(mock, qp, "cluster")
 
 		if err := grantClusterDefaultPrivilegeCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

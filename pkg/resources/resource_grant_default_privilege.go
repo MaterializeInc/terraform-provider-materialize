@@ -60,7 +60,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	mapping, _ := materialize.ParseDefaultPrivileges(privileges)
 
 	mapKey := materialize.DefaultPrivilegeMapKey{
-		ObjectType: key.objectType, GranteeId: key.granteeId,
+		ObjectType: strings.ToLower(key.objectType), GranteeId: key.granteeId,
 	}
 
 	if key.databaseId != "" {

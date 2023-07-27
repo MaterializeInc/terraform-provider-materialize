@@ -39,9 +39,9 @@ func TestResourceGrantTableDefaultPrivilegeCreate(t *testing.T) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'
-			AND mz_default_privileges.object_type = 'TABLE'
+			AND mz_default_privileges.object_type = 'table'
 			AND mz_default_privileges.role_id = 'u1'`
-		testhelpers.MockDefaultPrivilegeScan(mock, qp, "TABLE")
+		testhelpers.MockDefaultPrivilegeScan(mock, qp, "table")
 
 		if err := grantTableDefaultPrivilegeCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

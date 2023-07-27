@@ -39,9 +39,9 @@ func TestResourceGrantDatabaseDefaultPrivilegeCreate(t *testing.T) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'
-			AND mz_default_privileges.object_type = 'DATABASE'
+			AND mz_default_privileges.object_type = 'database'
 			AND mz_default_privileges.role_id = 'u1'`
-		testhelpers.MockDefaultPrivilegeScan(mock, qp, "DATABASE")
+		testhelpers.MockDefaultPrivilegeScan(mock, qp, "database")
 
 		if err := grantDatabaseDefaultPrivilegeCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
