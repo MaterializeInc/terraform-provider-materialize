@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4 - 2023-07-27
+
+### Features
+
+### BugFixes
+* Fix removing grants outside of Terraform state [#245](https://github.com/MaterializeInc/terraform-provider-materialize/pull/245)
+
+### Misc
+
 ## 0.1.3 - 2023-07-27
 
 ### Features
