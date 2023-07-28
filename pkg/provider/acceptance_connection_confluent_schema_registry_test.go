@@ -83,7 +83,12 @@ func TestAccConnConfluentSchemaRegistry_disappears(t *testing.T) {
 				Config: testAccConnConfluentSchemaRegistryResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.test"),
-					testAccCheckConnConfluentSchemaRegistryDisappears(connectionName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "CONNECTION",
+							Name:       connectionName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -120,14 +125,6 @@ func testAccCheckConnConfluentSchemaRegistryExists(name string) resource.TestChe
 			return fmt.Errorf("connection confluent schema registry not found: %s", name)
 		}
 		_, err := materialize.ScanConnection(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckConnConfluentSchemaRegistryDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CONNECTION "%s";`, name))
 		return err
 	}
 }

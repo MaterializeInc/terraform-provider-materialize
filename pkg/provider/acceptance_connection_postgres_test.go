@@ -92,7 +92,12 @@ func TestAccConnPostgres_disappears(t *testing.T) {
 				Config: testAccConnPostgresResource(roleName, secretName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
-					testAccCheckConnPostgresDisappears(connectionName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "CONNECTION",
+							Name:       connectionName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -154,14 +159,6 @@ func testAccCheckConnPostgresExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("connection postgres not found: %s", name)
 		}
 		_, err := materialize.ScanConnection(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckConnPostgresDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CONNECTION "%s";`, name))
 		return err
 	}
 }

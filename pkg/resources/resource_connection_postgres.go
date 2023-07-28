@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -47,6 +48,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Postgres database.", false),
+	"validate":        ValidateConnection(),
 	"ownership_role":  OwnershipRole(),
 }
 
@@ -130,6 +132,10 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		b.PostgresSSHTunnel(conn)
 	}
 
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
+	}
+
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
@@ -140,6 +146,8 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -159,6 +160,8 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SINK", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}

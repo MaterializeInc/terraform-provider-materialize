@@ -50,6 +50,9 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	SELECT
 		mz_clusters.id,
 		mz_clusters.name,
+		mz_clusters.replication_factor,
+		mz_clusters.size,
+		mz_clusters.managed,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters
@@ -134,6 +137,29 @@ func MockConnectionSshTunnelScan(mock sqlmock.Sqlmock, predicate string) {
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "connection_name", "schema_name", "database_name", "public_key_1", "public_key_2"}).
 		AddRow("u1", "connection", "schema", "database", "key_1", "key_2")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate, objectType string) {
+	b := `
+	SELECT
+		mz_default_privileges.object_type,
+		mz_default_privileges.grantee AS grantee_id,
+		mz_roles.name AS role_name,
+		mz_default_privileges.database_id AS database_id,
+		mz_default_privileges.schema_id AS schema_id,
+		mz_default_privileges.privileges
+	FROM mz_default_privileges
+	LEFT JOIN mz_roles
+		ON mz_default_privileges.role_id = mz_roles.id
+	LEFT JOIN mz_schemas
+		ON mz_default_privileges.schema_id = mz_schemas.id
+	LEFT JOIN mz_databases
+		ON mz_default_privileges.database_id = mz_databases.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"object_type", "grantee_id", "role_name", "schema_id", "database_id", "privileges"}).
+		AddRow(objectType, "u1", "target", nil, nil, "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -227,20 +253,37 @@ func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+func MockSystemPrivilege(mock sqlmock.Sqlmock) {
+	b := "SELECT privileges FROM mz_system_privileges"
+
+	ir := mock.NewRows([]string{"privileges"}).AddRow("s1=RBN/s1")
+	mock.ExpectQuery(b).WillReturnRows(ir)
+}
+
 func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
 		id,
 		name AS role_name,
-		inherit,
-		create_role,
-		create_db,
-		create_cluster
+		inherit
 	FROM mz_roles`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "role_name", "inherit", "create_role", "create_db", "create_cluster"}).
-		AddRow("u1", "joe", true, true, true, true)
+	ir := mock.NewRows([]string{"id", "role_name", "inherit"}).
+		AddRow("u1", "joe", true)
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockRoleGrantScan(mock sqlmock.Sqlmock) {
+	q := `
+	SELECT
+		mz_role_members.role_id,
+		mz_role_members.member,
+		mz_role_members.grantor
+	FROM mz_role_members`
+
+	ir := mock.NewRows([]string{"role_id", "member", "grantor"}).
+		AddRow("u1", "u1", "s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -363,6 +406,12 @@ func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
 	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default"}).
 		AddRow("u1", "column", "1", "true", "integer", "")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockSystemGrantScan(mock sqlmock.Sqlmock) {
+	q := `SELECT privileges FROM mz_system_privileges`
+	ir := mock.NewRows([]string{"privileges"}).AddRow("u1=B/s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

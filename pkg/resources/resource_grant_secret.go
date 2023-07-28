@@ -66,8 +66,8 @@ func grantSecretCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.PrivilegeObjectStruct{
-		Type:         "SECRET",
+	obj := materialize.ObjectSchemaStruct{
+		ObjectType:   "SECRET",
 		Name:         secretName,
 		SchemaName:   schemaName,
 		DatabaseName: databaseName,
@@ -86,11 +86,13 @@ func grantSecretCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
-	i, err := materialize.PrivilegeId(meta.(*sqlx.DB), obj, roleId, privilege)
+	i, err := materialize.ObjectId(meta.(*sqlx.DB), obj)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+
+	key := b.GrantKey(i, roleId, privilege)
+	d.SetId(key)
 
 	return grantRead(ctx, d, meta)
 }
@@ -106,8 +108,8 @@ func grantSecretDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.PrivilegeObjectStruct{
-			Type:         "SECRET",
+		materialize.ObjectSchemaStruct{
+			ObjectType:   "SECRET",
 			Name:         secretName,
 			SchemaName:   schemaName,
 			DatabaseName: databaseName,

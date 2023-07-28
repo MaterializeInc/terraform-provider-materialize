@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -40,8 +41,14 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"include_key": {
-		Description: "Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named \"key\".",
+		Description: "Include a column containing the Kafka message key.",
 		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_key_alias": {
+		Description: "Provide an alias for the key column.",
+		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
@@ -52,26 +59,47 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Default:     false,
 	},
+	"include_headers_alias": {
+		Description: "Provide an alias for the headers column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"include_partition": {
 		Description: "Include a partition column containing the Kafka message partition",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
-		Default:     false,
+	},
+	"include_partition_alias": {
+		Description: "Provide an alias for the partition column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"include_offset": {
 		Description: "Include an offset column containing the Kafka message offset.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
-		Default:     false,
+	},
+	"include_offset_alias": {
+		Description: "Provide an alias for the offset column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"include_timestamp": {
 		Description: "Include a timestamp column containing the Kafka message timestamp.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
-		Default:     false,
+	},
+	"include_timestamp_alias": {
+		Description: "Provide an alias for the timestamp column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
 	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
@@ -107,13 +135,6 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		},
 		Optional: true,
 		ForceNew: true,
-	},
-	"primary_key": {
-		Description: "Declare a set of columns as a primary key.",
-		Type:        schema.TypeList,
-		Elem:        &schema.Schema{Type: schema.TypeString},
-		Optional:    true,
-		ForceNew:    true,
 	},
 	"start_offset": {
 		Description: "Read partitions from the specified offset.",
@@ -180,23 +201,43 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("include_key"); ok && v.(bool) {
-		b.IncludeKey()
-	}
-
-	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
-		b.IncludeHeaders()
+		if alias, ok := d.GetOk("include_key_alias"); ok {
+			b.IncludeKeyAlias(alias.(string))
+		} else {
+			b.IncludeKey()
+		}
 	}
 
 	if v, ok := d.GetOk("include_partition"); ok && v.(bool) {
-		b.IncludePartition()
+		if alias, ok := d.GetOk("include_partition_alias"); ok {
+			b.IncludePartitionAlias(alias.(string))
+		} else {
+			b.IncludePartition()
+		}
 	}
 
 	if v, ok := d.GetOk("include_offset"); ok && v.(bool) {
-		b.IncludeOffset()
+		if alias, ok := d.GetOk("include_offset_alias"); ok {
+			b.IncludeOffsetAlias(alias.(string))
+		} else {
+			b.IncludeOffset()
+		}
 	}
 
 	if v, ok := d.GetOk("include_timestamp"); ok && v.(bool) {
-		b.IncludeTimestamp()
+		if alias, ok := d.GetOk("include_timestamp_alias"); ok {
+			b.IncludeTimestampAlias(alias.(string))
+		} else {
+			b.IncludeTimestamp()
+		}
+	}
+
+	if v, ok := d.GetOk("include_headers"); ok && v.(bool) {
+		if alias, ok := d.GetOk("include_headers_alias"); ok {
+			b.IncludeHeadersAlias(alias.(string))
+		} else {
+			b.IncludeHeaders()
+		}
 	}
 
 	if v, ok := d.GetOk("format"); ok {
@@ -217,11 +258,6 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	if v, ok := d.GetOk("envelope"); ok {
 		envelope := materialize.GetSourceKafkaEnelopeStruct(v)
 		b.Envelope(envelope)
-	}
-
-	if v, ok := d.GetOk("primary_key"); ok {
-		pk := materialize.GetSliceValueString(v.([]interface{}))
-		b.PrimaryKey(pk)
 	}
 
 	if v, ok := d.GetOk("start_offset"); ok {
@@ -247,6 +283,8 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}

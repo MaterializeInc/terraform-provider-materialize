@@ -26,6 +26,7 @@ func TestConnectionKafkaCreate(t *testing.T) {
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -52,6 +53,7 @@ func TestConnectionKafkaMultipleBrokersCreate(t *testing.T) {
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -76,6 +78,7 @@ func TestConnectionKafkaSshCreate(t *testing.T) {
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
 		b.KafkaSSHTunnel(IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -102,6 +105,7 @@ func TestConnectionKafkaBrokersCreate(t *testing.T) {
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -129,6 +133,7 @@ func TestConnectionKafkaBrokersSshCreate(t *testing.T) {
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
 		b.KafkaSSHTunnel(IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -152,6 +157,7 @@ func TestConnectionKafkaSslCreate(t *testing.T) {
 		b.KafkaSSLKey(IdentifierSchemaStruct{SchemaName: "schema", Name: "key", DatabaseName: "database"})
 		b.KafkaSSLCert(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "cert", DatabaseName: "database"}})
 		b.KafkaSSLCa(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "ca", DatabaseName: "database"}})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -183,6 +189,7 @@ func TestConnectionKafkaAwsPrivatelinkCreate(t *testing.T) {
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

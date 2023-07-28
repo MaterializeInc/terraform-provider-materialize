@@ -84,7 +84,12 @@ func TestAccSecret_disappears(t *testing.T) {
 				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
-					testAccCheckSecretDisappears(secretName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "SECRET",
+							Name:       secretName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -121,14 +126,6 @@ func testAccCheckSecretExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("secret not found: %s", name)
 		}
 		_, err := materialize.ScanSecret(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckSecretDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP SECRET "%s";`, name))
 		return err
 	}
 }

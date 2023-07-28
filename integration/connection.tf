@@ -27,7 +27,7 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
     broker = "redpanda:9092"
   }
   sasl_username {
-    text = "sasl_user"
+    text = "sasl-user"
   }
   sasl_password {
     name          = materialize_secret.kafka_password.name
@@ -36,6 +36,7 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   }
   sasl_mechanisms = "SCRAM-SHA-256"
   progress_topic  = "progress_topic"
+  validate        = false
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
@@ -54,7 +55,7 @@ resource "materialize_connection_postgres" "postgres_connection" {
 }
 
 resource "materialize_connection_postgres" "postgres_connection_with_secret" {
-  name = "postgres_connection_with_secret"
+  name = "postgres-connection-with-secret"
   host = "postgres"
   port = 5432
   user {
@@ -70,9 +71,10 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
     schema_name   = materialize_secret.postgres_password.schema_name
   }
   database = "postgres"
+  validate = false
 }
 
-resource "materialize_grant_connection" "connection_grant_usage" {
+resource "materialize_connection_grant" "connection_grant_usage" {
   role_name       = materialize_role.role_1.name
   privilege       = "USAGE"
   connection_name = materialize_connection_postgres.postgres_connection.name

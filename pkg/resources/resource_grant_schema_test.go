@@ -26,7 +26,7 @@ func TestResourceGrantSchemaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT CREATE ON SCHEMA "database"."schema" TO joe;`,
+			`GRANT CREATE ON SCHEMA "database"."schema" TO "joe";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Role Id
@@ -64,7 +64,7 @@ func TestResourceGrantSchemaDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE CREATE ON SCHEMA "database"."schema" FROM joe;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE CREATE ON SCHEMA "database"."schema" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSchemaDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

@@ -43,8 +43,9 @@ func (b *ConnectionAwsPrivatelinkBuilder) Create() error {
 		}
 		q.WriteString(QuoteString(az))
 	}
+	q.WriteString(`))`)
 
-	q.WriteString(`));`)
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
 

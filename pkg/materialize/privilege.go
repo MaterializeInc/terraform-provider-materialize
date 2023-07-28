@@ -14,6 +14,9 @@ var Permissions = map[string]string{
 	"d": "DELETE",
 	"C": "CREATE",
 	"U": "USAGE",
+	"R": "CREATEROLE",
+	"B": "CREATEDB",
+	"N": "CREATECLUSTER",
 }
 
 type ObjectType struct {
@@ -58,6 +61,9 @@ var ObjectPermissions = map[string]ObjectType{
 	"CLUSTER": {
 		Permissions: []string{"U", "C"},
 	},
+	"SYSTEM": {
+		Permissions: []string{"R", "B", "N"},
+	},
 }
 
 func ParsePrivileges(privileges string) map[string][]string {
@@ -93,63 +99,26 @@ func HasPrivilege(privileges []string, checkPrivilege string) bool {
 	return false
 }
 
-type PrivilegeObjectStruct struct {
-	Type         string
-	Name         string
-	SchemaName   string
-	DatabaseName string
-}
-
-func GetPrivilegeObjectStruct(databaseName string, schemaName string, v interface{}) PrivilegeObjectStruct {
-	var p PrivilegeObjectStruct
-	u := v.([]interface{})[0].(map[string]interface{})
-
-	if v, ok := u["type"]; ok {
-		p.Type = v.(string)
-	}
-
-	if v, ok := u["name"]; ok {
-		p.Name = v.(string)
-	}
-
-	if v, ok := u["schema_name"]; ok && v.(string) != "" {
-		p.SchemaName = v.(string)
-	}
-
-	if v, ok := u["database_name"]; ok && v.(string) != "" {
-		p.DatabaseName = v.(string)
-	}
-
-	return p
-}
-
-func (i *PrivilegeObjectStruct) QualifiedName() string {
-	p := []string{}
-
-	if i.DatabaseName != "" {
-		p = append(p, i.DatabaseName)
-	}
-
-	if i.SchemaName != "" {
-		p = append(p, i.SchemaName)
-	}
-
-	p = append(p, i.Name)
-	return QualifiedName(p...)
-}
-
 // DDL
+type MaterializeRole struct {
+	name string
+}
+
+func (b *MaterializeRole) QualifiedName() string {
+	return QualifiedName(b.name)
+}
+
 type PrivilegeBuilder struct {
 	ddl       Builder
-	role      string
+	role      MaterializeRole
 	privilege string
-	object    PrivilegeObjectStruct
+	object    ObjectSchemaStruct
 }
 
-func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object PrivilegeObjectStruct) *PrivilegeBuilder {
+func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object ObjectSchemaStruct) *PrivilegeBuilder {
 	return &PrivilegeBuilder{
 		ddl:       Builder{conn, Privilege},
-		role:      role,
+		role:      MaterializeRole{name: role},
 		privilege: privilege,
 		object:    object,
 	}
@@ -168,180 +137,80 @@ func objectCompatibility(objectType string) string {
 }
 
 func (b *PrivilegeBuilder) Grant() error {
-	t := objectCompatibility(b.object.Type)
-	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
+	t := objectCompatibility(b.object.ObjectType)
+	q := fmt.Sprintf(`GRANT %s ON %s %s TO %s;`, b.privilege, t, b.object.QualifiedName(), b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 
 func (b *PrivilegeBuilder) Revoke() error {
-	t := objectCompatibility(b.object.Type)
-	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role)
+	t := objectCompatibility(b.object.ObjectType)
+	q := fmt.Sprintf(`REVOKE %s ON %s %s FROM %s;`, b.privilege, t, b.object.QualifiedName(), b.role.QualifiedName())
 	return b.ddl.exec(q)
 }
 
-func PrivilegeId(conn *sqlx.DB, object PrivilegeObjectStruct, roleId, privilege string) (string, error) {
-	var id string
-
-	switch t := object.Type; t {
-	case "DATABASE":
-		o := ObjectSchemaStruct{Name: object.Name}
-		i, err := DatabaseId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "SCHEMA":
-		o := ObjectSchemaStruct{Name: object.Name, DatabaseName: object.DatabaseName}
-		i, err := SchemaId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "TABLE":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := TableId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "VIEW":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := ViewId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "MATERIALIZED VIEW":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := MaterializedViewId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "TYPE":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := TypeId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "SOURCE":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := SourceId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "CONNECTION":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := ConnectionId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "SECRET":
-		o := ObjectSchemaStruct{Name: object.Name, SchemaName: object.SchemaName, DatabaseName: object.DatabaseName}
-		i, err := SecretId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-
-	case "CLUSTER":
-		o := ObjectSchemaStruct{Name: object.Name}
-		i, err := ClusterId(conn, o)
-		if err != nil {
-			return "", err
-		}
-		id = i
-	}
-
-	f := fmt.Sprintf(`GRANT|%s|%s|%s|%s`, object.Type, id, roleId, privilege)
-	return f, nil
+func (b *PrivilegeBuilder) GrantKey(objectId, roleId, privilege string) string {
+	return fmt.Sprintf(`GRANT|%[1]s|%[2]s|%[3]s|%[4]s`, b.object.ObjectType, objectId, roleId, privilege)
 }
 
 func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) (string, error) {
-	var params string
+	var p string
+	var e error
 
 	switch t := objectType; t {
 	case "DATABASE":
-		p, err := ScanDatabase(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanDatabase(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "SCHEMA":
-		p, err := ScanSchema(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanSchema(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "TABLE":
-		p, err := ScanTable(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanTable(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "VIEW":
-		p, err := ScanView(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanView(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "MATERIALIZED VIEW":
-		p, err := ScanMaterializedView(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanMaterializedView(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "TYPE":
-		p, err := ScanType(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanType(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "SOURCE":
-		p, err := ScanSource(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanSource(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "CONNECTION":
-		p, err := ScanConnection(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanConnection(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "SECRET":
-		p, err := ScanSecret(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanSecret(conn, objectId)
+		p = params.Privileges.String
+		e = err
 
 	case "CLUSTER":
-		p, err := ScanCluster(conn, objectId)
-		if err != nil {
-			return "", err
-		}
-		params = p.Privileges.String
+		params, err := ScanCluster(conn, objectId)
+		p = params.Privileges.String
+		e = err
 	}
 
-	return params, nil
+	if e != nil {
+		return "", e
+	}
+
+	return p, nil
 }

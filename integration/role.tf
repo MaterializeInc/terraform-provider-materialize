@@ -1,15 +1,24 @@
 resource "materialize_role" "role_1" {
-  name           = "role_1"
-  create_role    = false
-  create_db      = true
-  create_cluster = false
+  name = "role-1"
 }
 
 resource "materialize_role" "role_2" {
-  name           = "role_2"
-  create_role    = true
-  create_db      = false
-  create_cluster = true
+  name = "role-2"
+}
+
+resource "materialize_grant_system_privilege" "role_1_system_createrole" {
+  role_name = materialize_role.role_1.name
+  privilege = "CREATEROLE"
+}
+
+resource "materialize_grant_system_privilege" "role_1_system_createdb" {
+  role_name = materialize_role.role_1.name
+  privilege = "CREATEDB"
+}
+
+resource "materialize_grant_system_privilege" "role_1_system_createcluster" {
+  role_name = materialize_role.role_1.name
+  privilege = "CREATECLUSTER"
 }
 
 output "qualified_role" {

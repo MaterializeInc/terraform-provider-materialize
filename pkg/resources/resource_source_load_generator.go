@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -211,6 +212,8 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}

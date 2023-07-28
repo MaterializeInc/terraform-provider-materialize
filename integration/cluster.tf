@@ -6,16 +6,22 @@ resource "materialize_cluster" "cluster_source" {
   name = "cluster_sources"
 }
 
-resource "materialize_grant_cluster" "cluster_grant_usage" {
+resource "materialize_cluster_grant" "cluster_grant_usage" {
   role_name    = materialize_role.role_1.name
   privilege    = "USAGE"
   cluster_name = materialize_cluster.cluster.name
 }
 
-resource "materialize_grant_cluster" "cluster_grant_create" {
+resource "materialize_cluster_grant" "cluster_grant_create" {
   role_name    = materialize_role.role_2.name
   privilege    = "CREATE"
   cluster_name = materialize_cluster.cluster_source.name
+}
+
+resource "materialize_cluster" "managed_cluster" {
+  name               = "managed_cluster"
+  replication_factor = 2
+  size               = "1"
 }
 
 data "materialize_cluster" "all" {}

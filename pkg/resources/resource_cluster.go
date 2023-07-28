@@ -3,17 +3,32 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
 var clusterSchema = map[string]*schema.Schema{
 	"name":           NameSchema("cluster", true, true),
 	"ownership_role": OwnershipRole(),
+	"replication_factor": {
+		Description:  "The number of replicas of each dataflow-powered object to maintain.",
+		Type:         schema.TypeInt,
+		Optional:     true,
+		RequiredWith: []string{"size"},
+	},
+	"size": {
+		Description:  "The size of the managed cluster.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
+		RequiredWith: []string{"replication_factor"},
+	},
 }
 
 func Cluster() *schema.Resource {
@@ -53,6 +68,14 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("replication_factor", s.ReplicationFactor.Int64); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", s.Size.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -61,6 +84,17 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	o := materialize.ObjectSchemaStruct{Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+
+	// size and replication_factor for managed clusters
+	if replicationFactor, replicationFactorOk := d.GetOk("replication_factor"); replicationFactorOk {
+		if size, sizeOk := d.GetOk("size"); sizeOk {
+			// set replication factor
+			b.ReplicationFactor(replicationFactor.(int))
+
+			// set size
+			b.Size(size.(string))
+		}
+	}
 
 	// create resource
 	if err := b.Create(); err != nil {
@@ -72,6 +106,8 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}
@@ -96,6 +132,30 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER", o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("size") {
+		_, newSize := d.GetChange("size")
+
+		o := materialize.ObjectSchemaStruct{Name: clusterName}
+		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Resize(newSize.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+
+	}
+
+	// ResizeReplicationFactor
+	if d.HasChange("replication_factor") {
+		_, newReplicationFactor := d.GetChange("replication_factor")
+
+		o := materialize.ObjectSchemaStruct{Name: clusterName}
+		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.ResizeReplicationFactor(newReplicationFactor.(int)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

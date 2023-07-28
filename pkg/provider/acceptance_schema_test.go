@@ -54,7 +54,12 @@ func TestAccSchema_disappears(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_schema.test", "name", schemaName),
 					resource.TestCheckResourceAttr("materialize_schema.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_schema.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."%s"`, schemaName)),
-					testAccCheckSchemaDisappears(schemaName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "SCHEMA",
+							Name:       schemaName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -91,14 +96,6 @@ func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("Schema not found: %s", name)
 		}
 		_, err := materialize.ScanSchema(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckSchemaDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP SCHEMA "%s";`, name))
 		return err
 	}
 }

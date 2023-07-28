@@ -84,7 +84,12 @@ func TestAccConnKafka_disappears(t *testing.T) {
 				Config: testAccConnKafkaResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
-					testAccCheckConnKafkaDisappears(connectionName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "CONNECTION",
+							Name:       connectionName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -113,6 +118,8 @@ resource "materialize_connection_kafka" "test_role" {
 	ownership_role = "%[4]s"
 
 	depends_on = [materialize_role.test]
+
+	validate = false
 }
 `, roleName, connectionName, connection2Name, connectionOwner)
 }
@@ -125,14 +132,6 @@ func testAccCheckConnKafkaExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("connection kafka not found: %s", name)
 		}
 		_, err := materialize.ScanConnection(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckConnKafkaDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CONNECTION "%s";`, name))
 		return err
 	}
 }

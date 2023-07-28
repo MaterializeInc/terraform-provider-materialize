@@ -22,6 +22,7 @@ func TestConnectionPostgresCreate(t *testing.T) {
 		b.PostgresUser(ValueSecretStruct{Text: "user"})
 		b.PostgresPassword(IdentifierSchemaStruct{Name: "password", SchemaName: "schema", DatabaseName: "database"})
 		b.PostgresDatabase("default")
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -42,6 +43,7 @@ func TestConnectionPostgresSshCreate(t *testing.T) {
 		b.PostgresPassword(IdentifierSchemaStruct{Name: "password", SchemaName: "schema", DatabaseName: "database"})
 		b.PostgresDatabase("default")
 		b.PostgresSSHTunnel(IdentifierSchemaStruct{Name: "ssh_conn", SchemaName: "schema", DatabaseName: "database"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -62,6 +64,7 @@ func TestConnectionPostgresPrivateLinkCreate(t *testing.T) {
 		b.PostgresPassword(IdentifierSchemaStruct{Name: "password", SchemaName: "schema", DatabaseName: "database"})
 		b.PostgresDatabase("default")
 		b.PostgresAWSPrivateLink(IdentifierSchemaStruct{Name: "private_link", SchemaName: "schema", DatabaseName: "database"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -85,6 +88,7 @@ func TestConnectionPostgresSslCreate(t *testing.T) {
 		b.PostgresSSLCa(ValueSecretStruct{Secret: IdentifierSchemaStruct{Name: "root", SchemaName: "schema", DatabaseName: "database"}})
 		b.PostgresSSLCert(ValueSecretStruct{Secret: IdentifierSchemaStruct{Name: "cert", SchemaName: "schema", DatabaseName: "database"}})
 		b.PostgresSSLKey(IdentifierSchemaStruct{Name: "key", SchemaName: "schema", DatabaseName: "database"})
+		b.Validate(true)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

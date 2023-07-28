@@ -9,12 +9,9 @@ import (
 )
 
 type RoleBuilder struct {
-	ddl           Builder
-	roleName      string
-	inherit       bool
-	createRole    bool
-	createDb      bool
-	createCluster bool
+	ddl      Builder
+	roleName string
+	inherit  bool
 }
 
 func NewRoleBuilder(conn *sqlx.DB, roleName string) *RoleBuilder {
@@ -33,21 +30,6 @@ func (b *RoleBuilder) Inherit() *RoleBuilder {
 	return b
 }
 
-func (b *RoleBuilder) CreateRole() *RoleBuilder {
-	b.createRole = true
-	return b
-}
-
-func (b *RoleBuilder) CreateDb() *RoleBuilder {
-	b.createDb = true
-	return b
-}
-
-func (b *RoleBuilder) CreateCluster() *RoleBuilder {
-	b.createCluster = true
-	return b
-}
-
 func (b *RoleBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE ROLE %s`, b.QualifiedName()))
@@ -58,18 +40,6 @@ func (b *RoleBuilder) Create() error {
 	// https://materialize.com/docs/sql/create-role/#details
 	if b.inherit {
 		p = append(p, ` INHERIT`)
-	}
-
-	if b.createRole {
-		p = append(p, ` CREATEROLE`)
-	}
-
-	if b.createDb {
-		p = append(p, ` CREATEDB`)
-	}
-
-	if b.createCluster {
-		p = append(p, ` CREATECLUSTER`)
 	}
 
 	if len(p) > 0 {
@@ -93,22 +63,16 @@ func (b *RoleBuilder) Drop() error {
 }
 
 type RoleParams struct {
-	RoleId         sql.NullString `db:"id"`
-	RoleName       sql.NullString `db:"role_name"`
-	Inherit        sql.NullBool   `db:"inherit"`
-	CreateRole     sql.NullBool   `db:"create_role"`
-	CreateDatabase sql.NullBool   `db:"create_db"`
-	CreateCluster  sql.NullBool   `db:"create_cluster"`
+	RoleId   sql.NullString `db:"id"`
+	RoleName sql.NullString `db:"role_name"`
+	Inherit  sql.NullBool   `db:"inherit"`
 }
 
 var roleQuery = NewBaseQuery(`
 	SELECT
 		id,
 		name AS role_name,
-		inherit,
-		create_role,
-		create_db,
-		create_cluster
+		inherit
 	FROM mz_roles`)
 
 func RoleId(conn *sqlx.DB, roleName string) (string, error) {

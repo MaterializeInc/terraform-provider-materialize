@@ -38,11 +38,15 @@ type SourceKafkaBuilder struct {
 	includePartition bool
 	includeOffset    bool
 	includeTimestamp bool
+	keyAlias         string
+	headersAlias     string
+	partitionAlias   string
+	offsetAlias      string
+	timestampAlias   string
 	format           SourceFormatSpecStruct
 	keyFormat        SourceFormatSpecStruct
 	valueFormat      SourceFormatSpecStruct
 	envelope         KafkaSourceEnvelopeStruct
-	primaryKey       []string
 	startOffset      []int
 	startTimestamp   int
 	exposeProgress   string
@@ -100,6 +104,36 @@ func (b *SourceKafkaBuilder) IncludeTimestamp() *SourceKafkaBuilder {
 	return b
 }
 
+func (b *SourceKafkaBuilder) IncludeKeyAlias(alias string) *SourceKafkaBuilder {
+	b.includeKey = true
+	b.keyAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeHeadersAlias(alias string) *SourceKafkaBuilder {
+	b.includeHeaders = true
+	b.headersAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludePartitionAlias(alias string) *SourceKafkaBuilder {
+	b.includePartition = true
+	b.partitionAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeOffsetAlias(alias string) *SourceKafkaBuilder {
+	b.includeOffset = true
+	b.offsetAlias = alias
+	return b
+}
+
+func (b *SourceKafkaBuilder) IncludeTimestampAlias(alias string) *SourceKafkaBuilder {
+	b.includeTimestamp = true
+	b.timestampAlias = alias
+	return b
+}
+
 func (b *SourceKafkaBuilder) Format(f SourceFormatSpecStruct) *SourceKafkaBuilder {
 	b.format = f
 	return b
@@ -117,11 +151,6 @@ func (b *SourceKafkaBuilder) KeyFormat(k SourceFormatSpecStruct) *SourceKafkaBui
 
 func (b *SourceKafkaBuilder) ValueFormat(v SourceFormatSpecStruct) *SourceKafkaBuilder {
 	b.valueFormat = v
-	return b
-}
-
-func (b *SourceKafkaBuilder) PrimaryKey(p []string) *SourceKafkaBuilder {
-	b.primaryKey = p
 	return b
 }
 
@@ -200,6 +229,10 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.format.Text {
 		q.WriteString(` FORMAT TEXT`)
+	}
+
+	if b.format.Json {
+		q.WriteString(` FORMAT JSON`)
 	}
 
 	if b.keyFormat.Avro != nil {
@@ -290,12 +323,6 @@ func (b *SourceKafkaBuilder) Create() error {
 		q.WriteString(` VALUE FORMAT TEXT`)
 	}
 
-	// Key Constraint
-	if len(b.primaryKey) > 0 {
-		k := strings.Join(b.primaryKey[:], ", ")
-		q.WriteString(fmt.Sprintf(` PRIMARY KEY (%s) NOT ENFORCED`, k))
-	}
-
 	// Time-based Offsets
 	if len(b.startOffset) > 0 {
 		k := strings.Join(strings.Fields(fmt.Sprint(b.startOffset)), ", ")
@@ -305,24 +332,64 @@ func (b *SourceKafkaBuilder) Create() error {
 	// Metadata
 	var i []string
 
+	if !b.includeKey && b.keyAlias != "" {
+		return fmt.Errorf("include_key_alias is set but include_key is false")
+	}
+
 	if b.includeKey {
-		i = append(i, "KEY")
+		if b.keyAlias != "" {
+			i = append(i, fmt.Sprintf("KEY AS %s", b.keyAlias))
+		} else {
+			i = append(i, "KEY")
+		}
+	}
+
+	if !b.includeHeaders && b.headersAlias != "" {
+		return fmt.Errorf("include_headers_alias is set but include_headers is false")
 	}
 
 	if b.includeHeaders {
-		i = append(i, "HEADERS")
+		if b.headersAlias != "" {
+			i = append(i, fmt.Sprintf("HEADERS AS %s", b.headersAlias))
+		} else {
+			i = append(i, "HEADERS")
+		}
+	}
+
+	if !b.includePartition && b.partitionAlias != "" {
+		return fmt.Errorf("include_partition_alias is set but include_partition is false")
 	}
 
 	if b.includePartition {
-		i = append(i, "PARTITION")
+		if b.partitionAlias != "" {
+			i = append(i, fmt.Sprintf("PARTITION AS %s", b.partitionAlias))
+		} else {
+			i = append(i, "PARTITION")
+		}
+	}
+
+	if !b.includeOffset && b.offsetAlias != "" {
+		return fmt.Errorf("include_offset_alias is set but include_offset is false")
 	}
 
 	if b.includeOffset {
-		i = append(i, "OFFSET")
+		if b.offsetAlias != "" {
+			i = append(i, fmt.Sprintf("OFFSET AS %s", b.offsetAlias))
+		} else {
+			i = append(i, "OFFSET")
+		}
+	}
+
+	if !b.includeTimestamp && b.timestampAlias != "" {
+		return fmt.Errorf("include_timestamp_alias is set but include_timestamp is false")
 	}
 
 	if b.includeTimestamp {
-		i = append(i, "TIMESTAMP")
+		if b.timestampAlias != "" {
+			i = append(i, fmt.Sprintf("TIMESTAMP AS %s", b.timestampAlias))
+		} else {
+			i = append(i, "TIMESTAMP")
+		}
 	}
 
 	if len(i) > 0 {

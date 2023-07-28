@@ -56,7 +56,13 @@ func TestAccClusterReplica_disappears(t *testing.T) {
 				Config: testAccClusterReplicaResource(roleName, clusterName, replicaName, replica2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
-					testAccCheckClusterReplicaDisappears(clusterName, replicaName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType:  "CLUSTER REPLICA",
+							Name:        replicaName,
+							ClusterName: clusterName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -99,14 +105,6 @@ func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("cluster replica not found: %s", name)
 		}
 		_, err := materialize.ScanClusterReplica(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckClusterReplicaDisappears(clusterName, replicaName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP CLUSTER REPLICA "%s"."%s";`, clusterName, replicaName))
 		return err
 	}
 }

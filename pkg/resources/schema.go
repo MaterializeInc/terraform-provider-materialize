@@ -71,6 +71,15 @@ func SizeSchema(resource string) *schema.Schema {
 	}
 }
 
+func ValidateConnection() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeBool,
+		Description: "If the connection should wait for validation.",
+		Optional:    true,
+		Default:     true,
+	}
+}
+
 func IdentifierSchema(elem, description string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,

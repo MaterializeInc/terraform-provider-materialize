@@ -63,35 +63,44 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":                              resources.Cluster(),
+			"materialize_cluster_grant":                        resources.GrantCluster(),
+			"materialize_cluster_grant_default_privilege":      resources.GrantClusterDefaultPrivilege(),
 			"materialize_cluster_replica":                      resources.ClusterReplica(),
 			"materialize_connection_aws_privatelink":           resources.ConnectionAwsPrivatelink(),
 			"materialize_connection_confluent_schema_registry": resources.ConnectionConfluentSchemaRegistry(),
 			"materialize_connection_kafka":                     resources.ConnectionKafka(),
 			"materialize_connection_postgres":                  resources.ConnectionPostgres(),
 			"materialize_connection_ssh_tunnel":                resources.ConnectionSshTunnel(),
+			"materialize_connection_grant":                     resources.GrantConnection(),
+			"materialize_connection_grant_default_privilege":   resources.GrantConnectionDefaultPrivilege(),
 			"materialize_database":                             resources.Database(),
-			"materialize_grant_cluster":                        resources.GrantCluster(),
-			"materialize_grant_connection":                     resources.GrantConnection(),
-			"materialize_grant_database":                       resources.GrantDatabase(),
-			"materialize_grant_materialized_view":              resources.GrantMaterializedView(),
-			"materialize_grant_schema":                         resources.GrantSchema(),
-			"materialize_grant_secret":                         resources.GrantSecret(),
-			"materialize_grant_source":                         resources.GrantSource(),
-			"materialize_grant_table":                          resources.GrantTable(),
-			"materialize_grant_type":                           resources.GrantType(),
-			"materialize_grant_view":                           resources.GrantView(),
+			"materialize_database_grant":                       resources.GrantDatabase(),
+			"materialize_database_grant_default_privilege":     resources.GrantDatabaseDefaultPrivilege(),
+			"materialize_grant_system_privilege":               resources.GrantSystemPrivilege(),
 			"materialize_index":                                resources.Index(),
 			"materialize_materialized_view":                    resources.MaterializedView(),
+			"materialize_materialized_view_grant":              resources.GrantMaterializedView(),
 			"materialize_role":                                 resources.Role(),
+			"materialize_role_grant":                           resources.GrantRole(),
 			"materialize_schema":                               resources.Schema(),
+			"materialize_schema_grant":                         resources.GrantSchema(),
+			"materialize_schema_grant_default_privilege":       resources.GrantSchemaDefaultPrivilege(),
 			"materialize_secret":                               resources.Secret(),
+			"materialize_secret_grant":                         resources.GrantSecret(),
+			"materialize_secret_grant_default_privilege":       resources.GrantSecretDefaultPrivilege(),
 			"materialize_sink_kafka":                           resources.SinkKafka(),
 			"materialize_source_kafka":                         resources.SourceKafka(),
 			"materialize_source_load_generator":                resources.SourceLoadgen(),
 			"materialize_source_postgres":                      resources.SourcePostgres(),
+			"materialize_source_grant":                         resources.GrantSource(),
 			"materialize_table":                                resources.Table(),
+			"materialize_table_grant":                          resources.GrantTable(),
+			"materialize_table_grant_default_privilege":        resources.GrantTableDefaultPrivilege(),
 			"materialize_type":                                 resources.Type(),
+			"materialize_type_grant":                           resources.GrantType(),
+			"materialize_type_grant_default_privilege":         resources.GrantTypeDefaultPrivilege(),
 			"materialize_view":                                 resources.View(),
+			"materialize_view_grant":                           resources.GrantView(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":           datasources.Cluster(),
@@ -157,6 +166,30 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			Detail:   "Unable to authenticate user for authenticated Materialize client",
 		})
 		return nil, diags
+	}
+
+	if testing {
+		// TODO: Remove this once enable_managed_clusters is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_managed_clusters = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable managed clusters",
+				Detail:   "Unable to enable managed clusters for authenticated Materialize client",
+			})
+			return nil, diags
+		}
+
+		// TODO: Remove this once enable_connection_validation_syntax is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_connection_validation_syntax = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable connection validation",
+				Detail:   "Unable to enable connection validation for authenticated Materialize client",
+			})
+			return nil, diags
+		}
 	}
 
 	return db, diags

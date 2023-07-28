@@ -10,7 +10,7 @@ SELECT
 SQL
 }
 
-resource "materialize_grant_materialized_view" "materialized_view_grant_select" {
+resource "materialize_materialized_view_grant" "materialized_view_grant_select" {
   role_name              = materialize_role.role_1.name
   privilege              = "SELECT"
   materialized_view_name = materialize_materialized_view.simple_materialized_view.name

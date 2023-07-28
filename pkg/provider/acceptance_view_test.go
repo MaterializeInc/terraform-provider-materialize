@@ -86,7 +86,12 @@ func TestAccView_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckViewExists("materialize_view.test"),
 					resource.TestCheckResourceAttr("materialize_view.test", "name", viewName),
-					testAccCheckViewDisappears(viewName),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "VIEW",
+							Name:       viewName,
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -123,14 +128,6 @@ func testAccCheckViewExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("View not found: %s", name)
 		}
 		_, err := materialize.ScanView(db, r.Primary.ID)
-		return err
-	}
-}
-
-func testAccCheckViewDisappears(name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP VIEW "%s";`, name))
 		return err
 	}
 }

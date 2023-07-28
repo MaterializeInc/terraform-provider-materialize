@@ -60,13 +60,17 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `expose_progress` (String) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
-- `include_key` (Boolean) Include a column containing the Kafka message key. If the key is encoded using a format that includes schemas, the column will take its name from the schema. For unnamed formats (e.g. TEXT), the column will be named "key".
+- `include_headers_alias` (String) Provide an alias for the headers column.
+- `include_key` (Boolean) Include a column containing the Kafka message key.
+- `include_key_alias` (String) Provide an alias for the key column.
 - `include_offset` (Boolean) Include an offset column containing the Kafka message offset.
+- `include_offset_alias` (String) Provide an alias for the offset column.
 - `include_partition` (Boolean) Include a partition column containing the Kafka message partition
+- `include_partition_alias` (String) Provide an alias for the partition column.
 - `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
+- `include_timestamp_alias` (String) Provide an alias for the timestamp column.
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The owernship role of the object.
-- `primary_key` (List of String) Declare a set of columns as a primary key.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `start_offset` (List of Number) Read partitions from the specified offset.

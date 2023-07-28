@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -63,6 +64,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
 	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
+	"validate":       ValidateConnection(),
 	"ownership_role": OwnershipRole(),
 }
 
@@ -134,6 +136,10 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		b.KafkaSSHTunnel(conn)
 	}
 
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
+	}
+
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
@@ -144,6 +150,8 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}

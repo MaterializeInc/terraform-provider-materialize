@@ -17,7 +17,7 @@ resource "materialize_secret" "kafka_password" {
   value         = "c2VjcmV0Cg=="
 }
 
-resource "materialize_grant_secret" "secret_grant_usage" {
+resource "materialize_secret_grant" "secret_grant_usage" {
   role_name     = materialize_role.role_1.name
   privilege     = "USAGE"
   secret_name   = materialize_secret.password.name

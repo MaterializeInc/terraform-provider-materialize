@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -27,6 +28,7 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false),
 	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false),
 	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
+	"validate":                  ValidateConnection(),
 	"ownership_role":            OwnershipRole(),
 }
 
@@ -94,6 +96,10 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		b.ConfluentSchemaRegistryAWSPrivateLink(conn)
 	}
 
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
+	}
+
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
@@ -104,6 +110,8 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
 			return diag.FromErr(err)
 		}
 	}
