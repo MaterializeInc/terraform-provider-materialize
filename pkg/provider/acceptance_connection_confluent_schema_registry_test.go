@@ -36,6 +36,11 @@ func TestAccConnConfluentSchemaRegistry_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_connection_confluent_schema_registry.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

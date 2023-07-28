@@ -34,6 +34,11 @@ func TestAccSchema_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_schema.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_schema.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

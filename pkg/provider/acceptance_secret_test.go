@@ -36,6 +36,12 @@ func TestAccSecret_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_secret.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:            "materialize_secret.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"value"},
+			},
 		},
 	})
 }

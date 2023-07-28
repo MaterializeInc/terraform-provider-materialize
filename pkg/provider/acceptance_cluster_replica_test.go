@@ -38,6 +38,12 @@ func TestAccClusterReplica_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:            "materialize_cluster_replica.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+			},
 		},
 	})
 }

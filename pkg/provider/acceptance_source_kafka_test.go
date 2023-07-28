@@ -42,6 +42,11 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_source_kafka.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

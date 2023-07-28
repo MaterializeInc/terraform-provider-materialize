@@ -39,6 +39,11 @@ func TestAccSourceLoadGenerator_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_source_load_generator.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

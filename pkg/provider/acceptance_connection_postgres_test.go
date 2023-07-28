@@ -43,6 +43,11 @@ func TestAccConnPostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_connection_postgres.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

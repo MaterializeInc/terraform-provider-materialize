@@ -40,6 +40,11 @@ func TestAccSinkKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_sink_kafka.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

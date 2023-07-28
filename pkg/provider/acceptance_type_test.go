@@ -39,6 +39,11 @@ func TestAccType_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_type.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_type.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }
