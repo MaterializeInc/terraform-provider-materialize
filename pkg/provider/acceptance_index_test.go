@@ -37,6 +37,11 @@ func TestAccIndex_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_index.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, indexName)),
 				),
 			},
+			{
+				ResourceName:      "materialize_index.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

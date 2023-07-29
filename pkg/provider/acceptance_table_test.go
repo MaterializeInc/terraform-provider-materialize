@@ -37,6 +37,11 @@ func TestAccTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_table.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

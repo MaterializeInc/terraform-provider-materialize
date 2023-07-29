@@ -40,6 +40,11 @@ func TestAccCluster_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "2-2"),
 				),
 			},
+			{
+				ResourceName:      "materialize_cluster.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

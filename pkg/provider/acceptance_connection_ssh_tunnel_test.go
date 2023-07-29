@@ -38,6 +38,11 @@ func TestAccConnSshTunnel_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:      "materialize_connection_ssh_tunnel.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

@@ -36,6 +36,12 @@ func TestAccView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_view.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				ResourceName:            "materialize_view.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"statement"},
+			},
 		},
 	})
 }

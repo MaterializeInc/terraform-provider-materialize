@@ -27,6 +27,11 @@ func TestAccRole_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_role.test", "inherit", "true"),
 				),
 			},
+			{
+				ResourceName:      "materialize_role.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
