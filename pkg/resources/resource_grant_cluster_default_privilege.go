@@ -20,9 +20,8 @@ var grantClusterDefaultPrivilegeSchema = map[string]*schema.Schema{
 	"target_role_name": {
 		Description: "The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 		ForceNew:    true,
-		Computed:    true,
 	},
 	"privilege": {
 		Description:  "The privilege to grant to the object.",
@@ -51,26 +50,10 @@ func GrantClusterDefaultPrivilege() *schema.Resource {
 
 func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	granteeName := d.Get("grantee_name").(string)
+	targetName := d.Get("target_role").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteeName, privilege)
-
-	var targetRole, database, schema string
-
-	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
-		targetRole = v.(string)
-		b.TargetRole(targetRole)
-	}
-
-	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
-		database = v.(string)
-		b.DatabaseName(database)
-	}
-
-	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
-		schema = v.(string)
-		b.SchemaName(schema)
-	}
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteeName, targetName, privilege)
 
 	// create resource
 	if err := b.Grant(); err != nil {
@@ -83,30 +66,12 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	var tId, dId, sId string
-
-	if targetRole != "" {
-		tId, err = materialize.RoleId(meta.(*sqlx.DB), targetRole)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	tId, err := materialize.RoleId(meta.(*sqlx.DB), targetName)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	if database != "" {
-		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if schema != "" {
-		sId, err = materialize.SchemaId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: schema, DatabaseName: database})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	key := b.GrantKey("CLUSTER", gId, tId, dId, sId, privilege)
+	key := b.GrantKey("CLUSTER", gId, tId, "", "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -114,13 +79,10 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 
 func grantClusterDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	granteenName := d.Get("grantee_name").(string)
+	targetName := d.Get("target_role").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteenName, privilege)
-
-	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
-		b.TargetRole(v.(string))
-	}
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteenName, targetName, privilege)
 
 	if err := b.Revoke(); err != nil {
 		return diag.FromErr(err)
