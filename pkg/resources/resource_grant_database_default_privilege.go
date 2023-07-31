@@ -56,7 +56,7 @@ func GrantDatabaseDefaultPrivilege() *schema.Resource {
 
 func grantDatabaseDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	granteeName := d.Get("grantee_name").(string)
-	targetName := d.Get("target_role").(string)
+	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
 	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "DATABASE", granteeName, targetName, privilege)
@@ -100,7 +100,7 @@ func grantDatabaseDefaultPrivilegeCreate(ctx context.Context, d *schema.Resource
 
 func grantDatabaseDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	granteenName := d.Get("grantee_name").(string)
-	targetName := d.Get("target_role").(string)
+	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
 	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "DATABASE", granteenName, targetName, privilege)
