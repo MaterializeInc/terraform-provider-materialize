@@ -18,20 +18,22 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"database_name":      DatabaseNameSchema("source", false),
 	"qualified_sql_name": QualifiedNameSchema("source"),
 	"cluster_name": {
-		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ForceNew:     true,
+		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		AtLeastOneOf:  []string{"cluster_name", "size"},
+		ConflictsWith: []string{"size"},
+		ForceNew:      true,
 	},
 	"size": {
-		Description:  "The size of the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
+		Description:   "The size of the source.",
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		AtLeastOneOf:  []string{"cluster_name", "size"},
+		ConflictsWith: []string{"cluster_name"},
+		ValidateFunc:  validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	},
 	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
@@ -48,7 +50,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"table": {
-		Description: "Creates subsources for specific tables.",
+		Description: "Creates subsources for specific tables. If neither table or schema is specified, will default to ALL TABLES",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -70,7 +72,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ConflictsWith: []string{"schema"},
 	},
 	"schema": {
-		Description:   "Creates subsources for specific schemas.",
+		Description:   "Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES",
 		Type:          schema.TypeList,
 		Elem:          &schema.Schema{Type: schema.TypeString},
 		Optional:      true,
