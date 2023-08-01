@@ -51,6 +51,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `expose_progress` (String) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.
 - `ownership_role` (String) The owernship role of the object.
+- `schema` (List of String) Creates subsources for specific schemas.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
 - `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--table))
