@@ -62,6 +62,27 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	// Subsources
+	deps, err := materialize.ListDependencies(meta.(*sqlx.DB), i, "source")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	depMaps := []map[string]interface{}{}
+	for _, dep := range deps {
+		depMap := map[string]interface{}{}
+
+		depMap["name"] = dep.ObjectName.String
+		depMap["schema_name"] = dep.SchemaName.String
+		depMap["database_name"] = dep.DatabaseName.String
+
+		depMaps = append(depMaps, depMap)
+	}
+
+	if err := d.Set("subsource", depMaps); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
