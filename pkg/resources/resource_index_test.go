@@ -38,6 +38,10 @@ func TestResourceIndexCreate(t *testing.T) {
 		pp := `WHERE mz_indexes.id = 'u1' AND mz_objects.type IN \('source', 'view', 'materialized-view'\)`
 		testhelpers.MockIndexScan(mock, pp)
 
+		// Query Columns
+		cp := `WHERE mz_indexes.id = 'u1'`
+		testhelpers.MockIndexColumnScan(mock, cp)
+
 		if err := indexCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}

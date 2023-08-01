@@ -42,7 +42,7 @@ func TestResourceTableCreate(t *testing.T) {
 
 		// Query Columns
 		cp := `WHERE mz_columns.id = 'u1'`
-		testhelpers.MockColumnScan(mock, cp)
+		testhelpers.MockTableColumnScan(mock, cp)
 
 		if err := tableCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
