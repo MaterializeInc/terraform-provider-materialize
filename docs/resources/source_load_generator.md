@@ -56,6 +56,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--auction_options"></a>
 ### Nested Schema for `auction_options`
@@ -130,6 +131,17 @@ Required:
 Optional:
 
 - `alias` (String) The alias of the table.
+
+
+
+<a id="nestedatt--subsource"></a>
+### Nested Schema for `subsource`
+
+Read-Only:
+
+- `database_name` (String)
+- `name` (String)
+- `schema_name` (String)
 
 ## Import
 

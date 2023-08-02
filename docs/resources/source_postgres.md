@@ -60,6 +60,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--postgres_connection"></a>
 ### Nested Schema for `postgres_connection`
@@ -84,6 +85,16 @@ Required:
 Optional:
 
 - `alias` (String) The alias of the table.
+
+
+<a id="nestedatt--subsource"></a>
+### Nested Schema for `subsource`
+
+Read-Only:
+
+- `database_name` (String)
+- `name` (String)
+- `schema_name` (String)
 
 ## Import
 
