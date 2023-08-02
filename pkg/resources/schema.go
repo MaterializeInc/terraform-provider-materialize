@@ -286,7 +286,7 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 	}
 }
 
-func SubSourceSchema() *schema.Schema {
+func SubsourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Description: "Subsources of a source.",
 		Type:        schema.TypeList,

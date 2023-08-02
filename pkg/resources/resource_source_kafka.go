@@ -155,7 +155,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"subsource":      SubSourceSchema(),
+	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRole(),
 }
 
