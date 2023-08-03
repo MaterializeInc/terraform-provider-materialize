@@ -20,9 +20,8 @@ var grantTypeDefaultPrivilegeSchema = map[string]*schema.Schema{
 	"target_role_name": {
 		Description: "The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 		ForceNew:    true,
-		Computed:    true,
 	},
 	"database_name": {
 		Description: "The default privilege will apply only to objects created in this database, if specified.",
@@ -63,16 +62,12 @@ func GrantTypeDefaultPrivilege() *schema.Resource {
 
 func grantTypeDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	granteeName := d.Get("grantee_name").(string)
+	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "TYPE", granteeName, privilege)
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "TYPE", granteeName, targetName, privilege)
 
-	var targetRole, database, schema string
-	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
-		targetRole = v.(string)
-		b.TargetRole(targetRole)
-	}
-
+	var database, schema string
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
 		database = v.(string)
 		b.DatabaseName(database)
@@ -94,15 +89,12 @@ func grantTypeDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	var tId, dId, sId string
-
-	if targetRole != "" {
-		tId, err = materialize.RoleId(meta.(*sqlx.DB), targetRole)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	tId, err := materialize.RoleId(meta.(*sqlx.DB), targetName)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
+	var dId, sId string
 	if database != "" {
 		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
 		if err != nil {
@@ -125,13 +117,10 @@ func grantTypeDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData
 
 func grantTypeDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	granteenName := d.Get("grantee_name").(string)
+	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "TYPE", granteenName, privilege)
-
-	if v, ok := d.GetOk("target_role_name"); ok && v.(string) != "" {
-		b.TargetRole(v.(string))
-	}
+	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "TYPE", granteenName, targetName, privilege)
 
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
 		b.DatabaseName(v.(string))
