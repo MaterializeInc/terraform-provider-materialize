@@ -81,6 +81,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--kafka_connection"></a>
 ### Nested Schema for `kafka_connection`
@@ -311,6 +312,18 @@ Optional:
 
 - `database_name` (String) The schema_registry_connection database name.
 - `schema_name` (String) The schema_registry_connection schema name.
+
+
+
+
+<a id="nestedatt--subsource"></a>
+### Nested Schema for `subsource`
+
+Read-Only:
+
+- `database_name` (String)
+- `name` (String)
+- `schema_name` (String)
 
 ## Import
 

@@ -389,6 +389,29 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+func MockSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_object_dependencies.object_id,
+		mz_object_dependencies.referenced_object_id,
+		mz_objects.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_objects.type
+	FROM mz_internal.mz_object_dependencies
+	JOIN mz_objects
+		ON mz_object_dependencies.referenced_object_id = mz_objects.id
+	JOIN mz_schemas
+		ON mz_objects.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type"}).
+		AddRow("u1", "u2", "object", "schema", "database", "source")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
 func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
