@@ -9,6 +9,10 @@ import (
 )
 
 var sourcePostgres = ObjectSchemaStruct{Name: "source", SchemaName: "schema", DatabaseName: "database"}
+var tableInput = []TableStruct{
+	{Name: "table_1"},
+	{Name: "table_2", Alias: "table_alias"},
+}
 
 func TestSourcePostgresAllTablesCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -55,4 +59,43 @@ func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 		}
 	})
 
+}
+
+func TestSourceAddSubsource(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE table_1, table_2 AS table_alias;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSource(db, sourcePostgres)
+		if err := b.AddSubsource(tableInput, []string{}); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSourceAddSubsourceTextColumns(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE table_1, table_2 AS table_alias WITH \(column_1, column_2\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSource(db, sourcePostgres)
+		if err := b.AddSubsource(tableInput, []string{"column_1", "column_2"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSourceDropSubsource(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SOURCE "database"."schema"."source" DROP SUBSOURCE table_1, table_alias;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourcePostgresBuilder(db, sourcePostgres)
+		if err := b.DropSubsource(tableInput); err != nil {
+			t.Fatal(err)
+		}
+	})
 }

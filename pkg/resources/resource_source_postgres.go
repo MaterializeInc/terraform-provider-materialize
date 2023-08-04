@@ -128,8 +128,9 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		b.ExposeProgress(v.(string))
 	}
 
-	if v, ok := d.GetOk("textColumns"); ok {
-		b.TextColumns(v.([]string))
+	if v, ok := d.GetOk("text_columns"); ok {
+		columns := materialize.GetSliceValueString(v.([]interface{}))
+		b.TextColumns(columns)
 	}
 
 	// create resource
@@ -201,11 +202,10 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		b := materialize.NewSource(meta.(*sqlx.DB), o)
 
 		if len(addTables) > 0 {
-			if err := b.AddSubsource(addTables); err != nil {
+			if err := b.AddSubsource(addTables, []string{}); err != nil {
 				return diag.FromErr(err)
 			}
 		}
-
 		if len(dropTables) > 0 {
 			if err := b.DropSubsource(dropTables); err != nil {
 				return diag.FromErr(err)
