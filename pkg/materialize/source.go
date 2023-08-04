@@ -2,6 +2,8 @@ package materialize
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -21,6 +23,12 @@ func GetTableStruct(v []interface{}) []TableStruct {
 		})
 	}
 	return tables
+}
+
+func DiffTables(old []interface{}, new []interface{}) ([]TableStruct, []TableStruct) {
+	var added, dropped []TableStruct
+	// TODO: Implement
+	return added, dropped
 }
 
 type Source struct {
@@ -56,6 +64,35 @@ func (b *Source) Resize(newSize string) error {
 func (b *Source) Drop() error {
 	qn := b.QualifiedName()
 	return b.ddl.drop(qn)
+}
+
+func (b *Source) AddSubsource(subsources []TableStruct) error {
+	var subsrc []string
+	for _, t := range subsources {
+		if t.Alias != "" {
+			f := fmt.Sprintf("%s AS %s", t.Name, t.Alias)
+			subsrc = append(subsrc, f)
+		} else {
+			subsrc = append(subsrc, t.Name)
+		}
+	}
+	s := strings.Join(subsrc, ", ")
+	q := fmt.Sprintf(`ALTER SOURCE %s ADD SUBSOURCE %s;`, b.QualifiedName(), s)
+	return b.ddl.exec(q)
+}
+
+func (b *Source) DropSubsource(subsources []TableStruct) error {
+	var subsrc []string
+	for _, t := range subsources {
+		if t.Alias != "" {
+			subsrc = append(subsrc, t.Alias)
+		} else {
+			subsrc = append(subsrc, t.Name)
+		}
+	}
+	s := strings.Join(subsrc, ", ")
+	q := fmt.Sprintf(`ALTER SOURCE %s DROP SUBSOURCE %s;`, b.QualifiedName(), s)
+	return b.ddl.exec(q)
 }
 
 type SourceParams struct {
