@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"database/sql"
+	"reflect"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -23,9 +24,42 @@ func GetTableStruct(v []interface{}) []TableStruct {
 	return tables
 }
 
-func DiffTables(old []interface{}, new []interface{}) ([]TableStruct, []TableStruct) {
-	var added, dropped []TableStruct
-	return added, dropped
+func DiffTableStructs(arr1, arr2 []interface{}) []TableStruct {
+	var difference []TableStruct
+
+	for _, item1 := range arr1 {
+		found := false
+		for _, item2 := range arr2 {
+			if areEqual(item1, item2) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			if diffItem, ok := item1.(map[string]interface{}); ok {
+				difference = append(difference, TableStruct{
+					Name:  diffItem["name"].(string),
+					Alias: diffItem["alias"].(string),
+				})
+			}
+		}
+	}
+
+	return difference
+}
+
+func areEqual(a, b interface{}) bool {
+	if reflect.DeepEqual(a, b) {
+		return true
+	}
+
+	if aItem, ok := a.(map[string]interface{}); ok {
+		if bItem, ok := b.(map[string]interface{}); ok {
+			return aItem["name"].(string) == bItem["name"].(string)
+		}
+	}
+
+	return false
 }
 
 type Source struct {

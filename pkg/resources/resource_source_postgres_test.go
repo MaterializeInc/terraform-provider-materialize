@@ -52,3 +52,30 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceSourcePostgresUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgres)
+
+	d.SetId("u1")
+	d.Set("size", "large")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" SET \(SIZE = 'small'\)`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "name" AS "alias"`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Subsources
+		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		testhelpers.MockSubsourceScan(mock, ps)
+
+		if err := sourcePostgresUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

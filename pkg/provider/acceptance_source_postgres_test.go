@@ -3,6 +3,7 @@ package provider
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -24,7 +25,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName, 2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName),
@@ -67,10 +68,10 @@ func TestAccSourcePostgres_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, "mz_system"),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, "mz_system", 2),
 			},
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, newSourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, newSourceName, source2Name, roleName, 2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", newSourceName),
@@ -104,7 +105,7 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSourcePostgresDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName, 2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
 					testAccCheckObjectDisappears(
@@ -120,7 +121,17 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 	})
 }
 
-func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, sourceOwner string) string {
+func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, sourceOwner string, numTables int) string {
+	q := strings.Builder{}
+	for i := 1; i <= numTables; i++ {
+		q.WriteString(fmt.Sprintf(`
+		table {
+			name  = "table%[1]d"
+			alias = "%[2]s_table%[1]d"
+		  }
+		`, i, connName))
+	}
+
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%[1]s"
@@ -154,14 +165,7 @@ resource "materialize_source_postgres" "test" {
 
 	size  = "1"
 	publication = "mz_source"
-	table {
-	  name  = "table1"
-	  alias = "%[3]s_table1"
-	}
-	table {
-	  name  = "table2"
-	  alias = "%[3]s_table2"
-	}
+	%[7]s
 }
 
 resource "materialize_source_postgres" "test_role" {
@@ -172,19 +176,12 @@ resource "materialize_source_postgres" "test_role" {
 
 	size  = "1"
 	publication = "mz_source"
-	table {
-		name  = "table1"
-		alias = "%[3]s_table_role_1"
-	  }
-	  table {
-		name  = "table2"
-		alias = "%[3]s_table_role_2"
-	  }
+	%[7]s
 	ownership_role = "%[6]s"
 
 	depends_on = [materialize_role.test]
 }
-`, roleName, secretName, connName, sourceName, source2Name, sourceOwner)
+`, roleName, secretName, connName, sourceName, source2Name, sourceOwner, q.String())
 }
 
 func testAccCheckSourcePostgresExists(name string) resource.TestCheckFunc {

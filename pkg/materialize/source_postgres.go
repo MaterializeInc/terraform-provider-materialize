@@ -112,10 +112,11 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 	var subsrc []string
 	for _, t := range subsources {
 		if t.Alias != "" {
-			f := fmt.Sprintf("%s AS %s", t.Name, t.Alias)
+			f := fmt.Sprintf("%s AS %s", QuoteIdentifier(t.Name), QuoteIdentifier(t.Alias))
 			subsrc = append(subsrc, f)
 		} else {
-			subsrc = append(subsrc, t.Name)
+			f := QuoteIdentifier(t.Name)
+			subsrc = append(subsrc, f)
 		}
 	}
 	s := strings.Join(subsrc, ", ")
@@ -136,9 +137,11 @@ func (b *Source) DropSubsource(subsources []TableStruct) error {
 	var subsrc []string
 	for _, t := range subsources {
 		if t.Alias != "" {
-			subsrc = append(subsrc, t.Alias)
+			f := QuoteIdentifier(t.Alias)
+			subsrc = append(subsrc, f)
 		} else {
-			subsrc = append(subsrc, t.Name)
+			f := QuoteIdentifier(t.Name)
+			subsrc = append(subsrc, f)
 		}
 	}
 	s := strings.Join(subsrc, ", ")

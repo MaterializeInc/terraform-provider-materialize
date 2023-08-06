@@ -195,14 +195,23 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	if d.HasChange("tables") {
-		oldTables, newTables := d.GetChange("table")
-		addTables, dropTables := materialize.DiffTables(oldTables.([]interface{}), newTables.([]interface{}))
+	if d.HasChange("table") {
+		ot, nt := d.GetChange("table")
+		addTables := materialize.DiffTableStructs(nt.([]interface{}), ot.([]interface{}))
+		dropTables := materialize.DiffTableStructs(ot.([]interface{}), nt.([]interface{}))
 
 		b := materialize.NewSource(meta.(*sqlx.DB), o)
 
 		if len(addTables) > 0 {
-			if err := b.AddSubsource(addTables, []string{}); err != nil {
+			var diffColumns []string
+			if d.HasChange("text_columns") {
+				_, nc := d.GetChange("text_columns")
+				for _, n := range nc.([]interface{}) {
+					diffColumns = append(diffColumns, n.(string))
+				}
+			}
+
+			if err := b.AddSubsource(addTables, diffColumns); err != nil {
 				return diag.FromErr(err)
 			}
 		}
