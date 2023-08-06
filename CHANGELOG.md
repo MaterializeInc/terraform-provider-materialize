@@ -6,7 +6,7 @@
 * Include `subsource` as computed attribute for sources [#263](https://github.com/MaterializeInc/terraform-provider-materialize/pull/263)
 
 ### BugFixes
-
+* Remove managed clusters testing flag [#261](https://github.com/MaterializeInc/terraform-provider-materialize/pull/261)
 ### Misc
 
 ### Breaking Changes
