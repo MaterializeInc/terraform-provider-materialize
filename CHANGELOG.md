@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.5 - 2023-08-03
+## 0.1.5 - 2023-08-07
 
 ### Features
 * Include `subsource` as computed attribute for sources [#263](https://github.com/MaterializeInc/terraform-provider-materialize/pull/263)
