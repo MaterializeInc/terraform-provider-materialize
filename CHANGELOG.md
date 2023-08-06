@@ -7,6 +7,7 @@
 
 ### BugFixes
 * Remove managed clusters testing flag [#261](https://github.com/MaterializeInc/terraform-provider-materialize/pull/261)
+
 ### Misc
 
 ### Breaking Changes
