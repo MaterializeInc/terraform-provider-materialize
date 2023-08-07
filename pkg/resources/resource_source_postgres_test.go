@@ -21,7 +21,10 @@ var inSourcePostgres = map[string]interface{}{
 	"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
 	"publication":         "mz_source",
 	"text_columns":        []interface{}{"table.unsupported_type_1"},
-	"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+	"table": []interface{}{
+		map[string]interface{}{"name": "name1", "alias": "alias"},
+		map[string]interface{}{"name": "name2"},
+	},
 }
 
 func TestResourceSourcePostgresCreate(t *testing.T) {
@@ -32,7 +35,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR TABLES \(name1 AS alias, name2 AS name2\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -64,7 +67,7 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" SET \(SIZE = 'small'\)`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "name" AS "alias"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "name1" AS "alias", "name2"`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`

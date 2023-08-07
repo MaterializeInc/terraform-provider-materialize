@@ -203,15 +203,13 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		b := materialize.NewSource(meta.(*sqlx.DB), o)
 
 		if len(addTables) > 0 {
-			var diffColumns []string
+			var colDiff []string
 			if d.HasChange("text_columns") {
-				_, nc := d.GetChange("text_columns")
-				for _, n := range nc.([]interface{}) {
-					diffColumns = append(diffColumns, n.(string))
-				}
+				oc, nc := d.GetChange("text_columns")
+				colDiff = diffTextColumns(oc.([]interface{}), nc.([]interface{}))
 			}
 
-			if err := b.AddSubsource(addTables, diffColumns); err != nil {
+			if err := b.AddSubsource(addTables, colDiff); err != nil {
 				return diag.FromErr(err)
 			}
 		}
@@ -223,4 +221,21 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	return sourceRead(ctx, d, meta)
+}
+
+func diffTextColumns(arr1, arr2 []interface{}) []string {
+	arr2Map := make(map[string]bool)
+	for _, item := range arr2 {
+		i := item.(string)
+		arr2Map[i] = true
+	}
+
+	var difference []string
+	for _, item := range arr1 {
+		i := item.(string)
+		if !arr2Map[i] {
+			difference = append(difference, i)
+		}
+	}
+	return difference
 }
