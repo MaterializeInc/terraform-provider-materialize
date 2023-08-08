@@ -36,11 +36,11 @@ var replicaSizes = []string{
 	"medium",
 	"large",
 	"xlarge",
-	"x2large",
-	"x3large",
-	"x4large",
-	"x5large",
-	"x6large",
+	"2xlarge",
+	"3xlarge",
+	"4xlarge",
+	"5xlarge",
+	"6xlarge",
 }
 
 var saslMechanisms = []string{
