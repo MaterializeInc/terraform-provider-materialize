@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -81,4 +82,15 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestDiffTextColumns(t *testing.T) {
+	arr1 := []interface{}{"t1.column_1", "t2.column_2"}
+	arr2 := []interface{}{"t1.column_1", "t3.column_2"}
+	o := diffTextColumns(arr1, arr2)
+	e := []string{"t2.column_2"}
+
+	if !reflect.DeepEqual(o, e) {
+		t.Fatalf("Expected diffTextColumns to be equal")
+	}
 }

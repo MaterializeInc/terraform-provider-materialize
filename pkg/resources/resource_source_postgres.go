@@ -41,11 +41,10 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.",
+		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
-		ForceNew:    true,
 	},
 	"table": {
 		Description: "Creates subsources for specific tables.",
@@ -206,7 +205,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 			var colDiff []string
 			if d.HasChange("text_columns") {
 				oc, nc := d.GetChange("text_columns")
-				colDiff = diffTextColumns(oc.([]interface{}), nc.([]interface{}))
+				colDiff = diffTextColumns(nc.([]interface{}), oc.([]interface{}))
 			}
 
 			if err := b.AddSubsource(addTables, colDiff); err != nil {

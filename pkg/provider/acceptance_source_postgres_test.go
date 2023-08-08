@@ -32,6 +32,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, connName)),
@@ -78,9 +79,12 @@ func TestAccSourcePostgres_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "2"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table3"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table3`, connName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "ownership_role", roleName),
@@ -134,8 +138,8 @@ resource "materialize_role" "test" {
 }
 
 resource "materialize_secret" "postgres_password" {
-	name          = "%[2]s"
-	value         = "c2VjcmV0Cg=="
+	name  = "%[2]s"
+	value = "c2VjcmV0Cg=="
 }
 
 resource "materialize_connection_postgres" "test" {
@@ -162,13 +166,14 @@ resource "materialize_source_postgres" "test" {
 	size  = "1"
 	publication = "mz_source"
 	table {
-	  name  = "table1"
-	  alias = "%[3]s_table1"
+		name  = "table1"
+		alias = "%[3]s_table1"
 	}
 	table {
-	  name  = "table2"
-	  alias = "%[3]s_table2"
+		name  = "table2"
+		alias = "%[3]s_table2"
 	}
+	text_columns = ["table1.id"]
 }
 
 resource "materialize_source_postgres" "test_role" {
@@ -182,11 +187,11 @@ resource "materialize_source_postgres" "test_role" {
 	table {
 		name  = "table1"
 		alias = "%[3]s_table_role_1"
-	  }
-	  table {
+	}
+	table {
 		name  = "table2"
 		alias = "%[3]s_table_role_2"
-	  }
+	}
 	ownership_role = "%[6]s"
 
 	depends_on = [materialize_role.test]
@@ -229,9 +234,14 @@ resource "materialize_source_postgres" "test" {
 	size  = "1"
 	publication = "mz_source"
 	table {
-	  name  = "table1"
-	  alias = "%[3]s_table1"
+		name  = "table1"
+		alias = "%[3]s_table1"
 	}
+	table {
+		name  = "table3"
+		alias = "%[3]s_table3"
+	}
+	text_columns = ["table1.id", "table3.id"]
 }
 
 resource "materialize_source_postgres" "test_role" {
@@ -245,11 +255,11 @@ resource "materialize_source_postgres" "test_role" {
 	table {
 		name  = "table1"
 		alias = "%[3]s_table_role_1"
-	  }
-	  table {
+	}
+	table {
 		name  = "table2"
 		alias = "%[3]s_table_role_2"
-	  }
+	}
 	ownership_role = "%[6]s"
 
 	depends_on = [materialize_role.test]

@@ -126,7 +126,7 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 
 	if len(textColumns) > 0 {
 		c := strings.Join(textColumns, ", ")
-		q.WriteString(fmt.Sprintf(` WITH (%s)`, c))
+		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
 	}
 
 	q.WriteString(";")
