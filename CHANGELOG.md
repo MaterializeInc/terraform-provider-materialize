@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6 - 2023-08-09
+
+### Features
+
+### BugFixes
+* Correct replica sizes >xlarge [#268](https://github.com/MaterializeInc/terraform-provider-materialize/pull/268)
+
+### Misc
+
 ## 0.1.5 - 2023-08-07
 
 ### Features
