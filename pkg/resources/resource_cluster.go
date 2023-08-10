@@ -29,6 +29,34 @@ var clusterSchema = map[string]*schema.Schema{
 		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
 		RequiredWith: []string{"replication_factor"},
 	},
+	"availability_zones": {
+		Description: "If you want the cluster to reside in specific availability zones.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		Computed:    true,
+		ForceNew:    true,
+	},
+	"introspection_interval": {
+		Description: "The interval at which to collect introspection data.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     "1s",
+	},
+	"introspection_debugging": {
+		Description: "Whether to introspect the gathering of the introspection data.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     false,
+	},
+	"idle_arrangement_merge_effort": {
+		Description: "The amount of effort the cluster should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
+		Type:        schema.TypeInt,
+		Optional:    true,
+		ForceNew:    true,
+	},
 }
 
 func Cluster() *schema.Resource {
@@ -88,11 +116,25 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	// size and replication_factor for managed clusters
 	if replicationFactor, replicationFactorOk := d.GetOk("replication_factor"); replicationFactorOk {
 		if size, sizeOk := d.GetOk("size"); sizeOk {
-			// set replication factor
 			b.ReplicationFactor(replicationFactor.(int))
-
-			// set size
 			b.Size(size.(string))
+
+			if v, ok := d.GetOk("availability_zones"); ok {
+				azs := materialize.GetSliceValueString(v.([]interface{}))
+				b.AvailabilityZones(azs)
+			}
+
+			if v, ok := d.GetOk("introspection_interval"); ok {
+				b.IntrospectionInterval(v.(string))
+			}
+
+			if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
+				b.IntrospectionDebugging()
+			}
+
+			if v, ok := d.GetOk("idle_arrangement_merge_effort"); ok {
+				b.IdleArrangementMergeEffort(v.(int))
+			}
 		}
 	}
 

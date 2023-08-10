@@ -3,16 +3,21 @@ package materialize
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
 
 // DDL
 type ClusterBuilder struct {
-	ddl               Builder
-	clusterName       string
-	replicationFactor int
-	size              string
+	ddl                        Builder
+	clusterName                string
+	replicationFactor          int
+	size                       string
+	availabilityZones          []string
+	introspectionInterval      string
+	introspectionDebugging     bool
+	idleArrangementMergeEffort int
 }
 
 func NewClusterBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ClusterBuilder {
@@ -36,14 +41,70 @@ func (b *ClusterBuilder) Size(s string) *ClusterBuilder {
 	return b
 }
 
+func (b *ClusterBuilder) AvailabilityZones(z []string) *ClusterBuilder {
+	b.availabilityZones = z
+	return b
+}
+
+func (b *ClusterBuilder) IntrospectionInterval(i string) *ClusterBuilder {
+	b.introspectionInterval = i
+	return b
+}
+
+func (b *ClusterBuilder) IntrospectionDebugging() *ClusterBuilder {
+	b.introspectionDebugging = true
+	return b
+}
+
+func (b *ClusterBuilder) IdleArrangementMergeEffort(e int) *ClusterBuilder {
+	b.idleArrangementMergeEffort = e
+	return b
+}
+
 func (b *ClusterBuilder) Create() error {
+	q := strings.Builder{}
+
+	q.WriteString(fmt.Sprintf(`CREATE CLUSTER %s`, b.QualifiedName()))
 	// Only create empty clusters, manage replicas with separate resource if replication factor is not set
 	if b.replicationFactor == 0 {
-		q := fmt.Sprintf(`CREATE CLUSTER %s REPLICAS ();`, b.QualifiedName())
-		return b.ddl.exec(q)
+		q.WriteString(` REPLICAS ()`)
+	} else {
+		q.WriteString(fmt.Sprintf(` SIZE '%s', REPLICATION FACTOR %d`, b.size, b.replicationFactor))
+
+		var p []string
+		if len(b.availabilityZones) > 0 {
+			var az []string
+			for _, z := range b.availabilityZones {
+				f := QuoteString(z)
+				az = append(az, f)
+			}
+			a := fmt.Sprintf(` AVAILABILITY ZONE = [%s]`, strings.Join(az[:], ","))
+			p = append(p, a)
+		}
+
+		if b.introspectionInterval != "" {
+			i := fmt.Sprintf(` INTROSPECTION INTERVAL = %s`, QuoteString(b.introspectionInterval))
+			p = append(p, i)
+		}
+
+		if b.introspectionDebugging {
+			p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
+		}
+
+		if b.idleArrangementMergeEffort != 0 {
+			m := fmt.Sprintf(` IDLE ARRANGEMENT MERGE EFFORT = %d`, b.idleArrangementMergeEffort)
+			p = append(p, m)
+		}
+
+		if len(p) > 0 {
+			p := strings.Join(p[:], ",")
+			q.WriteString(p)
+		}
 	}
-	q := fmt.Sprintf(`CREATE CLUSTER %s SIZE '%s', REPLICATION FACTOR %d;`, b.QualifiedName(), b.size, b.replicationFactor)
-	return b.ddl.exec(q)
+
+	q.WriteString(`;`)
+
+	return b.ddl.exec(q.String())
 }
 
 func (b *ClusterBuilder) Drop() error {
