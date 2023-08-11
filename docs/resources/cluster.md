@@ -27,6 +27,9 @@ resource "materialize_cluster" "example_cluster" {
 
 ### Optional
 
+- `idle_arrangement_merge_effort` (Number) The amount of effort the cluster should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
+- `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
+- `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
 - `size` (String) The size of the managed cluster.
