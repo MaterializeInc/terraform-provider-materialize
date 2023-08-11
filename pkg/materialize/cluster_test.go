@@ -19,14 +19,41 @@ func TestClusterCreate(t *testing.T) {
 	})
 }
 
-func TestClusterManagedCreate(t *testing.T) {
+func TestClusterManagedSizeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2 AVAILABILITY ZONE = \['us-east-1'\], INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := ObjectSchemaStruct{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
-		b.ReplicationFactor(2)
 		b.Size("xsmall")
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestClusterManagedSizeReplicationCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2;`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := ObjectSchemaStruct{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+		b.ReplicationFactor(2)
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestClusterManagedAllCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2, AVAILABILITY ZONES = \['us-east-1'\], INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := ObjectSchemaStruct{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+		b.ReplicationFactor(2)
 		b.AvailabilityZones([]string{"us-east-1"})
 		b.IntrospectionInterval("1s")
 		b.IntrospectionDebugging()

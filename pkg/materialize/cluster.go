@@ -66,19 +66,22 @@ func (b *ClusterBuilder) Create() error {
 
 	q.WriteString(fmt.Sprintf(`CREATE CLUSTER %s`, b.QualifiedName()))
 	// Only create empty clusters, manage replicas with separate resource if replication factor is not set
-	if b.replicationFactor == 0 {
-		q.WriteString(` REPLICAS ()`)
-	} else {
-		q.WriteString(fmt.Sprintf(` SIZE '%s', REPLICATION FACTOR %d`, b.size, b.replicationFactor))
+	if b.size != "" {
+		q.WriteString(fmt.Sprintf(` SIZE %s`, QuoteString(b.size)))
 
 		var p []string
+		if b.replicationFactor > 0 {
+			i := fmt.Sprintf(` REPLICATION FACTOR %d`, b.replicationFactor)
+			p = append(p, i)
+		}
+
 		if len(b.availabilityZones) > 0 {
 			var az []string
 			for _, z := range b.availabilityZones {
 				f := QuoteString(z)
 				az = append(az, f)
 			}
-			a := fmt.Sprintf(` AVAILABILITY ZONE = [%s]`, strings.Join(az[:], ","))
+			a := fmt.Sprintf(` AVAILABILITY ZONES = [%s]`, strings.Join(az[:], ","))
 			p = append(p, a)
 		}
 
@@ -98,8 +101,10 @@ func (b *ClusterBuilder) Create() error {
 
 		if len(p) > 0 {
 			p := strings.Join(p[:], ",")
-			q.WriteString(p)
+			q.WriteString(fmt.Sprintf(`,%s`, p))
 		}
+	} else {
+		q.WriteString(` REPLICAS ()`)
 	}
 
 	q.WriteString(`;`)
@@ -117,9 +122,45 @@ func (b *ClusterBuilder) Resize(newSize string) error {
 	return b.ddl.exec(q)
 }
 
-func (b *ClusterBuilder) ResizeReplicationFactor(newReplicationFactor int) error {
+func (b *ClusterBuilder) SetReplicationFactor(newReplicationFactor int) error {
 	q := fmt.Sprintf(`ALTER CLUSTER %s SET (REPLICATION FACTOR %d);`, b.QualifiedName(), newReplicationFactor)
 	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetAvailabilityZones(availabilityZones []string) error {
+	az := strings.Join(availabilityZones[:], ",")
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (AVAILABILITY ZONES = [%s]);`, b.QualifiedName(), az)
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetIntrospectionInterval(introspectionInterval string) error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (INTROSPECTION INTERVAL %s);`, b.QualifiedName(), QuoteString(introspectionInterval))
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetIntrospectionDebugging(introspectionDebugging bool) error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (INTROSPECTION DEBUGGING %t);`, b.QualifiedName(), introspectionDebugging)
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetIdleArrangementMergeEffort(idleArrangementMergeEffort int) error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (IDLE ARRANGEMENT MERGE EFFORT %d);`, b.QualifiedName(), idleArrangementMergeEffort)
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetManaged(managed bool) error {
+	q := strings.Builder{}
+
+	q.WriteString(fmt.Sprintf(`ALTER CLUSTER %s SET`, b.QualifiedName()))
+
+	if managed {
+		q.WriteString(` (MANAGED)`)
+	} else {
+		q.WriteString(` (MANAGED false)`)
+	}
+
+	q.WriteString(`;`)
+	return b.ddl.exec(q.String())
 }
 
 // DML

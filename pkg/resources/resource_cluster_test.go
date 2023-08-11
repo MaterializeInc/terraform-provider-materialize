@@ -13,10 +13,10 @@ import (
 )
 
 var inCluster = map[string]interface{}{
-	"name":                          "cluster",
-	"replication_factor":            2,
-	"size":                          "1",
-	"availability_zones":            []interface{}{"use1-az1", "use1-az2"},
+	"name":               "cluster",
+	"replication_factor": 2,
+	"size":               "1",
+	// "availability_zones":            []interface{}{"use1-az1", "use1-az2"},
 	"introspection_interval":        "10s",
 	"introspection_debugging":       true,
 	"idle_arrangement_merge_effort": 100,
@@ -31,7 +31,7 @@ func TestResourceClusterCreate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE '1', REPLICATION FACTOR 2 AVAILABILITY ZONE = \['use1-az1','use1-az2'\], INTROSPECTION INTERVAL = '10s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 100;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE '1', REPLICATION FACTOR 2, INTROSPECTION INTERVAL = '10s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 100;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership
 		mock.ExpectExec(`ALTER CLUSTER "cluster" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))

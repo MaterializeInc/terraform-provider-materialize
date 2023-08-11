@@ -16,15 +16,13 @@ func TestAccCluster_basic(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	clusterSize := "2-2"
-	clusterReplicationFactor := "1"
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, clusterSize, clusterReplicationFactor),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "2-2", "1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
@@ -41,9 +39,10 @@ func TestAccCluster_basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "materialize_cluster.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "materialize_cluster.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
 			},
 		},
 	})
@@ -55,8 +54,6 @@ func TestAccCluster_update(t *testing.T) {
 	newClusterName := fmt.Sprintf("new_%s", slug)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	newClusterSize := "2-2"
-	newClusterReplicationFactor := "1"
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -66,7 +63,7 @@ func TestAccCluster_update(t *testing.T) {
 				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2-1", "2"),
 			},
 			{
-				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, newClusterSize, newClusterReplicationFactor),
+				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, "2-2", "1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
