@@ -54,13 +54,8 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `schema` (List of String) Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source.
-<<<<<<< HEAD
 - `table` (Block List) Creates subsources for specific tables. If neither table or schema is specified, will default to ALL TABLES (see [below for nested schema](#nestedblock--table))
-- `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize.
-=======
-- `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
->>>>>>> main
 
 ### Read-Only
 
