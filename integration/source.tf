@@ -39,6 +39,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
     name  = "table2"
     alias = "s2_table1"
   }
+  text_columns = ["table1.id"]
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {

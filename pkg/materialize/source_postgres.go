@@ -107,3 +107,44 @@ func (b *SourcePostgresBuilder) Create() error {
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
+
+func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) error {
+	var subsrc []string
+	for _, t := range subsources {
+		if t.Alias != "" {
+			f := fmt.Sprintf("%s AS %s", QuoteIdentifier(t.Name), QuoteIdentifier(t.Alias))
+			subsrc = append(subsrc, f)
+		} else {
+			f := QuoteIdentifier(t.Name)
+			subsrc = append(subsrc, f)
+		}
+	}
+	s := strings.Join(subsrc, ", ")
+
+	q := strings.Builder{}
+	q.WriteString(fmt.Sprintf(`ALTER SOURCE %s ADD SUBSOURCE %s`, b.QualifiedName(), s))
+
+	if len(textColumns) > 0 {
+		c := strings.Join(textColumns, ", ")
+		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
+	}
+
+	q.WriteString(";")
+	return b.ddl.exec(q.String())
+}
+
+func (b *Source) DropSubsource(subsources []TableStruct) error {
+	var subsrc []string
+	for _, t := range subsources {
+		if t.Alias != "" {
+			f := QuoteIdentifier(t.Alias)
+			subsrc = append(subsrc, f)
+		} else {
+			f := QuoteIdentifier(t.Name)
+			subsrc = append(subsrc, f)
+		}
+	}
+	s := strings.Join(subsrc, ", ")
+	q := fmt.Sprintf(`ALTER SOURCE %s DROP SUBSOURCE %s;`, b.QualifiedName(), s)
+	return b.ddl.exec(q)
+}
