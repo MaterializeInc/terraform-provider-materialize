@@ -148,39 +148,26 @@ func (b *ClusterBuilder) SetIdleArrangementMergeEffort(idleArrangementMergeEffor
 	return b.ddl.exec(q)
 }
 
-func (b *ClusterBuilder) SetManaged(managed bool) error {
-	q := strings.Builder{}
-
-	q.WriteString(fmt.Sprintf(`ALTER CLUSTER %s SET`, b.QualifiedName()))
-
-	if managed {
-		q.WriteString(` (MANAGED)`)
-	} else {
-		q.WriteString(` (MANAGED false)`)
-	}
-
-	q.WriteString(`;`)
-	return b.ddl.exec(q.String())
-}
-
 // DML
 type ClusterParams struct {
 	ClusterId         sql.NullString `db:"id"`
 	ClusterName       sql.NullString `db:"name"`
+	Managed           sql.NullBool   `db:"managed"`
+	Size              sql.NullString `db:"size"`
+	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
+	Disk              sql.NullBool   `db:"disk"`
 	OwnerName         sql.NullString `db:"owner_name"`
 	Privileges        sql.NullString `db:"privileges"`
-	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
-	Size              sql.NullString `db:"size"`
-	Managed           sql.NullBool   `db:"managed"`
 }
 
 var clusterQuery = NewBaseQuery(`
 	SELECT
 		mz_clusters.id,
 		mz_clusters.name,
-		mz_clusters.replication_factor,
-		mz_clusters.size,
 		mz_clusters.managed,
+		mz_clusters.size,
+		mz_clusters.replication_factor,
+		mz_clusters.disk,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters

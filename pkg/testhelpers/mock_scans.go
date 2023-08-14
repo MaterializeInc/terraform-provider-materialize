@@ -47,9 +47,10 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	SELECT
 		mz_clusters.id,
 		mz_clusters.name,
-		mz_clusters.replication_factor,
-		mz_clusters.size,
 		mz_clusters.managed,
+		mz_clusters.size,
+		mz_clusters.replication_factor,
+		mz_clusters.disk,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters
@@ -57,8 +58,8 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_clusters.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "owner_name", "privileges"}).
-		AddRow("u1", "cluster", "joe", "{u1=UC/u18}")
+	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "owner_name", "privileges"}).
+		AddRow("u1", "cluster", true, "small", 2, true, "joe", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

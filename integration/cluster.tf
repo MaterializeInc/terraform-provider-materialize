@@ -19,10 +19,12 @@ resource "materialize_cluster_grant" "cluster_grant_create" {
 }
 
 resource "materialize_cluster" "managed_cluster" {
-  name                   = "managed_cluster"
-  replication_factor     = 2
-  size                   = "1"
-  introspection_interval = "3s"
+  name                          = "managed_cluster"
+  replication_factor            = 2
+  size                          = "1"
+  introspection_interval        = "1s"
+  introspection_debugging       = true
+  idle_arrangement_merge_effort = 2
 }
 
 data "materialize_cluster" "all" {}

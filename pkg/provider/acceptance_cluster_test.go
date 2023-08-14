@@ -87,15 +87,13 @@ func TestAccCluster_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	clusterSize := "2-2"
-	clusterReplicationFactor := "1"
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllClusterDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, clusterSize, clusterReplicationFactor),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "2-2", "1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					testAccCheckObjectDisappears(materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}),
@@ -126,9 +124,12 @@ resource "materialize_cluster" "test_role" {
 }
 
 resource "materialize_cluster" "test_managed_cluster" {
-	name               = "%[2]s_managed"
-	size               = "%[5]s"
-	replication_factor = %[6]s
+	name                          = "%[2]s_managed"
+	size                          = "%[5]s"
+	replication_factor            = %[6]s
+	introspection_interval        = "1s"
+	introspection_debugging       = true
+	idle_arrangement_merge_effort = 2
 }
 
 `, roleName, cluster1Name, cluster2Name, cluster2Owner, clusterSize, clusterReplicationFactor)
