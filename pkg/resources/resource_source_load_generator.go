@@ -142,6 +142,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
+	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRole(),
 }
 

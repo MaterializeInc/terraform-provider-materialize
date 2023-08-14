@@ -10,26 +10,22 @@ import (
 
 type DefaultPrivilegeBuilder struct {
 	ddl          Builder
-	grantee      MaterializeRole
+	granteeRole  MaterializeRole
+	targetRole   MaterializeRole
 	objectType   string
 	privilege    string
-	targetRole   MaterializeRole
 	schemaName   string
 	databaseName string
 }
 
-func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType, grantee, privilege string) *DefaultPrivilegeBuilder {
+func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType, grantee, target, privilege string) *DefaultPrivilegeBuilder {
 	return &DefaultPrivilegeBuilder{
-		ddl:        Builder{conn, Privilege},
-		objectType: objectType,
-		privilege:  privilege,
-		grantee:    MaterializeRole{name: grantee},
+		ddl:         Builder{conn, Privilege},
+		objectType:  objectType,
+		privilege:   privilege,
+		granteeRole: MaterializeRole{name: grantee},
+		targetRole:  MaterializeRole{name: target},
 	}
-}
-
-func (b *DefaultPrivilegeBuilder) TargetRole(c string) *DefaultPrivilegeBuilder {
-	b.targetRole = MaterializeRole{name: c}
-	return b
 }
 
 func (b *DefaultPrivilegeBuilder) SchemaName(c string) *DefaultPrivilegeBuilder {
@@ -47,11 +43,9 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 	q.WriteString(`ALTER DEFAULT PRIVILEGES`)
 
 	// role
-	if b.targetRole.name != "" && b.targetRole.name != "ALL" {
+	if b.targetRole.name != "ALL" {
 		q.WriteString(fmt.Sprintf(` FOR ROLE %s`, b.targetRole.QualifiedName()))
-	}
-
-	if b.targetRole.name == "ALL" {
+	} else {
 		q.WriteString(" FOR ALL ROLES")
 	}
 
@@ -71,7 +65,7 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 		grantDirection = "FROM"
 	}
 
-	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.grantee.QualifiedName()))
+	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.granteeRole.QualifiedName()))
 
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
@@ -85,8 +79,8 @@ func (b *DefaultPrivilegeBuilder) Revoke() error {
 	return b.baseQuery("REVOKE")
 }
 
-func (b *DefaultPrivilegeBuilder) GrantKey(objectType, granteeId, targetRoleId, databaseId, schemaId, privilege string) string {
-	return fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s`, objectType, granteeId, targetRoleId, databaseId, schemaId, privilege)
+func (b *DefaultPrivilegeBuilder) GrantKey(objectType, granteeId, targetId, databaseId, schemaId, privilege string) string {
+	return fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s`, objectType, granteeId, targetId, databaseId, schemaId, privilege)
 }
 
 type DefaultPrivilegeParams struct {
@@ -118,10 +112,7 @@ func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, da
 	p := map[string]string{
 		"mz_default_privileges.object_type": strings.ToLower(objectType),
 		"mz_default_privileges.grantee":     granteeId,
-	}
-
-	if targetRoleId != "" {
-		p["mz_default_privileges.role_id"] = targetRoleId
+		"mz_default_privileges.role_id":     targetRoleId,
 	}
 
 	if databaseId != "" {

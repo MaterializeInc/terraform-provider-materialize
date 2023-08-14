@@ -65,9 +65,8 @@ var indexSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"default"},
+		Required: true,
+		ForceNew: true,
 	},
 }
 
@@ -114,6 +113,23 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	qn := materialize.QualifiedName(s.ObjectDatabaseName.String, s.ObjectSchemaName.String, s.IndexName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Index columns
+	indexColumns, err := materialize.ListIndexColumns(meta.(*sqlx.DB), i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if len(indexColumns) > 0 {
+		var ic []interface{}
+		for _, i := range indexColumns {
+			column := map[string]interface{}{"field": i.Name.String}
+			ic = append(ic, column)
+		}
+		if err := d.Set("col_expr", ic); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return nil

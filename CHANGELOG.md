@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.1.6 - 2023-08-09
+
+### Features
+
+### BugFixes
+* Correct replica sizes >xlarge [#268](https://github.com/MaterializeInc/terraform-provider-materialize/pull/268)
+
+### Misc
+
+## 0.1.5 - 2023-08-07
+
+### Features
+* Include `subsource` as computed attribute for sources [#263](https://github.com/MaterializeInc/terraform-provider-materialize/pull/263)
+
+### BugFixes
+* Remove managed clusters testing flag [#261](https://github.com/MaterializeInc/terraform-provider-materialize/pull/261)
+
+### Misc
+
+### Breaking Changes
+* Remove `ownership` for cluster replica resource [#259](https://github.com/MaterializeInc/terraform-provider-materialize/pull/259)
+* Require `target_role_name` for all default privilege resources [#260](https://github.com/MaterializeInc/terraform-provider-materialize/pull/260)
+* Require `col_expr` for index resources [#220](https://github.com/MaterializeInc/terraform-provider-materialize/pull/220)
+
 ## 0.1.4 - 2023-07-27
 
 ### Features

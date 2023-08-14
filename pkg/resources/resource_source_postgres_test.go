@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -21,7 +22,10 @@ var inSourcePostgres = map[string]interface{}{
 	"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
 	"publication":         "mz_source",
 	"text_columns":        []interface{}{"table.unsupported_type_1"},
-	"table":               []interface{}{map[string]interface{}{"name": "name", "alias": "alias"}},
+	"table": []interface{}{
+		map[string]interface{}{"name": "name1", "alias": "alias"},
+		map[string]interface{}{"name": "name2"},
+	},
 }
 
 func TestResourceSourcePostgresCreate(t *testing.T) {
@@ -32,7 +36,7 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source'\) FOR TABLES \(name AS alias\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR TABLES \(name1 AS alias, name2 AS name2\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -43,8 +47,50 @@ func TestResourceSourcePostgresCreate(t *testing.T) {
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
 
+		// Query Subsources
+		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		testhelpers.MockSubsourceScan(mock, ps)
+
 		if err := sourcePostgresCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestResourceSourcePostgresUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgres)
+
+	d.SetId("u1")
+	d.Set("size", "large")
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" SET \(SIZE = 'small'\)`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "name1" AS "alias", "name2"`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Subsources
+		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		testhelpers.MockSubsourceScan(mock, ps)
+
+		if err := sourcePostgresUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestDiffTextColumns(t *testing.T) {
+	arr1 := []interface{}{"t1.column_1", "t2.column_2"}
+	arr2 := []interface{}{"t1.column_1", "t3.column_2"}
+	o := diffTextColumns(arr1, arr2)
+	e := []string{"t2.column_2"}
+
+	if !reflect.DeepEqual(o, e) {
+		t.Fatalf("Expected diffTextColumns to be equal")
+	}
 }

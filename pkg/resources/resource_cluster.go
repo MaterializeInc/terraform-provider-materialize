@@ -16,18 +16,44 @@ import (
 var clusterSchema = map[string]*schema.Schema{
 	"name":           NameSchema("cluster", true, true),
 	"ownership_role": OwnershipRole(),
+	"size": {
+		Description:  "The size of the managed cluster.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
+	},
 	"replication_factor": {
 		Description:  "The number of replicas of each dataflow-powered object to maintain.",
 		Type:         schema.TypeInt,
 		Optional:     true,
 		RequiredWith: []string{"size"},
 	},
-	"size": {
-		Description:  "The size of the managed cluster.",
+	// "availability_zones": {
+	// 	Description: "If you want the cluster to reside in specific availability zones.",
+	// 	Type:        schema.TypeList,
+	// 	Elem:        &schema.Schema{Type: schema.TypeString},
+	// 	Computed:    true,
+	// 	RequiredWith: []string{"size"},
+	// },
+	"introspection_interval": {
+		Description:  "The interval at which to collect introspection data.",
 		Type:         schema.TypeString,
 		Optional:     true,
-		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
-		RequiredWith: []string{"replication_factor"},
+		Default:      "1s",
+		RequiredWith: []string{"size"},
+	},
+	"introspection_debugging": {
+		Description:  "Whether to introspect the gathering of the introspection data.",
+		Type:         schema.TypeBool,
+		Optional:     true,
+		Default:      false,
+		RequiredWith: []string{"size"},
+	},
+	"idle_arrangement_merge_effort": {
+		Description:  "The amount of effort the cluster should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
+		Type:         schema.TypeInt,
+		Optional:     true,
+		RequiredWith: []string{"size"},
 	},
 }
 
@@ -85,14 +111,30 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	o := materialize.ObjectSchemaStruct{Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
-	// size and replication_factor for managed clusters
-	if replicationFactor, replicationFactorOk := d.GetOk("replication_factor"); replicationFactorOk {
-		if size, sizeOk := d.GetOk("size"); sizeOk {
-			// set replication factor
-			b.ReplicationFactor(replicationFactor.(int))
+	// managed cluster options
+	if size, ok := d.GetOk("size"); ok {
+		b.Size(size.(string))
 
-			// set size
-			b.Size(size.(string))
+		if v, ok := d.GetOk("replication_factor"); ok {
+			b.ReplicationFactor(v.(int))
+		}
+
+		// TODO: Disable until supported on create
+		// if v, ok := d.GetOk("availability_zones"); ok {
+		// 	azs := materialize.GetSliceValueString(v.([]interface{}))
+		// 	b.AvailabilityZones(azs)
+		// }
+
+		if v, ok := d.GetOk("introspection_interval"); ok {
+			b.IntrospectionInterval(v.(string))
+		}
+
+		if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
+			b.IntrospectionDebugging()
+		}
+
+		if v, ok := d.GetOk("idle_arrangement_merge_effort"); ok {
+			b.IdleArrangementMergeEffort(v.(int))
 		}
 	}
 
@@ -136,27 +178,58 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		}
 	}
 
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-
+	// managed cluster options
+	if _, ok := d.GetOk("size"); ok {
 		o := materialize.ObjectSchemaStruct{Name: clusterName}
-		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
-		if err := b.Resize(newSize.(string)); err != nil {
-			return diag.FromErr(err)
+		if d.HasChange("size") {
+			_, newSize := d.GetChange("size")
+			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+			if err := b.Resize(newSize.(string)); err != nil {
+				return diag.FromErr(err)
+			}
+
 		}
 
-	}
+		if d.HasChange("replication_factor") {
+			_, n := d.GetChange("replication_factor")
+			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+			if err := b.SetReplicationFactor(n.(int)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 
-	// ResizeReplicationFactor
-	if d.HasChange("replication_factor") {
-		_, newReplicationFactor := d.GetChange("replication_factor")
+		// if d.HasChange("availability_zones") {
+		// 	_, n := d.GetChange("availability_zones")
+		// 	azs := materialize.GetSliceValueString(n.([]interface{}))
+		// 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+		// 	if err := b.SetAvailabilityZones(azs); err != nil {
+		// 		return diag.FromErr(err)
+		// 	}
+		// }
 
-		o := materialize.ObjectSchemaStruct{Name: clusterName}
-		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+		if d.HasChange("introspection_interval") {
+			_, n := d.GetChange("introspection_interval")
+			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+			if err := b.SetIntrospectionInterval(n.(string)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 
-		if err := b.ResizeReplicationFactor(newReplicationFactor.(int)); err != nil {
-			return diag.FromErr(err)
+		if d.HasChange("introspection_debugging") {
+			_, n := d.GetChange("introspection_debugging")
+			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+			if err := b.SetIntrospectionDebugging(n.(bool)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		if d.HasChange("idle_arrangement_merge_effort") {
+			_, n := d.GetChange("idle_arrangement_merge_effort")
+			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+			if err := b.SetIdleArrangementMergeEffort(n.(int)); err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 

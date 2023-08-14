@@ -30,12 +30,12 @@ resource "materialize_type_grant_default_privilege" "example" {
 
 - `grantee_name` (String) The role name that will gain the default privilege. Use the `PUBLIC` pseudo-role to grant privileges to all roles.
 - `privilege` (String) The privilege to grant to the object.
+- `target_role_name` (String) The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles
 
 ### Optional
 
 - `database_name` (String) The default privilege will apply only to objects created in this database, if specified.
 - `schema_name` (String) The default privilege will apply only to objects created in this schema, if specified.
-- `target_role_name` (String) The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles
 
 ### Read-Only
 

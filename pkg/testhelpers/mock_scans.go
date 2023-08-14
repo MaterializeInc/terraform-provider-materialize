@@ -47,9 +47,10 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	SELECT
 		mz_clusters.id,
 		mz_clusters.name,
-		mz_clusters.replication_factor,
-		mz_clusters.size,
 		mz_clusters.managed,
+		mz_clusters.size,
+		mz_clusters.replication_factor,
+		mz_clusters.disk,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters
@@ -57,33 +58,8 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_clusters.owner_id = mz_roles.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "owner_name", "privileges"}).
-		AddRow("u1", "cluster", "joe", "{u1=UC/u18}")
-	mock.ExpectQuery(q).WillReturnRows(ir)
-}
-
-func MockColumnScan(mock sqlmock.Sqlmock, predicate string) {
-	b := `
-	SELECT
-		mz_columns.id,
-		mz_columns.name,
-		mz_columns.position,
-		mz_columns.nullable,
-		mz_columns.type,
-		mz_columns.default,
-		CASE WHEN mz_index_columns.index_id IS NOT NULL THEN true ELSE false END AS indexed_column,
-		mz_indexes.name AS index_name,
-		mz_indexes.id AS index_id
-	FROM mz_columns
-	LEFT JOIN mz_indexes
-		ON mz_columns.id = mz_indexes.on_id
-	LEFT JOIN mz_index_columns
-		ON mz_index_columns.index_id = mz_indexes.id
-		AND mz_index_columns.index_position = mz_columns.position`
-
-	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
-	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default", "indexed_column", "index_name", "index_id"}).
-		AddRow("u1", "column", "1", "true", "integer", "", "false", "", "")
+	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "owner_name", "privileges"}).
+		AddRow("u1", "cluster", true, "small", 2, true, "joe", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -199,6 +175,31 @@ func MockDatabaseScan(mock sqlmock.Sqlmock, predicate string) {
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "database_name", "owner_name", "privileges"}).
 		AddRow("u1", "database", "joe", "{u1=UC/u18}")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockIndexColumnScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_columns.id,
+		mz_columns.name,
+		mz_columns.position,
+		mz_columns.nullable,
+		mz_columns.type,
+		mz_columns.default,
+		CASE WHEN mz_index_columns.index_id IS NOT NULL THEN true ELSE false END AS indexed_column,
+		mz_indexes.name AS index_name,
+		mz_indexes.id AS index_id
+	FROM mz_columns
+	LEFT JOIN mz_indexes
+		ON mz_columns.id = mz_indexes.on_id
+	LEFT JOIN mz_index_columns
+		ON mz_index_columns.index_id = mz_indexes.id
+		AND mz_index_columns.index_position = mz_columns.position`
+
+	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
+	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default", "indexed_column", "index_name", "index_id"}).
+		AddRow("u1", "column", "1", "true", "integer", "", "true", "index", "u1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -386,6 +387,46 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
 		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", "{u1=r/u18}")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_object_dependencies.object_id,
+		mz_object_dependencies.referenced_object_id,
+		mz_objects.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_objects.type
+	FROM mz_internal.mz_object_dependencies
+	JOIN mz_objects
+		ON mz_object_dependencies.referenced_object_id = mz_objects.id
+	JOIN mz_schemas
+		ON mz_objects.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type"}).
+		AddRow("u1", "u2", "object", "schema", "database", "source")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_columns.id,
+		mz_columns.name,
+		mz_columns.position,
+		mz_columns.nullable,
+		mz_columns.type,
+		mz_columns.default
+	FROM mz_columns`
+
+	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
+	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default"}).
+		AddRow("u1", "column", "1", "true", "integer", "")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
