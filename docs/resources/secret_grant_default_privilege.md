@@ -35,7 +35,7 @@ resource "materialize_secret_grant_default_privilege" "example" {
 ### Optional
 
 - `database_name` (String) The default privilege will apply only to objects created in this database, if specified.
-- `schema_name` (String) The default privilege will apply only to objects created in this schema, if specified.
+- `schema_name` (String) The default privilege will apply only to objects created in this database, if specified.
 
 ### Read-Only
 
