@@ -34,6 +34,11 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
+		ValidateFunc: validation.StringInSlice([]string{
+			"TEXT",
+			"JSON",
+			"BYTES",
+		}, true),
 	},
 	"include_headers": {
 		Description: "Include headers in the webhook.",
@@ -44,9 +49,21 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 	"check_options": {
 		Description: "The check options for the webhook.",
 		Type:        schema.TypeList,
-		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
-		ForceNew:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"field": {
+					Description: "The field for the check options.",
+					Type:        schema.TypeString,
+					Computed:    true,
+				},
+				"alias": {
+					Description: "The alias for the check options.",
+					Type:        schema.TypeString,
+					Computed:    true,
+				},
+			},
+		},
 	},
 	"check_expression": {
 		Description: "The check expression for the webhook.",
@@ -91,13 +108,17 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		IncludeHeaders(d.Get("include_headers").(bool)).
 		CheckExpression(d.Get("check_expression").(string))
 
-	checkOptions := d.Get("check_options").([]interface{})
-	checkOptionsStrings := make([]string, len(checkOptions))
-	for i, option := range checkOptions {
-		checkOptionsStrings[i] = option.(string)
+	if v, ok := d.GetOk("check_options"); ok {
+		var options []materialize.CheckOptionsStruct
+		for _, option := range v.([]interface{}) {
+			t := option.(map[string]interface{})
+			options = append(options, materialize.CheckOptionsStruct{
+				Field: t["field"].(string),
+				Alias: t["alias"].(string),
+			})
+		}
+		b.CheckOptions(options)
 	}
-
-	b.CheckOptions(checkOptionsStrings)
 
 	// Create resource
 	if err := b.Create(); err != nil {

@@ -9,6 +9,16 @@ import (
 )
 
 var sourceWebhook = ObjectSchemaStruct{Name: "webhook_source", SchemaName: "schema", DatabaseName: "database"}
+var checkOptions = []CheckOptionsStruct{
+	{
+		Field: "BODY",
+		Alias: "bytes",
+	},
+	{
+		Field: "HEADERS",
+		Alias: "headers",
+	},
+}
 
 func TestSourceWebhookCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
@@ -20,10 +30,7 @@ func TestSourceWebhookCreate(t *testing.T) {
 		b.ClusterName("cluster")
 		b.BodyFormat("JSON")
 		b.IncludeHeaders(true)
-		b.CheckOptions([]string{
-			"BODY AS bytes",
-			"HEADERS AS headers",
-		})
+		b.CheckOptions(checkOptions)
 		b.CheckExpression("check_expression")
 
 		if err := b.Create(); err != nil {

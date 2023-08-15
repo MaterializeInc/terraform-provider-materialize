@@ -7,13 +7,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type CheckOptionsStruct struct {
+	Field string
+	Alias string
+}
+
 type SourceWebhookBuilder struct {
 	Source
 	clusterName     string
 	size            string // TODO: size is not supported for webhook sources
 	bodyFormat      string
 	includeHeaders  bool
-	checkOptions    []string
+	checkOptions    []CheckOptionsStruct
 	checkExpression string
 }
 
@@ -39,7 +44,7 @@ func (b *SourceWebhookBuilder) IncludeHeaders(h bool) *SourceWebhookBuilder {
 	return b
 }
 
-func (b *SourceWebhookBuilder) CheckOptions(o []string) *SourceWebhookBuilder {
+func (b *SourceWebhookBuilder) CheckOptions(o []CheckOptionsStruct) *SourceWebhookBuilder {
 	b.checkOptions = o
 	return b
 }
@@ -69,7 +74,13 @@ func (b *SourceWebhookBuilder) Create() error {
 		q.WriteString(` CHECK`)
 		if len(b.checkOptions) > 0 {
 			q.WriteString(` WITH (`)
-			q.WriteString(strings.Join(b.checkOptions, ", "))
+			var options []string
+			for _, option := range b.checkOptions {
+				if option.Field != "" && option.Alias != "" {
+					options = append(options, option.Field+" AS "+option.Alias)
+				}
+			}
+			q.WriteString(strings.Join(options, ", "))
 			q.WriteString(`) `)
 		}
 		if b.checkExpression != "" {

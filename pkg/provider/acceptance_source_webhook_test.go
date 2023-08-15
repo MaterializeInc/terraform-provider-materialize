@@ -39,6 +39,56 @@ func TestAccSourceWebhook_basic(t *testing.T) {
 	})
 }
 
+func TestAccSourceWebhook_disappears(t *testing.T) {
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	// source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	// roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	// connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllSourceWebhookDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceWebhookResource(sourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
+					testAccCheckObjectDisappears(
+						materialize.ObjectSchemaStruct{
+							ObjectType: "SOURCE",
+							Name:       sourceName,
+						},
+					),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccSourceWebhook_update(t *testing.T) {
+	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
+	sourceName := fmt.Sprintf("old_%s", slug)
+	newSourceName := fmt.Sprintf("new_%s", slug)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceWebhookResource(sourceName),
+			},
+			{
+				Config: testAccSourceWebhookResource(newSourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
+					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", newSourceName),
+				),
+			},
+		},
+	})
+}
+
 func testAccSourceWebhookResource(sourceName string) string {
 	return fmt.Sprintf(`
 resource "materialize_cluster" "example_cluster" {
