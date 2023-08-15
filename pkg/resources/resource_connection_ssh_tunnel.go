@@ -13,7 +13,7 @@ import (
 )
 
 var connectionSshTunnelSchema = map[string]*schema.Schema{
-	"name":               NameSchema("connection", true, false),
+	"name":               ObjectNameSchema("connection", true, false),
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
@@ -47,7 +47,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Computed:    true,
 		ForceNew:    true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func ConnectionSshTunnel() *schema.Resource {

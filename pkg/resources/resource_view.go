@@ -13,7 +13,7 @@ import (
 )
 
 var viewSchema = map[string]*schema.Schema{
-	"name":               NameSchema("view", true, false),
+	"name":               ObjectNameSchema("view", true, false),
 	"schema_name":        SchemaNameSchema("view", false),
 	"database_name":      DatabaseNameSchema("view", false),
 	"qualified_sql_name": QualifiedNameSchema("view"),
@@ -23,7 +23,7 @@ var viewSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func View() *schema.Resource {

@@ -15,19 +15,8 @@ import (
 )
 
 var grantSystemPrivilegeSchema = map[string]*schema.Schema{
-	"role_name": {
-		Description: "The name of the role to grant privilege to.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"privilege": {
-		Description:  "The system privilege to grant.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ForceNew:     true,
-		ValidateFunc: validPrivileges("SYSTEM"),
-	},
+	"role_name": RoleNameSchema(),
+	"privilege": PrivilegeSchema("SYSTEM"),
 }
 
 func GrantSystemPrivilege() *schema.Resource {

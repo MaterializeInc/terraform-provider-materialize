@@ -11,31 +11,10 @@ import (
 )
 
 var grantDatabaseDefaultPrivilegeSchema = map[string]*schema.Schema{
-	"grantee_name": {
-		Description: "The role name that will gain the default privilege. Use the `PUBLIC` pseudo-role to grant privileges to all roles.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"target_role_name": {
-		Description: "The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"database_name": {
-		Description: "The default privilege will apply only to objects created in this database, if specified.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"privilege": {
-		Description:  "The privilege to grant to the object.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ForceNew:     true,
-		ValidateFunc: validPrivileges("DATABASE"),
-	},
+	"grantee_name":     GranteeNameSchema(),
+	"target_role_name": TargetRoleNameSchema(),
+	"database_name":    GrantDefaultDatabaseNameSchema(),
+	"privilege":        PrivilegeSchema("DATABASE"),
 }
 
 func GrantDatabaseDefaultPrivilege() *schema.Resource {

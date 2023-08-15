@@ -13,7 +13,7 @@ import (
 )
 
 var materializedViewSchema = map[string]*schema.Schema{
-	"name":               NameSchema("materialized view", true, false),
+	"name":               ObjectNameSchema("materialized view", true, false),
 	"schema_name":        SchemaNameSchema("materialized view", false),
 	"database_name":      DatabaseNameSchema("materialized view", false),
 	"qualified_sql_name": QualifiedNameSchema("materialized view"),
@@ -29,7 +29,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func MaterializedView() *schema.Resource {

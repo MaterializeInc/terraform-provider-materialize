@@ -13,7 +13,7 @@ import (
 )
 
 var tableSchema = map[string]*schema.Schema{
-	"name":               NameSchema("table", true, false),
+	"name":               ObjectNameSchema("table", true, false),
 	"schema_name":        SchemaNameSchema("table", false),
 	"database_name":      DatabaseNameSchema("table", false),
 	"qualified_sql_name": QualifiedNameSchema("table"),
@@ -51,7 +51,7 @@ var tableSchema = map[string]*schema.Schema{
 		MinItems: 1,
 		ForceNew: true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func Table() *schema.Resource {

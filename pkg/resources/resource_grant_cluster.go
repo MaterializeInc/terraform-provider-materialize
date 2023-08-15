@@ -10,19 +10,8 @@ import (
 )
 
 var grantClusterSchema = map[string]*schema.Schema{
-	"role_name": {
-		Description: "The name of the role to grant privilege to.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"privilege": {
-		Description:  "The privilege to grant to the object.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ForceNew:     true,
-		ValidateFunc: validPrivileges("CLUSTER"),
-	},
+	"role_name": RoleNameSchema(),
+	"privilege": PrivilegeSchema("CLUSTER"),
 	"cluster_name": {
 		Description: "The cluster that is being granted on.",
 		Type:        schema.TypeString,
