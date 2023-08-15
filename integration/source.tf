@@ -98,10 +98,10 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
 }
 
 resource "materialize_source_webhook" "example_webhook_source" {
-	name = "example_webhook_source"
-  cluster_name        = materialize_cluster.cluster_source.name
-	body_format = "json"
-	include_headers = false
+  name            = "example_webhook_source"
+  cluster_name    = materialize_cluster.cluster_source.name
+  body_format     = "json"
+  include_headers = false
 }
 
 resource "materialize_source_grant" "source_grant_select" {
