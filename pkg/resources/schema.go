@@ -351,7 +351,7 @@ func IntrospectionDebuggingSchema(forceNew bool, requiredWith []string) *schema.
 
 func IdleArrangementMergeEffortSchema(forceNew bool, requiredWith []string) *schema.Schema {
 	return &schema.Schema{
-		Description:  "The amount of effort the replica should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
+		Description:  "The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
 		Type:         schema.TypeInt,
 		Optional:     true,
 		ForceNew:     forceNew,
@@ -379,7 +379,7 @@ func GrantDefaultDatabaseNameSchema() *schema.Schema {
 
 func GrantDefaultSchemaNameSchema() *schema.Schema {
 	return &schema.Schema{
-		Description: "The default privilege will apply only to objects created in this database, if specified.",
+		Description: "The default privilege will apply only to objects created in this schema, if specified.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
