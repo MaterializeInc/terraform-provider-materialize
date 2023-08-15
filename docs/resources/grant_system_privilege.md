@@ -25,7 +25,7 @@ resource "materialize_grant_system_privilege" "role_createdb" {
 
 ### Required
 
-- `privilege` (String) The privilege to grant to the object.
+- `privilege` (String) The system privilege to grant.
 - `role_name` (String) The name of the role to grant privilege to.
 
 ### Read-Only
