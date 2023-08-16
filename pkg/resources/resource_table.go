@@ -13,7 +13,7 @@ import (
 )
 
 var tableSchema = map[string]*schema.Schema{
-	"name":               NameSchema("table", true, false),
+	"name":               ObjectNameSchema("table", true, false),
 	"schema_name":        SchemaNameSchema("table", false),
 	"database_name":      DatabaseNameSchema("table", false),
 	"qualified_sql_name": QualifiedNameSchema("table"),
@@ -51,12 +51,12 @@ var tableSchema = map[string]*schema.Schema{
 		MinItems: 1,
 		ForceNew: true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func Table() *schema.Resource {
 	return &schema.Resource{
-		Description: "A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.",
+		Description: "A table persists durable storage that can be written to, updated and seamlessly joined with other tables, views or sources",
 
 		CreateContext: tableCreate,
 		ReadContext:   tableRead,

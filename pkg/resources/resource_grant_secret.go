@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -10,19 +11,8 @@ import (
 )
 
 var grantSecretSchema = map[string]*schema.Schema{
-	"role_name": {
-		Description: "The name of the role to grant privilege to.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"privilege": {
-		Description:  "The privilege to grant to the object.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ForceNew:     true,
-		ValidateFunc: validPrivileges("SECRET"),
-	},
+	"role_name": RoleNameSchema(),
+	"privilege": PrivilegeSchema("SECRET"),
 	"secret_name": {
 		Description: "The secret that is being granted on.",
 		Type:        schema.TypeString,
@@ -45,7 +35,7 @@ var grantSecretSchema = map[string]*schema.Schema{
 
 func GrantSecret() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the privileges on a Materailize secret for roles.",
+		Description: fmt.Sprintf(GrantDefinition, "secret"),
 
 		CreateContext: grantSecretCreate,
 		ReadContext:   grantRead,

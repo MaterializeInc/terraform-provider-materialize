@@ -3,12 +3,12 @@
 page_title: "materialize_cluster_replica Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A cluster replica is the physical resource which maintains dataflow-powered objects.
+  Cluster replicas allocate physical compute resources for a cluster.
 ---
 
 # materialize_cluster_replica (Resource)
 
-A cluster replica is the physical resource which maintains dataflow-powered objects.
+Cluster replicas allocate physical compute resources for a cluster.
 
 ## Example Usage
 
@@ -31,8 +31,8 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 
 ### Optional
 
-- `availability_zone` (String) If you want the replica to reside in a specific availability zone.
-- `idle_arrangement_merge_effort` (Number) The amount of effort the replica should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
+- `availability_zone` (String) The specific availability zone of the replica.
+- `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 

@@ -12,7 +12,7 @@ import (
 )
 
 var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
-	"name":               NameSchema("connection", true, false),
+	"name":               ObjectNameSchema("connection", true, false),
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
@@ -28,8 +28,8 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false),
 	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false),
 	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
-	"validate":                  ValidateConnection(),
-	"ownership_role":            OwnershipRole(),
+	"validate":                  ValidateConnectionSchema(),
+	"ownership_role":            OwnershipRoleSchema(),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {

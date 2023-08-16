@@ -3,12 +3,12 @@
 page_title: "materialize_view Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A non-materialized view, provides an alias for the embedded SELECT statement.
+  Views represent queries of sources and other views that you want to save for repeated execution.
 ---
 
 # materialize_view (Resource)
 
-A non-materialized view, provides an alias for the embedded SELECT statement.
+Views represent queries of sources and other views that you want to save for repeated execution.
 
 ## Example Usage
 
@@ -43,7 +43,7 @@ resource "materialize_view" "simple_view" {
 ### Required
 
 - `name` (String) The identifier for the view.
-- `statement` (String) The SQL statement to create the view.
+- `statement` (String) The SQL statement for the view.
 
 ### Optional
 

@@ -13,7 +13,7 @@ import (
 )
 
 var sinkKafkaSchema = map[string]*schema.Schema{
-	"name":               NameSchema("sink", true, false),
+	"name":               ObjectNameSchema("sink", true, false),
 	"schema_name":        SchemaNameSchema("sink", false),
 	"database_name":      DatabaseNameSchema("sink", false),
 	"qualified_sql_name": QualifiedNameSchema("sink"),
@@ -81,7 +81,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Default:     true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func SinkKafka() *schema.Resource {

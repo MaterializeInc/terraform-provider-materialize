@@ -12,7 +12,7 @@ const (
 	defaultDatabase = "materialize"
 )
 
-func NameSchema(resource string, required, forceNew bool) *schema.Schema {
+func ObjectNameSchema(resource string, required, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
 		Description: fmt.Sprintf("The identifier for the %s.", resource),
@@ -44,7 +44,16 @@ func DatabaseNameSchema(resource string, required bool) *schema.Schema {
 	}
 }
 
-func OwnershipRole() *schema.Schema {
+func ClusterNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The cluster whose resources you want to create an additional computation of.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	}
+}
+
+func OwnershipRoleSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
 		Description: "The owernship role of the object.",
@@ -61,17 +70,18 @@ func QualifiedNameSchema(resource string) *schema.Schema {
 	}
 }
 
-func SizeSchema(resource string) *schema.Schema {
+func SizeSchema(resource string, required bool, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type:         schema.TypeString,
 		Description:  fmt.Sprintf("The size of the %s.", resource),
-		Required:     true,
-		ForceNew:     true,
+		Required:     required,
+		Optional:     !required,
+		ForceNew:     forceNew,
 		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
 	}
 }
 
-func ValidateConnection() *schema.Schema {
+func ValidateConnectionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeBool,
 		Description: "If the connection should wait for validation.",
@@ -302,5 +312,114 @@ func SubsourceSchema() *schema.Schema {
 			},
 		},
 		Computed: true,
+	}
+}
+
+func SourceClusterNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"cluster_name", "size"},
+		ForceNew:     true,
+	}
+}
+
+func SourceSizeSchema() *schema.Schema {
+	return &schema.Schema{
+		Description:  "The size of the source.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"cluster_name", "size"},
+		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
+	}
+}
+
+func IntrospectionIntervalSchema(forceNew bool, requiredWith []string) *schema.Schema {
+	return &schema.Schema{
+		Description:  "The interval at which to collect introspection data.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     forceNew,
+		Default:      "1s",
+		RequiredWith: requiredWith,
+	}
+}
+
+func IntrospectionDebuggingSchema(forceNew bool, requiredWith []string) *schema.Schema {
+	return &schema.Schema{
+		Description:  "Whether to introspect the gathering of the introspection data.",
+		Type:         schema.TypeBool,
+		Optional:     true,
+		ForceNew:     forceNew,
+		Default:      false,
+		RequiredWith: requiredWith,
+	}
+}
+
+func IdleArrangementMergeEffortSchema(forceNew bool, requiredWith []string) *schema.Schema {
+	return &schema.Schema{
+		Description:  "The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
+		Type:         schema.TypeInt,
+		Optional:     true,
+		ForceNew:     forceNew,
+		RequiredWith: requiredWith,
+	}
+}
+
+func GranteeNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The role name that will gain the default privilege. Use the `PUBLIC` pseudo-role to grant privileges to all roles.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	}
+}
+
+func GrantDefaultDatabaseNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The default privilege will apply only to objects created in this database, if specified.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	}
+}
+
+func GrantDefaultSchemaNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The default privilege will apply only to objects created in this schema, if specified.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	}
+}
+
+func RoleNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The name of the role to grant privilege to.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	}
+}
+
+func TargetRoleNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	}
+}
+
+func PrivilegeSchema(objectType string) *schema.Schema {
+	return &schema.Schema{
+		Description:  "The privilege to grant to the object.",
+		Type:         schema.TypeString,
+		Required:     true,
+		ForceNew:     true,
+		ValidateFunc: validPrivileges(objectType),
 	}
 }

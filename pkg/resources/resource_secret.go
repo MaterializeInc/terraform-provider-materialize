@@ -13,7 +13,7 @@ import (
 )
 
 var secretSchema = map[string]*schema.Schema{
-	"name":               NameSchema("secret", true, false),
+	"name":               ObjectNameSchema("secret", true, false),
 	"schema_name":        SchemaNameSchema("secret", false),
 	"database_name":      DatabaseNameSchema("secret", false),
 	"qualified_sql_name": QualifiedNameSchema("secret"),
@@ -23,7 +23,7 @@ var secretSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Sensitive:   true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func Secret() *schema.Resource {

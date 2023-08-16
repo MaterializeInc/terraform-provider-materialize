@@ -3,12 +3,12 @@
 page_title: "materialize_materialized_view Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A materialized view persists in durable storage and can be written to, updated and seamlessly joined with other views, views or sources.
+  Materialized views represent query results stored durably.
 ---
 
 # materialize_materialized_view (Resource)
 
-A materialized view persists in durable storage and can be written to, updated and seamlessly joined with other views, views or sources.
+Materialized views represent query results stored durably.
 
 ## Example Usage
 
@@ -43,7 +43,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 ### Required
 
 - `name` (String) The identifier for the materialized view.
-- `statement` (String) The SQL statement to create the materialized view.
+- `statement` (String) The SQL statement for the materialized view.
 
 ### Optional
 

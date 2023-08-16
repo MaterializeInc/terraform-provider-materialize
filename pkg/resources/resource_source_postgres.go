@@ -8,31 +8,16 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourcePostgresSchema = map[string]*schema.Schema{
-	"name":               NameSchema("source", true, false),
-	"schema_name":        SchemaNameSchema("source", false),
-	"database_name":      DatabaseNameSchema("source", false),
-	"qualified_sql_name": QualifiedNameSchema("source"),
-	"cluster_name": {
-		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ForceNew:     true,
-	},
-	"size": {
-		Description:  "The size of the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
-	},
+	"name":                ObjectNameSchema("source", true, false),
+	"schema_name":         SchemaNameSchema("source", false),
+	"database_name":       DatabaseNameSchema("source", false),
+	"qualified_sql_name":  QualifiedNameSchema("source"),
+	"cluster_name":        SourceClusterNameSchema(),
+	"size":                SourceSizeSchema(),
 	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
@@ -73,7 +58,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"subsource":      SubsourceSchema(),
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func SourcePostgres() *schema.Resource {
