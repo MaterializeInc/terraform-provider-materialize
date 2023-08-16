@@ -51,26 +51,12 @@ var table = &schema.Schema{
 }
 
 var sourceLoadgenSchema = map[string]*schema.Schema{
-	"name":               NameSchema("source", true, false),
+	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
 	"database_name":      DatabaseNameSchema("source", false),
 	"qualified_sql_name": QualifiedNameSchema("source"),
-	"cluster_name": {
-		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ForceNew:     true,
-	},
-	"size": {
-		Description:  "The size of the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
-	},
+	"cluster_name":       SourceClusterNameSchema(),
+	"size":               SourceSizeSchema(),
 	"load_generator_type": {
 		Description:  fmt.Sprintf("The load generator types: %s.", loadGeneratorTypes),
 		Type:         schema.TypeString,
@@ -143,7 +129,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
 	"subsource":      SubsourceSchema(),
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func SourceLoadgen() *schema.Resource {

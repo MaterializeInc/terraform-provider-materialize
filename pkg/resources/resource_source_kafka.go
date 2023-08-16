@@ -8,32 +8,17 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourceKafkaSchema = map[string]*schema.Schema{
-	"name":               NameSchema("source", true, false),
+	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
 	"database_name":      DatabaseNameSchema("source", false),
 	"qualified_sql_name": QualifiedNameSchema("source"),
-	"cluster_name": {
-		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ForceNew:     true,
-	},
-	"size": {
-		Description:  "The size of the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
-	},
-	"kafka_connection": IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true),
+	"cluster_name":       SourceClusterNameSchema(),
+	"size":               SourceSizeSchema(),
+	"kafka_connection":   IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -156,7 +141,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"subsource":      SubsourceSchema(),
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func SourceKafka() *schema.Resource {

@@ -13,7 +13,7 @@ import (
 )
 
 var typeSchema = map[string]*schema.Schema{
-	"name":               NameSchema("type", true, true),
+	"name":               ObjectNameSchema("type", true, true),
 	"schema_name":        SchemaNameSchema("type", false),
 	"database_name":      DatabaseNameSchema("type", false),
 	"qualified_sql_name": QualifiedNameSchema("type"),
@@ -65,7 +65,7 @@ var typeSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func Type() *schema.Resource {

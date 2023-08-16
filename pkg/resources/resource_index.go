@@ -20,13 +20,6 @@ var indexSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ExactlyOneOf: []string{"name", "default"},
 	},
-	"default": {
-		Description:  "Creates a default index using all inferred columns are used.",
-		Type:         schema.TypeBool,
-		Optional:     true,
-		ForceNew:     true,
-		ExactlyOneOf: []string{"name", "default"},
-	},
 	"schema_name": {
 		Description: "The identifier for the index schema.",
 		Type:        schema.TypeString,
@@ -36,6 +29,13 @@ var indexSchema = map[string]*schema.Schema{
 		Description: "The identifier for the index database.",
 		Type:        schema.TypeString,
 		Computed:    true,
+	},
+	"default": {
+		Description:  "Creates a default index using all inferred columns are used.",
+		Type:         schema.TypeBool,
+		Optional:     true,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"name", "default"},
 	},
 	"qualified_sql_name": QualifiedNameSchema("view"),
 	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
@@ -72,7 +72,7 @@ var indexSchema = map[string]*schema.Schema{
 
 func Index() *schema.Resource {
 	return &schema.Resource{
-		Description: "An in-memory index on a source, view, or materialized view.",
+		Description: "Indexes represent query results stored in memory.",
 
 		CreateContext: indexCreate,
 		ReadContext:   indexRead,

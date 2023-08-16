@@ -13,8 +13,8 @@ import (
 )
 
 var databaseSchema = map[string]*schema.Schema{
-	"name":           NameSchema("database", true, true),
-	"ownership_role": OwnershipRole(),
+	"name":           ObjectNameSchema("database", true, true),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func Database() *schema.Resource {

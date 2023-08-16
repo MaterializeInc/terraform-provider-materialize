@@ -12,46 +12,24 @@ import (
 )
 
 var clusterReplicaSchema = map[string]*schema.Schema{
-	"name": NameSchema("replica", true, true),
-	"cluster_name": {
-		Description: "The cluster whose resources you want to create an additional computation of.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"size": SizeSchema("replica"),
+	"name":         ObjectNameSchema("replica", true, true),
+	"cluster_name": ClusterNameSchema(),
+	"size":         SizeSchema("replica", true, true),
 	"availability_zone": {
-		Description: "If you want the replica to reside in a specific availability zone.",
+		Description: "The specific availability zone of the replica.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		Computed:    true,
 		ForceNew:    true,
 	},
-	"introspection_interval": {
-		Description: "The interval at which to collect introspection data.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-		Default:     "1s",
-	},
-	"introspection_debugging": {
-		Description: "Whether to introspect the gathering of the introspection data.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
-		Default:     false,
-	},
-	"idle_arrangement_merge_effort": {
-		Description: "The amount of effort the replica should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
-		Type:        schema.TypeInt,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"introspection_interval":        IntrospectionIntervalSchema(true, []string{}),
+	"introspection_debugging":       IntrospectionDebuggingSchema(true, []string{}),
+	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(true, []string{}),
 }
 
 func ClusterReplica() *schema.Resource {
 	return &schema.Resource{
-		Description: "A cluster replica is the physical resource which maintains dataflow-powered objects.",
+		Description: "Cluster replicas allocate physical compute resources for a cluster.",
 
 		CreateContext: clusterReplicaCreate,
 		ReadContext:   clusterReplicaRead,

@@ -13,7 +13,7 @@ import (
 )
 
 var connectionKafkaSchema = map[string]*schema.Schema{
-	"name":               NameSchema("connection", true, false),
+	"name":               ObjectNameSchema("connection", true, false),
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
@@ -64,8 +64,8 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
 	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
-	"validate":       ValidateConnection(),
-	"ownership_role": OwnershipRole(),
+	"validate":       ValidateConnectionSchema(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func ConnectionKafka() *schema.Resource {

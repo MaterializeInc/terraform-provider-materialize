@@ -3,12 +3,12 @@
 page_title: "materialize_cluster Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A logical cluster, which contains dataflow-powered objects.
+  Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.
 ---
 
 # materialize_cluster (Resource)
 
-A logical cluster, which contains dataflow-powered objects.
+Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.
 
 ## Example Usage
 
@@ -27,7 +27,7 @@ resource "materialize_cluster" "example_cluster" {
 
 ### Optional
 
-- `idle_arrangement_merge_effort` (Number) The amount of effort the cluster should exert on compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
+- `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.

@@ -13,10 +13,10 @@ import (
 )
 
 var schemaSchema = map[string]*schema.Schema{
-	"name":               NameSchema("schema", true, true),
+	"name":               ObjectNameSchema("schema", true, true),
 	"database_name":      DatabaseNameSchema("schema", false),
 	"qualified_sql_name": QualifiedNameSchema("schema"),
-	"ownership_role":     OwnershipRole(),
+	"ownership_role":     OwnershipRoleSchema(),
 }
 
 func Schema() *schema.Resource {

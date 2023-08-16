@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -10,19 +11,8 @@ import (
 )
 
 var grantClusterSchema = map[string]*schema.Schema{
-	"role_name": {
-		Description: "The name of the role to grant privilege to.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"privilege": {
-		Description:  "The privilege to grant to the object.",
-		Type:         schema.TypeString,
-		Required:     true,
-		ForceNew:     true,
-		ValidateFunc: validPrivileges("CLUSTER"),
-	},
+	"role_name": RoleNameSchema(),
+	"privilege": PrivilegeSchema("CLUSTER"),
 	"cluster_name": {
 		Description: "The cluster that is being granted on.",
 		Type:        schema.TypeString,
@@ -33,7 +23,7 @@ var grantClusterSchema = map[string]*schema.Schema{
 
 func GrantCluster() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the privileges on a Materailize cluster for roles.",
+		Description: fmt.Sprintf(GrantDefinition, "cluster"),
 
 		CreateContext: grantClusterCreate,
 		ReadContext:   grantRead,

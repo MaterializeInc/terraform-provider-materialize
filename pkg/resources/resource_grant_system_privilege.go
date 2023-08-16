@@ -15,12 +15,7 @@ import (
 )
 
 var grantSystemPrivilegeSchema = map[string]*schema.Schema{
-	"role_name": {
-		Description: "The name of the role to grant privilege to.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
+	"role_name": RoleNameSchema(),
 	"privilege": {
 		Description:  "The system privilege to grant.",
 		Type:         schema.TypeString,

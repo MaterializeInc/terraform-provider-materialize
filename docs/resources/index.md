@@ -3,12 +3,12 @@
 page_title: "materialize_index Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  An in-memory index on a source, view, or materialized view.
+  Indexes represent query results stored in memory.
 ---
 
 # materialize_index (Resource)
 
-An in-memory index on a source, view, or materialized view.
+Indexes represent query results stored in memory.
 
 ## Example Usage
 

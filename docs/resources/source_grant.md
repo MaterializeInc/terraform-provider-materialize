@@ -3,12 +3,12 @@
 page_title: "materialize_source_grant Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  Manages the privileges on a Materailize view for roles.
+  Manages the privileges on a Materailize source for roles.
 ---
 
 # materialize_source_grant (Resource)
 
-Manages the privileges on a Materailize view for roles.
+Manages the privileges on a Materailize source for roles.
 
 ## Example Usage
 

@@ -3,12 +3,12 @@
 page_title: "materialize_table Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.
+  A table persists durable storage that can be written to, updated and seamlessly joined with other tables, views or sources
 ---
 
 # materialize_table (Resource)
 
-A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.
+A table persists durable storage that can be written to, updated and seamlessly joined with other tables, views or sources
 
 ## Example Usage
 
