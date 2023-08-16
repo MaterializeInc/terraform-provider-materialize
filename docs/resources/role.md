@@ -3,12 +3,12 @@
 page_title: "materialize_role Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A new role, which is a user account in Materialize.
+  A role is a collection of privileges you can apply to users.
 ---
 
 # materialize_role (Resource)
 
-A new role, which is a user account in Materialize.
+A role is a collection of privileges you can apply to users.
 
 ## Example Usage
 

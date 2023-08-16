@@ -3,12 +3,12 @@
 page_title: "materialize_cluster Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A logical cluster, which contains dataflow-powered objects.
+  Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.
 ---
 
 # materialize_cluster (Resource)
 
-A logical cluster, which contains dataflow-powered objects.
+Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.
 
 ## Example Usage
 
