@@ -34,7 +34,7 @@ func TestResourceSourceWebhookCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADERS CHECK WITH \(BODY AS bytes\, HEADERS AS headers\) check_expression;`,
+			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADERS CHECK \( WITH \(BODY AS bytes\, HEADERS AS headers\) check_expression\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
