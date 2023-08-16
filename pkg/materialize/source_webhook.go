@@ -71,13 +71,15 @@ func (b *SourceWebhookBuilder) Create() error {
 	}
 
 	if len(b.checkOptions) > 0 || b.checkExpression != "" {
-		q.WriteString(` CHECK`)
+		q.WriteString(` CHECK (`)
 		if len(b.checkOptions) > 0 {
 			q.WriteString(` WITH (`)
 			var options []string
 			for _, option := range b.checkOptions {
 				if option.Field != "" && option.Alias != "" {
 					options = append(options, option.Field+" AS "+option.Alias)
+				} else if option.Field != "" {
+					options = append(options, option.Field)
 				}
 			}
 			q.WriteString(strings.Join(options, ", "))
@@ -86,6 +88,7 @@ func (b *SourceWebhookBuilder) Create() error {
 		if b.checkExpression != "" {
 			q.WriteString(b.checkExpression)
 		}
+		q.WriteString(`)`)
 	}
 
 	q.WriteString(`;`)

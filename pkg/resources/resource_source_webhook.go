@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -55,12 +56,12 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 				"field": {
 					Description: "The field for the check options.",
 					Type:        schema.TypeString,
-					Computed:    true,
+					Required:    true,
 				},
 				"alias": {
 					Description: "The alias for the check options.",
 					Type:        schema.TypeString,
-					Computed:    true,
+					Optional:    true,
 				},
 			},
 		},
@@ -123,6 +124,17 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	// Create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
+	}
+
+	// ownership
+	if v, ok := d.GetOk("ownership_role"); ok {
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
+
+		if err := ownership.Alter(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
 	}
 
 	// Set id
