@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -34,7 +35,7 @@ var grantSourceSchema = map[string]*schema.Schema{
 
 func GrantSource() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the privileges on a Materailize view for roles.",
+		Description: fmt.Sprintf(GrantDefinition, "source"),
 
 		CreateContext: grantSourceCreate,
 		ReadContext:   grantRead,

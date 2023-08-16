@@ -56,7 +56,7 @@ var tableSchema = map[string]*schema.Schema{
 
 func Table() *schema.Resource {
 	return &schema.Resource{
-		Description: "A table persists in durable storage and can be written to, updated and seamlessly joined with other tables, views or sources.",
+		Description: "A table persists durable storage that can be written to, updated and seamlessly joined with other tables, views or sources",
 
 		CreateContext: tableCreate,
 		ReadContext:   tableRead,

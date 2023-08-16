@@ -12,6 +12,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var GrantDefinition = "Manages the privileges on a Materailize %[1]s for roles."
+var DefaultPrivilegeDefinition = "Defines default privileges that will be applied to objects created in the future. It does not affect any existing objects."
+
 var materializedViewSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("materialized view", true, false),
 	"schema_name":        SchemaNameSchema("materialized view", false),
@@ -24,7 +27,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"statement": {
-		Description: "The SQL statement to create the materialized view.",
+		Description: "The SQL statement for the materialized view.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
@@ -34,7 +37,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 
 func MaterializedView() *schema.Resource {
 	return &schema.Resource{
-		Description: "A materialized view persists in durable storage and can be written to, updated and seamlessly joined with other views, views or sources.",
+		Description: "Materialized views represent query results stored durably.",
 
 		CreateContext: materializedViewCreate,
 		ReadContext:   materializedViewRead,

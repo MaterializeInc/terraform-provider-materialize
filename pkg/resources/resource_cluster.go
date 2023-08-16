@@ -9,19 +9,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
 var clusterSchema = map[string]*schema.Schema{
 	"name":           ObjectNameSchema("cluster", true, true),
 	"ownership_role": OwnershipRoleSchema(),
-	"size": {
-		Description:  "The size of the managed cluster.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
-	},
+	"size":           SizeSchema("managed cluster", false, false),
 	"replication_factor": {
 		Description:  "The number of replicas of each dataflow-powered object to maintain.",
 		Type:         schema.TypeInt,
@@ -29,7 +23,7 @@ var clusterSchema = map[string]*schema.Schema{
 		RequiredWith: []string{"size"},
 	},
 	// "availability_zones": {
-	// 	Description: "If you want the cluster to reside in specific availability zones.",
+	// 	Description: "The specific availability zones of the cluster.",
 	// 	Type:        schema.TypeList,
 	// 	Elem:        &schema.Schema{Type: schema.TypeString},
 	// 	Computed:    true,
@@ -42,7 +36,7 @@ var clusterSchema = map[string]*schema.Schema{
 
 func Cluster() *schema.Resource {
 	return &schema.Resource{
-		Description: "A logical cluster, which contains dataflow-powered objects.",
+		Description: "Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.",
 
 		CreateContext: clusterCreate,
 		ReadContext:   clusterRead,

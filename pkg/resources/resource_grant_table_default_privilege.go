@@ -20,7 +20,7 @@ var grantTableDefaultPrivilegeSchema = map[string]*schema.Schema{
 
 func GrantTableDefaultPrivilege() *schema.Resource {
 	return &schema.Resource{
-		Description: "Defines default privileges that will be applied to objects created in the future. It does not affect any existing objects.",
+		Description: DefaultPrivilegeDefinition,
 
 		CreateContext: grantTableDefaultPrivilegeCreate,
 		ReadContext:   grantDefaultPrivilegeRead,

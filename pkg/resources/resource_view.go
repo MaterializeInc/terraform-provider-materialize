@@ -18,7 +18,7 @@ var viewSchema = map[string]*schema.Schema{
 	"database_name":      DatabaseNameSchema("view", false),
 	"qualified_sql_name": QualifiedNameSchema("view"),
 	"statement": {
-		Description: "The SQL statement to create the view.",
+		Description: "The SQL statement for the view.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
@@ -28,7 +28,7 @@ var viewSchema = map[string]*schema.Schema{
 
 func View() *schema.Resource {
 	return &schema.Resource{
-		Description: "A non-materialized view, provides an alias for the embedded SELECT statement.",
+		Description: "Views represent queries of sources and other views that you want to save for repeated execution.",
 
 		CreateContext: viewCreate,
 		ReadContext:   viewRead,

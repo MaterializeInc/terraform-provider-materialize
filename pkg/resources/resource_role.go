@@ -23,7 +23,7 @@ var roleSchema = map[string]*schema.Schema{
 
 func Role() *schema.Resource {
 	return &schema.Resource{
-		Description: "A new role, which is a user account in Materialize.",
+		Description: "A role is a collection of privileges you can apply to users.",
 
 		CreateContext: roleCreate,
 		ReadContext:   roleRead,

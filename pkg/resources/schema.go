@@ -44,6 +44,15 @@ func DatabaseNameSchema(resource string, required bool) *schema.Schema {
 	}
 }
 
+func ClusterNameSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The cluster whose resources you want to create an additional computation of.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	}
+}
+
 func OwnershipRoleSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
@@ -61,12 +70,13 @@ func QualifiedNameSchema(resource string) *schema.Schema {
 	}
 }
 
-func SizeSchema(resource string) *schema.Schema {
+func SizeSchema(resource string, required bool, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type:         schema.TypeString,
 		Description:  fmt.Sprintf("The size of the %s.", resource),
-		Required:     true,
-		ForceNew:     true,
+		Required:     required,
+		Optional:     !required,
+		ForceNew:     forceNew,
 		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
 	}
 }

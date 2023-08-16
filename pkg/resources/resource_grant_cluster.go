@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,7 +23,7 @@ var grantClusterSchema = map[string]*schema.Schema{
 
 func GrantCluster() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the privileges on a Materailize cluster for roles.",
+		Description: fmt.Sprintf(GrantDefinition, "cluster"),
 
 		CreateContext: grantClusterCreate,
 		ReadContext:   grantRead,

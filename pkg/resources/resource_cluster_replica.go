@@ -12,16 +12,11 @@ import (
 )
 
 var clusterReplicaSchema = map[string]*schema.Schema{
-	"name": ObjectNameSchema("replica", true, true),
-	"cluster_name": {
-		Description: "The cluster whose resources you want to create an additional computation of.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
-	},
-	"size": SizeSchema("replica"),
+	"name":         ObjectNameSchema("replica", true, true),
+	"cluster_name": ClusterNameSchema(),
+	"size":         SizeSchema("replica", true, true),
 	"availability_zone": {
-		Description: "If you want the replica to reside in a specific availability zone.",
+		Description: "The specific availability zone of the replica.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		Computed:    true,
@@ -34,7 +29,7 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 
 func ClusterReplica() *schema.Resource {
 	return &schema.Resource{
-		Description: "A cluster replica is the physical resource which maintains dataflow-powered objects.",
+		Description: "Cluster replicas allocate physical compute resources for a cluster.",
 
 		CreateContext: clusterReplicaCreate,
 		ReadContext:   clusterReplicaRead,
