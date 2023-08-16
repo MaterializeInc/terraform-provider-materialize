@@ -32,7 +32,7 @@ resource "materialize_source_webhook" "example_webhook" {
 ### Optional
 
 - `check_expression` (String) The check expression for the webhook.
-- `check_options` (List of String) The check options for the webhook.
+- `check_options` (Block List) The check options for the webhook. (see [below for nested schema](#nestedblock--check_options))
 - `cluster_name` (String) The cluster to maintain this source.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `include_headers` (Boolean) Include headers in the webhook.
@@ -45,6 +45,18 @@ resource "materialize_source_webhook" "example_webhook" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
+
+<a id="nestedblock--check_options"></a>
+### Nested Schema for `check_options`
+
+Required:
+
+- `field` (String) The field for the check options.
+
+Optional:
+
+- `alias` (String) The alias for the check options.
+
 
 <a id="nestedatt--subsource"></a>
 ### Nested Schema for `subsource`
