@@ -315,9 +315,9 @@ func SubsourceSchema() *schema.Schema {
 	}
 }
 
-func SourceClusterNameSchema() *schema.Schema {
+func ObjectClusterNameSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
-		Description:   "The cluster to maintain this source. If not specified, the size option must be specified.",
+		Description:   fmt.Sprintf("The cluster to maintain this %s. If not specified, the `size` option must be specified.", objectType),
 		Type:          schema.TypeString,
 		Optional:      true,
 		Computed:      true,
@@ -327,9 +327,9 @@ func SourceClusterNameSchema() *schema.Schema {
 	}
 }
 
-func SourceSizeSchema() *schema.Schema {
+func ObjectSizeSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
-		Description:   "The size of the source.",
+		Description:   fmt.Sprintf("The size of the %s. If not specified, the `cluster_name` option must be specified.", objectType),
 		Type:          schema.TypeString,
 		Optional:      true,
 		Computed:      true,
