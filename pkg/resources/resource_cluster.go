@@ -22,6 +22,11 @@ var clusterSchema = map[string]*schema.Schema{
 		Optional:     true,
 		RequiredWith: []string{"size"},
 	},
+	"disk": {
+		Description:  "**Private Preview**. Whether or not the replicas of the managed cluster are _disk-backed replicas_.",
+		Type:         schema.TypeBool,
+		Optional:     true,
+	},
 	// "availability_zones": {
 	// 	Description: "The specific availability zones of the cluster.",
 	// 	Type:        schema.TypeList,
@@ -79,6 +84,10 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("disk", s.Disk.Bool); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -94,6 +103,10 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if v, ok := d.GetOk("replication_factor"); ok {
 			b.ReplicationFactor(v.(int))
+		}
+
+		if v, ok := d.GetOk("disk"); ok {
+			b.Disk(v.(bool))
 		}
 
 		// TODO: Disable until supported on create
@@ -166,6 +179,14 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 				return diag.FromErr(err)
 			}
 
+		}
+
+		if d.HasChange("disk") {
+			_, newDisk := d.GetChange("disk")
+			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+			if err := b.SetDisk(newDisk.(bool)); err != nil {
+				return diag.FromErr(err)
+			}
 		}
 
 		if d.HasChange("replication_factor") {

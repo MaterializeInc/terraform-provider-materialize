@@ -11,12 +11,13 @@ import (
 func TestClusterReplicaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`,
+			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1, DISK;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := ObjectSchemaStruct{Name: "replica", ClusterName: "cluster"}
 		b := NewClusterReplicaBuilder(db, o)
 		b.Size("xsmall")
+		b.Disk(true)
 		b.AvailabilityZone("us-east-1")
 		b.IntrospectionInterval("1s")
 		b.IntrospectionDebugging()

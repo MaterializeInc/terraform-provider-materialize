@@ -14,6 +14,7 @@ type ClusterReplicaBuilder struct {
 	replicaName                string
 	clusterName                string
 	size                       string
+	disk                       bool
 	availabilityZone           string
 	introspectionInterval      string
 	introspectionDebugging     bool
@@ -34,6 +35,11 @@ func (b *ClusterReplicaBuilder) QualifiedName() string {
 
 func (b *ClusterReplicaBuilder) Size(s string) *ClusterReplicaBuilder {
 	b.size = s
+	return b
+}
+
+func (b *ClusterReplicaBuilder) Disk(disk bool) *ClusterReplicaBuilder {
+	b.disk= disk
 	return b
 }
 
@@ -65,6 +71,11 @@ func (b *ClusterReplicaBuilder) Create() error {
 	if b.size != "" {
 		s := fmt.Sprintf(` SIZE = %s`, QuoteString(b.size))
 		p = append(p, s)
+	}
+
+	if b.disk {
+		i := fmt.Sprintf(` DISK`)
+		p = append(p, i)
 	}
 
 	if b.availabilityZone != "" {

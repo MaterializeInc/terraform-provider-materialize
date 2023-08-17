@@ -14,6 +14,7 @@ type ClusterBuilder struct {
 	clusterName                string
 	replicationFactor          int
 	size                       string
+	disk                       bool
 	availabilityZones          []string
 	introspectionInterval      string
 	introspectionDebugging     bool
@@ -38,6 +39,11 @@ func (b *ClusterBuilder) ReplicationFactor(r int) *ClusterBuilder {
 
 func (b *ClusterBuilder) Size(s string) *ClusterBuilder {
 	b.size = s
+	return b
+}
+
+func (b *ClusterBuilder) Disk(disk bool) *ClusterBuilder {
+	b.disk= disk
 	return b
 }
 
@@ -70,6 +76,12 @@ func (b *ClusterBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` SIZE %s`, QuoteString(b.size)))
 
 		var p []string
+
+		if b.disk {
+			i := fmt.Sprintf(` DISK`)
+			p = append(p, i)
+		}
+
 		if b.replicationFactor > 0 {
 			i := fmt.Sprintf(` REPLICATION FACTOR %d`, b.replicationFactor)
 			p = append(p, i)
@@ -119,6 +131,11 @@ func (b *ClusterBuilder) Drop() error {
 
 func (b *ClusterBuilder) Resize(newSize string) error {
 	q := fmt.Sprintf(`ALTER CLUSTER %s SET (SIZE '%s');`, b.QualifiedName(), newSize)
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetDisk(disk bool) error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s SET (DISK %t);`, b.QualifiedName(), disk)
 	return b.ddl.exec(q)
 }
 
