@@ -39,13 +39,11 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The first public key associated with the SSH tunnel.",
 		Type:        schema.TypeString,
 		Computed:    true,
-		ForceNew:    true,
 	},
 	"public_key_2": {
 		Description: "The second public key associated with the SSH tunnel.",
 		Type:        schema.TypeString,
 		Computed:    true,
-		ForceNew:    true,
 	},
 	"ownership_role": OwnershipRoleSchema(),
 }
