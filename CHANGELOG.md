@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.7 - 2023-08-17
+
+### Features
+* Support for `ADD|DROP` tables with postgres sources [#265](https://github.com/MaterializeInc/terraform-provider-materialize/pull/265)
+* Additional attributes for managed clusters [#275](https://github.com/MaterializeInc/terraform-provider-materialize/pull/275)
+
+### BugFixes
+
+### Misc
+* Consistent documentation for common attributes [#276](https://github.com/MaterializeInc/terraform-provider-materialize/pull/276)
+
 ## 0.1.6 - 2023-08-09
 
 ### Features
