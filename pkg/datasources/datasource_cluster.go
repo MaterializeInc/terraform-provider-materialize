@@ -28,6 +28,10 @@ func Cluster() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"disk": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -49,6 +53,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 		clusterMap["id"] = p.ClusterId.String
 		clusterMap["name"] = p.ClusterName.String
+		clusterMap["disk"] = p.Disk.Bool
 
 		clusterFormats = append(clusterFormats, clusterMap)
 	}

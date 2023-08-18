@@ -43,7 +43,7 @@ func (b *ClusterBuilder) Size(s string) *ClusterBuilder {
 }
 
 func (b *ClusterBuilder) Disk(disk bool) *ClusterBuilder {
-	b.disk= disk
+	b.disk = disk
 	return b
 }
 

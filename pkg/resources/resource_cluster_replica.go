@@ -16,9 +16,10 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	"cluster_name": ClusterNameSchema(),
 	"size":         SizeSchema("replica", true, true),
 	"disk": {
-		Description:  "**Private Preview**. Whether or not the replica is a _disk-backed replica_.",
-		Type:         schema.TypeBool,
-		Optional:     true,
+		Description: "**Private Preview**. Whether or not the replica is a _disk-backed replica_.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"availability_zone": {
 		Description: "The specific availability zone of the replica.",
@@ -97,7 +98,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	if v, ok := d.GetOk("disk"); ok {
 		b.Disk(v.(bool))
-  }
+	}
 
 	if v, ok := d.GetOk("availability_zone"); ok {
 		b.AvailabilityZone(v.(string))

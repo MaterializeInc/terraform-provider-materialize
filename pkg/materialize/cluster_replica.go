@@ -39,7 +39,7 @@ func (b *ClusterReplicaBuilder) Size(s string) *ClusterReplicaBuilder {
 }
 
 func (b *ClusterReplicaBuilder) Disk(disk bool) *ClusterReplicaBuilder {
-	b.disk= disk
+	b.disk = disk
 	return b
 }
 
@@ -119,6 +119,7 @@ type ClusterReplicaParams struct {
 	ClusterName      sql.NullString `db:"cluster_name"`
 	Size             sql.NullString `db:"size"`
 	AvailabilityZone sql.NullString `db:"availability_zone"`
+	Disk             sql.NullBool   `db:"disk"`
 }
 
 var clusterReplicaQuery = NewBaseQuery(`
@@ -127,7 +128,8 @@ var clusterReplicaQuery = NewBaseQuery(`
 		mz_cluster_replicas.name AS replica_name,
 		mz_clusters.name AS cluster_name,
 		mz_cluster_replicas.size,
-		mz_cluster_replicas.availability_zone
+		mz_cluster_replicas.availability_zone,
+		mz_cluster_replicas.disk
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
 		ON mz_cluster_replicas.cluster_id = mz_clusters.id`)
