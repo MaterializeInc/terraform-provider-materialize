@@ -20,8 +20,18 @@ var inSourceWebhook = map[string]interface{}{
 	"body_format":     "JSON",
 	"include_headers": true,
 	"check_options": []interface{}{
-		map[string]interface{}{"field": "BODY", "alias": "bytes"},
-		map[string]interface{}{"field": "HEADERS", "alias": "headers"},
+		map[string]interface{}{
+			"field": []interface{}{map[string]interface{}{
+				"body": true,
+			}},
+			"alias": "bytes",
+		},
+		map[string]interface{}{
+			"field": []interface{}{map[string]interface{}{
+				"headers": true,
+			}},
+			"alias": "headers",
+		},
 	},
 	"check_expression": "check_expression",
 }

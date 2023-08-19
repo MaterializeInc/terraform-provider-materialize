@@ -115,16 +115,24 @@ resource "materialize_source_webhook" "test" {
 	ownership_role = materialize_role.test.name
 
 	check_options {
-		field = "BODY"
+		field {
+			body = true
+		}
 		alias = "bytes"
 	}
 
 	check_options {
-		field = "HEADERS"
+		field {
+			headers = true
+		}
 	}
 
 	check_options {
-		field = "SECRET ${materialize_secret.basic_auth.name}"
+		field {
+			secret {
+				name = materialize_secret.basic_auth.name
+			}
+		}
 		alias = "BASIC_HOOK_AUTH"
 	}
 

@@ -11,11 +11,15 @@ import (
 var sourceWebhook = ObjectSchemaStruct{Name: "webhook_source", SchemaName: "schema", DatabaseName: "database"}
 var checkOptions = []CheckOptionsStruct{
 	{
-		Field: "BODY",
+		Field: FieldStruct{
+			Body: true,
+		},
 		Alias: "bytes",
 	},
 	{
-		Field: "HEADERS",
+		Field: FieldStruct{
+			Headers: true,
+		},
 		Alias: "headers",
 	},
 }

@@ -7,8 +7,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type FieldStruct struct {
+	Body    bool
+	Headers bool
+	Secret  IdentifierSchemaStruct
+}
+
 type CheckOptionsStruct struct {
-	Field string
+	Field FieldStruct
 	Alias string
 }
 
@@ -76,10 +82,17 @@ func (b *SourceWebhookBuilder) Create() error {
 			q.WriteString(` WITH (`)
 			var options []string
 			for _, option := range b.checkOptions {
-				if option.Field != "" && option.Alias != "" {
-					options = append(options, option.Field+" AS "+option.Alias)
-				} else if option.Field != "" {
-					options = append(options, option.Field)
+				if option.Field.Body {
+					options = append(options, "BODY")
+				}
+				if option.Field.Headers {
+					options = append(options, "HEADERS")
+				}
+				if option.Field.Secret.Name != "" {
+					options = append(options, "SECRET "+option.Field.Secret.QualifiedName())
+				}
+				if option.Alias != "" {
+					options[len(options)-1] += " AS " + option.Alias
 				}
 			}
 			q.WriteString(strings.Join(options, ", "))

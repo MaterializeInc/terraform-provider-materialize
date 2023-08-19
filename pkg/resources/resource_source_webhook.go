@@ -55,8 +55,25 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 			Schema: map[string]*schema.Schema{
 				"field": {
 					Description: "The field for the check options.",
-					Type:        schema.TypeString,
-					Required:    true,
+					Type:        schema.TypeList,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"body": {
+								Description: "The body for the check options.",
+								Type:        schema.TypeBool,
+								Optional:    true,
+							},
+							"headers": {
+								Description: "The headers for the check options.",
+								Type:        schema.TypeBool,
+								Optional:    true,
+							},
+							"secret": IdentifierSchema("secret", "The secret for the check options.", false),
+						},
+					},
+					MinItems: 1,
+					MaxItems: 1,
+					Required: true,
 				},
 				"alias": {
 					Description: "The alias for the check options.",
@@ -113,14 +130,26 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		var options []materialize.CheckOptionsStruct
 		for _, option := range v.([]interface{}) {
 			t := option.(map[string]interface{})
+			fieldMap := t["field"].([]interface{})[0].(map[string]interface{})
+
+			var secret = materialize.IdentifierSchemaStruct{}
+			if secretMap, ok := fieldMap["secret"].([]interface{}); ok && len(secretMap) > 0 && secretMap[0] != nil {
+				secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, secretMap)
+			}
+
+			field := materialize.FieldStruct{
+				Body:    fieldMap["body"].(bool),
+				Headers: fieldMap["headers"].(bool),
+				Secret:  secret,
+			}
+
 			options = append(options, materialize.CheckOptionsStruct{
-				Field: t["field"].(string),
+				Field: field,
 				Alias: t["alias"].(string),
 			})
 		}
 		b.CheckOptions(options)
 	}
-
 	// Create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
