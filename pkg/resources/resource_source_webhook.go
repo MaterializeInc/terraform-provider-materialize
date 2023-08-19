@@ -12,7 +12,7 @@ import (
 )
 
 var sourceWebhookSchema = map[string]*schema.Schema{
-	"name":               NameSchema("source", true, false),
+	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
 	"database_name":      DatabaseNameSchema("source", false),
 	"qualified_sql_name": QualifiedNameSchema("source"),
@@ -90,7 +90,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"subsource":      SubsourceSchema(),
-	"ownership_role": OwnershipRole(),
+	"ownership_role": OwnershipRoleSchema(),
 }
 
 func SourceWebhook() *schema.Resource {
