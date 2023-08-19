@@ -51,11 +51,34 @@ resource "materialize_source_webhook" "example_webhook" {
 
 Required:
 
-- `field` (String) The field for the check options.
+- `field` (Block List, Min: 1, Max: 1) The field for the check options. (see [below for nested schema](#nestedblock--check_options--field))
 
 Optional:
 
 - `alias` (String) The alias for the check options.
+
+<a id="nestedblock--check_options--field"></a>
+### Nested Schema for `check_options.field`
+
+Optional:
+
+- `body` (Boolean) The body for the check options.
+- `headers` (Boolean) The headers for the check options.
+- `secret` (Block List, Max: 1) The secret for the check options. (see [below for nested schema](#nestedblock--check_options--field--secret))
+
+<a id="nestedblock--check_options--field--secret"></a>
+### Nested Schema for `check_options.field.secret`
+
+Required:
+
+- `name` (String) The secret name.
+
+Optional:
+
+- `database_name` (String) The secret database name.
+- `schema_name` (String) The secret schema name.
+
+
 
 
 <a id="nestedatt--subsource"></a>
