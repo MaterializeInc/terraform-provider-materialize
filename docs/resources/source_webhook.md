@@ -38,12 +38,12 @@ resource "materialize_source_webhook" "example_webhook" {
 - `include_headers` (Boolean) Include headers in the webhook.
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `size` (String) The size of the source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--check_options"></a>
