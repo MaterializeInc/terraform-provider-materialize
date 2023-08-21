@@ -23,12 +23,9 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"size": {
-		Description:  "The size of the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
+		Description: "The size of the source.",
+		Type:        schema.TypeString,
+		Computed:    true,
 	},
 	"body_format": {
 		Description: "The body format of the webhook.",

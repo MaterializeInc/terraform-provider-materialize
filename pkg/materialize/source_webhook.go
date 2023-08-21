@@ -21,7 +21,7 @@ type CheckOptionsStruct struct {
 type SourceWebhookBuilder struct {
 	Source
 	clusterName     string
-	size            string // TODO: size is not supported for webhook sources
+	size            string
 	bodyFormat      string
 	includeHeaders  bool
 	checkOptions    []CheckOptionsStruct
