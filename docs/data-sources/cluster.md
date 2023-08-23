@@ -29,5 +29,9 @@ data "materialize_cluster" "all" {}
 
 Read-Only:
 
+- `disk` (Boolean)
 - `id` (String)
+- `managed` (Boolean)
 - `name` (String)
+- `replication_factor` (Number)
+- `size` (String)
