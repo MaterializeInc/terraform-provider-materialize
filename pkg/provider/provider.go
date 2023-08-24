@@ -171,6 +171,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	if testing {
 		// TODO: Remove this once enable_connection_validation_syntax is enabled by default
 		_, err = db.Exec("ALTER SYSTEM SET enable_connection_validation_syntax = true;")
+		// TODO: Remove this once enable_disk_cluster_replicas is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_disk_cluster_replicas TO true;")
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
