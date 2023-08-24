@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.8 - 2023-08-24
+
+### Features
+* New resource `materialize_source_webhook` for [Webhook Sources](https://materialize.com/docs/sql/create-source/webhook/) [#271](https://github.com/MaterializeInc/terraform-provider-materialize/pull/271)
+* Support `disk` attribute for clusters and replicas [#279](https://github.com/MaterializeInc/terraform-provider-materialize/pull/279)
+
+### BugFixes
+
+### Misc
+* Include missing attributes for managed cluster data sources [#282](https://github.com/MaterializeInc/terraform-provider-materialize/pull/282)
+* Support key rotation for SSH tunnels [#278](https://github.com/MaterializeInc/terraform-provider-materialize/pull/278)
+
 ## 0.1.7 - 2023-08-17
 
 ### Features
