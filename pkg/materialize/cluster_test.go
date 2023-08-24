@@ -32,6 +32,20 @@ func TestClusterManagedSizeCreate(t *testing.T) {
 	})
 }
 
+func TestClusterManagedSizeDiskCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', DISK;`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := ObjectSchemaStruct{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+		b.Disk(true)
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestClusterManagedSizeReplicationCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2;`).WillReturnResult(sqlmock.NewResult(1, 1))

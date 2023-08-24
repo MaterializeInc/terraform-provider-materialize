@@ -40,6 +40,10 @@ func ClusterReplica() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"disk": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -64,6 +68,7 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 		clusterReplicaMap["cluster"] = p.ClusterName.String
 		clusterReplicaMap["size"] = p.Size.String
 		clusterReplicaMap["availability_zone"] = p.AvailabilityZone.String
+		clusterReplicaMap["disk"] = p.Disk.Bool
 
 		clusterReplicaFormats = append(clusterReplicaFormats, clusterReplicaMap)
 	}
