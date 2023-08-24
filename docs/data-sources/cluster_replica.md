@@ -31,6 +31,7 @@ Read-Only:
 
 - `availability_zone` (String)
 - `cluster` (String)
+- `disk` (Boolean)
 - `id` (String)
 - `name` (String)
 - `size` (String)
