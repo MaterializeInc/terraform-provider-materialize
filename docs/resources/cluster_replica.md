@@ -32,6 +32,7 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 ### Optional
 
 - `availability_zone` (String) The specific availability zone of the replica.
+- `disk` (Boolean) **Private Preview**. Whether or not the replica is a _disk-backed replica_.
 - `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.

@@ -25,6 +25,7 @@ resource "materialize_cluster" "managed_cluster" {
   introspection_interval        = "1s"
   introspection_debugging       = true
   idle_arrangement_merge_effort = 2
+  disk                          = true
 }
 
 data "materialize_cluster" "all" {}

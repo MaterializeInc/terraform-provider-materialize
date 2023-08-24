@@ -12,6 +12,7 @@ resource "materialize_cluster_replica" "cluster_replica_2" {
   introspection_interval        = "2s"
   introspection_debugging       = true
   idle_arrangement_merge_effort = 1
+  disk                          = true
 }
 
 resource "materialize_cluster_replica" "cluster_replica_source" {

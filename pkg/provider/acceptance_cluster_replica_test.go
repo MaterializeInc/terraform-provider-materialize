@@ -29,6 +29,7 @@ func TestAccClusterReplica_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "size", "1"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_debugging", "false"),
+					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "disk", "true"),
 					resource.TestCheckNoResourceAttr("materialize_cluster_replica.test", "idle_arrangement_merge_effort"),
 				),
 			},
@@ -78,6 +79,7 @@ resource "materialize_cluster_replica" "test" {
 	cluster_name = materialize_cluster.test.name
 	name = "%[2]s"
 	size = "1"
+	disk = true
 }
 `, clusterName, clusterReplica)
 }
