@@ -92,6 +92,7 @@ func Provider() *schema.Provider {
 			"materialize_source_kafka":                         resources.SourceKafka(),
 			"materialize_source_load_generator":                resources.SourceLoadgen(),
 			"materialize_source_postgres":                      resources.SourcePostgres(),
+			"materialize_source_webhook":                       resources.SourceWebhook(),
 			"materialize_source_grant":                         resources.GrantSource(),
 			"materialize_table":                                resources.Table(),
 			"materialize_table_grant":                          resources.GrantTable(),
@@ -169,6 +170,17 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	if testing {
+		// TODO: Remove this once enable_webhook_sources is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_webhook_sources = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable webhook sources",
+				Detail:   "Unable to enable webhook sources for authenticated Materialize client",
+			})
+			return nil, diags
+		}
+
 		// TODO: Remove this once enable_connection_validation_syntax is enabled by default
 		_, err = db.Exec("ALTER SYSTEM SET enable_connection_validation_syntax = true;")
 		if err != nil {
