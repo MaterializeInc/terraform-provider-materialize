@@ -315,25 +315,27 @@ func SubsourceSchema() *schema.Schema {
 	}
 }
 
-func SourceClusterNameSchema() *schema.Schema {
+func ObjectClusterNameSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
-		Description:  "The cluster to maintain this source. If not specified, the size option must be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ForceNew:     true,
+		Description:   fmt.Sprintf("The cluster to maintain this %s. If not specified, the `size` option must be specified.", objectType),
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		AtLeastOneOf:  []string{"cluster_name", "size"},
+		ConflictsWith: []string{"size"},
+		ForceNew:      true,
 	}
 }
 
-func SourceSizeSchema() *schema.Schema {
+func ObjectSizeSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
-		Description:  "The size of the source.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
+		Description:   fmt.Sprintf("The size of the %s. If not specified, the `cluster_name` option must be specified.", objectType),
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		AtLeastOneOf:  []string{"cluster_name", "size"},
+		ConflictsWith: []string{"cluster_name"},
+		ValidateFunc:  validation.StringInSlice(append(sourceSizes, localSizes...), true),
 	}
 }
 

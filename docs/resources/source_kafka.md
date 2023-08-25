@@ -54,7 +54,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 ### Optional
 
-- `cluster_name` (String) The cluster to maintain this source. If not specified, the size option must be specified.
+- `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `expose_progress` (String) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.
@@ -72,7 +72,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source.
+- `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set "START OFFSET" based on the Kafka timestamp.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))

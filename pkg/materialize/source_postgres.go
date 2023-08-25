@@ -15,6 +15,7 @@ type SourcePostgresBuilder struct {
 	publication        string
 	textColumns        []string
 	table              []TableStruct
+	schema             []string
 	exposeProgress     string
 }
 
@@ -55,6 +56,11 @@ func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	return b
 }
 
+func (b *SourcePostgresBuilder) Schema(t []string) *SourcePostgresBuilder {
+	b.schema = t
+	return b
+}
+
 func (b *SourcePostgresBuilder) ExposeProgress(e string) *SourcePostgresBuilder {
 	b.exposeProgress = e
 	return b
@@ -92,6 +98,9 @@ func (b *SourcePostgresBuilder) Create() error {
 			}
 		}
 		q.WriteString(`)`)
+	} else if len(b.schema) > 0 {
+		s := strings.Join(b.schema, ", ")
+		q.WriteString(fmt.Sprintf(` FOR SCHEMAS (%s)`, s))
 	} else {
 		q.WriteString(` FOR ALL TABLES`)
 	}

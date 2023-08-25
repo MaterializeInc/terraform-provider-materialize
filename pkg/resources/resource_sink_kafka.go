@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,24 +16,10 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("sink", false),
 	"database_name":      DatabaseNameSchema("sink", false),
 	"qualified_sql_name": QualifiedNameSchema("sink"),
-	"cluster_name": {
-		Description:  "The cluster to maintain this sink. If not specified, the size option must be specified.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ForceNew:     true,
-	},
-	"size": {
-		Description:  "The size of the sink.",
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"cluster_name", "size"},
-		ValidateFunc: validation.StringInSlice(append(sourceSizes, localSizes...), true),
-	},
-	"from":             IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
-	"kafka_connection": IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true),
+	"cluster_name":       ObjectClusterNameSchema("sink"),
+	"size":               ObjectSizeSchema("sink"),
+	"from":               IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
+	"kafka_connection":   IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
