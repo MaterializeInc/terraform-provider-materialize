@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -25,7 +26,13 @@ func validPrivileges(objType string) schema.SchemaValidateFunc {
 			}
 		}
 
-		errors = append(errors, fmt.Errorf("expected %s to be one of %v, got %s", k, allowedP, v))
+		var f []string
+		for _, p := range materialize.ObjectPermissions[objType].Permissions {
+			f = append(f, fmt.Sprintf(`'%s'`, materialize.Permissions[p]))
+		}
+		fs := strings.Join(f[:], ", ")
+
+		errors = append(errors, fmt.Errorf("expected %s to be one of (%v), got '%s'", k, fs, v))
 		return warnings, errors
 	}
 }
