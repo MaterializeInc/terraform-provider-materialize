@@ -25,6 +25,12 @@ resource "materialize_secret_grant" "secret_grant_usage" {
   database_name = materialize_secret.password.database_name
 }
 
+resource "materialize_secret_grant_default_privilege" "example" {
+  grantee_name     = materialize_role.grantee.name
+  privilege        = "USAGE"
+  target_role_name = materialize_role.target.name
+}
+
 output "qualified_sql_password" {
   value = materialize_secret.password.qualified_sql_name
 }

@@ -33,6 +33,12 @@ resource "materialize_type_grant_default_privilege" "type_grant_default_privileg
   target_role_name = materialize_role.role_2.name
 }
 
+resource "materialize_type_grant_default_privilege" "example" {
+  grantee_name     = materialize_role.grantee.name
+  privilege        = "USAGE"
+  target_role_name = materialize_role.target.name
+}
+
 output "qualified_type" {
   value = materialize_type.list_type.qualified_sql_name
 }

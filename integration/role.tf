@@ -6,6 +6,14 @@ resource "materialize_role" "role_2" {
   name = "role-2"
 }
 
+resource "materialize_role" "grantee" {
+  name = "grantee"
+}
+
+resource "materialize_role" "target" {
+  name = "target"
+}
+
 resource "materialize_grant_system_privilege" "role_1_system_createrole" {
   role_name = materialize_role.role_1.name
   privilege = "CREATEROLE"
