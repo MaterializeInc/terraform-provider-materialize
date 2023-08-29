@@ -14,6 +14,12 @@ resource "materialize_database_grant" "database_grant_create" {
   database_name = materialize_database.database.name
 }
 
+resource "materialize_database_grant_default_privilege" "example" {
+  grantee_name     = materialize_role.role_1.name
+  privilege        = "USAGE"
+  target_role_name = materialize_role.role_2.name
+}
+
 data "materialize_database" "all" {}
 
 data "materialize_current_database" "default" {}

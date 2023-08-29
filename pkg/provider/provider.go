@@ -94,6 +94,7 @@ func Provider() *schema.Provider {
 			"materialize_source_postgres":                      resources.SourcePostgres(),
 			"materialize_source_webhook":                       resources.SourceWebhook(),
 			"materialize_source_grant":                         resources.GrantSource(),
+			"materialize_source_grant_default_privilege":       resources.GrantSourceDefaultPrivilege(),
 			"materialize_table":                                resources.Table(),
 			"materialize_table_grant":                          resources.GrantTable(),
 			"materialize_table_grant_default_privilege":        resources.GrantTableDefaultPrivilege(),

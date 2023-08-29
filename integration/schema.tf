@@ -17,6 +17,13 @@ resource "materialize_schema_grant" "schema_grant_create" {
   schema_name   = materialize_schema.schema.name
 }
 
+resource "materialize_schema_grant_default_privilege" "example" {
+  grantee_name     = materialize_role.role_1.name
+  privilege        = "USAGE"
+  target_role_name = materialize_role.role_2.name
+  database_name    = materialize_database.database.name
+}
+
 output "qualified_schema" {
   value = materialize_schema.schema.qualified_sql_name
 }

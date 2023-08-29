@@ -51,6 +51,14 @@ resource "materialize_table_grant" "table_grant_delete" {
   table_name    = materialize_table.simple_table.name
 }
 
+resource "materialize_table_grant_default_privilege" "example" {
+  grantee_name     = materialize_role.role_1.name
+  privilege        = "SELECT"
+  target_role_name = materialize_role.role_2.name
+  schema_name      = materialize_schema.schema.name
+  database_name    = materialize_database.database.name
+}
+
 output "qualified_table" {
   value = materialize_table.simple_table.qualified_sql_name
 }
