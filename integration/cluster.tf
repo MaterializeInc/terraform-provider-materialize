@@ -18,6 +18,12 @@ resource "materialize_cluster_grant" "cluster_grant_create" {
   cluster_name = materialize_cluster.cluster_source.name
 }
 
+resource "materialize_cluster_grant_default_privilege" "example" {
+  grantee_name     = materialize_role.grantee.name
+  privilege        = "USAGE"
+  target_role_name = materialize_role.target.name
+}
+
 resource "materialize_cluster" "managed_cluster" {
   name                          = "managed_cluster"
   replication_factor            = 2
