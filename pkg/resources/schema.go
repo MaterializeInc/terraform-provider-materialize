@@ -409,7 +409,7 @@ func RoleNameSchema() *schema.Schema {
 
 func TargetRoleNameSchema() *schema.Schema {
 	return &schema.Schema{
-		Description: "The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` will apply to objects created by all roles",
+		Description: "The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles. If using `ALL` or `ALL ROLES`, will apply to objects created by all roles.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
