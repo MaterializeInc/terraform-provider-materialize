@@ -52,11 +52,9 @@ resource "materialize_table_grant" "table_grant_delete" {
 }
 
 resource "materialize_table_grant_default_privilege" "example" {
-  grantee_name     = materialize_role.role_1.name
+  grantee_name     = materialize_role.grantee.name
   privilege        = "SELECT"
-  target_role_name = materialize_role.role_2.name
-  schema_name      = materialize_schema.schema.name
-  database_name    = materialize_database.database.name
+  target_role_name = materialize_role.target.name
 }
 
 output "qualified_table" {

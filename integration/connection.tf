@@ -83,9 +83,9 @@ resource "materialize_connection_grant" "connection_grant_usage" {
 }
 
 resource "materialize_connection_grant_default_privilege" "example" {
-  grantee_name     = materialize_role.role_1.name
+  grantee_name     = materialize_role.grantee.name
   privilege        = "USAGE"
-  target_role_name = materialize_role.role_2.name
+  target_role_name = materialize_role.target.name
   schema_name      = materialize_schema.schema.name
   database_name    = materialize_database.database.name
 }

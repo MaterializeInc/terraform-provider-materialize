@@ -112,14 +112,6 @@ resource "materialize_source_grant" "source_grant_select" {
   database_name = materialize_source_load_generator.load_generator.database_name
 }
 
-resource "materialize_source_grant_default_privilege" "example" {
-  grantee_name     = materialize_role.role_1.name
-  privilege        = "SELECT"
-  target_role_name = materialize_role.role_2.name
-  schema_name      = materialize_schema.schema.name
-  database_name    = materialize_database.database.name
-}
-
 output "qualified_load_generator" {
   value = materialize_source_load_generator.load_generator.qualified_sql_name
 }

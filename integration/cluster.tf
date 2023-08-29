@@ -19,9 +19,9 @@ resource "materialize_cluster_grant" "cluster_grant_create" {
 }
 
 resource "materialize_cluster_grant_default_privilege" "example" {
-  grantee_name     = materialize_role.role_1.name
+  grantee_name     = materialize_role.grantee.name
   privilege        = "USAGE"
-  target_role_name = materialize_role.role_2.name
+  target_role_name = materialize_role.target.name
 }
 
 resource "materialize_cluster" "managed_cluster" {
