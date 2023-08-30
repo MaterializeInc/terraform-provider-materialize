@@ -14,11 +14,12 @@ func TestOwnershipAlter(t *testing.T) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "my_role";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := ObjectSchemaStruct{
+			ObjectType:   "TABLE",
 			DatabaseName: "database",
 			SchemaName:   "schema",
 			Name:         "table",
 		}
-		b := NewOwnershipBuilder(db, "TABLE", o)
+		b := NewOwnershipBuilder(db, o)
 
 		if err := b.Alter("my_role"); err != nil {
 			t.Fatal(err)

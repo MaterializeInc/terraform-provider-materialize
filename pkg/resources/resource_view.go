@@ -85,7 +85,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.ObjectSchemaStruct{ObjectType: "VIEW", Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
@@ -99,7 +99,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "VIEW", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -123,24 +123,22 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	if d.HasChange("name") {
-		oldViewName, newViewName := d.GetChange("name")
+	o := materialize.ObjectSchemaStruct{ObjectType: "VIEW", Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
 
-		o := materialize.ObjectSchemaStruct{Name: oldViewName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
-		if err := b.Rename(newViewName.(string)); err != nil {
+		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	if d.HasChange("ownership_role") {
-		_, newRole := d.GetChange("ownership_role")
+	if d.HasChange("name") {
+		_, newViewName := d.GetChange("name")
+		b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
 
-		o := materialize.ObjectSchemaStruct{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "VIEW", o)
-
-		if err := b.Alter(newRole.(string)); err != nil {
+		if err := b.Rename(newViewName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

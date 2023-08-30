@@ -94,7 +94,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: clusterName}
+	o := materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
 	// managed cluster options
@@ -135,7 +135,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -157,24 +157,20 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
+	o := materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}
+
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-
-		o := materialize.ObjectSchemaStruct{Name: clusterName}
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CLUSTER", o)
-
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	// managed cluster options
+	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 	if _, ok := d.GetOk("size"); ok {
-		o := materialize.ObjectSchemaStruct{Name: clusterName}
-
 		if d.HasChange("size") {
 			_, newSize := d.GetChange("size")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 			if err := b.Resize(newSize.(string)); err != nil {
 				return diag.FromErr(err)
 			}
@@ -183,7 +179,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("disk") {
 			_, newDisk := d.GetChange("disk")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 			if err := b.SetDisk(newDisk.(bool)); err != nil {
 				return diag.FromErr(err)
 			}
@@ -191,7 +186,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("replication_factor") {
 			_, n := d.GetChange("replication_factor")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 			if err := b.SetReplicationFactor(n.(int)); err != nil {
 				return diag.FromErr(err)
 			}
@@ -208,7 +202,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("introspection_interval") {
 			_, n := d.GetChange("introspection_interval")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 			if err := b.SetIntrospectionInterval(n.(string)); err != nil {
 				return diag.FromErr(err)
 			}
@@ -216,7 +209,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("introspection_debugging") {
 			_, n := d.GetChange("introspection_debugging")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 			if err := b.SetIntrospectionDebugging(n.(bool)); err != nil {
 				return diag.FromErr(err)
 			}
@@ -224,7 +216,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("idle_arrangement_merge_effort") {
 			_, n := d.GetChange("idle_arrangement_merge_effort")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 			if err := b.SetIdleArrangementMergeEffort(n.(int)); err != nil {
 				return diag.FromErr(err)
 			}

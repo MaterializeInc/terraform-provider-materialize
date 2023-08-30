@@ -53,24 +53,21 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	if d.HasChange("name") {
-		oldName, newName := d.GetChange("name")
+	o := materialize.ObjectSchemaStruct{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewConnection(meta.(*sqlx.DB), o)
 
-		o := materialize.ObjectSchemaStruct{Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewConnection(meta.(*sqlx.DB), o)
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
-		if err := b.Rename(newName.(string)); err != nil {
+		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	if d.HasChange("ownership_role") {
-		_, newRole := d.GetChange("ownership_role")
-
-		o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
-
-		if err := b.Alter(newRole.(string)); err != nil {
+	if d.HasChange("name") {
+		_, newName := d.GetChange("name")
+		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
