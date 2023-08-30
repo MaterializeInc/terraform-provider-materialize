@@ -14,7 +14,6 @@ var grantSchemaDefaultPrivilegeSchema = map[string]*schema.Schema{
 	"grantee_name":     GranteeNameSchema(),
 	"target_role_name": TargetRoleNameSchema(),
 	"database_name":    GrantDefaultDatabaseNameSchema(),
-	"schema_name":      GrantDefaultSchemaNameSchema(),
 	"privilege":        PrivilegeSchema("SCHEMA"),
 }
 
@@ -41,15 +40,10 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 
 	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "SCHEMA", granteeName, targetName, privilege)
 
-	var database, schema string
+	var database string
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
 		database = v.(string)
 		b.DatabaseName(database)
-	}
-
-	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
-		schema = v.(string)
-		b.SchemaName(schema)
 	}
 
 	// create resource
@@ -68,7 +62,7 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	var dId, sId string
+	var dId string
 	if database != "" {
 		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
 		if err != nil {
@@ -76,14 +70,7 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	if schema != "" {
-		sId, err = materialize.SchemaId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: schema, DatabaseName: database})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	key := b.GrantKey("SCHEMA", gId, tId, dId, sId, privilege)
+	key := b.GrantKey("SCHEMA", gId, tId, dId, "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -98,10 +85,6 @@ func grantSchemaDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceDa
 
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
 		b.DatabaseName(v.(string))
-	}
-
-	if v, ok := d.GetOk("schema_name"); ok && v.(string) != "" {
-		b.SchemaName(v.(string))
 	}
 
 	if err := b.Revoke(); err != nil {
