@@ -78,7 +78,7 @@ resource "materialize_connection_postgres" "example_postgres_connection" {
 Optional:
 
 - `secret` (Block List, Max: 1) The `user` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--user--secret))
-- `text` (String) The `user` text value. Conflicts with `secret` within this block
+- `text` (String, Sensitive) The `user` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--user--secret"></a>
 ### Nested Schema for `user.secret`
@@ -139,7 +139,7 @@ Optional:
 Optional:
 
 - `secret` (Block List, Max: 1) The `ssl_certificate` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate--secret))
-- `text` (String) The `ssl_certificate` text value. Conflicts with `secret` within this block
+- `text` (String, Sensitive) The `ssl_certificate` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate--secret"></a>
 ### Nested Schema for `ssl_certificate.secret`
@@ -161,7 +161,7 @@ Optional:
 Optional:
 
 - `secret` (Block List, Max: 1) The `ssl_certificate_authority` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
-- `text` (String) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
+- `text` (String, Sensitive) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
 
 <a id="nestedblock--ssl_certificate_authority--secret"></a>
 ### Nested Schema for `ssl_certificate_authority.secret`
