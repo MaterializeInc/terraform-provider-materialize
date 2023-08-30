@@ -126,6 +126,15 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	o := materialize.ObjectSchemaStruct{ObjectType: "SECRET", Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), o)
 
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.ObjectSchemaStruct{ObjectType: "SECRET", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewSecretBuilder(meta.(*sqlx.DB), o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("value") {
 		_, newValue := d.GetChange("value")
 		if err := b.UpdateValue(newValue.(string)); err != nil {
@@ -138,13 +147,6 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

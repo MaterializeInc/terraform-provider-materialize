@@ -67,9 +67,9 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" SET \(SIZE = 'small'\)`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "name1" AS "alias", "name2"`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`

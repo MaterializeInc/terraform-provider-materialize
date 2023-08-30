@@ -52,7 +52,7 @@ func TestResourceViewUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER VIEW "database"."schema"."old_view" RENAME TO "view";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER VIEW "database"."schema"."" RENAME TO "view";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_views.id = 'u1'`

@@ -141,20 +141,21 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	databaseName := d.Get("database_name").(string)
 
 	o := materialize.ObjectSchemaStruct{ObjectType: "MATERIALIZED VIEW", Name: materializedViewName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), o)
+
+	if d.HasChange("name") {
+		oldName, newMaterializedViewName := d.GetChange("name")
+		o := materialize.ObjectSchemaStruct{ObjectType: "MATERIALIZED VIEW", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), o)
+		if err := b.Rename(newMaterializedViewName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newMaterializedViewName := d.GetChange("name")
-		if err := b.Rename(newMaterializedViewName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

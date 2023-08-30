@@ -54,7 +54,7 @@ func TestResourceMaterializedViewUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER MATERIALIZED VIEW "database"."schema"."old_materialized_view" RENAME TO "materialized_view";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER MATERIALIZED VIEW "database"."schema"."" RENAME TO "materialized_view";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_materialized_views.id = 'u1'`

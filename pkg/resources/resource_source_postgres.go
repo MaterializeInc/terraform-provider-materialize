@@ -165,6 +165,15 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 	o := materialize.ObjectSchemaStruct{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSource(meta.(*sqlx.DB), o)
 
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.ObjectSchemaStruct{ObjectType: "SOURCE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewSource(meta.(*sqlx.DB), o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("size") {
 		_, newSize := d.GetChange("size")
 		if err := b.Resize(newSize.(string)); err != nil {
@@ -201,13 +210,6 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 			if err := b.DropSubsource(dropTables); err != nil {
 				return diag.FromErr(err)
 			}
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-		if err := b.Rename(newName.(string)); err != nil {
-			return diag.FromErr(err)
 		}
 	}
 

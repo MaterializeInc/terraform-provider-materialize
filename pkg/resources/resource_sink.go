@@ -64,6 +64,15 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	o := materialize.ObjectSchemaStruct{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSink(meta.(*sqlx.DB), o)
 
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.ObjectSchemaStruct{ObjectType: "SINK", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewSink(meta.(*sqlx.DB), o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("size") {
 		_, newSize := d.GetChange("size")
 		if err := b.Resize(newSize.(string)); err != nil {
@@ -76,13 +85,6 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("name") {
-		_, newName := d.GetChange("name")
-		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
