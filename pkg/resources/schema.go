@@ -130,6 +130,7 @@ func ValueSecretSchema(elem string, description string, required bool) *schema.S
 					Description:   fmt.Sprintf("The `%s` text value. Conflicts with `secret` within this block", elem),
 					Type:          schema.TypeString,
 					Optional:      true,
+					Sensitive:     true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
 				"secret": IdentifierSchema(
