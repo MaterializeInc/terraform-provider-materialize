@@ -24,12 +24,6 @@ resource "materialize_cluster_grant_default_privilege" "example" {
   target_role_name = materialize_role.target.name
 }
 
-resource "materialize_cluster_grant_default_privilege" "example_target_all" {
-  grantee_name     = materialize_role.grantee.name
-  privilege        = "USAGE"
-  target_role_name = "PUBLIC"
-}
-
 resource "materialize_cluster" "managed_cluster" {
   name                          = "managed_cluster"
   replication_factor            = 2
