@@ -79,8 +79,14 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 
 	d.SetId(i)
 
-	if err := d.Set("target_role_name", privileges[0].TargetRole.String); err != nil {
-		return diag.FromErr(err)
+	if privileges[0].TargetRole.String == "p" {
+		if err := d.Set("target_role_name", "PUBLIC"); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		if err := d.Set("target_role_name", privileges[0].TargetRole.String); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return nil
