@@ -65,6 +65,13 @@ resource "materialize_table_grant_default_privilege" "example_all" {
   target_role_name = materialize_role.target.name
 }
 
+resource "materialize_table_grant_default_privilege" "example_target_all" {
+  grantee_name     = materialize_role.grantee.name
+  privilege        = "SELECT"
+  target_role_name = "PUBLIC"
+}
+
+
 output "qualified_table" {
   value = materialize_table.simple_table.qualified_sql_name
 }

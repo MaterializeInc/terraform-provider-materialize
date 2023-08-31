@@ -43,10 +43,10 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 	q.WriteString(`ALTER DEFAULT PRIVILEGES`)
 
 	// role
-	if b.targetRole.name != "ALL" && b.targetRole.name != "ALL ROLES" {
-		q.WriteString(fmt.Sprintf(` FOR ROLE %s`, b.targetRole.QualifiedName()))
-	} else {
+	if b.targetRole.name == "PUBLIC" {
 		q.WriteString(" FOR ALL ROLES")
+	} else {
+		q.WriteString(fmt.Sprintf(` FOR ROLE %s`, b.targetRole.QualifiedName()))
 	}
 
 	// object location

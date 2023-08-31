@@ -76,15 +76,19 @@ var roleQuery = NewBaseQuery(`
 	FROM mz_roles`)
 
 func RoleId(conn *sqlx.DB, roleName string) (string, error) {
-	p := map[string]string{"mz_roles.name": roleName}
-	q := roleQuery.QueryPredicate(p)
+	if roleName == "PUBLIC" {
+		return "p", nil
+	} else {
+		p := map[string]string{"mz_roles.name": roleName}
+		q := roleQuery.QueryPredicate(p)
 
-	var c RoleParams
-	if err := conn.Get(&c, q); err != nil {
-		return "", err
+		var c RoleParams
+		if err := conn.Get(&c, q); err != nil {
+			return "", err
+		}
+
+		return c.RoleId.String, nil
 	}
-
-	return c.RoleId.String, nil
 }
 
 func ScanRole(conn *sqlx.DB, id string) (RoleParams, error) {
