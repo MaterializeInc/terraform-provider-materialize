@@ -94,7 +94,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}
+	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
 	// managed cluster options
@@ -157,7 +157,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}
+	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
@@ -228,7 +228,7 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: clusterName}
+	o := materialize.MaterializeObject{Name: clusterName}
 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

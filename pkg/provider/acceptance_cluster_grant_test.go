@@ -22,7 +22,7 @@ func TestAccGrantCluster_basic(t *testing.T) {
 				Config: testAccGrantClusterResource(roleName, clusterName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "CLUSTER",
 							Name:       clusterName,
 						}, "materialize_cluster_grant.cluster_grant", roleName, privilege),
@@ -40,7 +40,7 @@ func TestAccGrantCluster_disappears(t *testing.T) {
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType: "CLUSTER",
 		Name:       clusterName,
 	}

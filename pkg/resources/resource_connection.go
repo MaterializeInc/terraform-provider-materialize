@@ -53,11 +53,11 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.ObjectSchemaStruct{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewConnection(meta.(*sqlx.DB), o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
@@ -81,7 +81,7 @@ func connectionDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewConnection(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

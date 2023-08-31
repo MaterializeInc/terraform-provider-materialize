@@ -56,7 +56,7 @@ func TestAccClusterReplica_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType:  "CLUSTER REPLICA",
 							Name:        replicaName,
 							ClusterName: clusterName,

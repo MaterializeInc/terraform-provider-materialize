@@ -54,7 +54,7 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewConnectionConfluentSchemaRegistryBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("url"); ok {

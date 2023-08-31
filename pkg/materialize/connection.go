@@ -30,7 +30,7 @@ type Connection struct {
 	DatabaseName   string
 }
 
-func NewConnection(conn *sqlx.DB, obj ObjectSchemaStruct) *Connection {
+func NewConnection(conn *sqlx.DB, obj MaterializeObject) *Connection {
 	return &Connection{
 		ddl:            Builder{conn, BaseConnection},
 		ConnectionName: obj.Name,
@@ -80,7 +80,7 @@ var connectionQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_connections.owner_id = mz_roles.id`)
 
-func ConnectionId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func ConnectionId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_connections.name": obj.Name,
 		"mz_databases.name":   obj.DatabaseName,

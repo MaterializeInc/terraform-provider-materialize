@@ -20,7 +20,7 @@ type ConnectionConfluentSchemaRegistryBuilder struct {
 	validate                              bool
 }
 
-func NewConnectionConfluentSchemaRegistryBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionConfluentSchemaRegistryBuilder {
+func NewConnectionConfluentSchemaRegistryBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionConfluentSchemaRegistryBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionConfluentSchemaRegistryBuilder{
 		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},

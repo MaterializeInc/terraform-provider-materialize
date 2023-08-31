@@ -24,7 +24,7 @@ func TestAccGrantSource_basic(t *testing.T) {
 				Config: testAccGrantSourceResource(roleName, sourceName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType:   "SOURCE",
 							Name:         sourceName,
 							SchemaName:   schemaName,
@@ -48,7 +48,7 @@ func TestAccGrantSource_disappears(t *testing.T) {
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType:   "SOURCE",
 		Name:         sourceName,
 		SchemaName:   schemaName,

@@ -13,7 +13,7 @@ func TestOwnershipAlter(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "my_role";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{
+		o := MaterializeObject{
 			ObjectType:   "TABLE",
 			DatabaseName: "database",
 			SchemaName:   "schema",

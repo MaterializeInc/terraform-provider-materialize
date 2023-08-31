@@ -17,7 +17,7 @@ type MaterializedViewBuilder struct {
 	selectStmt           string
 }
 
-func NewMaterializedViewBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *MaterializedViewBuilder {
+func NewMaterializedViewBuilder(conn *sqlx.DB, obj MaterializeObject) *MaterializedViewBuilder {
 	return &MaterializedViewBuilder{
 		ddl:                  Builder{conn, MaterializedView},
 		materializedViewName: obj.Name,
@@ -93,7 +93,7 @@ var materializedViewQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_materialized_views.owner_id = mz_roles.id`)
 
-func MaterializedViewId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func MaterializedViewId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_materialized_views.name": obj.Name,
 		"mz_schemas.name":            obj.SchemaName,

@@ -43,7 +43,7 @@ func testAccPreCheck(t *testing.T) {
 
 }
 
-func testAccCheckObjectDisappears(object materialize.ObjectSchemaStruct) resource.TestCheckFunc {
+func testAccCheckObjectDisappears(object materialize.MaterializeObject) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
 		_, err := db.Exec(fmt.Sprintf(`DROP %[1]s %[2]s;`, object.ObjectType, object.QualifiedName()))
@@ -51,7 +51,7 @@ func testAccCheckObjectDisappears(object materialize.ObjectSchemaStruct) resourc
 	}
 }
 
-func testAccCheckGrantRevoked(object materialize.ObjectSchemaStruct, roleName, privilege string) resource.TestCheckFunc {
+func testAccCheckGrantRevoked(object materialize.MaterializeObject, roleName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
 		_, err := db.Exec(fmt.Sprintf(
@@ -62,7 +62,7 @@ func testAccCheckGrantRevoked(object materialize.ObjectSchemaStruct, roleName, p
 	}
 }
 
-func testAccCheckGrantExists(object materialize.ObjectSchemaStruct, grantName, roleName, privilege string) resource.TestCheckFunc {
+func testAccCheckGrantExists(object materialize.MaterializeObject, grantName, roleName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)
 		_, ok := s.RootModule().Resources[grantName]

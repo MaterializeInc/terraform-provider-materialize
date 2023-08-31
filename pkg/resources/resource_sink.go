@@ -61,12 +61,12 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSink(meta.(*sqlx.DB), o)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.ObjectSchemaStruct{ObjectType: "SINK", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: "SINK", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSink(meta.(*sqlx.DB), o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
@@ -97,7 +97,7 @@ func sinkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSink(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

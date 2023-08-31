@@ -91,7 +91,7 @@ func TestAccConnSshTunnel_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnSshTunnelExists("materialize_connection_ssh_tunnel.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "CONNECTION",
 							Name:       connectionName,
 						},

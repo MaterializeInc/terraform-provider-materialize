@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var connPostgres = ObjectSchemaStruct{Name: "postgres_conn", SchemaName: "schema", DatabaseName: "database"}
+var connPostgres = MaterializeObject{Name: "postgres_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionPostgresCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

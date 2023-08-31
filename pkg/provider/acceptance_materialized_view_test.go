@@ -92,7 +92,7 @@ func TestAccMaterializedView_disappears(t *testing.T) {
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "MATERIALIZED VIEW",
 							Name:       viewName,
 						},

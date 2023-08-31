@@ -91,7 +91,7 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSinkKafkaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {

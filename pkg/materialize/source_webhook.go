@@ -28,7 +28,7 @@ type SourceWebhookBuilder struct {
 	checkExpression string
 }
 
-func NewSourceWebhookBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourceWebhookBuilder {
+func NewSourceWebhookBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceWebhookBuilder {
 	b := Builder{conn, BaseSource}
 	return &SourceWebhookBuilder{
 		Source: Source{b, obj.Name, obj.SchemaName, obj.DatabaseName},

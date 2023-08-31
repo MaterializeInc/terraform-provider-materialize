@@ -13,7 +13,7 @@ type Sink struct {
 	DatabaseName string
 }
 
-func NewSink(conn *sqlx.DB, obj ObjectSchemaStruct) *Sink {
+func NewSink(conn *sqlx.DB, obj MaterializeObject) *Sink {
 	return &Sink{
 		ddl:          Builder{conn, BaseSink},
 		SinkName:     obj.Name,
@@ -77,7 +77,7 @@ var sinkQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_sinks.owner_id = mz_roles.id`)
 
-func SinkId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func SinkId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_sinks.name":     obj.Name,
 		"mz_schemas.name":   obj.SchemaName,

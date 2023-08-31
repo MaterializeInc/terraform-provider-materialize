@@ -35,7 +35,7 @@ type TableBuilder struct {
 	column       []TableColumn
 }
 
-func NewTableBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *TableBuilder {
+func NewTableBuilder(conn *sqlx.DB, obj MaterializeObject) *TableBuilder {
 	return &TableBuilder{
 		ddl:          Builder{conn, Table},
 		tableName:    obj.Name,
@@ -110,7 +110,7 @@ var tableQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_tables.owner_id = mz_roles.id`)
 
-func TableId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func TableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_tables.name":    obj.Name,
 		"mz_schemas.name":   obj.SchemaName,

@@ -91,12 +91,12 @@ func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSource(meta.(*sqlx.DB), o)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.ObjectSchemaStruct{ObjectType: "SOURCE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSource(meta.(*sqlx.DB), o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
@@ -127,7 +127,7 @@ func sourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSource(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

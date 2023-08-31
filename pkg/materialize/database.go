@@ -12,7 +12,7 @@ type DatabaseBuilder struct {
 	databaseName string
 }
 
-func NewDatabaseBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *DatabaseBuilder {
+func NewDatabaseBuilder(conn *sqlx.DB, obj MaterializeObject) *DatabaseBuilder {
 	return &DatabaseBuilder{
 		ddl:          Builder{conn, Database},
 		databaseName: obj.Name,
@@ -50,7 +50,7 @@ var databaseQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_databases.owner_id = mz_roles.id`)
 
-func DatabaseId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func DatabaseId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.name": obj.Name})
 
 	var c DatabaseParams

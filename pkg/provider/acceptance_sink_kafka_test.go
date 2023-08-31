@@ -100,7 +100,7 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "SINK",
 							Name:       sinkName,
 						},

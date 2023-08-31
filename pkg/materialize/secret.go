@@ -16,7 +16,7 @@ type SecretBuilder struct {
 	value        string
 }
 
-func NewSecretBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SecretBuilder {
+func NewSecretBuilder(conn *sqlx.DB, obj MaterializeObject) *SecretBuilder {
 	return &SecretBuilder{
 		ddl:          Builder{conn, Secret},
 		secretName:   obj.Name,
@@ -80,7 +80,7 @@ var secretQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_secrets.owner_id = mz_roles.id`)
 
-func SecretId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func SecretId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_secrets.name":   obj.Name,
 		"mz_schemas.name":   obj.SchemaName,

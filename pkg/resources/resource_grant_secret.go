@@ -56,7 +56,7 @@ func grantSecretCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.ObjectSchemaStruct{
+	obj := materialize.MaterializeObject{
 		ObjectType:   "SECRET",
 		Name:         secretName,
 		SchemaName:   schemaName,
@@ -98,7 +98,7 @@ func grantSecretDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.ObjectSchemaStruct{
+		materialize.MaterializeObject{
 			ObjectType:   "SECRET",
 			Name:         secretName,
 			SchemaName:   schemaName,

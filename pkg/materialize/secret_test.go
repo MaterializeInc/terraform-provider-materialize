@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var secret = ObjectSchemaStruct{Name: "secret", SchemaName: "schema", DatabaseName: "database"}
+var secret = MaterializeObject{Name: "secret", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSecretCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

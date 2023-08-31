@@ -48,7 +48,7 @@ func TestAccRole_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists("materialize_role.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "ROLE",
 							Name:       roleName,
 						},

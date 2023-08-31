@@ -52,7 +52,7 @@ type SourceKafkaBuilder struct {
 	exposeProgress   string
 }
 
-func NewSourceKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourceKafkaBuilder {
+func NewSourceKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceKafkaBuilder {
 	b := Builder{conn, BaseSink}
 	return &SourceKafkaBuilder{
 		Source: Source{b, obj.Name, obj.SchemaName, obj.DatabaseName},

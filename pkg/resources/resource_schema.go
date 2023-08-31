@@ -72,7 +72,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSchemaBuilder(meta.(*sqlx.DB), o)
 
 	// create resource
@@ -105,7 +105,7 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 	if d.HasChange("ownership_role") {
@@ -122,7 +122,7 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSchemaBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

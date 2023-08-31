@@ -112,15 +112,15 @@ type PrivilegeBuilder struct {
 	ddl       Builder
 	role      MaterializeRole
 	privilege string
-	object    ObjectSchemaStruct
+	object    MaterializeObject
 }
 
-func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, object ObjectSchemaStruct) *PrivilegeBuilder {
+func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, obj MaterializeObject) *PrivilegeBuilder {
 	return &PrivilegeBuilder{
 		ddl:       Builder{conn, Privilege},
 		role:      MaterializeRole{name: role},
 		privilege: privilege,
-		object:    object,
+		object:    obj,
 	}
 }
 

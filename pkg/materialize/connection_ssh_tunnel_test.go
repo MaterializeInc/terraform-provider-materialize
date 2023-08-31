@@ -14,7 +14,7 @@ func TestConnectionSshTunnelCreate(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."ssh_conn" TO SSH TUNNEL \(HOST 'localhost', USER 'user', PORT 123\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "ssh_conn", SchemaName: "schema", DatabaseName: "database"}
+		o := MaterializeObject{Name: "ssh_conn", SchemaName: "schema", DatabaseName: "database"}
 		b := NewConnectionSshTunnelBuilder(db, o)
 		b.SSHHost("localhost")
 		b.SSHPort(123)

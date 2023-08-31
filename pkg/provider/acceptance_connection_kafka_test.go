@@ -90,7 +90,7 @@ func TestAccConnKafka_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "CONNECTION",
 							Name:       connectionName,
 						},

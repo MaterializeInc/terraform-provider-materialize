@@ -115,7 +115,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	clusterName := d.Get("cluster_name").(string)
 	bodyFormat := d.Get("body_format").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSourceWebhookBuilder(meta.(*sqlx.DB), o)
 
 	b.ClusterName(clusterName).

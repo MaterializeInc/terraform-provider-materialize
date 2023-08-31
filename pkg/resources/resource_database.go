@@ -61,7 +61,7 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "DATABASE", Name: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "DATABASE", Name: databaseName}
 	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), o)
 
 	// create resource
@@ -93,7 +93,7 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "DATABASE", Name: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "DATABASE", Name: databaseName}
 	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 	if d.HasChange("ownership_role") {
@@ -109,7 +109,7 @@ func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: databaseName}
+	o := materialize.MaterializeObject{Name: databaseName}
 	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

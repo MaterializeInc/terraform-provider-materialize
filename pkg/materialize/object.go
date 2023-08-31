@@ -4,7 +4,7 @@ import "github.com/jmoiron/sqlx"
 
 // Any Materialize Database Object. Will contain name and optionally database and schema
 // Cluster name only applies to cluster replicas
-type ObjectSchemaStruct struct {
+type MaterializeObject struct {
 	ObjectType   string
 	Name         string
 	SchemaName   string
@@ -12,8 +12,8 @@ type ObjectSchemaStruct struct {
 	ClusterName  string
 }
 
-func GetObjectSchemaStruct(v interface{}) ObjectSchemaStruct {
-	var conn ObjectSchemaStruct
+func GetMaterializeObject(v interface{}) MaterializeObject {
+	var conn MaterializeObject
 	u := v.([]interface{})[0].(map[string]interface{})
 	if v, ok := u["name"]; ok {
 		conn.Name = v.(string)
@@ -36,7 +36,7 @@ func GetObjectSchemaStruct(v interface{}) ObjectSchemaStruct {
 	return conn
 }
 
-func (g *ObjectSchemaStruct) QualifiedName() string {
+func (g *MaterializeObject) QualifiedName() string {
 	fields := []string{}
 
 	if g.ClusterName != "" {
@@ -55,7 +55,7 @@ func (g *ObjectSchemaStruct) QualifiedName() string {
 	return QualifiedName(fields...)
 }
 
-func ObjectId(conn *sqlx.DB, object ObjectSchemaStruct) (string, error) {
+func ObjectId(conn *sqlx.DB, object MaterializeObject) (string, error) {
 	var i string
 	var e error
 

@@ -12,7 +12,7 @@ func TestClusterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "cluster"}
+		o := MaterializeObject{Name: "cluster"}
 		if err := NewClusterBuilder(db, o).Create(); err != nil {
 			t.Fatal(err)
 		}
@@ -23,7 +23,7 @@ func TestClusterManagedSizeCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "cluster"}
+		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
 		if err := b.Create(); err != nil {
@@ -36,7 +36,7 @@ func TestClusterManagedSizeDiskCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', DISK;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "cluster"}
+		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
 		b.Disk(true)
@@ -50,7 +50,7 @@ func TestClusterManagedSizeReplicationCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "cluster"}
+		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
 		b.ReplicationFactor(2)
@@ -64,7 +64,7 @@ func TestClusterManagedAllCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2, AVAILABILITY ZONES = \['us-east-1'\], INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "cluster"}
+		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
 		b.ReplicationFactor(2)
@@ -82,7 +82,7 @@ func TestClusterDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CLUSTER "cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "cluster"}
+		o := MaterializeObject{Name: "cluster"}
 		if err := NewClusterBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}

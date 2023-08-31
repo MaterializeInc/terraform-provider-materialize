@@ -21,7 +21,7 @@ type ClusterBuilder struct {
 	idleArrangementMergeEffort int
 }
 
-func NewClusterBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ClusterBuilder {
+func NewClusterBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterBuilder {
 	return &ClusterBuilder{
 		ddl:         Builder{conn, Cluster},
 		clusterName: obj.Name,
@@ -191,7 +191,7 @@ var clusterQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_clusters.owner_id = mz_roles.id`)
 
-func ClusterId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func ClusterId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	q := clusterQuery.QueryPredicate(map[string]string{"mz_clusters.name": obj.Name})
 
 	var c ClusterParams

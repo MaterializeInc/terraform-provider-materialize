@@ -16,7 +16,7 @@ type ViewBuilder struct {
 	selectStmt   string
 }
 
-func NewViewBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ViewBuilder {
+func NewViewBuilder(conn *sqlx.DB, obj MaterializeObject) *ViewBuilder {
 	return &ViewBuilder{
 		ddl:          Builder{conn, View},
 		viewName:     obj.Name,
@@ -75,7 +75,7 @@ var viewQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_views.owner_id = mz_roles.id`)
 
-func ViewId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func ViewId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_views.name":     obj.Name,
 		"mz_schemas.name":   obj.SchemaName,

@@ -64,7 +64,7 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 
 	var dId string
 	if database != "" {
-		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
+		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.MaterializeObject{Name: database})
 		if err != nil {
 			return diag.FromErr(err)
 		}

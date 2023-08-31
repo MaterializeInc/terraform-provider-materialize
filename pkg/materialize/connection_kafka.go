@@ -46,7 +46,7 @@ type ConnectionKafkaBuilder struct {
 	validate            bool
 }
 
-func NewConnectionKafkaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionKafkaBuilder {
+func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionKafkaBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionKafkaBuilder{
 		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},

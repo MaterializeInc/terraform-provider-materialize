@@ -85,7 +85,7 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SECRET", Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SECRET", Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("value"); ok {
@@ -123,12 +123,12 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{ObjectType: "SECRET", Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SECRET", Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), o)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.ObjectSchemaStruct{ObjectType: "SECRET", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: "SECRET", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSecretBuilder(meta.(*sqlx.DB), o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
@@ -159,7 +159,7 @@ func secretDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: secretName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSecretBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

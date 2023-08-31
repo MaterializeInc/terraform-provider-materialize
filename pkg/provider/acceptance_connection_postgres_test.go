@@ -98,7 +98,7 @@ func TestAccConnPostgres_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "CONNECTION",
 							Name:       connectionName,
 						},

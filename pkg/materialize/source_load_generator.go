@@ -110,7 +110,7 @@ type SourceLoadgenBuilder struct {
 	tpchOptions       TPCHOptions
 }
 
-func NewSourceLoadgenBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourceLoadgenBuilder {
+func NewSourceLoadgenBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceLoadgenBuilder {
 	b := Builder{conn, BaseSource}
 	return &SourceLoadgenBuilder{
 		Source: Source{b, obj.Name, obj.SchemaName, obj.DatabaseName},

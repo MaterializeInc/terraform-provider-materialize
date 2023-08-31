@@ -8,17 +8,17 @@ import (
 
 type OwnershipBuilder struct {
 	ddl    Builder
-	object ObjectSchemaStruct
+	object MaterializeObject
 }
 
-func NewOwnershipBuilder(conn *sqlx.DB, object ObjectSchemaStruct) *OwnershipBuilder {
+func NewOwnershipBuilder(conn *sqlx.DB, object MaterializeObject) *OwnershipBuilder {
 	return &OwnershipBuilder{
 		ddl:    Builder{conn, Ownership},
 		object: object,
 	}
 }
 
-func (b *OwnershipBuilder) Object(o ObjectSchemaStruct) *OwnershipBuilder {
+func (b *OwnershipBuilder) Object(o MaterializeObject) *OwnershipBuilder {
 	b.object = o
 	return b
 }

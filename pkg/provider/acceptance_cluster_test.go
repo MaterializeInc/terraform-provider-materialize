@@ -98,9 +98,9 @@ func TestAccCluster_disappears(t *testing.T) {
 				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "2-2", "1", "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckObjectDisappears(materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName}),
+					testAccCheckObjectDisappears(materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}),
 					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					testAccCheckObjectDisappears(materialize.ObjectSchemaStruct{ObjectType: "CLUSTER", Name: clusterName + "_managed"}),
+					testAccCheckObjectDisappears(materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName + "_managed"}),
 				),
 				ExpectNonEmptyPlan: true,
 			},

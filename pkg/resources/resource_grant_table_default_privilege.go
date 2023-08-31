@@ -70,14 +70,14 @@ func grantTableDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDat
 
 	var dId, sId string
 	if database != "" {
-		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: database})
+		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.MaterializeObject{Name: database})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	if schema != "" {
-		sId, err = materialize.SchemaId(meta.(*sqlx.DB), materialize.ObjectSchemaStruct{Name: schema, DatabaseName: database})
+		sId, err = materialize.SchemaId(meta.(*sqlx.DB), materialize.MaterializeObject{Name: schema, DatabaseName: database})
 		if err != nil {
 			return diag.FromErr(err)
 		}

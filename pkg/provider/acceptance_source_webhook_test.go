@@ -63,7 +63,7 @@ func TestAccSourceWebhook_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "SOURCE",
 							Name:       sourceName,
 						},
