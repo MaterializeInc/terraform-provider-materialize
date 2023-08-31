@@ -24,7 +24,7 @@ func TestAccGrantSecret_basic(t *testing.T) {
 				Config: testAccGrantSecretResource(roleName, secretName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType:   "SECRET",
 							Name:         secretName,
 							SchemaName:   schemaName,
@@ -48,7 +48,7 @@ func TestAccGrantSecret_disappears(t *testing.T) {
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType:   "SECRET",
 		Name:         secretName,
 		SchemaName:   schemaName,

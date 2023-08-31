@@ -91,7 +91,7 @@ func TestAccSecret_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "SECRET",
 							Name:       secretName,
 						},

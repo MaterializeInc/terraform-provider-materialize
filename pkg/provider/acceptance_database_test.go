@@ -61,7 +61,7 @@ func TestAccDatabase_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatabaseExists("materialize_database.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "DATABASE",
 							Name:       databaseName,
 						},

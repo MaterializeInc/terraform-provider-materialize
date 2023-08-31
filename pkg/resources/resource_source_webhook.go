@@ -115,7 +115,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	clusterName := d.Get("cluster_name").(string)
 	bodyFormat := d.Get("body_format").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSourceWebhookBuilder(meta.(*sqlx.DB), o)
 
 	b.ClusterName(clusterName).
@@ -154,7 +154,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)

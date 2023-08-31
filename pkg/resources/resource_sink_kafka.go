@@ -91,7 +91,7 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSinkKafkaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
@@ -142,7 +142,7 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SINK", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)

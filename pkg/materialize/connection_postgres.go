@@ -24,7 +24,7 @@ type ConnectionPostgresBuilder struct {
 	validate               bool
 }
 
-func NewConnectionPostgresBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionPostgresBuilder {
+func NewConnectionPostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionPostgresBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionPostgresBuilder{
 		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},

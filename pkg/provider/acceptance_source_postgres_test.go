@@ -119,7 +119,7 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "SOURCE",
 							Name:       sourceName,
 						},

@@ -26,7 +26,7 @@ func TestAccGrantDatabase_basic(t *testing.T) {
 						Config: testAccGrantDatabaseResource(roleName, databaseName, privilege),
 						Check: resource.ComposeTestCheckFunc(
 							testAccCheckGrantExists(
-								materialize.ObjectSchemaStruct{
+								materialize.MaterializeObject{
 									ObjectType: "DATABASE",
 									Name:       databaseName,
 								}, "materialize_database_grant.database_grant", roleName, privilege),
@@ -46,7 +46,7 @@ func TestAccGrantDatabase_disappears(t *testing.T) {
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType: "DATABASE",
 		Name:       databaseName,
 	}

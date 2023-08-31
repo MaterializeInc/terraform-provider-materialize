@@ -19,7 +19,7 @@ type SourcePostgresBuilder struct {
 	exposeProgress     string
 }
 
-func NewSourcePostgresBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SourcePostgresBuilder {
+func NewSourcePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *SourcePostgresBuilder {
 	b := Builder{conn, BaseSource}
 	return &SourcePostgresBuilder{
 		Source: Source{b, obj.Name, obj.SchemaName, obj.DatabaseName},

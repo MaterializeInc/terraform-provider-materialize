@@ -154,7 +154,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSourceLoadgenBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
@@ -196,7 +196,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SOURCE", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)

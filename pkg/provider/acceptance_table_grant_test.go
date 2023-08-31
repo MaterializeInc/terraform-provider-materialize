@@ -24,7 +24,7 @@ func TestAccGrantTable_basic(t *testing.T) {
 				Config: testAccGrantTableResource(roleName, tableName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType:   "TABLE",
 							Name:         tableName,
 							SchemaName:   schemaName,
@@ -48,7 +48,7 @@ func TestAccGrantTable_disappears(t *testing.T) {
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType:   "TABLE",
 		Name:         tableName,
 		SchemaName:   schemaName,

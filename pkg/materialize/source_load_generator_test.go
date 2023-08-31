@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var sourceLoadgen = ObjectSchemaStruct{Name: "source", SchemaName: "schema", DatabaseName: "database"}
+var sourceLoadgen = MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSourceLoadgenCounterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

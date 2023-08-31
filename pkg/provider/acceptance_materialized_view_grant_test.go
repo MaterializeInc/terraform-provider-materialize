@@ -24,7 +24,7 @@ func TestAccGrantMaterializedView_basic(t *testing.T) {
 				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType:   "MATERIALIZED VIEW",
 							Name:         materializedViewName,
 							SchemaName:   schemaName,
@@ -48,7 +48,7 @@ func TestAccGrantMaterializedView_disappears(t *testing.T) {
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType:   "MATERIALIZED VIEW",
 		Name:         materializedViewName,
 		SchemaName:   schemaName,

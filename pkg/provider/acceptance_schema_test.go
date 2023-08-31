@@ -60,7 +60,7 @@ func TestAccSchema_disappears(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_schema.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_schema.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."%s"`, schemaName)),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "SCHEMA",
 							Name:       schemaName,
 						},

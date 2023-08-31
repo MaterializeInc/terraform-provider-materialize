@@ -69,7 +69,7 @@ type Source struct {
 	DatabaseName string
 }
 
-func NewSource(conn *sqlx.DB, obj ObjectSchemaStruct) *Source {
+func NewSource(conn *sqlx.DB, obj MaterializeObject) *Source {
 	return &Source{
 		ddl:          Builder{conn, BaseSource},
 		SourceName:   obj.Name,
@@ -136,7 +136,7 @@ var sourceQuery = NewBaseQuery(`
 		JOIN mz_roles
 			ON mz_sources.owner_id = mz_roles.id`)
 
-func SourceId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func SourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_sources.name":   obj.Name,
 		"mz_schemas.name":   obj.SchemaName,

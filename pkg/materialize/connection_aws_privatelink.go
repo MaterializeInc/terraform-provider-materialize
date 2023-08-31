@@ -14,7 +14,7 @@ type ConnectionAwsPrivatelinkBuilder struct {
 	privateLinkAvailabilityZones []string
 }
 
-func NewConnectionAwsPrivatelinkBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionAwsPrivatelinkBuilder {
+func NewConnectionAwsPrivatelinkBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionAwsPrivatelinkBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionAwsPrivatelinkBuilder{
 		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},

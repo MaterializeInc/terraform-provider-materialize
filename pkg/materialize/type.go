@@ -49,7 +49,7 @@ type Type struct {
 	mapProperties  []MapProperties
 }
 
-func NewTypeBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *Type {
+func NewTypeBuilder(conn *sqlx.DB, obj MaterializeObject) *Type {
 	return &Type{
 		ddl:          Builder{conn, BaseType},
 		typeName:     obj.Name,
@@ -133,7 +133,7 @@ var typeQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_types.owner_id = mz_roles.id`)
 
-func TypeId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func TypeId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_types.name":     obj.Name,
 		"mz_schemas.name":   obj.SchemaName,

@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var sourceWebhook = ObjectSchemaStruct{Name: "webhook_source", SchemaName: "schema", DatabaseName: "database"}
+var sourceWebhook = MaterializeObject{Name: "webhook_source", SchemaName: "schema", DatabaseName: "database"}
 var checkOptions = []CheckOptionsStruct{
 	{
 		Field: FieldStruct{

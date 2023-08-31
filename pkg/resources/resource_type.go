@@ -131,7 +131,7 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewTypeBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("list_properties"); ok {
@@ -151,7 +151,7 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TYPE", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -175,12 +175,11 @@ func typeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "TYPE", o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
@@ -195,7 +194,7 @@ func typeDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewTypeBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

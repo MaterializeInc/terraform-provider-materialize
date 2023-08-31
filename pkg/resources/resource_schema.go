@@ -72,7 +72,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSchemaBuilder(meta.(*sqlx.DB), o)
 
 	// create resource
@@ -82,7 +82,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SCHEMA", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -105,12 +105,11 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
+	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-
-		o := materialize.ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName}
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "SCHEMA", o)
-
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
@@ -123,7 +122,7 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSchemaBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {

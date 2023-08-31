@@ -12,22 +12,22 @@ import (
 func TestObjectName(t *testing.T) {
 	r := require.New(t)
 
-	on := ObjectSchemaStruct{Name: "name"}
+	on := MaterializeObject{Name: "name"}
 	r.Equal(on.QualifiedName(), `"name"`)
 
-	ond := ObjectSchemaStruct{Name: "name", DatabaseName: "database"}
+	ond := MaterializeObject{Name: "name", DatabaseName: "database"}
 	r.Equal(ond.QualifiedName(), `"database"."name"`)
 
-	onsd := ObjectSchemaStruct{Name: "name", SchemaName: "schema", DatabaseName: "database"}
+	onsd := MaterializeObject{Name: "name", SchemaName: "schema", DatabaseName: "database"}
 	r.Equal(onsd.QualifiedName(), `"database"."schema"."name"`)
 
-	onc := ObjectSchemaStruct{Name: "name", ClusterName: "cluster"}
+	onc := MaterializeObject{Name: "name", ClusterName: "cluster"}
 	r.Equal(onc.QualifiedName(), `"cluster"."name"`)
 }
 
 func TestObjectId(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		o := ObjectSchemaStruct{ObjectType: "DATABASE", Name: "materialize"}
+		o := MaterializeObject{ObjectType: "DATABASE", Name: "materialize"}
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'materialize'`

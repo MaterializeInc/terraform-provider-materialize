@@ -42,7 +42,7 @@ func grantClusterCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	privilege := d.Get("privilege").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	obj := materialize.ObjectSchemaStruct{
+	obj := materialize.MaterializeObject{
 		ObjectType: "CLUSTER",
 		Name:       clusterName,
 	}
@@ -80,7 +80,7 @@ func grantClusterDelete(ctx context.Context, d *schema.ResourceData, meta interf
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.ObjectSchemaStruct{
+		materialize.MaterializeObject{
 			ObjectType: "CLUSTER",
 			Name:       clusterName,
 		},

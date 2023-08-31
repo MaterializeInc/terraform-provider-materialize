@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var connConfluentSchema = ObjectSchemaStruct{Name: "csr_conn", SchemaName: "schema", DatabaseName: "database"}
+var connConfluentSchema = MaterializeObject{Name: "csr_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

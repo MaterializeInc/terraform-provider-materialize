@@ -55,7 +55,7 @@ func grantViewCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	obj := materialize.ObjectSchemaStruct{
+	obj := materialize.MaterializeObject{
 		ObjectType:   "VIEW",
 		Name:         viewName,
 		SchemaName:   schemaName,
@@ -97,7 +97,7 @@ func grantViewDelete(ctx context.Context, d *schema.ResourceData, meta interface
 		meta.(*sqlx.DB),
 		roleName,
 		privilege,
-		materialize.ObjectSchemaStruct{
+		materialize.MaterializeObject{
 			ObjectType:   "VIEW",
 			Name:         viewName,
 			SchemaName:   schemaName,

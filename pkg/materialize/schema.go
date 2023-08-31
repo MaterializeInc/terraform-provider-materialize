@@ -14,7 +14,7 @@ type SchemaBuilder struct {
 	databaseName string
 }
 
-func NewSchemaBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *SchemaBuilder {
+func NewSchemaBuilder(conn *sqlx.DB, obj MaterializeObject) *SchemaBuilder {
 	return &SchemaBuilder{
 		ddl:          Builder{conn, Schema},
 		schemaName:   obj.Name,
@@ -58,7 +58,7 @@ var schemaQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_schemas.owner_id = mz_roles.id`)
 
-func SchemaId(conn *sqlx.DB, obj ObjectSchemaStruct) (string, error) {
+func SchemaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_schemas.name":   obj.Name,
 		"mz_databases.name": obj.DatabaseName,

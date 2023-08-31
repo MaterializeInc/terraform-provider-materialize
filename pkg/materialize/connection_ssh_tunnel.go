@@ -15,7 +15,7 @@ type ConnectionSshTunnelBuilder struct {
 	sshPort int
 }
 
-func NewConnectionSshTunnelBuilder(conn *sqlx.DB, obj ObjectSchemaStruct) *ConnectionSshTunnelBuilder {
+func NewConnectionSshTunnelBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionSshTunnelBuilder {
 	b := Builder{conn, BaseConnection}
 	return &ConnectionSshTunnelBuilder{
 		Connection: Connection{b, obj.Name, obj.SchemaName, obj.DatabaseName},

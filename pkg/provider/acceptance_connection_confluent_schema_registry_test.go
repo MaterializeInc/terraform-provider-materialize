@@ -89,7 +89,7 @@ func TestAccConnConfluentSchemaRegistry_disappears(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.test"),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "CONNECTION",
 							Name:       connectionName,
 						},

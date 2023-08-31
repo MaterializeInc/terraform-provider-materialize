@@ -94,7 +94,7 @@ func TestAccType_disappears(t *testing.T) {
 					testAccCheckTypeExists("materialize_type.test"),
 					resource.TestCheckResourceAttr("materialize_type.test", "name", typeName),
 					testAccCheckObjectDisappears(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType: "TYPE",
 							Name:       typeName,
 						},

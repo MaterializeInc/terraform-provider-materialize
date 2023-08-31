@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var sourcePostgres = ObjectSchemaStruct{Name: "source", SchemaName: "schema", DatabaseName: "database"}
+var sourcePostgres = MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 var tableInput = []TableStruct{
 	{Name: "table_1"},
 	{Name: "table_2", Alias: "table_alias"},

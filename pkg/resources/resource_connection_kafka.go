@@ -90,7 +90,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	o := materialize.ObjectSchemaStruct{Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewConnectionKafkaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
@@ -147,7 +147,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), "CONNECTION", o)
+		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)

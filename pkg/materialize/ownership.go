@@ -7,25 +7,23 @@ import (
 )
 
 type OwnershipBuilder struct {
-	ddl           Builder
-	ownershipType EntityType
-	object        ObjectSchemaStruct
+	ddl    Builder
+	object MaterializeObject
 }
 
-func NewOwnershipBuilder(conn *sqlx.DB, ownershipType EntityType, object ObjectSchemaStruct) *OwnershipBuilder {
+func NewOwnershipBuilder(conn *sqlx.DB, object MaterializeObject) *OwnershipBuilder {
 	return &OwnershipBuilder{
-		ddl:           Builder{conn, Ownership},
-		ownershipType: ownershipType,
-		object:        object,
+		ddl:    Builder{conn, Ownership},
+		object: object,
 	}
 }
 
-func (b *OwnershipBuilder) Object(o ObjectSchemaStruct) *OwnershipBuilder {
+func (b *OwnershipBuilder) Object(o MaterializeObject) *OwnershipBuilder {
 	b.object = o
 	return b
 }
 
 func (b *OwnershipBuilder) Alter(roleName string) error {
-	q := fmt.Sprintf(`ALTER %s %s OWNER TO "%s";`, b.ownershipType, b.object.QualifiedName(), roleName)
+	q := fmt.Sprintf(`ALTER %s %s OWNER TO "%s";`, b.object.ObjectType, b.object.QualifiedName(), roleName)
 	return b.ddl.exec(q)
 }

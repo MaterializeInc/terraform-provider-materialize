@@ -14,7 +14,7 @@ func TestMaterializedViewCreate(t *testing.T) {
 			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" AS SELECT 1 FROM t1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "materialized_view", SchemaName: "schema", DatabaseName: "database"}
+		o := MaterializeObject{Name: "materialized_view", SchemaName: "schema", DatabaseName: "database"}
 		b := NewMaterializedViewBuilder(db, o)
 		b.SelectStmt("SELECT 1 FROM t1")
 
@@ -28,7 +28,7 @@ func TestMaterializedViewDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP MATERIALIZED VIEW "database"."schema"."materialized_view";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "materialized_view", SchemaName: "schema", DatabaseName: "database"}
+		o := MaterializeObject{Name: "materialized_view", SchemaName: "schema", DatabaseName: "database"}
 		if err := NewMaterializedViewBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}

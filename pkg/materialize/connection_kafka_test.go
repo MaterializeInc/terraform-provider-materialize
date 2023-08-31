@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var connKafka = ObjectSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"}
+var connKafka = MaterializeObject{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

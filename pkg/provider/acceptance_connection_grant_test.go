@@ -24,7 +24,7 @@ func TestAccGrantConnection_basic(t *testing.T) {
 				Config: testAccGrantConnectionResource(roleName, connectionName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
-						materialize.ObjectSchemaStruct{
+						materialize.MaterializeObject{
 							ObjectType:   "CONNECTION",
 							Name:         connectionName,
 							SchemaName:   schemaName,
@@ -49,7 +49,7 @@ func TestAccGrantConnection_disappears(t *testing.T) {
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
-	o := materialize.ObjectSchemaStruct{
+	o := materialize.MaterializeObject{
 		ObjectType:   "CONNECTION",
 		Name:         connectionName,
 		SchemaName:   schemaName,

@@ -14,7 +14,7 @@ func TestSinkKafkaCreate(t *testing.T) {
 			`CREATE SINK "database"."schema"."sink" FROM "database"."schema"."table" INTO KAFKA CONNECTION "database"."schema"."kafka_connection" KEY \(key_1, key_2\) \(TOPIC 'test_avro_topic'\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."public"."csr_connection" ENVELOPE UPSERT WITH \( SIZE = 'xsmall' SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		o := ObjectSchemaStruct{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
+		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSinkKafkaBuilder(db, o)
 		b.Size("xsmall")
 		b.From(IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"})

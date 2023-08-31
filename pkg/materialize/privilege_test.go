@@ -47,7 +47,7 @@ func TestPrivilegeGrant(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`GRANT CREATE ON DATABASE "materialize" TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewPrivilegeBuilder(db, "joe", "CREATE", ObjectSchemaStruct{ObjectType: "DATABASE", Name: "materialize"})
+		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: "DATABASE", Name: "materialize"})
 		if err := b.Grant(); err != nil {
 			t.Fatal(err)
 		}
@@ -58,7 +58,7 @@ func TestPrivilegeRevoke(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewPrivilegeBuilder(db, "joe", "CREATE", ObjectSchemaStruct{ObjectType: "DATABASE", Name: "materialize"})
+		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: "DATABASE", Name: "materialize"})
 		if err := b.Revoke(); err != nil {
 			t.Fatal(err)
 		}
