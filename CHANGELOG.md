@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.9 - 2023-08-31
+
+### Features
+* Support FOR SCHEMAS for postgres source [#262](https://github.com/MaterializeInc/terraform-provider-materialize/pull/262)
+
+### BugFixes
+* Remove unnecessary default privilege attributes [#294](https://github.com/MaterializeInc/terraform-provider-materialize/pull/294)
+
+### Misc
+
 ## 0.1.8 - 2023-08-24
 
 ### Features
