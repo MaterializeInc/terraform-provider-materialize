@@ -144,21 +144,25 @@ func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate, objectType string
 	SELECT
 		mz_default_privileges.object_type,
 		mz_default_privileges.grantee AS grantee_id,
-		mz_roles.name AS role_name,
+		\(CASE WHEN mz_default_privileges.grantee = 'p' THEN 'PUBLIC' ELSE grantee.name END\) AS grantee_name,
+		mz_default_privileges.role_id AS target_id,
+		\(CASE WHEN mz_default_privileges.role_id = 'p' THEN 'PUBLIC' ELSE target.name END\) AS target_name,
 		mz_default_privileges.database_id AS database_id,
 		mz_default_privileges.schema_id AS schema_id,
 		mz_default_privileges.privileges
 	FROM mz_default_privileges
-	LEFT JOIN mz_roles
-		ON mz_default_privileges.role_id = mz_roles.id
+	LEFT JOIN mz_roles AS grantee
+		ON mz_default_privileges.grantee = grantee.id
+	LEFT JOIN mz_roles AS target
+		ON mz_default_privileges.role_id = target.id
 	LEFT JOIN mz_schemas
 		ON mz_default_privileges.schema_id = mz_schemas.id
 	LEFT JOIN mz_databases
 		ON mz_default_privileges.database_id = mz_databases.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"object_type", "grantee_id", "role_name", "schema_id", "database_id", "privileges"}).
-		AddRow(objectType, "u1", "target", nil, nil, "{u1=UC/u18}")
+	ir := mock.NewRows([]string{"object_type", "grantee_id", "grantee_name", "target_id", "target_name", "database_id", "schema_id", "privileges"}).
+		AddRow(objectType, "u1", "grantee", "u1", "target", nil, nil, "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

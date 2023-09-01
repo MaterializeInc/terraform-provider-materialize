@@ -91,7 +91,7 @@ func TestDefaultPrivilegeGrantAllRoles(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ALL ROLES GRANT SELECT ON TABLES TO "managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewDefaultPrivilegeBuilder(db, "TABLE", "managers", "ALL", "SELECT")
+		b := NewDefaultPrivilegeBuilder(db, "TABLE", "managers", "PUBLIC", "SELECT")
 		if err := b.Grant(); err != nil {
 			t.Fatal(err)
 		}
