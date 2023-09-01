@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.10 - 2023-09-01
+
+### Features
+
+### BugFixes
+* Fix `ALL ROLES` for default grants [#300](https://github.com/MaterializeInc/terraform-provider-materialize/pull/300)
+
+### Misc
+
 ## 0.1.9 - 2023-08-31
 
 ### Features
