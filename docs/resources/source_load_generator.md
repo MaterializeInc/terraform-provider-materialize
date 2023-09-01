@@ -64,20 +64,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 Optional:
 
 - `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
-- `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--auction_options--table))
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
-
-<a id="nestedblock--auction_options--table"></a>
-### Nested Schema for `auction_options.table`
-
-Required:
-
-- `name` (String) The name of the table.
-
-Optional:
-
-- `alias` (String) The alias of the table.
-
 
 
 <a id="nestedblock--counter_options"></a>
@@ -96,20 +83,7 @@ Optional:
 Optional:
 
 - `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
-- `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--marketing_options--table))
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
-
-<a id="nestedblock--marketing_options--table"></a>
-### Nested Schema for `marketing_options.table`
-
-Required:
-
-- `name` (String) The name of the table.
-
-Optional:
-
-- `alias` (String) The alias of the table.
-
 
 
 <a id="nestedblock--tpch_options"></a>
@@ -118,20 +92,7 @@ Optional:
 Optional:
 
 - `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
-- `table` (Block List) Creates subsources for specific tables. (see [below for nested schema](#nestedblock--tpch_options--table))
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
-
-<a id="nestedblock--tpch_options--table"></a>
-### Nested Schema for `tpch_options.table`
-
-Required:
-
-- `name` (String) The name of the table.
-
-Optional:
-
-- `alias` (String) The alias of the table.
-
 
 
 <a id="nestedatt--subsource"></a>
