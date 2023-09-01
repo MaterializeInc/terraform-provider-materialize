@@ -33,7 +33,7 @@ func TestSourceLoadgenCounterCreate(t *testing.T) {
 func TestSourceLoadgenAuctionCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR AUCTION \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR ALL TABLES WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR AUCTION \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
@@ -53,7 +53,7 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 func TestSourceLoadgenMarketingCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR MARKETING \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR ALL TABLES WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR MARKETING \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
@@ -73,7 +73,7 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR TABLES \(schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1\) WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
@@ -82,16 +82,6 @@ func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 		b.TPCHOptions(TPCHOptions{
 			TickInterval: "1s",
 			ScaleFactor:  0.01,
-			Table: []TableStruct{
-				{
-					Name:  "schema1.table_1",
-					Alias: "s1_table_1",
-				},
-				{
-					Name:  "schema2.table_1",
-					Alias: "s2_table_1",
-				},
-			},
 		})
 
 		if err := b.Create(); err != nil {

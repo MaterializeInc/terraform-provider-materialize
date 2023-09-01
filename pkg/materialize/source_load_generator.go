@@ -33,7 +33,6 @@ func GetCounterOptionsStruct(v interface{}) CounterOptions {
 type AuctionOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []TableStruct
 }
 
 func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
@@ -46,17 +45,12 @@ func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
 	if v, ok := u["scale_factor"]; ok {
 		o.ScaleFactor = v.(float64)
 	}
-
-	if v, ok := u["table"]; ok {
-		o.Table = GetTableStruct(v.([]interface{}))
-	}
 	return o
 }
 
 type MarketingOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []TableStruct
 }
 
 func GetMarketingOptionsStruct(v interface{}) MarketingOptions {
@@ -69,17 +63,12 @@ func GetMarketingOptionsStruct(v interface{}) MarketingOptions {
 	if v, ok := u["scale_factor"]; ok {
 		o.ScaleFactor = v.(float64)
 	}
-
-	if v, ok := u["table"]; ok {
-		o.Table = GetTableStruct(v.([]interface{}))
-	}
 	return o
 }
 
 type TPCHOptions struct {
 	TickInterval string
 	ScaleFactor  float64
-	Table        []TableStruct
 }
 
 func GetTPCHOptionsStruct(v interface{}) TPCHOptions {
@@ -91,10 +80,6 @@ func GetTPCHOptionsStruct(v interface{}) TPCHOptions {
 
 	if v, ok := u["scale_factor"]; ok {
 		o.ScaleFactor = v.(float64)
-	}
-
-	if v, ok := u["table"]; ok {
-		o.Table = GetTableStruct(v.([]interface{}))
 	}
 	return o
 }
@@ -185,34 +170,6 @@ func (b *SourceLoadgenBuilder) Create() error {
 	if len(p) != 0 {
 		p := strings.Join(p[:], ", ")
 		q.WriteString(fmt.Sprintf(` (%s)`, p))
-	}
-
-	// Table Mapping
-	if b.loadGeneratorType == "COUNTER" {
-		// Tables do not apply to COUNTER
-	} else if len(b.auctionOptions.Table) > 0 || len(b.marketingOptions.Table) > 0 || len(b.tpchOptions.Table) > 0 {
-
-		var ot []TableStruct
-		if len(b.auctionOptions.Table) > 0 {
-			ot = b.auctionOptions.Table
-		} else if len(b.marketingOptions.Table) > 0 {
-			ot = b.marketingOptions.Table
-		} else {
-			ot = b.tpchOptions.Table
-		}
-
-		var tables []string
-		for _, t := range ot {
-			if t.Alias == "" {
-				t.Alias = t.Name
-			}
-			s := fmt.Sprintf(`%s AS %s`, t.Name, t.Alias)
-			tables = append(tables, s)
-		}
-		o := strings.Join(tables[:], ", ")
-		q.WriteString(fmt.Sprintf(` FOR TABLES (%s)`, o))
-	} else {
-		q.WriteString(` FOR ALL TABLES`)
 	}
 
 	// Size

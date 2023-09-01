@@ -28,28 +28,6 @@ var scale_factor = &schema.Schema{
 	ForceNew:    true,
 }
 
-var table = &schema.Schema{
-	Description: "Creates subsources for specific tables.",
-	Type:        schema.TypeList,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "The name of the table.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"alias": {
-				Description: "The alias of the table.",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-		},
-	},
-	Optional: true,
-	MinItems: 1,
-	ForceNew: true,
-}
-
 var sourceLoadgenSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
@@ -90,7 +68,6 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
 				"scale_factor":  scale_factor,
-				"table":         table,
 			},
 		},
 		Optional:     true,
@@ -105,7 +82,6 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
 				"scale_factor":  scale_factor,
-				"table":         table,
 			},
 		},
 		Optional:     true,
@@ -120,7 +96,6 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
 				"scale_factor":  scale_factor,
-				"table":         table,
 			},
 		},
 		Optional:     true,
