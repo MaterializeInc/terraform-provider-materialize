@@ -240,6 +240,12 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 					Optional:    true,
 					ForceNew:    true,
 				},
+				"json": {
+					Description: "JSON format.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+					ForceNew:    true,
+				},
 			},
 		},
 		Required:    required,
