@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.11 - 2023-09-07
+
+### Features
+
+### BugFixes
+* Add support for format `JSON` in Kafka source [#305](https://github.com/MaterializeInc/terraform-provider-materialize/pull/305)
+
+### Misc
+
+### Breaking Changes
+* Remove `Table`` attributes for load gen source [#303](https://github.com/MaterializeInc/terraform-provider-materialize/pull/303)
+
 ## 0.1.10 - 2023-09-01
 
 ### Features
