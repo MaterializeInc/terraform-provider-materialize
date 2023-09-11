@@ -22,6 +22,18 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   }
 }
 
+resource "materialize_source_load_generator" "load_generator_auction" {
+  name                = "load_gen_auction"
+  schema_name         = materialize_schema.schema.name
+  database_name       = materialize_database.database.name
+  cluster_name        = materialize_cluster.cluster_source.name
+  load_generator_type = "AUCTION"
+
+  auction_options {
+    tick_interval = "500ms"
+  }
+}
+
 resource "materialize_source_postgres" "example_source_postgres" {
   name = "source_postgres"
   size = "2"
