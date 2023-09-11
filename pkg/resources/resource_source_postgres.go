@@ -119,7 +119,8 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("schema"); ok {
-		b.Schema(v.([]string))
+		schemas := materialize.GetSliceValueString(v.([]interface{}))
+		b.Schema(schemas)
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
