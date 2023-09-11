@@ -51,7 +51,7 @@ resource "materialize_source_postgres" "example_source_postgres_schema" {
     database_name = materialize_connection_postgres.postgres_connection.database_name
   }
   publication = "mz_source"
-  schema = ["PUBLIC"]
+  schema      = ["PUBLIC"]
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
