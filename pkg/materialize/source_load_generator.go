@@ -172,6 +172,11 @@ func (b *SourceLoadgenBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` (%s)`, p))
 	}
 
+	// Include for multi-output sources
+	if b.loadGeneratorType == "AUCTION" || b.loadGeneratorType == "MARKETING" {
+		q.WriteString(` FOR ALL TABLES`)
+	}
+
 	// Size
 	if b.size != "" {
 		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
