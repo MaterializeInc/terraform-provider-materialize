@@ -13,7 +13,7 @@ import (
 
 func TestResourceSourceUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgres)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable)
 
 	// Set current state
 	d.SetId("u1")
