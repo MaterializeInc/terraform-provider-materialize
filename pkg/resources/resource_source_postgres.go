@@ -18,7 +18,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"qualified_sql_name":  QualifiedNameSchema("source"),
 	"cluster_name":        ObjectClusterNameSchema("source"),
 	"size":                ObjectSizeSchema("source"),
-	"postgres_connection": IdentifierSchema("posgres_connection", "The PostgreSQL connection to use in the source.", true),
+	"postgres_connection": IdentifierSchema("postgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
 		Type:        schema.TypeString,

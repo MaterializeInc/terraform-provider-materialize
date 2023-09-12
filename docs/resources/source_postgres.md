@@ -17,16 +17,23 @@ resource "materialize_source_postgres" "example_source_postgres" {
   name        = "source_postgres"
   schema_name = "schema"
   size        = "3xsmall"
+  publication = "mz_source"
+
   postgres_connection {
     name = "pg_connection"
     # Optional parameters
     # database_name = "postgres"
     # schema_name = "public"
   }
-  publication = "mz_source"
-  table = {
-    "schema1.table_1" = "s1_table_1"
-    "schema2_table_1" = "s2_table_1"
+
+  table {
+    name  = "schema1.table_1"
+    alias = "s1_table_1"
+  }
+
+  table {
+    name  = "schema2.table_1"
+    alias = "s2_table_1"
   }
 }
 
@@ -68,12 +75,12 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 Required:
 
-- `name` (String) The posgres_connection name.
+- `name` (String) The postgres_connection name.
 
 Optional:
 
-- `database_name` (String) The posgres_connection database name.
-- `schema_name` (String) The posgres_connection schema name.
+- `database_name` (String) The postgres_connection database name.
+- `schema_name` (String) The postgres_connection schema name.
 
 
 <a id="nestedblock--table"></a>
