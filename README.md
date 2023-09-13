@@ -93,7 +93,7 @@ resource "materialize_connection_kafka" "kafka_connection" {
 }
 ```
 
-Then, look up the connection id (`CONNECTION_ID`) in [`mz_connections`](https://materialize.com/docs/sql/system-catalog/mz_catalog/#mz_connections) and run:
+Then, look up the connection id (`connection_id`) in [`mz_connections`](https://materialize.com/docs/sql/system-catalog/mz_catalog/#mz_connections) and run:
 
 ```bash
 terraform import materialize_connection_kafka.kafka_connection <connection_id>
