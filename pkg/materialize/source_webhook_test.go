@@ -42,3 +42,29 @@ func TestSourceWebhookCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestSourceWebhookCreateSecret(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT AVRO CHECK \( WITH \(SECRET "database"."schema"."secret"\) \);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		var c = []CheckOptionsStruct{
+			{
+				Field: FieldStruct{
+					Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "secret", DatabaseName: "database"},
+				},
+			},
+		}
+
+		b := NewSourceWebhookBuilder(db, sourceWebhook)
+		b.ClusterName("cluster")
+		b.BodyFormat("AVRO")
+		b.IncludeHeaders(false)
+		b.CheckOptions(c)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
