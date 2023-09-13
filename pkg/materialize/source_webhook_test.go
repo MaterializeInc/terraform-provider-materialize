@@ -42,3 +42,20 @@ func TestSourceWebhookCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestSourceWebhookCreateSecret(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT AVRO;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceWebhookBuilder(db, sourceWebhook)
+		b.ClusterName("cluster")
+		b.BodyFormat("AVRO")
+		b.IncludeHeaders(false)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
