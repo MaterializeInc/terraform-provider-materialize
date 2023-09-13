@@ -1,6 +1,6 @@
 name: documentation
 on:
-  pull_request:
+  pull_request_target:
     paths:
       - pkg/**
       - examples/**
