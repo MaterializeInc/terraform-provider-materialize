@@ -93,10 +93,10 @@ resource "materialize_connection_kafka" "kafka_connection" {
 }
 ```
 
-Then, look up the `id` for the connection (`CONNECTION_ID`) in [`mz_connections`](https://materialize.com/docs/sql/system-catalog/mz_catalog/#mz_connections) and run:
+Then, look up the connection id (`CONNECTION_ID`) in [`mz_connections`](https://materialize.com/docs/sql/system-catalog/mz_catalog/#mz_connections) and run:
 
 ```bash
-terraform import materialize_connection_kafka.kafka_connection CONNECTION_ID
+terraform import materialize_connection_kafka.kafka_connection <connection_id>
 ```
 
 After the import, you can check the state of the resource by running:
