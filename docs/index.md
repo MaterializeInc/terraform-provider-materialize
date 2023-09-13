@@ -47,4 +47,4 @@ To help with your projects, you can use these Materialize maintained Terraform m
 
 ## Getting support
 
-If you run into a snag or need support as you try out the Materialize Terraform provider, join the Materialize [Slack community](https://materialize.com/s/chat) or [open an issue](https://github.com/MaterializeInc/terraform-provider-materialize/issues)!
+If you run into a snag or need support as you use the provider, join the Materialize [Slack community](https://materialize.com/s/chat) or [open an issue](https://github.com/MaterializeInc/terraform-provider-materialize/issues)!
