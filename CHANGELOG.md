@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.12 - 2023-09-14
+
+### Features
+
+### BugFixes
+* Fix Postgres source `schema` Attribute [#314](https://github.com/MaterializeInc/terraform-provider-materialize/pull/314)
+* Require `FOR ALL TABLES` Multi Output Sources [#310](https://github.com/MaterializeInc/terraform-provider-materialize/pull/310)
+
+### Misc
+
 ## 0.1.11 - 2023-09-07
 
 ### Features
