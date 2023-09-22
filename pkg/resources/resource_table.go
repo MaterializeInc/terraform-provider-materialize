@@ -17,6 +17,7 @@ var tableSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("table", false),
 	"database_name":      DatabaseNameSchema("table", false),
 	"qualified_sql_name": QualifiedNameSchema("table"),
+	"comment":            CommentSchema(),
 	"column": {
 		Description: "Column of the table.",
 		Type:        schema.TypeList,
@@ -45,6 +46,7 @@ var tableSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Default:     false,
 				},
+				"comment": CommentSchema(),
 			},
 		},
 		Optional: true,
@@ -151,6 +153,33 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// column comment
+	if v, ok := d.GetOk("column"); ok {
+		columns := materialize.GetTableColumnStruct(v.([]interface{}))
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		for _, c := range columns {
+			if c.Comment != "" {
+				if err := comment.Column(c.ColName, c.Comment); err != nil {
+					log.Printf("[DEBUG] resource failed column comment, dropping object: %s", o.Name)
+					b.Drop()
+					return diag.FromErr(err)
+				}
+			}
+		}
+	}
+
 	// set id
 	i, err := materialize.TableId(meta.(*sqlx.DB), o)
 	if err != nil {
@@ -186,6 +215,31 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("columns") {
+		_, newColumns := d.GetChange("columns")
+		columns := materialize.GetTableColumnStruct(newColumns.([]interface{}))
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		for _, c := range columns {
+			// Cannot compare comments to state so reapplying all comments
+			if c.Comment != "" {
+				if err := comment.Column(c.ColName, c.Comment); err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+
 	}
 
 	return tableRead(ctx, d, meta)

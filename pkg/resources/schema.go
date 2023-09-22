@@ -432,3 +432,12 @@ func PrivilegeSchema(objectType string) *schema.Schema {
 		ValidateFunc: validPrivileges(objectType),
 	}
 }
+
+func CommentSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "**Private Preview** Comment on an object in the database.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    false,
+	}
+}

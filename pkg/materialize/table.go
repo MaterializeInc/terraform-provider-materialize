@@ -12,6 +12,7 @@ type TableColumn struct {
 	ColName string
 	ColType string
 	NotNull bool
+	Comment string
 }
 
 func GetTableColumnStruct(v []interface{}) []TableColumn {
@@ -22,6 +23,7 @@ func GetTableColumnStruct(v []interface{}) []TableColumn {
 			ColName: c["name"].(string),
 			ColType: c["type"].(string),
 			NotNull: c["nullable"].(bool),
+			Comment: c["comment"].(string),
 		})
 	}
 	return columns

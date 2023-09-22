@@ -193,6 +193,17 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			})
 			return nil, diags
 		}
+
+		// TODO: Remove this once enable_comment is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_comment = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable connection comment",
+				Detail:   "Unable to enable connection comment for authenticated Materialize client",
+			})
+			return nil, diags
+		}
 	}
 
 	return db, diags
