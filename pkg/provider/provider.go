@@ -169,31 +169,5 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return nil, diags
 	}
 
-	if testing {
-		// TODO: Remove this once enable_webhook_sources is enabled by default
-		_, err = db.Exec("ALTER SYSTEM SET enable_webhook_sources = true;")
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Unable to enable webhook sources",
-				Detail:   "Unable to enable webhook sources for authenticated Materialize client",
-			})
-			return nil, diags
-		}
-
-		// TODO: Remove this once enable_connection_validation_syntax is enabled by default
-		_, err = db.Exec("ALTER SYSTEM SET enable_connection_validation_syntax = true;")
-		// TODO: Remove this once enable_disk_cluster_replicas is enabled by default
-		_, err = db.Exec("ALTER SYSTEM SET enable_disk_cluster_replicas TO true;")
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Unable to enable connection validation",
-				Detail:   "Unable to enable connection validation for authenticated Materialize client",
-			})
-			return nil, diags
-		}
-	}
-
 	return db, diags
 }
