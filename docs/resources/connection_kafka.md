@@ -92,7 +92,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_key))
-- `validate` (Boolean) If the connection should wait for validation.
+- `validate` (Boolean) **Private Preview** If the connection should wait for validation.
 
 ### Read-Only
 
