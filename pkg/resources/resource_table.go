@@ -98,6 +98,10 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
 		return diag.FromErr(err)
 	}
@@ -110,11 +114,12 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	// Table columns
 	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), i)
 	if err != nil {
+		log.Print("[DEBUG] cannot query list tables")
 		return diag.FromErr(err)
 	}
 	var tc []interface{}
 	for _, t := range tableColumns {
-		column := map[string]interface{}{"name": t.Name.String, "type": t.Type.String, "nullable": !t.Nullable.Bool}
+		column := map[string]interface{}{"name": t.Name.String, "type": t.Type.String, "nullable": !t.Nullable.Bool, "comment": t.Comment.String}
 		tc = append(tc, column)
 	}
 	if err := d.Set("column", tc); err != nil {
@@ -183,6 +188,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	// set id
 	i, err := materialize.TableId(meta.(*sqlx.DB), o)
 	if err != nil {
+		log.Printf("[DEBUG] cannot query table: %s", o.QualifiedName())
 		return diag.FromErr(err)
 	}
 
@@ -231,15 +237,14 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		columns := materialize.GetTableColumnStruct(newColumns.([]interface{}))
 		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
 
+		// Reset all comments if change present
 		for _, c := range columns {
-			// Cannot compare comments to state so reapplying all comments
 			if c.Comment != "" {
 				if err := comment.Column(c.ColName, c.Comment); err != nil {
 					return diag.FromErr(err)
 				}
 			}
 		}
-
 	}
 
 	return tableRead(ctx, d, meta)

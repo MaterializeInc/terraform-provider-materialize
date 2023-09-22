@@ -425,9 +425,13 @@ func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_columns.name,
 		mz_columns.position,
 		mz_columns.nullable,
+		mz_comments.comment,
 		mz_columns.type,
 		mz_columns.default
-	FROM mz_columns`
+	FROM mz_columns
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_columns.id = mz_comments.id
+		AND mz_columns.position = mz_comments.object_sub_id`
 
 	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
 	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default"}).
@@ -448,6 +452,7 @@ func MockTableScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_tables.privileges
 	FROM mz_tables
@@ -456,11 +461,13 @@ func MockTableScan(mock sqlmock.Sqlmock, predicate string) {
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_tables.owner_id = mz_roles.id`
+		ON mz_tables.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_tables.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
-		AddRow("u1", "table", "schema", "database", "materialize", "{u1=arwd/u18}")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "comment", "owner_name", "privileges"}).
+		AddRow("u1", "table", "schema", "database", "comment", "materialize", "{u1=arwd/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

@@ -38,11 +38,11 @@ func TestResourceTableCreate(t *testing.T) {
 		mock.ExpectExec(`COMMENT ON COLUMN "database"."schema"."table"."column" IS 'column comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
-		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		ip := `WHERE mz_comments.object_sub_id IS NULL AND mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
 		testhelpers.MockTableScan(mock, ip)
 
 		// Query Params
-		pp := `WHERE mz_tables.id = 'u1'`
+		pp := `WHERE mz_comments.object_sub_id IS NULL AND mz_tables.id = 'u1'`
 		testhelpers.MockTableScan(mock, pp)
 
 		// Query Columns
