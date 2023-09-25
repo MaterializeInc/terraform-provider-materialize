@@ -60,7 +60,7 @@ var schemaQuery = NewBaseQuery(`
 	JOIN mz_roles
 		ON mz_schemas.owner_id = mz_roles.id
 	LEFT JOIN mz_internal.mz_comments
-		ON mz_clusters.id = mz_comments.id`)
+		ON mz_schemas.id = mz_comments.id`)
 
 func SchemaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

@@ -313,7 +313,7 @@ func MockSchemaScan(mock sqlmock.Sqlmock, predicate string) {
 	JOIN mz_roles
 		ON mz_schemas.owner_id = mz_roles.id
 	LEFT JOIN mz_internal.mz_comments
-		ON mz_clusters.id = mz_comments.id`
+		ON mz_schemas.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "schema_name", "database_name", "owner_name", "privileges"}).
@@ -328,6 +328,7 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_secrets.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_comments.comment AS comment,	
 		mz_roles.name AS owner_name,
 		mz_secrets.privileges
 	FROM mz_secrets
@@ -336,7 +337,9 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_secrets.owner_id = mz_roles.id`
+		ON mz_secrets.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_secrets.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
