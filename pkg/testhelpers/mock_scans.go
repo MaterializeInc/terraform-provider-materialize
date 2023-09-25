@@ -497,6 +497,7 @@ func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_types.category,
+		mz_comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_types.privileges
 	FROM mz_types
@@ -505,7 +506,9 @@ func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_types.owner_id = mz_roles.id`
+		ON mz_types.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_types.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "category", "owner_name", "privileges"}).
