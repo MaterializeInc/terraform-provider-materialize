@@ -15,12 +15,7 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	"name":         ObjectNameSchema("replica", true, true),
 	"cluster_name": ClusterNameSchema(),
 	"size":         SizeSchema("replica", true, true),
-	"disk": {
-		Description: "**Private Preview**. Whether or not the replica is a _disk-backed replica_.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
-	},
+	"disk":         DiskSchema(true),
 	"availability_zone": {
 		Description: "The specific availability zone of the replica.",
 		Type:        schema.TypeString,
