@@ -14,7 +14,7 @@ import (
 
 var clusterSchema = map[string]*schema.Schema{
 	"name":           ObjectNameSchema("cluster", true, true),
-	"comment":        CommentSchema(),
+	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
 	"size":           SizeSchema("managed cluster", false, false),
 	"replication_factor": {

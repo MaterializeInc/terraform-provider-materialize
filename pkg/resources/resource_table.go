@@ -17,7 +17,7 @@ var tableSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("table", false),
 	"database_name":      DatabaseNameSchema("table", false),
 	"qualified_sql_name": QualifiedNameSchema("table"),
-	"comment":            CommentSchema(),
+	"comment":            CommentSchema(false),
 	"column": {
 		Description: "Column of the table.",
 		Type:        schema.TypeList,
@@ -46,7 +46,7 @@ var tableSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Default:     false,
 				},
-				"comment": CommentSchema(),
+				"comment": CommentSchema(false),
 			},
 		},
 		Optional: true,
