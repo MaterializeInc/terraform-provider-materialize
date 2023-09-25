@@ -2,6 +2,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   name          = "sink_kafka"
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
+  comment       = "sink comment"
   size          = "1"
   from {
     name          = materialize_source_load_generator.load_generator.name

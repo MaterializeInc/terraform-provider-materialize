@@ -2,6 +2,7 @@ resource "materialize_cluster_replica" "cluster_replica_1" {
   name         = "r1"
   cluster_name = materialize_cluster.cluster.name
   size         = "8"
+  comment      = "cluster replica comment"
 }
 
 resource "materialize_cluster_replica" "cluster_replica_2" {

@@ -1,5 +1,6 @@
 resource "materialize_database" "database" {
-  name = "example_database"
+  name    = "example_database"
+  comment = "database comment"
 }
 
 resource "materialize_database_grant" "database_grant_usage" {
