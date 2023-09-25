@@ -14,6 +14,7 @@ import (
 
 var clusterSchema = map[string]*schema.Schema{
 	"name":           ObjectNameSchema("cluster", true, true),
+	"comment":        CommentSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"size":           SizeSchema("managed cluster", false, false),
 	"replication_factor": {
@@ -88,6 +89,10 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -139,6 +144,17 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}
@@ -219,6 +235,15 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			if err := b.SetIdleArrangementMergeEffort(n.(int)); err != nil {
 				return diag.FromErr(err)
 			}
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
