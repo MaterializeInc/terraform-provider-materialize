@@ -41,6 +41,7 @@ type SchemaParams struct {
 	SchemaId     sql.NullString `db:"id"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
@@ -50,13 +51,16 @@ var schemaQuery = NewBaseQuery(`
 		mz_schemas.id,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_schemas.privileges
 	FROM mz_schemas
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_schemas.owner_id = mz_roles.id`)
+		ON mz_schemas.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_clusters.id = mz_comments.id`)
 
 func SchemaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
