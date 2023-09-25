@@ -359,6 +359,7 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,
+		mz_comments.comment AS comment,
 		mz_roles.name AS owner_name
 	FROM mz_sinks
 	JOIN mz_schemas
@@ -370,7 +371,9 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 	LEFT JOIN mz_clusters
 		ON mz_sinks.cluster_id = mz_clusters.id
 	JOIN mz_roles
-		ON mz_sinks.owner_id = mz_roles.id`
+		ON mz_sinks.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_sinks.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name"}).
