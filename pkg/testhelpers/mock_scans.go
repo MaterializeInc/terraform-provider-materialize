@@ -239,7 +239,7 @@ func MockIndexScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
-func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
+func MockMaterializeViewScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
 		mz_materialized_views.id,
@@ -247,6 +247,7 @@ func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_clusters.name AS cluster_name,
+		mz_comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
@@ -257,7 +258,9 @@ func MockMaterailizeViewScan(mock sqlmock.Sqlmock, predicate string) {
 	LEFT JOIN mz_clusters
 		ON mz_materialized_views.cluster_id = mz_clusters.id
 	JOIN mz_roles
-		ON mz_materialized_views.owner_id = mz_roles.id`
+		ON mz_materialized_views.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_materialized_views.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "materialized_view_name", "schema_name", "database_name", "cluster_name", "owner_name", "privileges"}).
@@ -523,6 +526,7 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_views.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_views.privileges
 	FROM mz_views
@@ -531,7 +535,9 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_views.owner_id = mz_roles.id`
+		ON mz_views.owner_id = mz_roles.id
+	LEFT JOIN mz_internal.mz_comments
+		ON mz_views.id = mz_comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).

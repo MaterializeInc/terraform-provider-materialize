@@ -17,6 +17,7 @@ var viewSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("view", false),
 	"database_name":      DatabaseNameSchema("view", false),
 	"qualified_sql_name": QualifiedNameSchema("view"),
+	"comment":            CommentSchema(false),
 	"statement": {
 		Description: "The SQL statement for the view.",
 		Type:        schema.TypeString,
@@ -77,6 +78,10 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -103,6 +108,17 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}
@@ -140,6 +156,15 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

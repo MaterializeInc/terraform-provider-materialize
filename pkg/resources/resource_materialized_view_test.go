@@ -32,11 +32,11 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_materialized_views.name = 'materialized_view' AND mz_schemas.name = 'schema'`
-		testhelpers.MockMaterailizeViewScan(mock, ip)
+		testhelpers.MockMaterializeViewScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_materialized_views.id = 'u1'`
-		testhelpers.MockMaterailizeViewScan(mock, pp)
+		testhelpers.MockMaterializeViewScan(mock, pp)
 
 		if err := materializedViewCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -58,7 +58,7 @@ func TestResourceMaterializedViewUpdate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_materialized_views.id = 'u1'`
-		testhelpers.MockMaterailizeViewScan(mock, pp)
+		testhelpers.MockMaterializeViewScan(mock, pp)
 
 		if err := materializedViewUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
