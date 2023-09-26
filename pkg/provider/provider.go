@@ -169,6 +169,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return nil, diags
 	}
 
+	// Feature flags to enable
 	if testing {
 		// TODO: Remove this once enable_webhook_sources is enabled by default
 		_, err = db.Exec("ALTER SYSTEM SET enable_webhook_sources = true;")
@@ -183,13 +184,22 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 		// TODO: Remove this once enable_connection_validation_syntax is enabled by default
 		_, err = db.Exec("ALTER SYSTEM SET enable_connection_validation_syntax = true;")
-		// TODO: Remove this once enable_disk_cluster_replicas is enabled by default
-		_, err = db.Exec("ALTER SYSTEM SET enable_disk_cluster_replicas TO true;")
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Unable to enable connection validation",
 				Detail:   "Unable to enable connection validation for authenticated Materialize client",
+			})
+			return nil, diags
+		}
+
+		// TODO: Remove this once enable_disk_cluster_replicas is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_disk_cluster_replicas = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable disk cluster replicas",
+				Detail:   "Unable to enable disk cluster replicas for authenticated Materialize client",
 			})
 			return nil, diags
 		}

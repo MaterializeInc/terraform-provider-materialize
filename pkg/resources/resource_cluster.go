@@ -23,11 +23,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Optional:     true,
 		RequiredWith: []string{"size"},
 	},
-	"disk": {
-		Description: "**Private Preview**. Whether or not the replicas of the managed cluster are _disk-backed replicas_.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-	},
+	"disk": DiskSchema(false),
 	// "availability_zones": {
 	// 	Description: "The specific availability zones of the cluster.",
 	// 	Type:        schema.TypeList,

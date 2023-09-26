@@ -3,12 +3,12 @@
 page_title: "materialize_source_webhook Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A webhook source describes a webhook you want Materialize to read data from.
+  Private Preview A webhook source describes a webhook you want Materialize to read data from.
 ---
 
 # materialize_source_webhook (Resource)
 
-A webhook source describes a webhook you want Materialize to read data from.
+**Private Preview** A webhook source describes a webhook you want Materialize to read data from.
 
 ## Example Usage
 

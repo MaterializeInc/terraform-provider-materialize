@@ -84,7 +84,7 @@ func SizeSchema(resource string, required bool, forceNew bool) *schema.Schema {
 func ValidateConnectionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeBool,
-		Description: "If the connection should wait for validation.",
+		Description: "**Private Preview** If the connection should wait for validation.",
 		Optional:    true,
 		Default:     true,
 	}
@@ -430,6 +430,15 @@ func PrivilegeSchema(objectType string) *schema.Schema {
 		Required:     true,
 		ForceNew:     true,
 		ValidateFunc: validPrivileges(objectType),
+	}
+}
+
+func DiskSchema(forceNew bool) *schema.Schema {
+	return &schema.Schema{
+		Description: "**Private Preview**. Whether or not the replica is a _disk-backed replica_.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    forceNew,
 	}
 }
 
