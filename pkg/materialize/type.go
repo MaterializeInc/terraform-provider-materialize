@@ -124,7 +124,7 @@ var typeQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_types.category,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_types.privileges
 	FROM mz_types
@@ -134,8 +134,12 @@ var typeQuery = NewBaseQuery(`
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_types.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_types.id = mz_comments.id`)
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'type'
+	) comments
+		ON mz_types.id = comments.id`)
 
 func TypeId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

@@ -103,7 +103,7 @@ var tableQuery = NewBaseQuery(`
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_tables.privileges
 	FROM mz_tables
@@ -113,11 +113,13 @@ var tableQuery = NewBaseQuery(`
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_tables.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_tables.id = mz_comments.id`).
-	CustomPredicate([]string{
-		"mz_comments.object_sub_id IS NULL",
-	})
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'table'
+		AND object_sub_id IS NULL
+	) comments
+		ON mz_tables.id = comments.id`)
 
 func TableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

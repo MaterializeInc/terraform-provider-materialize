@@ -23,7 +23,7 @@ func TestTableDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		p := `WHERE mz_comments.object_sub_id IS NULL AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
+		p := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
 		testhelpers.MockTableScan(mock, p)
 
 		if err := tableRead(context.TODO(), d, db); err != nil {

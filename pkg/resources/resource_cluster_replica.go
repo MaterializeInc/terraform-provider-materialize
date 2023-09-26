@@ -90,7 +90,11 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	o := materialize.MaterializeObject{Name: replicaName, ClusterName: clusterName}
+	o := materialize.MaterializeObject{
+		ObjectType:  "CLUSTER REPLICA",
+		Name:        replicaName,
+		ClusterName: clusterName,
+	}
 	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("size"); ok {

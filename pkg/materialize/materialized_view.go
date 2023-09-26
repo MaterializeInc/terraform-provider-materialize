@@ -82,7 +82,7 @@ var materializedViewQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_clusters.name AS cluster_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
@@ -94,8 +94,12 @@ var materializedViewQuery = NewBaseQuery(`
 		ON mz_materialized_views.cluster_id = mz_clusters.id
 	JOIN mz_roles
 		ON mz_materialized_views.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_materialized_views.id = mz_comments.id`)
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'materialized-view'
+	) comments
+		ON mz_materialized_views.id = comments.id`)
 
 func MaterializedViewId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

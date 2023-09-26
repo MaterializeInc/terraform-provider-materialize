@@ -65,7 +65,7 @@ var sinkQuery = NewBaseQuery(`
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name
 	FROM mz_sinks
 	JOIN mz_schemas
@@ -78,8 +78,12 @@ var sinkQuery = NewBaseQuery(`
 		ON mz_sinks.cluster_id = mz_clusters.id
 	JOIN mz_roles
 		ON mz_sinks.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_sinks.id = mz_comments.id`)
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'sink'
+	) comments
+		ON mz_sinks.id = comments.id`)
 
 func SinkId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

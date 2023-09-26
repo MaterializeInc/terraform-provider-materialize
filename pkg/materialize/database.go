@@ -45,14 +45,18 @@ var databaseQuery = NewBaseQuery(`
 	SELECT
 		mz_databases.id,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_databases.privileges
 	FROM mz_databases
 	JOIN mz_roles
 		ON mz_databases.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_databases.id = mz_comments.id`)
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'database'
+	) comments
+		ON mz_databases.id = comments.id`)
 
 func DatabaseId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.name": obj.Name})

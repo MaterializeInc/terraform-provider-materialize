@@ -35,11 +35,11 @@ func TestResourceGrantTableCreate(t *testing.T) {
 		testhelpers.MockRoleScan(mock, rp)
 
 		// Query Grant Id
-		gp := `WHERE mz_comments.object_sub_id IS NULL AND mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		gp := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
 		testhelpers.MockTableScan(mock, gp)
 
 		// Query Params
-		pp := `WHERE mz_comments.object_sub_id IS NULL AND mz_tables.id = 'u1'`
+		pp := `WHERE mz_tables.id = 'u1'`
 		testhelpers.MockTableScan(mock, pp)
 
 		if err := grantTableCreate(context.TODO(), d, db); err != nil {

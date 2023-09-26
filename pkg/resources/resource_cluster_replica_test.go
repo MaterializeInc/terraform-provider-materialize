@@ -23,6 +23,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 		"introspection_interval":        "10s",
 		"introspection_debugging":       true,
 		"idle_arrangement_merge_effort": 100,
+		"comment":                       "object comment",
 	}
 	d := schema.TestResourceDataRaw(t, ClusterReplica().Schema, in)
 	r.NotNil(d)
@@ -37,6 +38,9 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 			INTROSPECTION DEBUGGING = TRUE,
 			IDLE ARRANGEMENT MERGE EFFORT = 100;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CLUSTER REPLICA "cluster"."replica" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_cluster_replicas.name = 'replica' AND mz_clusters.name = 'cluster'`

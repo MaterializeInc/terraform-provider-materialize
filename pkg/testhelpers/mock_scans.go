@@ -33,12 +33,16 @@ func MockClusterReplicaScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_cluster_replicas.size,
 		mz_cluster_replicas.availability_zone,
 		mz_cluster_replicas.disk,
-		mz_comments.comment AS comment
+		comments.comment AS comment
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
 		ON mz_cluster_replicas.cluster_id = mz_clusters.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_cluster_replicas.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'cluster-replica'
+	\) comments
+		ON mz_cluster_replicas.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "replica_name", "cluster_name", "size", "availability_zone", "disk", "comment"}).
@@ -55,14 +59,18 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_clusters.size,
 		mz_clusters.replication_factor,
 		mz_clusters.disk,
-		mz_comments.comment AS comment,	
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters
 	JOIN mz_roles
 		ON mz_clusters.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_clusters.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'cluster'
+	\) comments
+		ON mz_clusters.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "comment", "owner_name", "privileges"}).
@@ -177,14 +185,18 @@ func MockDatabaseScan(mock sqlmock.Sqlmock, predicate string) {
 	SELECT
 		mz_databases.id,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_databases.privileges
 	FROM mz_databases
 	JOIN mz_roles
 		ON mz_databases.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_databases.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'database'
+	\) comments
+		ON mz_databases.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "database_name", "owner_name", "privileges"}).
@@ -247,7 +259,7 @@ func MockMaterializeViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_clusters.name AS cluster_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
@@ -259,8 +271,12 @@ func MockMaterializeViewScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_materialized_views.cluster_id = mz_clusters.id
 	JOIN mz_roles
 		ON mz_materialized_views.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_materialized_views.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'materialized-view'
+	\) comments
+		ON mz_materialized_views.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "materialized_view_name", "schema_name", "database_name", "cluster_name", "owner_name", "privileges"}).
@@ -308,15 +324,19 @@ func MockSchemaScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.id,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_schemas.privileges
 	FROM mz_schemas JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_schemas.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_schemas.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'schema'
+	\) comments
+		ON mz_schemas.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "schema_name", "database_name", "owner_name", "privileges"}).
@@ -331,7 +351,7 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_secrets.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,	
+		comments.comment AS comment,	
 		mz_roles.name AS owner_name,
 		mz_secrets.privileges
 	FROM mz_secrets
@@ -341,8 +361,12 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_secrets.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_secrets.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'secret'
+	\) comments
+		ON mz_secrets.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
@@ -362,7 +386,7 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name
 	FROM mz_sinks
 	JOIN mz_schemas
@@ -375,8 +399,12 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_sinks.cluster_id = mz_clusters.id
 	JOIN mz_roles
 		ON mz_sinks.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_sinks.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'sink'
+	\) comments
+		ON mz_sinks.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name"}).
@@ -446,13 +474,17 @@ func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_columns.name,
 		mz_columns.position,
 		mz_columns.nullable,
-		mz_comments.comment,
+		comments.comment,
 		mz_columns.type,
 		mz_columns.default
 	FROM mz_columns
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_columns.id = mz_comments.id
-		AND mz_columns.position = mz_comments.object_sub_id`
+	LEFT JOIN \(
+		SELECT id, object_sub_id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'table'
+	\) comments
+		ON mz_columns.id = comments.id
+		AND mz_columns.position = comments.object_sub_id`
 
 	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
 	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default"}).
@@ -473,7 +505,7 @@ func MockTableScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_tables.privileges
 	FROM mz_tables
@@ -483,8 +515,13 @@ func MockTableScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_tables.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_tables.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'table'
+		AND object_sub_id IS NULL
+	\) comments
+		ON mz_tables.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "comment", "owner_name", "privileges"}).
@@ -500,7 +537,7 @@ func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_types.category,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_types.privileges
 	FROM mz_types
@@ -510,8 +547,12 @@ func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_types.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_types.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'type'
+	\) comments
+		ON mz_types.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "category", "owner_name", "privileges"}).
@@ -526,7 +567,7 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_views.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_comments.comment AS comment,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_views.privileges
 	FROM mz_views
@@ -536,8 +577,12 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
 		ON mz_views.owner_id = mz_roles.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_views.id = mz_comments.id`
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'view'
+	\) comments
+		ON mz_views.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).

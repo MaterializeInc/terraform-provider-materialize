@@ -131,12 +131,16 @@ var clusterReplicaQuery = NewBaseQuery(`
 		mz_cluster_replicas.size,
 		mz_cluster_replicas.availability_zone,
 		mz_cluster_replicas.disk,
-		mz_comments.comment AS comment
+		comments.comment AS comment
 	FROM mz_cluster_replicas
 	JOIN mz_clusters
 		ON mz_cluster_replicas.cluster_id = mz_clusters.id
-	LEFT JOIN mz_internal.mz_comments
-		ON mz_cluster_replicas.id = mz_comments.id`)
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'cluster-replica'
+	) comments
+		ON mz_cluster_replicas.id = comments.id`)
 
 func ClusterReplicaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
