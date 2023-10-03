@@ -14,7 +14,7 @@ A role is a collection of privileges you can apply to users.
 
 ```terraform
 resource "materialize_role" "example_role" {
-  name           = "example_role"
+  name = "example_role"
 }
 ```
 
