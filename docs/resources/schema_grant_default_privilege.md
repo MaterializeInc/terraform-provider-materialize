@@ -18,7 +18,6 @@ resource "materialize_schema_grant_default_privilege" "example" {
   grantee_name     = "grantee"
   privilege        = "USAGE"
   target_role_name = "target_role"
-  schema_name      = "schema"
   database_name    = "database"
 }
 ```
