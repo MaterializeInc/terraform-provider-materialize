@@ -14,7 +14,8 @@ func TestIndexCreate(t *testing.T) {
 			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(column\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewIndexBuilder(db, "index", false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		o := MaterializeObject{Name: "index"}
+		b := NewIndexBuilder(db, o, false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
 		b.ClusterName("cluster")
 		b.Method("ARRANGEMENT")
 		b.ColExpr([]IndexColumn{
@@ -35,7 +36,8 @@ func TestIndexDefaultCreate(t *testing.T) {
 			`CREATE DEFAULT INDEX IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewIndexBuilder(db, "", true, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		o := MaterializeObject{Name: "index"}
+		b := NewIndexBuilder(db, o, true, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
 		b.ClusterName("cluster")
 		b.Method("ARRANGEMENT")
 
@@ -49,8 +51,21 @@ func TestIndexDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP INDEX "database"."schema"."index" RESTRICT;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewIndexBuilder(db, "index", false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		o := MaterializeObject{Name: "index"}
+		b := NewIndexBuilder(db, o, false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
 		if err := b.Drop(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestIndexComment(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`COMMENT ON INDEX "database"."schema"."index" IS 'comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "index"}
+		b := NewIndexBuilder(db, o, false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		if err := b.Comment("comment"); err != nil {
 			t.Fatal(err)
 		}
 	})

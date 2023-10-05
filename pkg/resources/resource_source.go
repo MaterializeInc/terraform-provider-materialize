@@ -11,15 +11,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type SourceParams struct {
-	SourceName     sql.NullString `db:"source_name"`
-	SchemaName     sql.NullString `db:"schema_name"`
-	DatabaseName   sql.NullString `db:"database_name"`
-	Size           sql.NullString `db:"size"`
-	ConnectionName sql.NullString `db:"connection_name"`
-	ClusterName    sql.NullString `db:"cluster_name"`
-}
-
 func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
@@ -59,6 +50,10 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	b := materialize.Source{SourceName: s.SourceName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
 	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("comment", s.Comment.String); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -115,6 +110,15 @@ func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

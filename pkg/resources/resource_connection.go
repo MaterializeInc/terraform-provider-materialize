@@ -40,6 +40,10 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	b := materialize.Connection{ConnectionName: s.ConnectionName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
 	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
 		return diag.FromErr(err)
@@ -69,6 +73,15 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

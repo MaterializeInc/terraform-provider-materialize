@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -14,6 +15,7 @@ import (
 var roleSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("role", true, true),
 	"qualified_sql_name": QualifiedNameSchema("role"),
+	"comment":            CommentSchema(true),
 	"inherit": {
 		Description: "Grants the role the ability to inheritance of privileges of other roles. Unlike PostgreSQL, Materialize does not currently support `NOINHERIT`",
 		Type:        schema.TypeBool,
@@ -62,13 +64,18 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
 func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
-	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), roleName)
+	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
+	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("inherit"); ok && v.(bool) {
 		b.Inherit()
@@ -77,6 +84,17 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
 	}
 
 	// set id
@@ -92,7 +110,8 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 func roleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
-	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), roleName)
+	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
+	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

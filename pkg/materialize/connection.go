@@ -59,6 +59,7 @@ type ConnectionParams struct {
 	SchemaName     sql.NullString `db:"schema_name"`
 	DatabaseName   sql.NullString `db:"database_name"`
 	ConnectionType sql.NullString `db:"connection_type"`
+	Comment        sql.NullString `db:"comment"`
 	OwnerName      sql.NullString `db:"owner_name"`
 	Privileges     sql.NullString `db:"privileges"`
 }
@@ -70,6 +71,7 @@ var connectionQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_connections.type AS connection_type,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_connections.privileges
 	FROM mz_connections
@@ -78,7 +80,13 @@ var connectionQuery = NewBaseQuery(`
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_connections.owner_id = mz_roles.id`)
+		ON mz_connections.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'connection'
+	) comments
+		ON mz_connections.id = comments.id`)
 
 func ConnectionId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

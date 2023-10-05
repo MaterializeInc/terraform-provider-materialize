@@ -1,7 +1,9 @@
 resource "materialize_source_load_generator" "load_generator" {
-  name                = "load_gen"
-  schema_name         = materialize_schema.schema.name
-  database_name       = materialize_database.database.name
+  name          = "load_gen"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  comment       = "source load generator comment"
+
   size                = "1"
   load_generator_type = "COUNTER"
 
@@ -35,7 +37,9 @@ resource "materialize_source_load_generator" "load_generator_auction" {
 }
 
 resource "materialize_source_postgres" "example_source_postgres" {
-  name = "source_postgres"
+  name    = "source_postgres"
+  comment = "source postgres comment"
+
   size = "2"
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name
@@ -67,7 +71,9 @@ resource "materialize_source_postgres" "example_source_postgres_schema" {
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
-  name = "source_kafka_text"
+  name    = "source_kafka_text"
+  comment = "source kafka comment"
+
   size = "2"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
@@ -122,7 +128,9 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
 }
 
 resource "materialize_source_webhook" "example_webhook_source" {
-  name            = "example_webhook_source"
+  name    = "example_webhook_source"
+  comment = "source webhook comment"
+
   cluster_name    = materialize_cluster.cluster_source.name
   body_format     = "json"
   include_headers = false

@@ -16,6 +16,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("source", false),
 	"database_name":      DatabaseNameSchema("source", false),
 	"qualified_sql_name": QualifiedNameSchema("source"),
+	"comment":            CommentSchema(false),
 	"cluster_name": {
 		Description: "The cluster to maintain this source.",
 		Type:        schema.TypeString,
@@ -158,6 +159,17 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}

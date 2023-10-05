@@ -1,21 +1,27 @@
 resource "materialize_connection_kafka" "kafka_connection" {
-  name = "kafka_connection"
+  name    = "kafka_connection"
+  comment = "connection kafka comment"
+
   kafka_broker {
     broker = "redpanda:9092"
   }
 }
 
 resource "materialize_connection_confluent_schema_registry" "schema_registry" {
-  name = "schema_registry_connection"
-  url  = "http://redpanda:8081"
+  name    = "schema_registry_connection"
+  comment = "connection schema registry comment"
+
+  url = "http://redpanda:8081"
 }
 
 resource "materialize_connection_ssh_tunnel" "ssh_connection" {
   name        = "ssh_connection"
   schema_name = "public"
-  host        = "ssh_host"
-  user        = "ssh_user"
-  port        = 22
+  comment     = "connection ssh tunnel comment"
+
+  host = "ssh_host"
+  user = "ssh_user"
+  port = 22
 }
 
 resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
@@ -40,7 +46,9 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
-  name = "postgres_connection"
+  name    = "postgres_connection"
+  comment = "connection postgres comment"
+
   host = "postgres"
   port = 5432
   user {
