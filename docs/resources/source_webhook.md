@@ -34,6 +34,7 @@ resource "materialize_source_webhook" "example_webhook" {
 - `check_expression` (String) The check expression for the webhook.
 - `check_options` (Block List) The check options for the webhook. (see [below for nested schema](#nestedblock--check_options))
 - `cluster_name` (String) The cluster to maintain this source.
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `include_headers` (Boolean) Include headers in the webhook.
 - `ownership_role` (String) The owernship role of the object.

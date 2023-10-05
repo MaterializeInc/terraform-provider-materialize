@@ -25,6 +25,10 @@ resource "materialize_role" "example_role" {
 
 - `name` (String) The identifier for the role.
 
+### Optional
+
+- `comment` (String) **Private Preview** Comment on an object in the database.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
