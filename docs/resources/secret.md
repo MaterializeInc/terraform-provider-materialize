@@ -28,6 +28,7 @@ resource "materialize_secret" "example_secret" {
 
 ### Optional
 
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the secret database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the secret schema. Defaults to `public`.

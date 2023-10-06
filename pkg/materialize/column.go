@@ -11,6 +11,7 @@ type TableColumnParams struct {
 	Name     sql.NullString `db:"name"`
 	Position sql.NullString `db:"position"`
 	Nullable sql.NullBool   `db:"nullable"`
+	Comment  sql.NullString `db:"comment"`
 	Type     sql.NullString `db:"type"`
 	Default  sql.NullString `db:"default"`
 }
@@ -21,9 +22,17 @@ var tableColumnQuery = NewBaseQuery(`
 		mz_columns.name,
 		mz_columns.position,
 		mz_columns.nullable,
+		comments.comment,
 		mz_columns.type,
 		mz_columns.default
-	FROM mz_columns`).Order("mz_columns.position")
+	FROM mz_columns
+	LEFT JOIN (
+		SELECT id, object_sub_id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'table'
+	) comments
+		ON mz_columns.id = comments.id
+		AND mz_columns.position = comments.object_sub_id`).Order("mz_columns.position")
 
 func ListTableColumns(conn *sqlx.DB, objectId string) ([]TableColumnParams, error) {
 	p := map[string]string{"mz_columns.id": objectId}

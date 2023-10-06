@@ -36,11 +36,11 @@ func TestResourceGrantMaterializedViewCreate(t *testing.T) {
 
 		// Query Grant Id
 		gp := `WHERE mz_databases.name = 'database' AND mz_materialized_views.name = 'mview' AND mz_schemas.name = 'schema'`
-		testhelpers.MockMaterailizeViewScan(mock, gp)
+		testhelpers.MockMaterializeViewScan(mock, gp)
 
 		// Query Params
 		pp := `WHERE mz_materialized_views.id = 'u1'`
-		testhelpers.MockMaterailizeViewScan(mock, pp)
+		testhelpers.MockMaterializeViewScan(mock, pp)
 
 		if err := grantMaterializedViewCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

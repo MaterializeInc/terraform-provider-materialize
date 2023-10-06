@@ -112,6 +112,7 @@ type TypeParams struct {
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
 	Category     sql.NullString `db:"category"`
+	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
@@ -123,6 +124,7 @@ var typeQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_types.category,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_types.privileges
 	FROM mz_types
@@ -131,7 +133,13 @@ var typeQuery = NewBaseQuery(`
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_types.owner_id = mz_roles.id`)
+		ON mz_types.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'type'
+	) comments
+		ON mz_types.id = comments.id`)
 
 func TypeId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

@@ -17,6 +17,7 @@ var secretSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("secret", false),
 	"database_name":      DatabaseNameSchema("secret", false),
 	"qualified_sql_name": QualifiedNameSchema("secret"),
+	"comment":            CommentSchema(false),
 	"value": {
 		Description: "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.",
 		Type:        schema.TypeString,
@@ -77,6 +78,10 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -103,6 +108,17 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}
@@ -147,6 +163,15 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

@@ -81,6 +81,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 ### Optional
 
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.

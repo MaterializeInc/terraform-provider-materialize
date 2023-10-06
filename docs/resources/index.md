@@ -42,6 +42,7 @@ resource "materialize_index" "loadgen_index" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this index. If not specified, defaults to the active cluster.
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `default` (Boolean) Creates a default index using all inferred columns are used.
 - `method` (String) The name of the index method to use.
 - `name` (String) The identifier for the index.
@@ -50,7 +51,7 @@ resource "materialize_index" "loadgen_index" {
 
 - `database_name` (String) The identifier for the index database.
 - `id` (String) The ID of this resource.
-- `qualified_sql_name` (String) The fully qualified name of the view.
+- `qualified_sql_name` (String) The fully qualified name of the index.
 - `schema_name` (String) The identifier for the index schema.
 
 <a id="nestedblock--col_expr"></a>

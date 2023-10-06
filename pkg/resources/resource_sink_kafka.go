@@ -16,6 +16,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("sink", false),
 	"database_name":      DatabaseNameSchema("sink", false),
 	"qualified_sql_name": QualifiedNameSchema("sink"),
+	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("sink"),
 	"size":               ObjectSizeSchema("sink"),
 	"from":               IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
@@ -146,6 +147,17 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}

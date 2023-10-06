@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -37,7 +38,8 @@ var indexSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ExactlyOneOf: []string{"name", "default"},
 	},
-	"qualified_sql_name": QualifiedNameSchema("view"),
+	"qualified_sql_name": QualifiedNameSchema("index"),
+	"comment":            CommentSchema(true),
 	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
 	"cluster_name": {
 		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
@@ -115,6 +117,10 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	// Index columns
 	indexColumns, err := materialize.ListIndexColumns(meta.(*sqlx.DB), i)
 	if err != nil {
@@ -139,16 +145,17 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	indexName := d.Get("name").(string)
 	indexDefault := d.Get("default").(bool)
 
-	o := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
+	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
 
+	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
 	b := materialize.NewIndexBuilder(
 		meta.(*sqlx.DB),
-		indexName,
+		o,
 		indexDefault,
 		materialize.IdentifierSchemaStruct{
-			Name:         o["name"].(string),
-			SchemaName:   o["schema_name"].(string),
-			DatabaseName: o["database_name"].(string),
+			Name:         obj["name"].(string),
+			SchemaName:   obj["schema_name"].(string),
+			DatabaseName: obj["database_name"].(string),
 		},
 	)
 
@@ -170,6 +177,15 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		if err := b.Comment(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.IndexId(meta.(*sqlx.DB), indexName)
 	if err != nil {
@@ -181,16 +197,18 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 }
 
 func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	o := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
+	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
+	name := d.Get("name").(string)
 
+	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: name}
 	b := materialize.NewIndexBuilder(
 		meta.(*sqlx.DB),
-		d.Get("name").(string),
+		o,
 		d.Get("default").(bool),
 		materialize.IdentifierSchemaStruct{
-			Name:         o["name"].(string),
-			SchemaName:   o["schema_name"].(string),
-			DatabaseName: o["database_name"].(string),
+			Name:         obj["name"].(string),
+			SchemaName:   obj["schema_name"].(string),
+			DatabaseName: obj["database_name"].(string),
 		},
 	)
 

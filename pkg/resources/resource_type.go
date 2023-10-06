@@ -17,6 +17,7 @@ var typeSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("type", false),
 	"database_name":      DatabaseNameSchema("type", false),
 	"qualified_sql_name": QualifiedNameSchema("type"),
+	"comment":            CommentSchema(false),
 	"list_properties": {
 		Description: "List properties.",
 		Type:        schema.TypeList,
@@ -123,6 +124,10 @@ func typeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -160,6 +165,17 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		}
 	}
 
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.TypeId(meta.(*sqlx.DB), o)
 	if err != nil {
@@ -182,6 +198,15 @@ func typeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		_, newRole := d.GetChange("ownership_role")
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

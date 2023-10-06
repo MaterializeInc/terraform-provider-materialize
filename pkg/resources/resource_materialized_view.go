@@ -20,6 +20,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("materialized view", false),
 	"database_name":      DatabaseNameSchema("materialized view", false),
 	"qualified_sql_name": QualifiedNameSchema("materialized view"),
+	"comment":            CommentSchema(false),
 	"cluster_name": {
 		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
 		Type:        schema.TypeString,
@@ -90,6 +91,10 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -120,6 +125,17 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}
@@ -156,6 +172,15 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

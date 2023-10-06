@@ -2,14 +2,16 @@ resource "materialize_table" "simple_table" {
   name          = "simple_table"
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
+  comment       = "table comment"
 
   column {
     name = "column_1"
     type = "text"
   }
   column {
-    name = "column_2"
-    type = "int"
+    name    = "column_2"
+    type    = "int"
+    comment = "column_2 comment"
   }
   column {
     name     = "column_3"

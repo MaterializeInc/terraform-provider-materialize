@@ -60,6 +60,7 @@ type SecretParams struct {
 	SecretName   sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
@@ -70,6 +71,7 @@ var secretQuery = NewBaseQuery(`
 		mz_secrets.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_secrets.privileges
 	FROM mz_secrets
@@ -78,7 +80,13 @@ var secretQuery = NewBaseQuery(`
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_secrets.owner_id = mz_roles.id`)
+		ON mz_secrets.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'secret'
+	) comments
+		ON mz_secrets.id = comments.id`)
 
 func SecretId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

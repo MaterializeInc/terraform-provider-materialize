@@ -13,7 +13,9 @@ func TestRoleCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE ROLE "role" INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
-		b := NewRoleBuilder(db, "role")
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
 		b.Inherit()
 
 		if err := b.Create(); err != nil {
@@ -28,7 +30,8 @@ func TestRoleAlter(t *testing.T) {
 			`ALTER ROLE "role" INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewRoleBuilder(db, "role").Alter("INHERIT"); err != nil {
+		o := MaterializeObject{Name: "role"}
+		if err := NewRoleBuilder(db, o).Alter("INHERIT"); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -40,7 +43,8 @@ func TestRoleDrop(t *testing.T) {
 			`DROP ROLE "role";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewRoleBuilder(db, "role").Drop(); err != nil {
+		o := MaterializeObject{Name: "role"}
+		if err := NewRoleBuilder(db, o).Drop(); err != nil {
 			t.Fatal(err)
 		}
 	})

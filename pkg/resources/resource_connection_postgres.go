@@ -16,6 +16,7 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
+	"comment":            CommentSchema(false),
 	"database": {
 		Description: "The target Postgres database.",
 		Type:        schema.TypeString,
@@ -147,6 +148,17 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}

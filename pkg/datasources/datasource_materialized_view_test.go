@@ -24,7 +24,7 @@ func TestMaterializedViewDatasource(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		p := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
-		testhelpers.MockMaterailizeViewScan(mock, p)
+		testhelpers.MockMaterializeViewScan(mock, p)
 
 		if err := materializedViewRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

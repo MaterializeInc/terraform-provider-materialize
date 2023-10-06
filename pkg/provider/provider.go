@@ -194,12 +194,23 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		}
 
 		// TODO: Remove this once enable_disk_cluster_replicas is enabled by default
-		_, err = db.Exec("ALTER SYSTEM SET enable_disk_cluster_replicas TO true;")
+		_, err = db.Exec("ALTER SYSTEM SET enable_disk_cluster_replicas = true;")
 		if err != nil {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Unable to enable disk cluster replicas",
 				Detail:   "Unable to enable disk cluster replicas for authenticated Materialize client",
+			})
+			return nil, diags
+		}
+
+		// TODO: Remove this once enable_comment is enabled by default
+		_, err = db.Exec("ALTER SYSTEM SET enable_comment = true;")
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Unable to enable connection comment",
+				Detail:   "Unable to enable connection comment for authenticated Materialize client",
 			})
 			return nil, diags
 		}

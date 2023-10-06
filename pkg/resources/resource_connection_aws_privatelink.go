@@ -17,6 +17,7 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
+	"comment":            CommentSchema(false),
 	"service_name": {
 		Description: "The name of the AWS PrivateLink service.",
 		Type:        schema.TypeString,
@@ -101,6 +102,10 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -137,6 +142,17 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.ConnectionId(meta.(*sqlx.DB), o)
 	if err != nil {
@@ -167,6 +183,15 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		_, newRole := d.GetChange("ownership_role")
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
