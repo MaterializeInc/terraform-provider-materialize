@@ -25,8 +25,8 @@ var roleSchema = map[string]*schema.Schema{
 	"session_variable": {
 		Description: "Session variable.",
 		Type:        schema.TypeList,
-		Required:    true,
-		MinItems:    0,
+		Optional:    true,
+		MinItems:    1,
 		ForceNew:    true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{

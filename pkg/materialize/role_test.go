@@ -43,7 +43,8 @@ func TestSessionVariable(t *testing.T) {
 			`ALTER ROLE "role" SET session_variable = 1000;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		if err := NewRoleBuilder(db, "role").SessionVariable("session_variable", "1000"); err != nil {
+		o := MaterializeObject{Name: "role"}
+		if err := NewRoleBuilder(db, o).SessionVariable("session_variable", "1000"); err != nil {
 			t.Fatal(err)
 		}
 	})

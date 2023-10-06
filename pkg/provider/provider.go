@@ -175,17 +175,18 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			"enable_webhook_sources",
 			"enable_connection_validation_syntax",
 			"enable_disk_cluster_replicas",
+			"enable_comment",
 			"enable_role_vars",
 		}
 
-		for _, flag := range flags {
-			q := fmt.Sprintf("ALTER SYSTEM SET %s = true;", flag)
+		for _, f := range flags {
+			q := fmt.Sprintf("ALTER SYSTEM SET %s = true;", f)
 			_, err = db.Exec(q)
 			if err != nil {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Unable to %s", flag),
-					Detail:   fmt.Sprintf("Unable to %s for authenticated Materialize client", flag),
+					Summary:  fmt.Sprintf("Unable to %s", f),
+					Detail:   fmt.Sprintf("Unable to %s for authenticated Materialize client", f),
 				})
 				return nil, diags
 			}
