@@ -34,6 +34,18 @@ func TestRoleAlter(t *testing.T) {
 	})
 }
 
+func TestSessionVariable(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER ROLE "role" SET session_variable = 1000;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		if err := NewRoleBuilder(db, "role").SessionVariable("session_variable", "1000"); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestRoleDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
