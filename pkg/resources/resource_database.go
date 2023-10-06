@@ -14,6 +14,7 @@ import (
 
 var databaseSchema = map[string]*schema.Schema{
 	"name":           ObjectNameSchema("database", true, true),
+	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
 }
 
@@ -55,6 +56,10 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -80,6 +85,17 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		}
 	}
 
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.DatabaseId(meta.(*sqlx.DB), o)
 	if err != nil {
@@ -99,6 +115,15 @@ func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

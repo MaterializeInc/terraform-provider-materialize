@@ -27,6 +27,7 @@ resource "materialize_database" "example_database" {
 
 ### Optional
 
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `ownership_role` (String) The owernship role of the object.
 
 ### Read-Only

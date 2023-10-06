@@ -54,6 +54,7 @@ type ConnectionSshTunnelParams struct {
 	DatabaseName   sql.NullString `db:"database_name"`
 	PublicKey1     sql.NullString `db:"public_key_1"`
 	PublicKey2     sql.NullString `db:"public_key_2"`
+	Comment        sql.NullString `db:"comment"`
 	OwnerName      sql.NullString `db:"owner_name"`
 }
 
@@ -65,6 +66,7 @@ var connectionSshTunnelQuery = NewBaseQuery(`
 		mz_databases.name AS database_name,
 		mz_ssh_tunnel_connections.public_key_1,
 		mz_ssh_tunnel_connections.public_key_2,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name
 	FROM mz_connections
 	JOIN mz_schemas
@@ -74,7 +76,13 @@ var connectionSshTunnelQuery = NewBaseQuery(`
 	LEFT JOIN mz_ssh_tunnel_connections
 		ON mz_connections.id = mz_ssh_tunnel_connections.id
 	JOIN mz_roles
-		ON mz_connections.owner_id = mz_roles.id`)
+		ON mz_connections.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'connection'
+	) comments
+		ON mz_connections.id = comments.id`)
 
 func ScanConnectionSshTunnel(conn *sqlx.DB, id string) (ConnectionSshTunnelParams, error) {
 	q := connectionSshTunnelQuery.QueryPredicate(map[string]string{"mz_connections.id": id})

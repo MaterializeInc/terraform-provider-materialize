@@ -441,3 +441,12 @@ func DiskSchema(forceNew bool) *schema.Schema {
 		ForceNew:    forceNew,
 	}
 }
+
+func CommentSchema(forceNew bool) *schema.Schema {
+	return &schema.Schema{
+		Description: "**Private Preview** Comment on an object in the database.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    forceNew,
+	}
+}

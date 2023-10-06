@@ -1,5 +1,6 @@
 resource "materialize_cluster" "cluster" {
-  name = "cluster"
+  name    = "cluster"
+  comment = "cluster comment"
 }
 
 resource "materialize_cluster" "cluster_source" {

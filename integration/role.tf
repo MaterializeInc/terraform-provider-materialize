@@ -1,13 +1,16 @@
 resource "materialize_role" "role_1" {
-  name = "role-1"
+  name    = "role-1"
+  comment = "role 1 comment"
 }
 
 resource "materialize_role" "role_2" {
-  name = "role-2"
+  name    = "role-2"
+  comment = "role 2 comment"
 }
 
 resource "materialize_role" "grantee" {
-  name = "grantee"
+  name    = "grantee"
+  comment = "role grantee comment"
 }
 
 resource "materialize_role" "target" {

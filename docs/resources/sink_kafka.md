@@ -59,6 +59,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this sink. If not specified, the `size` option must be specified.
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the sink database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))

@@ -173,6 +173,7 @@ type ClusterParams struct {
 	Size              sql.NullString `db:"size"`
 	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
 	Disk              sql.NullBool   `db:"disk"`
+	Comment           sql.NullString `db:"comment"`
 	OwnerName         sql.NullString `db:"owner_name"`
 	Privileges        sql.NullString `db:"privileges"`
 }
@@ -185,11 +186,18 @@ var clusterQuery = NewBaseQuery(`
 		mz_clusters.size,
 		mz_clusters.replication_factor,
 		mz_clusters.disk,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges
 	FROM mz_clusters
 	JOIN mz_roles
-		ON mz_clusters.owner_id = mz_roles.id`)
+		ON mz_clusters.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'cluster'
+	) comments
+		ON mz_clusters.id = comments.id`)
 
 func ClusterId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	q := clusterQuery.QueryPredicate(map[string]string{"mz_clusters.name": obj.Name})

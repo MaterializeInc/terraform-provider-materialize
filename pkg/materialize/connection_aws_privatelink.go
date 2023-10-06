@@ -54,6 +54,7 @@ type ConnectionAwsPrivatelinkParams struct {
 	ConnectionName sql.NullString `db:"connection_name"`
 	SchemaName     sql.NullString `db:"schema_name"`
 	DatabaseName   sql.NullString `db:"database_name"`
+	Comment        sql.NullString `db:"comment"`
 	Principal      sql.NullString `db:"principal"`
 	OwnerName      sql.NullString `db:"owner_name"`
 }
@@ -65,6 +66,7 @@ var connectionAwsPrivatelinkQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_aws_privatelink_connections.principal,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name
 	FROM mz_connections
 	JOIN mz_schemas
@@ -74,7 +76,13 @@ var connectionAwsPrivatelinkQuery = NewBaseQuery(`
 	LEFT JOIN mz_aws_privatelink_connections
 		ON mz_connections.id = mz_aws_privatelink_connections.id
 	JOIN mz_roles
-		ON mz_connections.owner_id = mz_roles.id`)
+		ON mz_connections.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'connection'
+	) comments
+		ON mz_connections.id = comments.id`)
 
 func ScanConnectionAwsPrivatelink(conn *sqlx.DB, id string) (ConnectionAwsPrivatelinkParams, error) {
 	q := connectionAwsPrivatelinkQuery.QueryPredicate(map[string]string{"mz_connections.id": id})

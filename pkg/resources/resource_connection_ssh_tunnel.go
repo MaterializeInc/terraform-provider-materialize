@@ -17,6 +17,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
+	"comment":            CommentSchema(false),
 	"host": {
 		Description: "The host of the SSH tunnel.",
 		Type:        schema.TypeString,
@@ -107,6 +108,10 @@ func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -133,6 +138,17 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}
@@ -168,6 +184,15 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		_, newRole := d.GetChange("ownership_role")
 		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
 		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

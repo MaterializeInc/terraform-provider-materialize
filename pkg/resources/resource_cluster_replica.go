@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -14,6 +15,7 @@ import (
 var clusterReplicaSchema = map[string]*schema.Schema{
 	"name":         ObjectNameSchema("replica", true, true),
 	"cluster_name": ClusterNameSchema(),
+	"comment":      CommentSchema(true),
 	"size":         SizeSchema("replica", true, true),
 	"disk":         DiskSchema(true),
 	"availability_zone": {
@@ -77,6 +79,10 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -84,7 +90,11 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	o := materialize.MaterializeObject{Name: replicaName, ClusterName: clusterName}
+	o := materialize.MaterializeObject{
+		ObjectType:  "CLUSTER REPLICA",
+		Name:        replicaName,
+		ClusterName: clusterName,
+	}
 	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("size"); ok {
@@ -114,6 +124,17 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
 	}
 
 	// set id

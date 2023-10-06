@@ -1,6 +1,7 @@
 resource "materialize_schema" "schema" {
   name          = "example_schema"
   database_name = materialize_database.database.name
+  comment       = "schema comment"
 }
 
 resource "materialize_schema_grant" "schema_grant_usage" {

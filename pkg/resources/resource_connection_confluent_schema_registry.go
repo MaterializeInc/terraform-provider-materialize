@@ -16,6 +16,7 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
+	"comment":            CommentSchema(false),
 	"url": {
 		Description: "The URL of the Confluent Schema Registry.",
 		Type:        schema.TypeString,
@@ -111,6 +112,17 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
 			return diag.FromErr(err)
 		}

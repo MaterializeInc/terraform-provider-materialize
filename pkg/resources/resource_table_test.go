@@ -17,7 +17,8 @@ var inTable = map[string]interface{}{
 	"schema_name":    "schema",
 	"database_name":  "database",
 	"ownership_role": "joe",
-	"column":         []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true}},
+	"comment":        "object comment",
+	"column":         []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true, "comment": "column comment"}},
 }
 
 func TestResourceTableCreate(t *testing.T) {
@@ -31,6 +32,10 @@ func TestResourceTableCreate(t *testing.T) {
 
 		// Ownership
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON TABLE "database"."schema"."table" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`COMMENT ON COLUMN "database"."schema"."table"."column" IS 'column comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`

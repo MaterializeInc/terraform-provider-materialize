@@ -12,6 +12,7 @@ type TableColumn struct {
 	ColName string
 	ColType string
 	NotNull bool
+	Comment string
 }
 
 func GetTableColumnStruct(v []interface{}) []TableColumn {
@@ -22,6 +23,7 @@ func GetTableColumnStruct(v []interface{}) []TableColumn {
 			ColName: c["name"].(string),
 			ColType: c["type"].(string),
 			NotNull: c["nullable"].(bool),
+			Comment: c["comment"].(string),
 		})
 	}
 	return columns
@@ -90,6 +92,7 @@ type TableParams struct {
 	TableName    sql.NullString `db:"name"`
 	SchemaName   sql.NullString `db:"schema_name"`
 	DatabaseName sql.NullString `db:"database_name"`
+	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   sql.NullString `db:"privileges"`
 }
@@ -100,6 +103,7 @@ var tableQuery = NewBaseQuery(`
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_tables.privileges
 	FROM mz_tables
@@ -108,7 +112,14 @@ var tableQuery = NewBaseQuery(`
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
 	JOIN mz_roles
-		ON mz_tables.owner_id = mz_roles.id`)
+		ON mz_tables.owner_id = mz_roles.id
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'table'
+		AND object_sub_id IS NULL
+	) comments
+		ON mz_tables.id = comments.id`)
 
 func TableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

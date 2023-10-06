@@ -107,6 +107,7 @@ type SourceParams struct {
 	EnvelopeType   sql.NullString `db:"envelope_type"`
 	ConnectionName sql.NullString `db:"connection_name"`
 	ClusterName    sql.NullString `db:"cluster_name"`
+	Comment        sql.NullString `db:"comment"`
 	OwnerName      sql.NullString `db:"owner_name"`
 	Privileges     sql.NullString `db:"privileges"`
 }
@@ -122,6 +123,7 @@ var sourceQuery = NewBaseQuery(`
 			mz_sources.envelope_type,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name,
+			comments.comment AS comment,
 			mz_roles.name AS owner_name,
 			mz_sources.privileges
 		FROM mz_sources
@@ -134,7 +136,13 @@ var sourceQuery = NewBaseQuery(`
 		LEFT JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		JOIN mz_roles
-			ON mz_sources.owner_id = mz_roles.id`)
+			ON mz_sources.owner_id = mz_roles.id
+		LEFT JOIN (
+			SELECT id, comment
+			FROM mz_internal.mz_comments
+			WHERE object_type = 'source'
+		) comments
+			ON mz_sources.id = comments.id`)
 
 func SourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{

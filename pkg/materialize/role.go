@@ -31,10 +31,10 @@ type RoleBuilder struct {
 	inherit  bool
 }
 
-func NewRoleBuilder(conn *sqlx.DB, roleName string) *RoleBuilder {
+func NewRoleBuilder(conn *sqlx.DB, obj MaterializeObject) *RoleBuilder {
 	return &RoleBuilder{
 		ddl:      Builder{conn, Role},
-		roleName: roleName,
+		roleName: obj.Name,
 	}
 }
 
@@ -88,14 +88,22 @@ type RoleParams struct {
 	RoleId   sql.NullString `db:"id"`
 	RoleName sql.NullString `db:"role_name"`
 	Inherit  sql.NullBool   `db:"inherit"`
+	Comment  sql.NullString `db:"comment"`
 }
 
 var roleQuery = NewBaseQuery(`
 	SELECT
-		id,
-		name AS role_name,
-		inherit
-	FROM mz_roles`)
+		mz_roles.id,
+		mz_roles.name AS role_name,
+		mz_roles.inherit,
+		comments.comment AS comment
+	FROM mz_roles
+	LEFT JOIN (
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'role'
+	) comments
+		ON mz_roles.id = comments.id`)
 
 func RoleId(conn *sqlx.DB, roleName string) (string, error) {
 	if roleName == "PUBLIC" {

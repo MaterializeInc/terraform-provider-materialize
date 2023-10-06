@@ -44,6 +44,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 - `auction_options` (Block List) Auction Options. (see [below for nested schema](#nestedblock--auction_options))
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
+- `comment` (String) **Private Preview** Comment on an object in the database.
 - `counter_options` (Block List) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `marketing_options` (Block List) Marketing Options. (see [below for nested schema](#nestedblock--marketing_options))

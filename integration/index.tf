@@ -1,5 +1,7 @@
 resource "materialize_index" "loadgen_index" {
-  name         = "loadgen_index"
+  name    = "loadgen_index"
+  comment = "index comment"
+
   cluster_name = materialize_cluster.cluster.name
 
   obj_name {

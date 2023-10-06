@@ -16,6 +16,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"schema_name":         SchemaNameSchema("source", false),
 	"database_name":       DatabaseNameSchema("source", false),
 	"qualified_sql_name":  QualifiedNameSchema("source"),
+	"comment":             CommentSchema(false),
 	"cluster_name":        ObjectClusterNameSchema("source"),
 	"size":                ObjectSizeSchema("source"),
 	"postgres_connection": IdentifierSchema("postgres_connection", "The PostgreSQL connection to use in the source.", true),
@@ -148,6 +149,17 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
+	// object comment
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := comment.Object(v.(string)); err != nil {
+			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
+			b.Drop()
+			return diag.FromErr(err)
+		}
+	}
+
 	// set id
 	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
 	if err != nil {
@@ -211,6 +223,15 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 			if err := b.DropSubsource(dropTables); err != nil {
 				return diag.FromErr(err)
 			}
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 

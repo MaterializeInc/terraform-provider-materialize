@@ -1,6 +1,7 @@
 resource "materialize_secret" "password" {
-  name  = "password"
-  value = "c2VjcmV0Cg=="
+  name    = "password"
+  value   = "c2VjcmV0Cg=="
+  comment = "secret comment"
 }
 
 resource "materialize_secret" "postgres_password" {
