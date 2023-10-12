@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.13 - 2023-10-12
+
+### Features
+* Support for `COMMENTS` on resources [#324](https://github.com/MaterializeInc/terraform-provider-materialize/pull/324)
+
+### BugFixes
+
+### Misc
+
 ## 0.1.12 - 2023-09-14
 
 ### Features
