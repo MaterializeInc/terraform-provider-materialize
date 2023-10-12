@@ -46,6 +46,33 @@ func TestAccIndex_basic(t *testing.T) {
 	})
 }
 
+func TestAccIndex_update(t *testing.T) {
+	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	comment := "index comment"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIndexResource(viewName, indexName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIndexExists("materialize_index.test"),
+				),
+			},
+			{
+				Config: testAccIndexWithComment(viewName, indexName, comment),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIndexExists("materialize_index.test"),
+					resource.TestCheckResourceAttr("materialize_index.test", "comment", comment),
+				),
+			},
+		},
+	})
+}
+
 func TestAccIndex_disappears(t *testing.T) {
 	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	indexName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -92,6 +119,35 @@ resource "materialize_index" "test" {
 	}
 }
 `, viewName, indexName)
+}
+
+func testAccIndexWithComment(viewName, indexName, comment string) string {
+	return fmt.Sprintf(`
+resource "materialize_view" "test" {
+	name = "%[1]s"
+
+	statement = <<SQL
+  SELECT
+	  1 AS id
+  SQL
+}
+
+resource "materialize_index" "test" {
+	name = "%[2]s"
+	cluster_name = "default"
+	comment = "%[3]s"
+
+	obj_name {
+		name = materialize_view.test.name
+		schema_name = materialize_view.test.schema_name
+		database_name = materialize_view.test.database_name
+	}
+
+	col_expr {
+		field = "id"
+	}
+}
+`, viewName, indexName, comment)
 }
 
 func testAccCheckIndexExists(name string) resource.TestCheckFunc {

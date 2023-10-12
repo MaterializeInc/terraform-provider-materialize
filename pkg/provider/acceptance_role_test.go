@@ -36,6 +36,32 @@ func TestAccRole_basic(t *testing.T) {
 	})
 }
 
+func TestAccRole_update(t *testing.T) {
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	comment := "role comment"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleResource(roleName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+				),
+			},
+			{
+				Config: testAccRoleWithComment(roleName, comment),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+					resource.TestCheckResourceAttr("materialize_role.test", "comment", comment),
+				),
+			},
+		},
+	})
+}
+
 func TestAccRole_disappears(t *testing.T) {
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -66,6 +92,15 @@ resource "materialize_role" "test" {
 	name = "%s"
 }
 `, roleName)
+}
+
+func testAccRoleWithComment(roleName, comment string) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%s"
+	comment = "%s"
+}
+`, roleName, comment)
 }
 
 func testAccCheckRoleExists(name string) resource.TestCheckFunc {
