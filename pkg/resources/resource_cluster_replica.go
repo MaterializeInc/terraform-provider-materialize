@@ -15,7 +15,7 @@ import (
 var clusterReplicaSchema = map[string]*schema.Schema{
 	"name":         ObjectNameSchema("replica", true, true),
 	"cluster_name": ClusterNameSchema(),
-	"comment":      CommentSchema(true),
+	"comment":      CommentSchema(false),
 	"size":         SizeSchema("replica", true, true),
 	"disk":         DiskSchema(true),
 	"availability_zone": {
@@ -36,6 +36,7 @@ func ClusterReplica() *schema.Resource {
 
 		CreateContext: clusterReplicaCreate,
 		ReadContext:   clusterReplicaRead,
+		UpdateContext: clusterReplicaUpdate,
 		DeleteContext: clusterReplicaDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -143,6 +144,28 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 	d.SetId(i)
+
+	return clusterReplicaRead(ctx, d, meta)
+}
+
+func clusterReplicaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	replicaName := d.Get("name").(string)
+	clusterName := d.Get("cluster_name").(string)
+
+	o := materialize.MaterializeObject{
+		ObjectType:  "CLUSTER REPLICA",
+		Name:        replicaName,
+		ClusterName: clusterName,
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	return clusterReplicaRead(ctx, d, meta)
 }
