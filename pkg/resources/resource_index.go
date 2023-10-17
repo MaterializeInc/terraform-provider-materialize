@@ -39,7 +39,7 @@ var indexSchema = map[string]*schema.Schema{
 		ExactlyOneOf: []string{"name", "default"},
 	},
 	"qualified_sql_name": QualifiedNameSchema("index"),
-	"comment":            CommentSchema(true),
+	"comment":            CommentSchema(false),
 	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
 	"cluster_name": {
 		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
@@ -78,6 +78,7 @@ func Index() *schema.Resource {
 
 		CreateContext: indexCreate,
 		ReadContext:   indexRead,
+		UpdateContext: indexUpdate,
 		DeleteContext: indexDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -192,6 +193,22 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 	d.SetId(i)
+
+	return indexRead(ctx, d, meta)
+}
+
+func indexUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	indexName := d.Get("name").(string)
+	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	return indexRead(ctx, d, meta)
 }

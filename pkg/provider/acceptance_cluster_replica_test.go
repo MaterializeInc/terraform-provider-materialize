@@ -43,6 +43,33 @@ func TestAccClusterReplica_basic(t *testing.T) {
 	})
 }
 
+func TestAccClusterReplica_update(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	comment := "cluster replica comment"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterReplicaResource(clusterName, replicaName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
+				),
+			},
+			{
+				Config: testAccClusterReplicaWithComment(clusterName, replicaName, comment),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
+					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "comment", comment),
+				),
+			},
+		},
+	})
+}
+
 func TestAccClusterReplica_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	replicaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -82,6 +109,22 @@ resource "materialize_cluster_replica" "test" {
 	disk = true
 }
 `, clusterName, clusterReplica)
+}
+
+func testAccClusterReplicaWithComment(clusterName, clusterReplica, comment string) string {
+	return fmt.Sprintf(`
+resource "materialize_cluster" "test" {
+	name = "%[1]s"
+}
+
+resource "materialize_cluster_replica" "test" {
+	cluster_name = materialize_cluster.test.name
+	name = "%[2]s"
+	size = "1"
+	disk = true
+	comment = "%[3]s"
+}
+`, clusterName, clusterReplica, comment)
 }
 
 func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {

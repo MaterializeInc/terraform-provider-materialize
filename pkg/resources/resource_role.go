@@ -16,7 +16,7 @@ import (
 var roleSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("role", true, true),
 	"qualified_sql_name": QualifiedNameSchema("role"),
-	"comment":            CommentSchema(true),
+	"comment":            CommentSchema(false),
 	"inherit": {
 		Description: "Grants the role the ability to inheritance of privileges of other roles. Unlike PostgreSQL, Materialize does not currently support `NOINHERIT`",
 		Type:        schema.TypeBool,
@@ -52,6 +52,7 @@ func Role() *schema.Resource {
 
 		CreateContext: roleCreate,
 		ReadContext:   roleRead,
+		UpdateContext: roleUpdate,
 		DeleteContext: roleDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -138,6 +139,23 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 	d.SetId(i)
+
+	return roleRead(ctx, d, meta)
+}
+
+func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	roleName := d.Get("name").(string)
+
+	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	return roleRead(ctx, d, meta)
 }
