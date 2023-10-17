@@ -15,6 +15,19 @@ resource "materialize_role" "grantee" {
 
 resource "materialize_role" "target" {
   name = "target"
+
+  session_variable {
+    name  = "datestyle"
+    value = "ISO, MDY"
+  }
+  session_variable {
+    name  = "emit_timestamp_notice"
+    value = "true"
+  }
+  session_variable {
+    name  = "max_query_result_size"
+    value = "1073741824"
+  }
 }
 
 resource "materialize_grant_system_privilege" "role_1_system_createrole" {

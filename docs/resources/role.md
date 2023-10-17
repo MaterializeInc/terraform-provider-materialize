@@ -28,12 +28,21 @@ resource "materialize_role" "example_role" {
 ### Optional
 
 - `comment` (String) **Private Preview** Comment on an object in the database.
+- `session_variable` (Block List) Session variable. (see [below for nested schema](#nestedblock--session_variable))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `inherit` (Boolean) Grants the role the ability to inheritance of privileges of other roles. Unlike PostgreSQL, Materialize does not currently support `NOINHERIT`
 - `qualified_sql_name` (String) The fully qualified name of the role.
+
+<a id="nestedblock--session_variable"></a>
+### Nested Schema for `session_variable`
+
+Required:
+
+- `name` (String) The name of the session variable.
+- `value` (String) The value for the session variable.
 
 ## Import
 

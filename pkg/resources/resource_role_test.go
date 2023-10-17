@@ -13,8 +13,9 @@ import (
 )
 
 var inRole = map[string]interface{}{
-	"name":    "role",
-	"inherit": true,
+	"name":             "role",
+	"inherit":          true,
+	"session_variable": []interface{}{map[string]interface{}{"name": "session_variable", "value": "1000"}},
 }
 
 func TestResourceRoleCreate(t *testing.T) {
@@ -26,6 +27,11 @@ func TestResourceRoleCreate(t *testing.T) {
 		// Create
 		mock.ExpectExec(
 			`CREATE ROLE "role" INHERIT;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Set session variable
+		mock.ExpectExec(
+			`ALTER ROLE "role" SET session_variable = 1000;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
