@@ -28,7 +28,7 @@ resource "materialize_cluster_grant_default_privilege" "example" {
 resource "materialize_cluster" "managed_cluster" {
   name                          = "managed_cluster"
   replication_factor            = 2
-  size                          = "1"
+  size                          = "3xsmall"
   introspection_interval        = "1s"
   introspection_debugging       = true
   idle_arrangement_merge_effort = 2

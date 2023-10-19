@@ -128,7 +128,7 @@ resource "materialize_secret" "basic_auth" {
 
 resource "materialize_cluster" "example_cluster" {
 	name = "%[3]s"
-	size = "1"
+	size = "3xsmall"
 	replication_factor = 1
 }
 

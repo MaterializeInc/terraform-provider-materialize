@@ -31,7 +31,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
@@ -78,7 +78,7 @@ func TestAccSourcePostgres_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
@@ -163,7 +163,7 @@ resource "materialize_source_postgres" "test" {
 		name = materialize_connection_postgres.test.name
 	}
 
-	size  = "1"
+	size  = "3xsmall"
 	publication = "mz_source"
 	table {
 		name  = "table1"
@@ -182,7 +182,7 @@ resource "materialize_source_postgres" "test_role" {
 		name = materialize_connection_postgres.test.name
 	}
 
-	size  = "1"
+	size  = "3xsmall"
 	publication = "mz_source"
 	table {
 		name  = "table1"
@@ -231,7 +231,7 @@ resource "materialize_source_postgres" "test" {
 		name = materialize_connection_postgres.test.name
 	}
 
-	size  = "1"
+	size  = "3xsmall"
 	publication = "mz_source"
 	table {
 		name  = "table1"
@@ -250,7 +250,7 @@ resource "materialize_source_postgres" "test_role" {
 		name = materialize_connection_postgres.test.name
 	}
 
-	size  = "1"
+	size  = "3xsmall"
 	publication = "mz_source"
 	table {
 		name  = "table1"

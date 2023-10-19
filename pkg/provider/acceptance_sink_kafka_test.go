@@ -150,7 +150,7 @@ resource "materialize_sink_kafka" "test" {
 	from {
 		name = materialize_table.test.name
 	}
-	size  = "1"
+	size  = "3xsmall"
 	topic = "sink_topic"
 	format {
 		json = true
@@ -168,7 +168,7 @@ resource "materialize_sink_kafka" "test_role" {
 	from {
 		name = materialize_table.test.name
 	}
-	size  = "1"
+	size  = "3xsmall"
 	topic = "sink_topic"
 	format {
 		json = true

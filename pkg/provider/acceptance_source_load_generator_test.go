@@ -29,7 +29,7 @@ func TestAccSourceLoadGenerator_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "COUNTER"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.scale_factor", "0.1"),
@@ -108,7 +108,7 @@ resource "materialize_role" "test" {
 resource "materialize_source_load_generator" "test" {
 	name = "%[2]s"
 	schema_name = "public"
-	size = "1"
+	size = "3xsmall"
 	load_generator_type = "COUNTER"
 	counter_options {
 		tick_interval       = "1000ms"
@@ -119,7 +119,7 @@ resource "materialize_source_load_generator" "test" {
 resource "materialize_source_load_generator" "test_role" {
 	name = "%[3]s"
 	schema_name = "public"
-	size = "1"
+	size = "3xsmall"
 	load_generator_type = "COUNTER"
 	counter_options {
 		tick_interval       = "1000ms"

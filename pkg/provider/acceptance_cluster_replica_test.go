@@ -26,7 +26,7 @@ func TestAccClusterReplica_basic(t *testing.T) {
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "cluster_name", clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "name", replicaName),
-					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "size", "1"),
+					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_debugging", "false"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "disk", "true"),
@@ -105,7 +105,7 @@ resource "materialize_cluster" "test" {
 resource "materialize_cluster_replica" "test" {
 	cluster_name = materialize_cluster.test.name
 	name = "%[2]s"
-	size = "1"
+	size = "3xsmall"
 	disk = true
 }
 `, clusterName, clusterReplica)
@@ -120,7 +120,7 @@ resource "materialize_cluster" "test" {
 resource "materialize_cluster_replica" "test" {
 	cluster_name = materialize_cluster.test.name
 	name = "%[2]s"
-	size = "1"
+	size = "3xsmall"
 	disk = true
 	comment = "%[3]s"
 }

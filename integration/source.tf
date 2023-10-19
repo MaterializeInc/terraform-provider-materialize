@@ -4,7 +4,7 @@ resource "materialize_source_load_generator" "load_generator" {
   database_name = materialize_database.database.name
   comment       = "source load generator comment"
 
-  size                = "1"
+  size                = "3xsmall"
   load_generator_type = "COUNTER"
 
   counter_options {
@@ -40,7 +40,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
   name    = "source_postgres"
   comment = "source postgres comment"
 
-  size = "2"
+  size = "3xsmall"
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name
     schema_name   = materialize_connection_postgres.postgres_connection.schema_name
@@ -74,7 +74,7 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name    = "source_kafka_text"
   comment = "source kafka comment"
 
-  size = "2"
+  size = "3xsmall"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
@@ -91,7 +91,7 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
 
 resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
   name = "source_kafka_bytes"
-  size = "2"
+  size = "2xsmall"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
@@ -105,7 +105,7 @@ resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
 
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   name = "source_kafka_avro"
-  size = "2"
+  size = "3xsmall"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
