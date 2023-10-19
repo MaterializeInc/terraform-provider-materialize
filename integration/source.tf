@@ -60,7 +60,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 resource "materialize_source_postgres" "example_source_postgres_schema" {
   name = "source_postgres_schema"
-  size = "2"
+  size = "3xsmall"
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name
     schema_name   = materialize_connection_postgres.postgres_connection.schema_name

@@ -22,7 +22,7 @@ func TestAccCluster_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "2-2", "1", "true"),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
@@ -61,10 +61,10 @@ func TestAccCluster_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2-1", "2", "false"),
+				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2xsmall", "2", "false"),
 			},
 			{
-				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, "2-2", "1", "true"),
+				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, "3xsmall", "1", "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
@@ -95,7 +95,7 @@ func TestAccCluster_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllClusterDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "2-2", "1", "true"),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					testAccCheckObjectDisappears(materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}),
