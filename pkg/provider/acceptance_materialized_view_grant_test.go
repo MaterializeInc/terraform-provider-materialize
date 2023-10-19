@@ -21,7 +21,7 @@ func TestAccGrantMaterializedView_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege),
+				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, "default", privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
 						materialize.MaterializeObject{
@@ -61,7 +61,7 @@ func TestAccGrantMaterializedView_disappears(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege),
+				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, "default", privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(o, "materialize_materialized_view_grant.materialized_view_grant", roleName, privilege),
 					testAccCheckGrantRevoked(o, roleName, privilege),
@@ -73,7 +73,7 @@ func TestAccGrantMaterializedView_disappears(t *testing.T) {
 	})
 }
 
-func testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege string) string {
+func testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, clusterName, privilege string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%s"
@@ -88,11 +88,18 @@ resource "materialize_schema" "test" {
 	database_name = materialize_database.test.name
 }
 
+resource "materialize_cluster" "test" {
+	name                          = "test"
+	size                          = "3xsmall"
+  }
+
 resource "materialize_materialized_view" "test" {
 	name          = "%s"
 	schema_name   = materialize_schema.test.name
 	database_name = materialize_database.test.name
-	cluster_name  = "default"
+	cluster_name  = "%s"
+
+	depends_on = [materialize_cluster.test]
   
 	statement = <<SQL
   SELECT
@@ -107,5 +114,5 @@ resource "materialize_materialized_view_grant" "materialized_view_grant" {
 	schema_name            = materialize_schema.test.name
 	materialized_view_name = materialize_materialized_view.test.name
 }
-`, roleName, databaseName, schemaName, materializedViewName, privilege)
+`, roleName, databaseName, schemaName, materializedViewName, clusterName, privilege)
 }

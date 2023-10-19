@@ -64,6 +64,11 @@ func (b *MaterializedViewBuilder) Drop() error {
 	return b.ddl.drop(qn)
 }
 
+func (b *MaterializedViewBuilder) AlterCluster(clusterName string) error {
+	q := fmt.Sprintf(`ALTER MATERIALIZED VIEW %s SET IN CLUSTER %s;`, b.QualifiedName(), QuoteIdentifier(clusterName))
+	return b.ddl.exec(q)
+}
+
 type MaterializedViewParams struct {
 	MaterializedViewId   sql.NullString `db:"id"`
 	MaterializedViewName sql.NullString `db:"materialized_view_name"`

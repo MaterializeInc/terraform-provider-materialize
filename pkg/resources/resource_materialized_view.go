@@ -185,6 +185,15 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		}
 	}
 
+	if d.HasChange("cluster_name") {
+		_, newCluster := d.GetChange("cluster_name")
+		b := materialize.NewMaterializedViewBuilder(meta.(*sqlx.DB), o)
+
+		if err := b.AlterCluster(newCluster.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	return materializedViewRead(ctx, d, meta)
 }
 

@@ -22,7 +22,7 @@ func TestAccMaterializedView_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName),
+				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName, "default"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
@@ -58,10 +58,10 @@ func TestAccMaterializedView_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, "mz_system"),
+				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, "mz_system", "default"),
 			},
 			{
-				Config: testAccMaterializedViewResource(roleName, newViewName, view2Name, roleName),
+				Config: testAccMaterializedViewResource(roleName, newViewName, view2Name, roleName, "new_cluster"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", newViewName),
@@ -87,7 +87,7 @@ func TestAccMaterializedView_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllMaterializedViewsDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName),
+				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName, "default"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
@@ -104,7 +104,7 @@ func TestAccMaterializedView_disappears(t *testing.T) {
 	})
 }
 
-func testAccMaterializedViewResource(roleName, materializeViewName, materializeView2Name, materializeViewOwner string) string {
+func testAccMaterializedViewResource(roleName, materializeViewName, materializeView2Name, materializeViewOwner, clusterName string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
 	name = "%[1]s"
@@ -116,15 +116,20 @@ resource "materialize_materialized_view" "test" {
 	cluster_name = "default"
 }
 
+resource "materialize_cluster" "test" {
+	name = "new_cluster"
+	size = "3xsmall"
+}
+
 resource "materialize_materialized_view" "test_role" {
 	name = "%[3]s"
 	statement = "SELECT 1 AS id"
-	cluster_name = "default"
+	cluster_name = "%[5]s"
 	ownership_role = "%[4]s"
 
 	depends_on = [materialize_role.test]
 }
-`, roleName, materializeViewName, materializeView2Name, materializeViewOwner)
+`, roleName, materializeViewName, materializeView2Name, materializeViewOwner, clusterName)
 }
 
 func testAccCheckMaterializedViewExists(name string) resource.TestCheckFunc {
