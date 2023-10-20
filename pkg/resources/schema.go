@@ -77,7 +77,7 @@ func SizeSchema(resource string, required bool, forceNew bool) *schema.Schema {
 		Required:     required,
 		Optional:     !required,
 		ForceNew:     forceNew,
-		ValidateFunc: validation.StringInSlice(append(replicaSizes, localSizes...), true),
+		ValidateFunc: validation.StringInSlice(replicaSizes, true),
 	}
 }
 
@@ -342,7 +342,7 @@ func ObjectSizeSchema(objectType string) *schema.Schema {
 		Computed:      true,
 		AtLeastOneOf:  []string{"cluster_name", "size"},
 		ConflictsWith: []string{"cluster_name"},
-		ValidateFunc:  validation.StringInSlice(append(sourceSizes, localSizes...), true),
+		ValidateFunc:  validation.StringInSlice(sourceSizes, true),
 	}
 }
 

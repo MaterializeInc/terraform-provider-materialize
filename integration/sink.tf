@@ -3,7 +3,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
   comment       = "sink comment"
-  size          = "1"
+  size          = "3xsmall"
   from {
     name          = materialize_source_load_generator.load_generator.name
     database_name = materialize_source_load_generator.load_generator.database_name

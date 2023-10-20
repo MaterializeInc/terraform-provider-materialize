@@ -134,7 +134,7 @@ resource "materialize_source_kafka" "test" {
 		name = materialize_connection_kafka.test.name
 	}
 
-	size  = "1"
+	size  = "3xsmall"
 	topic = "topic1"
 	key_format {
 		text = true
@@ -153,7 +153,7 @@ resource "materialize_source_kafka" "test_role" {
 		name = materialize_connection_kafka.test.name
 	}
 
-	size  = "1"
+	size  = "3xsmall"
 	topic = "topic1"
 	key_format {
 		text = true
