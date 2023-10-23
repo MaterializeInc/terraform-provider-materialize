@@ -92,7 +92,7 @@ resource "materialize_source_load_generator" "test" {
 	name                = "%s"
 	schema_name         = materialize_schema.test.name
 	database_name       = materialize_database.test.name
-	size                = "1"
+	size                = "3xsmall"
 	load_generator_type = "COUNTER"
   
 	counter_options {

@@ -7,26 +7,6 @@ var loadGeneratorTypes = []string{
 	"TPCH",
 }
 
-var localSizes = []string{
-	"1",
-	"2",
-	"2-1",
-	"2-2",
-	"2-4",
-	"4",
-	"4-1",
-	"4-4",
-	"8",
-	"8-1",
-	"8-8",
-	"16",
-	"16-1",
-	"16-16",
-	"32",
-	"32-1",
-	"32-32",
-}
-
 // https://materialize.com/docs/sql/create-cluster-replica/#sizes
 var replicaSizes = []string{
 	"3xsmall",
