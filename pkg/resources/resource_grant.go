@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -41,7 +42,10 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	privileges, err := materialize.ScanPrivileges(meta.(*sqlx.DB), key.objectType, key.objectId)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
