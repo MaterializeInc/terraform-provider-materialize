@@ -37,7 +37,7 @@ func TestMaterializedViewDrop(t *testing.T) {
 
 func TestMaterializedAlterCluster(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER MATERIALIZED VIEW "database"."schema"."materialized_view" SET IN CLUSTER "new_cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER MATERIALIZED VIEW "database"."schema"."materialized_view" SET CLUSTER "new_cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "materialized_view", SchemaName: "schema", DatabaseName: "database"}
 		if err := NewMaterializedViewBuilder(db, o).AlterCluster("new_cluster"); err != nil {

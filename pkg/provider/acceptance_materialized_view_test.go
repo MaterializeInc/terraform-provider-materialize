@@ -119,6 +119,7 @@ resource "materialize_materialized_view" "test" {
 resource "materialize_cluster" "test" {
 	name = "new_cluster"
 	size = "3xsmall"
+	replication_factor = 1
 }
 
 resource "materialize_materialized_view" "test_role" {

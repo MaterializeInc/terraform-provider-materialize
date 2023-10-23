@@ -65,7 +65,7 @@ func (b *MaterializedViewBuilder) Drop() error {
 }
 
 func (b *MaterializedViewBuilder) AlterCluster(clusterName string) error {
-	q := fmt.Sprintf(`ALTER MATERIALIZED VIEW %s SET IN CLUSTER %s;`, b.QualifiedName(), QuoteIdentifier(clusterName))
+	q := fmt.Sprintf(`ALTER MATERIALIZED VIEW %s SET CLUSTER %s;`, b.QualifiedName(), QuoteIdentifier(clusterName))
 	return b.ddl.exec(q)
 }
 
