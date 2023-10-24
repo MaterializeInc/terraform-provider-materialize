@@ -58,6 +58,12 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", true),
+				Description: "For testing purposes, disable SSL.",
+			},
+			"mz_preview_features": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MZ_PREVIEW_FEATURES", false),
 				Description: "Enable to test the provider locally",
 			},
 		},
@@ -126,7 +132,7 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host, username, password string, port int, database string, sslmode bool, application string) string {
+func connectionString(host, username, password string, port int, database string, sslmode bool, preview_features bool, application string) string {
 	c := strings.Builder{}
 	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
 
@@ -136,8 +142,6 @@ func connectionString(host, username, password string, port int, database string
 		params = append(params, "sslmode=require")
 	} else {
 		params = append(params, "sslmode=disable")
-		params = append(params, "enable_rbac_checks=true")
-		params = append(params, "enable_ld_rbac_checks=true")
 	}
 
 	params = append(params, fmt.Sprintf("application_name=%s", application))
@@ -155,8 +159,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	database := d.Get("mz_database").(string)
 	application := d.Get("application_name").(string)
 	sslmode := d.Get("mz_sslmode").(bool)
+	preview_features := d.Get("mz_preview_features").(bool)
 
-	connStr := connectionString(host, username, password, port, database, sslmode, application)
+	connStr := connectionString(host, username, password, port, database, sslmode, preview_features, application)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("pgx", connStr)
@@ -170,7 +175,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	// Feature flags to enable
-	if !sslmode {
+	if preview_features {
 		flags := []string{
 			"enable_webhook_sources",
 			"enable_connection_validation_syntax",

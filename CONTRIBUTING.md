@@ -43,6 +43,7 @@ To run the acceptance tests which will simulate running Terraform commands you w
 export MZ_HOST=localhost
 export MZ_USERNAME=mz_system
 export MZ_SSLMODE="false"
+export MZ_PREVIEW_FEATURES="true"
 export MZ_PORT=6877
 
 # Start all containers
