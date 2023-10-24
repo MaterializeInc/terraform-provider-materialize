@@ -17,32 +17,32 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"host": {
+			"mz_host": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Materialize host. Can also come from the `MZ_HOST` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
-			"username": {
+			"mz_username": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Materialize username. Can also come from the `MZ_USER` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_USER", nil),
+				Description: "Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", nil),
 			},
-			"password": {
+			"mz_password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
-				Description: "Materialize host. Can also come from the `MZ_PW` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_PW", nil),
+				Description: "Materialize host. Can also come from the `MZ_PASSWORD` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_PASSWORD", nil),
 			},
-			"port": {
+			"mz_port": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6875),
 			},
-			"database": {
+			"mz_database": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.",
@@ -54,10 +54,10 @@ func Provider() *schema.Provider {
 				Default:     "terraform-provider-materialize",
 				Description: "The application name to include in the connection string",
 			},
-			"testing": {
+			"mz_sslmode": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MZ_TESTING", false),
+				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", true),
 				Description: "Enable to test the provider locally",
 			},
 		},
@@ -126,18 +126,18 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host, username, password string, port int, database string, testing bool, application string) string {
+func connectionString(host, username, password string, port int, database string, sslmode bool, application string) string {
 	c := strings.Builder{}
 	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
 
 	params := []string{}
 
-	if testing {
+	if sslmode {
+		params = append(params, "sslmode=require")
+	} else {
 		params = append(params, "sslmode=disable")
 		params = append(params, "enable_rbac_checks=true")
 		params = append(params, "enable_ld_rbac_checks=true")
-	} else {
-		params = append(params, "sslmode=require")
 	}
 
 	params = append(params, fmt.Sprintf("application_name=%s", application))
@@ -148,15 +148,15 @@ func connectionString(host, username, password string, port int, database string
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	host := d.Get("host").(string)
-	username := d.Get("username").(string)
-	password := d.Get("password").(string)
-	port := d.Get("port").(int)
-	database := d.Get("database").(string)
+	host := d.Get("mz_host").(string)
+	username := d.Get("mz_username").(string)
+	password := d.Get("mz_password").(string)
+	port := d.Get("mz_port").(int)
+	database := d.Get("mz_database").(string)
 	application := d.Get("application_name").(string)
-	testing := d.Get("testing").(bool)
+	sslmode := d.Get("mz_sslmode").(bool)
 
-	connStr := connectionString(host, username, password, port, database, testing, application)
+	connStr := connectionString(host, username, password, port, database, sslmode, application)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("pgx", connStr)
@@ -170,7 +170,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	// Feature flags to enable
-	if testing {
+	if !sslmode {
 		flags := []string{
 			"enable_webhook_sources",
 			"enable_connection_validation_syntax",
