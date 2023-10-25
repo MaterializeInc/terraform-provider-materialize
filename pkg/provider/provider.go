@@ -60,12 +60,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", true),
 				Description: "For testing purposes, disable SSL.",
 			},
-			"preview_features": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MZ_PREVIEW_FEATURES", false),
-				Description: "Enable to test the provider locally",
-			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_cluster":                              resources.Cluster(),
@@ -132,7 +126,7 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host, username, password string, port int, database string, sslmode bool, preview_features bool, application string) string {
+func connectionString(host, username, password string, port int, database string, sslmode bool, application string) string {
 	c := strings.Builder{}
 	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
 
@@ -159,9 +153,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	database := d.Get("database").(string)
 	application := d.Get("application_name").(string)
 	sslmode := d.Get("sslmode").(bool)
-	preview_features := d.Get("preview_features").(bool)
 
-	connStr := connectionString(host, username, password, port, database, sslmode, preview_features, application)
+	connStr := connectionString(host, username, password, port, database, sslmode, application)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("pgx", connStr)
@@ -172,30 +165,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			Detail:   "Unable to authenticate user for authenticated Materialize client",
 		})
 		return nil, diags
-	}
-
-	// Feature flags to enable
-	if preview_features {
-		flags := []string{
-			"enable_webhook_sources",
-			"enable_connection_validation_syntax",
-			"enable_disk_cluster_replicas",
-			"enable_comment",
-			"enable_role_vars",
-		}
-
-		for _, f := range flags {
-			q := fmt.Sprintf("ALTER SYSTEM SET %s = true;", f)
-			_, err = db.Exec(q)
-			if err != nil {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Unable to %s", f),
-					Detail:   fmt.Sprintf("Unable to %s for authenticated Materialize client", f),
-				})
-				return nil, diags
-			}
-		}
 	}
 
 	return db, diags

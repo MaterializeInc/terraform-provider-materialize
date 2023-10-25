@@ -13,5 +13,4 @@ provider "materialize" {
   port             = 6877
   database         = "materialize"
   sslmode          = false
-  preview_features = true
 }
