@@ -7,10 +7,10 @@ terraform {
 }
 
 provider "materialize" {
-  host             = "materialized"
-  username         = "mz_system"
-  password         = "password"
-  port             = 6877
-  database         = "materialize"
-  sslmode          = false
+  host     = "materialized"
+  username = "mz_system"
+  password = "password"
+  port     = 6877
+  database = "materialize"
+  sslmode  = false
 }
