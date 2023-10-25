@@ -15,7 +15,7 @@ Configure the provider by adding the following block to your Terraform project:
 # Configuration-based authentication
 provider "materialize" {
   host     = var.materialize_hostname # optionally use MZ_HOST env var
-  username = var.materialize_username # optionally use MZ_USERNAME env var
+  user     = var.materialize_user     # optionally use MZ_USER env var
   password = var.materialize_password # optionally use MZ_PASSWORD env var
   port     = var.materialize_port     # optionally use MZ_PORT env var
   database = var.materialize_database # optionally use MZ_DATABASE env var
@@ -25,7 +25,7 @@ provider "materialize" {
 ## Schema
 
 * `host` (String) Materialize host. Can also come from the `MZ_HOST` environment variable.
-* `username` (String) Materialize username. Can also come from the `MZ_USERNAME` environment variable.
+* `user` (String) Materialize user. Can also come from the `MZ_USER` environment variable.
 * `password` (String, Sensitive) Materialize host. Can also come from the `MZ_PASSWORD` environment variable.
 * `port` (Number) The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.
 * `database` (String) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.

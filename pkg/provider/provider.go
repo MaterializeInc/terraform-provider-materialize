@@ -23,11 +23,11 @@ func Provider() *schema.Provider {
 				Description: "Materialize host. Can also come from the `MZ_HOST` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
-			"username": {
+			"user": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", nil),
+				Description: "Materialize user. Can also come from the `MZ_USER` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_USER", nil),
 			},
 			"password": {
 				Type:        schema.TypeString,
@@ -126,9 +126,9 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host, username, password string, port int, database string, sslmode bool, application string) string {
+func connectionString(host, user, password string, port int, database string, sslmode bool, application string) string {
 	c := strings.Builder{}
-	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
+	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, database))
 
 	params := []string{}
 
@@ -147,14 +147,14 @@ func connectionString(host, username, password string, port int, database string
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	host := d.Get("host").(string)
-	username := d.Get("username").(string)
+	user := d.Get("user").(string)
 	password := d.Get("password").(string)
 	port := d.Get("port").(int)
 	database := d.Get("database").(string)
 	application := d.Get("application_name").(string)
 	sslmode := d.Get("sslmode").(bool)
 
-	connStr := connectionString(host, username, password, port, database, sslmode, application)
+	connStr := connectionString(host, user, password, port, database, sslmode, application)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("pgx", connStr)

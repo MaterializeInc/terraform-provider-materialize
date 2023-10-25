@@ -19,9 +19,8 @@ jobs:
         run: make testacc
         env:
           MZ_HOST: localhost
-          MZ_USERNAME: mz_system
+          MZ_USER: mz_system
           MZ_SSLMODE: "false"
-          MZ_PREVIEW_FEATURES: "true"
           MZ_PORT: 6877
 
       - name: Docker Compose Down
