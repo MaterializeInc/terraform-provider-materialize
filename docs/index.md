@@ -14,7 +14,7 @@ Configure the provider by adding the following block to your Terraform project:
 ```terraform
 # Configuration-based authentication
 provider "materialize" {
-  host     = var.materialize_hostname # optionally use MZ_HOST env var
+  host     = var.materialize_host     # optionally use MZ_HOST env var
   user     = var.materialize_user     # optionally use MZ_USER env var
   password = var.materialize_password # optionally use MZ_PASSWORD env var
   port     = var.materialize_port     # optionally use MZ_PORT env var
