@@ -17,32 +17,32 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"mz_host": {
+			"host": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Materialize host. Can also come from the `MZ_HOST` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
-			"mz_username": {
+			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", nil),
 			},
-			"mz_password": {
+			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 				Description: "Materialize host. Can also come from the `MZ_PASSWORD` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PASSWORD", nil),
 			},
-			"mz_port": {
+			"port": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6875),
 			},
-			"mz_database": {
+			"database": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.",
@@ -54,13 +54,13 @@ func Provider() *schema.Provider {
 				Default:     "terraform-provider-materialize",
 				Description: "The application name to include in the connection string",
 			},
-			"mz_sslmode": {
+			"sslmode": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", true),
 				Description: "For testing purposes, disable SSL.",
 			},
-			"mz_preview_features": {
+			"preview_features": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PREVIEW_FEATURES", false),
@@ -152,14 +152,14 @@ func connectionString(host, username, password string, port int, database string
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	host := d.Get("mz_host").(string)
-	username := d.Get("mz_username").(string)
-	password := d.Get("mz_password").(string)
-	port := d.Get("mz_port").(int)
-	database := d.Get("mz_database").(string)
+	host := d.Get("host").(string)
+	username := d.Get("username").(string)
+	password := d.Get("password").(string)
+	port := d.Get("port").(int)
+	database := d.Get("database").(string)
 	application := d.Get("application_name").(string)
-	sslmode := d.Get("mz_sslmode").(bool)
-	preview_features := d.Get("mz_preview_features").(bool)
+	sslmode := d.Get("sslmode").(bool)
+	preview_features := d.Get("preview_features").(bool)
 
 	connStr := connectionString(host, username, password, port, database, sslmode, preview_features, application)
 

@@ -14,21 +14,21 @@ Configure the provider by adding the following block to your Terraform project:
 ```terraform
 # Configuration-based authentication
 provider "materialize" {
-  mz_host     = var.materialize_hostname # optionally use MZ_HOST env var
-  mz_username = var.materialize_username # optionally use MZ_USERNAME env var
-  mz_password = var.materialize_password # optionally use MZ_PASSWORD env var
-  mz_port     = var.materialize_port     # optionally use MZ_PORT env var
-  mz_database = var.materialize_database # optionally use MZ_DATABASE env var
+  host     = var.materialize_hostname # optionally use MZ_HOST env var
+  username = var.materialize_username # optionally use MZ_USERNAME env var
+  password = var.materialize_password # optionally use MZ_PASSWORD env var
+  port     = var.materialize_port     # optionally use MZ_PORT env var
+  database = var.materialize_database # optionally use MZ_DATABASE env var
 }
 ```
 
 ## Schema
 
-* `mz_host` (String) Materialize host. Can also come from the `MZ_HOST` environment variable.
-* `mz_username` (String) Materialize username. Can also come from the `MZ_USERNAME` environment variable.
-* `mz_password` (String, Sensitive) Materialize host. Can also come from the `MZ_PASSWORD` environment variable.
-* `mz_port` (Number) The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.
-* `mz_database` (String) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
+* `host` (String) Materialize host. Can also come from the `MZ_HOST` environment variable.
+* `username` (String) Materialize username. Can also come from the `MZ_USERNAME` environment variable.
+* `password` (String, Sensitive) Materialize host. Can also come from the `MZ_PASSWORD` environment variable.
+* `port` (Number) The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.
+* `database` (String) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
 
 ## Order precedence
 
