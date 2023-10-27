@@ -58,7 +58,7 @@ func (b *MaterializedViewBuilder) Create() error {
 	if len(b.notNullAssertions) > 0 {
 		var na []string
 		for _, n := range b.notNullAssertions {
-			f := fmt.Sprintf("ASSERT NOT NULL %s", QuoteString(n))
+			f := fmt.Sprintf("ASSERT NOT NULL %s", QuoteIdentifier(n))
 			na = append(na, f)
 		}
 		q.WriteString(fmt.Sprintf(` WITH (%s)`, strings.Join(na[:], ", ")))

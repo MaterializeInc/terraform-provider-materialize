@@ -29,7 +29,7 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" IN CLUSTER "cluster" WITH \(ASSERT NOT NULL 'column_1', ASSERT NOT NULL 'column_2'\) AS SELECT 1 FROM 1;`,
+			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" IN CLUSTER "cluster" WITH \(ASSERT NOT NULL "column_1", ASSERT NOT NULL "column_2"\) AS SELECT 1 FROM 1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

@@ -177,6 +177,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			"enable_disk_cluster_replicas",
 			"enable_comment",
 			"enable_role_vars",
+			"enable_assert_not_null",
 		}
 
 		for _, f := range flags {
