@@ -1,9 +1,10 @@
 resource "materialize_materialized_view" "simple_materialized_view" {
-  name          = "simple_materialized_view"
-  schema_name   = materialize_schema.schema.name
-  database_name = materialize_database.database.name
-  comment       = "materialize view comment"
-  cluster_name  = "default"
+  name               = "simple_materialized_view"
+  schema_name        = materialize_schema.schema.name
+  database_name      = materialize_database.database.name
+  comment            = "materialize view comment"
+  cluster_name       = "default"
+  not_null_assertion = ["id"]
 
   statement = <<SQL
 SELECT

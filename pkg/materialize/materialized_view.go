@@ -14,6 +14,7 @@ type MaterializedViewBuilder struct {
 	schemaName           string
 	databaseName         string
 	clusterName          string
+	notNullAssertions    []string
 	selectStmt           string
 }
 
@@ -35,6 +36,11 @@ func (b *MaterializedViewBuilder) ClusterName(clusterName string) *MaterializedV
 	return b
 }
 
+func (b *MaterializedViewBuilder) NotNullAssertions(notNullAssertions []string) *MaterializedViewBuilder {
+	b.notNullAssertions = notNullAssertions
+	return b
+}
+
 func (b *MaterializedViewBuilder) SelectStmt(selectStmt string) *MaterializedViewBuilder {
 	b.selectStmt = selectStmt
 	return b
@@ -47,6 +53,15 @@ func (b *MaterializedViewBuilder) Create() error {
 
 	if b.clusterName != "" {
 		q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
+	}
+
+	if len(b.notNullAssertions) > 0 {
+		var na []string
+		for _, n := range b.notNullAssertions {
+			f := fmt.Sprintf("ASSERT NOT NULL %s", QuoteString(n))
+			na = append(na, f)
+		}
+		q.WriteString(fmt.Sprintf(` WITH (%s)`, strings.Join(na[:], ", ")))
 	}
 
 	q.WriteString(fmt.Sprintf(` AS %s;`, b.selectStmt))
