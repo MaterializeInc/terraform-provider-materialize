@@ -24,13 +24,13 @@ var clusterSchema = map[string]*schema.Schema{
 		RequiredWith: []string{"size"},
 	},
 	"disk": DiskSchema(false),
-	// "availability_zones": {
-	// 	Description: "The specific availability zones of the cluster.",
-	// 	Type:        schema.TypeList,
-	// 	Elem:        &schema.Schema{Type: schema.TypeString},
-	// 	Computed:    true,
-	// 	RequiredWith: []string{"size"},
-	// },
+	"availability_zones": {
+		Description:  "The specific availability zones of the cluster.",
+		Type:         schema.TypeList,
+		Elem:         &schema.Schema{Type: schema.TypeString},
+		Computed:     true,
+		RequiredWith: []string{"size"},
+	},
 	"introspection_interval":        IntrospectionIntervalSchema(false, []string{"size"}),
 	"introspection_debugging":       IntrospectionDebuggingSchema(false, []string{"size"}),
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(false, []string{"size"}),
@@ -110,11 +110,10 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			b.Disk(v.(bool))
 		}
 
-		// TODO: Disable until supported on create
-		// if v, ok := d.GetOk("availability_zones"); ok {
-		// 	azs := materialize.GetSliceValueString(v.([]interface{}))
-		// 	b.AvailabilityZones(azs)
-		// }
+		if v, ok := d.GetOk("availability_zones"); ok {
+			azs := materialize.GetSliceValueString(v.([]interface{}))
+			b.AvailabilityZones(azs)
+		}
 
 		if v, ok := d.GetOk("introspection_interval"); ok {
 			b.IntrospectionInterval(v.(string))
