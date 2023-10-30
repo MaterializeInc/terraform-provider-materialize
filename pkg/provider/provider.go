@@ -23,18 +23,18 @@ func Provider() *schema.Provider {
 				Description: "Materialize host. Can also come from the `MZ_HOST` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
-			"username": {
+			"user": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Materialize username. Can also come from the `MZ_USER` environment variable.",
+				Description: "Materialize user. Can also come from the `MZ_USER` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_USER", nil),
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
-				Description: "Materialize host. Can also come from the `MZ_PW` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_PW", nil),
+				Description: "Materialize host. Can also come from the `MZ_PASSWORD` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_PASSWORD", nil),
 			},
 			"port": {
 				Type:        schema.TypeInt,
@@ -54,11 +54,11 @@ func Provider() *schema.Provider {
 				Default:     "terraform-provider-materialize",
 				Description: "The application name to include in the connection string",
 			},
-			"testing": {
+			"sslmode": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MZ_TESTING", false),
-				Description: "Enable to test the provider locally",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", true),
+				Description: "For testing purposes, disable SSL.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -126,18 +126,16 @@ func Provider() *schema.Provider {
 	}
 }
 
-func connectionString(host, username, password string, port int, database string, testing bool, application string) string {
+func connectionString(host, user, password string, port int, database string, sslmode bool, application string) string {
 	c := strings.Builder{}
-	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
+	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, database))
 
 	params := []string{}
 
-	if testing {
-		params = append(params, "sslmode=disable")
-		params = append(params, "enable_rbac_checks=true")
-		params = append(params, "enable_ld_rbac_checks=true")
-	} else {
+	if sslmode {
 		params = append(params, "sslmode=require")
+	} else {
+		params = append(params, "sslmode=disable")
 	}
 
 	params = append(params, fmt.Sprintf("application_name=%s", application))
@@ -149,14 +147,14 @@ func connectionString(host, username, password string, port int, database string
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	host := d.Get("host").(string)
-	username := d.Get("username").(string)
+	user := d.Get("user").(string)
 	password := d.Get("password").(string)
 	port := d.Get("port").(int)
 	database := d.Get("database").(string)
 	application := d.Get("application_name").(string)
-	testing := d.Get("testing").(bool)
+	sslmode := d.Get("sslmode").(bool)
 
-	connStr := connectionString(host, username, password, port, database, testing, application)
+	connStr := connectionString(host, user, password, port, database, sslmode, application)
 
 	var diags diag.Diagnostics
 	db, err := sqlx.Open("pgx", connStr)
@@ -167,31 +165,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			Detail:   "Unable to authenticate user for authenticated Materialize client",
 		})
 		return nil, diags
-	}
-
-	// Feature flags to enable
-	if testing {
-		flags := []string{
-			"enable_webhook_sources",
-			"enable_connection_validation_syntax",
-			"enable_disk_cluster_replicas",
-			"enable_comment",
-			"enable_role_vars",
-			"enable_assert_not_null",
-		}
-
-		for _, f := range flags {
-			q := fmt.Sprintf("ALTER SYSTEM SET %s = true;", f)
-			_, err = db.Exec(q)
-			if err != nil {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("Unable to %s", f),
-					Detail:   fmt.Sprintf("Unable to %s for authenticated Materialize client", f),
-				})
-				return nil, diags
-			}
-		}
 	}
 
 	return db, diags
