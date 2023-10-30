@@ -89,10 +89,10 @@ resource "materialize_schema" "test" {
 }
 
 resource "materialize_materialized_view" "test" {
-	name          = "%s"
-	schema_name   = materialize_schema.test.name
+	name = "%s"
+	schema_name = materialize_schema.test.name
 	database_name = materialize_database.test.name
-	cluster_name  = "default"
+	cluster_name = "default"
   
 	statement = <<SQL
   SELECT
