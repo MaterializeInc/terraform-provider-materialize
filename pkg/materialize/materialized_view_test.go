@@ -11,11 +11,13 @@ import (
 func TestMaterializedViewCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" AS SELECT 1 FROM t1;`,
+			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" IN CLUSTER "cluster" WITH \(ASSERT NOT NULL "column_1", ASSERT NOT NULL "column_2"\) AS SELECT 1 FROM t1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "materialized_view", SchemaName: "schema", DatabaseName: "database"}
 		b := NewMaterializedViewBuilder(db, o)
+		b.ClusterName("cluster")
+		b.NotNullAssertions([]string{"column_1", "column_2"})
 		b.SelectStmt("SELECT 1 FROM t1")
 
 		if err := b.Create(); err != nil {

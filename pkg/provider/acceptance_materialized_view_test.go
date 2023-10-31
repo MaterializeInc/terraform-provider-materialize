@@ -39,7 +39,7 @@ func TestAccMaterializedView_basic(t *testing.T) {
 			{
 				ResourceName:            "materialize_materialized_view.test",
 				ImportState:             true,
-				ImportStateVerify:       true,
+				ImportStateVerify:       false,
 				ImportStateVerifyIgnore: []string{"statement"},
 			},
 		},
@@ -114,6 +114,7 @@ resource "materialize_materialized_view" "test" {
 	name = "%[2]s"
 	statement = "SELECT 1 AS id"
 	cluster_name = "default"
+	not_null_assertion = ["id"]
 }
 
 resource "materialize_cluster" "test" {

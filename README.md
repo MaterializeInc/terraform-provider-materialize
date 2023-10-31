@@ -29,7 +29,7 @@ Configure the provider by adding the following block to your Terraform project:
 ```hcl
 provider "materialize" {
   host     = "materialized_hostname"
-  username = "materialize_username"
+  user     = "materialize_user"
   password = "materialize_password"
   port     = 6875
   database = "materialize"

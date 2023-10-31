@@ -13,10 +13,12 @@ import (
 )
 
 var inMaterializedView = map[string]interface{}{
-	"name":          "materialized_view",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"statement":     "SELECT 1 FROM 1",
+	"name":               "materialized_view",
+	"schema_name":        "schema",
+	"database_name":      "database",
+	"cluster_name":       "cluster",
+	"not_null_assertion": []interface{}{"column_1", "column_2"},
+	"statement":          "SELECT 1 FROM 1",
 }
 
 func TestResourceMaterializedViewCreate(t *testing.T) {
@@ -27,7 +29,7 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" AS SELECT 1 FROM 1;`,
+			`CREATE MATERIALIZED VIEW "database"."schema"."materialized_view" IN CLUSTER "cluster" WITH \(ASSERT NOT NULL "column_1", ASSERT NOT NULL "column_2"\) AS SELECT 1 FROM 1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
