@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 - 2023-10-30
+
+### Breaking Changes
+* Provider configuration parameters so that they are consistent across all components [#339](https://github.com/MaterializeInc/terraform-provider-materialize/pull/339):
+    * The configuration variable `username` is changed to `user`
+    * The environment variable `MZ_PW` is changed to `MZ_PASSWORD`
+
+### Features
+
+### BugFixes
+
+### Misc
+
 ## 0.1.14 - 2023-10-25
 
 ### Features

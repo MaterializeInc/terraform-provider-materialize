@@ -27,6 +27,13 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Computed:    true,
 	},
+	"not_null_assertion": {
+		Description: "**Private Preview** A list of columns for which to create non-null assertions.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"statement": {
 		Description: "The SQL statement for the materialized view.",
 		Type:        schema.TypeString,
@@ -108,6 +115,11 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	if v, ok := d.GetOk("cluster_name"); ok && v.(string) != "" {
 		b.ClusterName(v.(string))
+	}
+
+	if v, ok := d.GetOk("not_null_assertion"); ok {
+		nas := materialize.GetSliceValueString(v.([]interface{}))
+		b.NotNullAssertions(nas)
 	}
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
