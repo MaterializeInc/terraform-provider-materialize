@@ -89,8 +89,9 @@ resource "materialize_schema" "test" {
 }
 
 resource "materialize_cluster" "test" {
-	name                          = "test"
-	size                          = "3xsmall"
+	name               = "test"
+	size               = "3xsmall"
+	replication_factor = 1
   }
 
 resource "materialize_materialized_view" "test" {
