@@ -85,6 +85,11 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	az := []string{s.AvailabilityZones.String}
+	if err := d.Set("availability_zones", az); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("comment", s.Comment.String); err != nil {
 		return diag.FromErr(err)
 	}

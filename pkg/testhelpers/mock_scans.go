@@ -75,7 +75,7 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "availability_zones", "comment", "owner_name", "privileges"}).
-		AddRow("u1", "cluster", true, "small", 2, true, "az", "comment", "joe", "{u1=UC/u18}")
+		AddRow("u1", "cluster", true, "small", 2, true, "{az1, az2}", "comment", "joe", "{u1=UC/u18}")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
