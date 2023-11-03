@@ -34,6 +34,10 @@ type Builder struct {
 }
 
 func (b *Builder) exec(statement string) error {
+	if statement[len(statement)-1:] != ";" {
+		statement += ";"
+	}
+
 	_, err := b.conn.Exec(statement)
 	if err != nil {
 		log.Printf("[DEBUG] error executing: %s", statement)

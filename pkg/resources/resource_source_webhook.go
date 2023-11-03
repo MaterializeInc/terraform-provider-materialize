@@ -39,11 +39,44 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 			"BYTES",
 		}, true),
 	},
+	"include_header": {
+		Description: "Map a header value from a request into a column.",
+		Type:        schema.TypeList,
+		Optional:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"header": {
+					Description: "The name for the header.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"alias": {
+					Description: "The alias for the header.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+				"bytes": {
+					Description: "Change type to `bytea`.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+				},
+			},
+		},
+		ForceNew: true,
+	},
 	"include_headers": {
 		Description: "Include headers in the webhook.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
+	},
+	"exclude_headers": {
+		Description:  "Headers to exclude from mapping.",
+		Type:         schema.TypeList,
+		Elem:         &schema.Schema{Type: schema.TypeString},
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"include_headers"},
 	},
 	"check_options": {
 		Description: "The check options for the webhook.",
@@ -78,8 +111,14 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 				},
+				"bytes": {
+					Description: "Change type to `bytea`.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+				},
 			},
 		},
+		ForceNew: true,
 	},
 	"check_expression": {
 		Description: "The check expression for the webhook.",
@@ -124,6 +163,24 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		IncludeHeaders(d.Get("include_headers").(bool)).
 		CheckExpression(d.Get("check_expression").(string))
 
+	if v, ok := d.GetOk("exclude_headers"); ok {
+		h := materialize.GetSliceValueString(v.([]interface{}))
+		b.ExcludeHeaders(h)
+	}
+
+	if v, ok := d.GetOk("include_header"); ok {
+		var headers []materialize.HeaderStruct
+		for _, header := range v.([]interface{}) {
+			h := header.(map[string]interface{})
+			headers = append(headers, materialize.HeaderStruct{
+				Header: h["header"].(string),
+				Alias:  h["alias"].(string),
+				Bytes:  h["bytes"].(bool),
+			})
+		}
+		b.IncludeHeader(headers)
+	}
+
 	if v, ok := d.GetOk("check_options"); ok {
 		var options []materialize.CheckOptionsStruct
 		for _, option := range v.([]interface{}) {
@@ -144,6 +201,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 			options = append(options, materialize.CheckOptionsStruct{
 				Field: field,
 				Alias: t["alias"].(string),
+				Bytes: t["bytes"].(bool),
 			})
 		}
 		b.CheckOptions(options)
