@@ -19,6 +19,12 @@ type HeaderStruct struct {
 	Bytes  bool
 }
 
+type IncludeHeadersStruct struct {
+	All  bool
+	Only []string
+	Not  []string
+}
+
 type CheckOptionsStruct struct {
 	Field FieldStruct
 	Alias string
@@ -31,8 +37,7 @@ type SourceWebhookBuilder struct {
 	size            string
 	bodyFormat      string
 	includeHeader   []HeaderStruct
-	includeHeaders  bool
-	excludeHeaders  []string
+	includeHeaders  IncludeHeadersStruct
 	checkOptions    []CheckOptionsStruct
 	checkExpression string
 }
@@ -59,13 +64,8 @@ func (b *SourceWebhookBuilder) IncludeHeader(h []HeaderStruct) *SourceWebhookBui
 	return b
 }
 
-func (b *SourceWebhookBuilder) IncludeHeaders(h bool) *SourceWebhookBuilder {
+func (b *SourceWebhookBuilder) IncludeHeaders(h IncludeHeadersStruct) *SourceWebhookBuilder {
 	b.includeHeaders = h
-	return b
-}
-
-func (b *SourceWebhookBuilder) ExcludeHeaders(e []string) *SourceWebhookBuilder {
-	b.excludeHeaders = e
 	return b
 }
 
@@ -100,16 +100,19 @@ func (b *SourceWebhookBuilder) Create() error {
 		}
 	}
 
-	if b.includeHeaders {
+	if b.includeHeaders.All || len(b.includeHeaders.Only) > 0 || len(b.includeHeaders.Not) > 0 {
 		q.WriteString(` INCLUDE HEADERS`)
-	}
 
-	if len(b.excludeHeaders) > 0 {
-		var ih []string
-		for _, h := range b.excludeHeaders {
-			ih = append(ih, fmt.Sprintf("NOT %s", QuoteString(h)))
+		var headers []string
+		for _, h := range b.includeHeaders.Only {
+			headers = append(headers, QuoteString(h))
 		}
-		q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(ih, ", ")))
+		for _, h := range b.includeHeaders.Not {
+			headers = append(headers, fmt.Sprintf("NOT %s", QuoteString(h)))
+		}
+		if len(headers) > 0 {
+			q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(headers, ", ")))
+		}
 	}
 
 	if len(b.checkOptions) > 0 || b.checkExpression != "" {

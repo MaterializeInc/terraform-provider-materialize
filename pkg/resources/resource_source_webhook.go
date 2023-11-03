@@ -66,17 +66,38 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 	},
 	"include_headers": {
 		Description: "Include headers in the webhook.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"exclude_headers": {
-		Description:  "Headers to exclude from mapping.",
-		Type:         schema.TypeList,
-		Elem:         &schema.Schema{Type: schema.TypeString},
-		Optional:     true,
-		ForceNew:     true,
-		RequiredWith: []string{"include_headers"},
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"all": {
+					Description:   "Include all headers.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ConflictsWith: []string{"include_headers.0.only", "include_headers.0.not"},
+					AtLeastOneOf:  []string{"include_headers.0.all", "include_headers.0.only", "include_headers.0.not"},
+				},
+				"only": {
+					Description:   "Headers that should be included.",
+					Type:          schema.TypeList,
+					Elem:          &schema.Schema{Type: schema.TypeString},
+					Optional:      true,
+					ConflictsWith: []string{"include_headers.0.all"},
+					AtLeastOneOf:  []string{"include_headers.0.all", "include_headers.0.only", "include_headers.0.not"},
+				},
+				"not": {
+					Description:   "Headers that should be excluded.",
+					Type:          schema.TypeList,
+					Elem:          &schema.Schema{Type: schema.TypeString},
+					Optional:      true,
+					ConflictsWith: []string{"include_headers.0.all"},
+					AtLeastOneOf:  []string{"include_headers.0.all", "include_headers.0.only", "include_headers.0.not"},
+				},
+			},
+		},
+		Optional: true,
+		MinItems: 1,
+		MaxItems: 1,
+		ForceNew: true,
 	},
 	"check_options": {
 		Description: "The check options for the webhook.",
@@ -160,13 +181,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	b.ClusterName(clusterName).
 		BodyFormat(bodyFormat).
-		IncludeHeaders(d.Get("include_headers").(bool)).
 		CheckExpression(d.Get("check_expression").(string))
-
-	if v, ok := d.GetOk("exclude_headers"); ok {
-		h := materialize.GetSliceValueString(v.([]interface{}))
-		b.ExcludeHeaders(h)
-	}
 
 	if v, ok := d.GetOk("include_header"); ok {
 		var headers []materialize.HeaderStruct
@@ -179,6 +194,25 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 			})
 		}
 		b.IncludeHeader(headers)
+	}
+
+	if v, ok := d.GetOk("include_headers"); ok {
+		var i materialize.IncludeHeadersStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["all"]; ok {
+			i.All = v.(bool)
+		}
+
+		if v, ok := u["only"]; ok {
+			o := materialize.GetSliceValueString(v.([]interface{}))
+			i.Only = o
+		}
+
+		if v, ok := u["not"]; ok {
+			n := materialize.GetSliceValueString(v.([]interface{}))
+			i.Not = n
+		}
+		b.IncludeHeaders(i)
 	}
 
 	if v, ok := d.GetOk("check_options"); ok {

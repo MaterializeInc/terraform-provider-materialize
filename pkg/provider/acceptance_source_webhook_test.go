@@ -29,7 +29,10 @@ func TestAccSourceWebhook_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "cluster_name", clusterName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "body_format", "json"),
-					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers", "false"),
+					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers.0.only.0", "a"),
+					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers.0.only.1", "b"),
+					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers.0.not.0", "c"),
+					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers.0.not.1", "d"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "size", ""),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.0.field.0.body", "true"),
@@ -101,7 +104,6 @@ func TestAccSourceWebhook_update(t *testing.T) {
 					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", newSourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "body_format", "json"),
-					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers", "false"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "size", ""),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.0.field.0.body", "true"),
@@ -136,8 +138,12 @@ resource "materialize_source_webhook" "test" {
 	name = "%[4]s"
 	cluster_name = materialize_cluster.example_cluster.name
 	body_format = "json"
-	include_headers = false
 	ownership_role = materialize_role.test.name
+
+	include_headers {
+		only = ["a", "b"]
+		not  = ["c", "d"]
+	}
 
 	check_options {
 		field {

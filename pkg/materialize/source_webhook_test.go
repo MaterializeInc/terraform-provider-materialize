@@ -44,13 +44,12 @@ func TestSourceWebhookCreateIncludeHeaders(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADERS \(NOT 'authorization', NOT 'x-api-key'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		var excludeHeaders = []string{"authorization", "x-api-key"}
-
 		b := NewSourceWebhookBuilder(db, sourceWebhook)
 		b.ClusterName("cluster")
 		b.BodyFormat("JSON")
-		b.IncludeHeaders(true)
-		b.ExcludeHeaders(excludeHeaders)
+		b.IncludeHeaders(IncludeHeadersStruct{
+			Not: []string{"authorization", "x-api-key"},
+		})
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
@@ -132,7 +131,7 @@ func TestSourceWebhookCreateSegment(t *testing.T) {
 		b.ClusterName("cluster")
 		b.BodyFormat("JSON")
 		b.IncludeHeader(includeHeader)
-		b.IncludeHeaders(true)
+		b.IncludeHeaders(IncludeHeadersStruct{All: true})
 		b.CheckOptions(checkOptions)
 		b.CheckExpression("decode(headers->'x-signature', 'hex') = hmac(body, secret, 'sha1')")
 
