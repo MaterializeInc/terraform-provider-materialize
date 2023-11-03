@@ -36,6 +36,8 @@ resource "materialize_source_webhook" "example_webhook" {
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `exclude_headers` (List of String) Headers to exclude from mapping.
+- `include_header` (Block List) Map a header value from a request into a column. (see [below for nested schema](#nestedblock--include_header))
 - `include_headers` (Boolean) Include headers in the webhook.
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
@@ -57,6 +59,7 @@ Required:
 Optional:
 
 - `alias` (String) The alias for the check options.
+- `bytes` (Boolean) Change type to `bytea`.
 
 <a id="nestedblock--check_options--field"></a>
 ### Nested Schema for `check_options.field`
@@ -80,6 +83,19 @@ Optional:
 - `schema_name` (String) The secret schema name.
 
 
+
+
+<a id="nestedblock--include_header"></a>
+### Nested Schema for `include_header`
+
+Required:
+
+- `header` (String) The name for the header.
+
+Optional:
+
+- `alias` (String) The alias for the header.
+- `bytes` (Boolean) Change type to `bytea`.
 
 
 <a id="nestedatt--subsource"></a>
