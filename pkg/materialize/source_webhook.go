@@ -13,9 +13,22 @@ type FieldStruct struct {
 	Secret  IdentifierSchemaStruct
 }
 
+type HeaderStruct struct {
+	Header string
+	Alias  string
+	Bytes  bool
+}
+
+type IncludeHeadersStruct struct {
+	All  bool
+	Only []string
+	Not  []string
+}
+
 type CheckOptionsStruct struct {
 	Field FieldStruct
 	Alias string
+	Bytes bool
 }
 
 type SourceWebhookBuilder struct {
@@ -23,7 +36,8 @@ type SourceWebhookBuilder struct {
 	clusterName     string
 	size            string
 	bodyFormat      string
-	includeHeaders  bool
+	includeHeader   []HeaderStruct
+	includeHeaders  IncludeHeadersStruct
 	checkOptions    []CheckOptionsStruct
 	checkExpression string
 }
@@ -45,7 +59,12 @@ func (b *SourceWebhookBuilder) BodyFormat(f string) *SourceWebhookBuilder {
 	return b
 }
 
-func (b *SourceWebhookBuilder) IncludeHeaders(h bool) *SourceWebhookBuilder {
+func (b *SourceWebhookBuilder) IncludeHeader(h []HeaderStruct) *SourceWebhookBuilder {
+	b.includeHeader = h
+	return b
+}
+
+func (b *SourceWebhookBuilder) IncludeHeaders(h IncludeHeadersStruct) *SourceWebhookBuilder {
 	b.includeHeaders = h
 	return b
 }
@@ -72,38 +91,61 @@ func (b *SourceWebhookBuilder) Create() error {
 	q.WriteString(` FROM WEBHOOK`)
 	q.WriteString(fmt.Sprintf(` BODY FORMAT %s`, b.bodyFormat))
 
-	if b.includeHeaders {
+	if len(b.includeHeader) > 0 {
+		for _, h := range b.includeHeader {
+			q.WriteString(fmt.Sprintf(` INCLUDE HEADER %s AS %s`, QuoteString(h.Header), h.Alias))
+			if h.Bytes {
+				q.WriteString(` BYTES`)
+			}
+		}
+	}
+
+	if b.includeHeaders.All || len(b.includeHeaders.Only) > 0 || len(b.includeHeaders.Not) > 0 {
 		q.WriteString(` INCLUDE HEADERS`)
+
+		var headers []string
+		for _, h := range b.includeHeaders.Only {
+			headers = append(headers, QuoteString(h))
+		}
+		for _, h := range b.includeHeaders.Not {
+			headers = append(headers, fmt.Sprintf("NOT %s", QuoteString(h)))
+		}
+		if len(headers) > 0 {
+			q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(headers, ", ")))
+		}
 	}
 
 	if len(b.checkOptions) > 0 || b.checkExpression != "" {
-		q.WriteString(` CHECK (`)
-		if len(b.checkOptions) > 0 {
-			q.WriteString(` WITH (`)
-			var options []string
-			for _, option := range b.checkOptions {
-				if option.Field.Body {
-					options = append(options, "BODY")
-				}
-				if option.Field.Headers {
-					options = append(options, "HEADERS")
-				}
-				if option.Field.Secret.Name != "" {
-					options = append(options, "SECRET "+option.Field.Secret.QualifiedName())
-				}
-				if option.Alias != "" {
-					options[len(options)-1] += " AS " + option.Alias
-				}
+		var options []string
+		for _, option := range b.checkOptions {
+			var o string
+			if option.Field.Body {
+				o = "BODY"
 			}
-			q.WriteString(strings.Join(options, ", "))
-			q.WriteString(`) `)
+			if option.Field.Headers {
+				o = "HEADERS"
+			}
+			if option.Field.Secret.Name != "" {
+				o = "SECRET " + option.Field.Secret.QualifiedName()
+			}
+			if option.Alias != "" {
+				o += fmt.Sprintf(" AS %s", option.Alias)
+			}
+			if option.Bytes {
+				o += " BYTES"
+			}
+			options = append(options, o)
+		}
+
+		q.WriteString(" CHECK (")
+		if len(options) > 0 {
+			q.WriteString(fmt.Sprintf(" WITH (%s)", strings.Join(options, ", ")))
 		}
 		if b.checkExpression != "" {
-			q.WriteString(b.checkExpression)
+			q.WriteString(fmt.Sprintf(" %s", b.checkExpression))
 		}
-		q.WriteString(`)`)
+		q.WriteString(")")
 	}
 
-	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }

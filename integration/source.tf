@@ -131,9 +131,12 @@ resource "materialize_source_webhook" "example_webhook_source" {
   name    = "example_webhook_source"
   comment = "source webhook comment"
 
-  cluster_name    = materialize_cluster.cluster_source.name
-  body_format     = "json"
-  include_headers = false
+  include_headers {
+    all = true
+  }
+
+  cluster_name = materialize_cluster.cluster_source.name
+  body_format  = "json"
 }
 
 resource "materialize_source_grant" "source_grant_select" {
