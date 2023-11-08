@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.1 - 2023-10-31
+## 0.2.1 - 2023-11-09
 
 ### Features
 * Support `ASSERT NOT NULL` for materialized view resource [#341](https://github.com/MaterializeInc/terraform-provider-materialize/pull/341)
@@ -8,6 +8,7 @@
 ### BugFixes
 
 ### Misc
+* Update testing plugin [#345](https://github.com/MaterializeInc/terraform-provider-materialize/pull/345)
 
 ## 0.2.0 - 2023-10-30
 
