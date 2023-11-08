@@ -5,6 +5,7 @@ on:
       - pkg/**
       - examples/**
       - templates/**
+      - README.md
 
 jobs:
   documentation:

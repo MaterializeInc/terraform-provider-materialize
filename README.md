@@ -51,7 +51,7 @@ resource "materialize_connection_kafka" "kafka_connection" {
   kafka_broker {
     broker = "b-1.hostname-1:9096"
   }
-  sasl_username = {
+  sasl_username {
     text = "user"
   }
   sasl_password {
