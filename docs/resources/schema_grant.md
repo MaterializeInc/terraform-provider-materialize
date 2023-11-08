@@ -32,6 +32,10 @@ resource "materialize_schema_grant" "schema_grant_usage" {
 - `role_name` (String) The name of the role to grant privilege to.
 - `schema_name` (String) The schema that is being granted on.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

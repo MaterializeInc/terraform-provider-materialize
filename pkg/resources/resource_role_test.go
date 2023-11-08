@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestResourceRoleCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`CREATE ROLE "role" INHERIT;`,
@@ -72,7 +72,7 @@ func TestResourceRoleDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP ROLE "role";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := roleDelete(context.TODO(), d, db); err != nil {

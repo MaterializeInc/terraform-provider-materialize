@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccDatabase_basic(t *testing.T) {
@@ -130,18 +129,26 @@ func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner
 
 func testAccCheckDatabaseExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		r, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("database not found: %s", name)
 		}
-		_, err := materialize.ScanDatabase(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanDatabase(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
 
 func testAccCheckAllDatabasesDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
+	meta := testAccProvider.Meta()
+	db, err := utils.GetDBClientFromMeta(meta, nil)
+	if err != nil {
+		return fmt.Errorf("error getting DB client: %s", err)
+	}
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "materialize_database" {

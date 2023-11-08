@@ -22,13 +22,16 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up --build -d
 
+      - name: Configure hosts file
+        run: echo "127.0.0.1 materialized frontegg cloud" | sudo tee -a /etc/hosts
+
       - name: make testacc
         run: make testacc
         env:
-          MZ_HOST: localhost
-          MZ_USER: mz_system
+          MZ_ENDPOINT: http://localhost:3000
+          MZ_CLOUD_ENDPOINT: http://localhost:3001
+          MZ_PASSWORD: mzp_1b2a3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b
           MZ_SSLMODE: disable
-          MZ_PORT: 6877
 
       - name: Docker Compose Down
         run: docker compose down

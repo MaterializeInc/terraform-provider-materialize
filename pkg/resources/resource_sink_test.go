@@ -6,8 +6,8 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,7 +45,7 @@ func TestResourceSinkUpdate(t *testing.T) {
 	d.Set("size", "medium")
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SINK "database"."schema"."" RENAME TO "sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" SET \(SIZE = 'small'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -70,7 +70,7 @@ func TestResourceSinkDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP SINK "database"."schema"."sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := sinkDelete(context.TODO(), d, db); err != nil {

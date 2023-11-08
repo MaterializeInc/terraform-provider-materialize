@@ -50,6 +50,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `marketing_options` (Block List, Max: 1) Marketing Options. (see [below for nested schema](#nestedblock--marketing_options))
 - `ownership_role` (String) The owernship role of the object.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `tpch_options` (Block List, Max: 1) TPCH Options. (see [below for nested schema](#nestedblock--tpch_options))

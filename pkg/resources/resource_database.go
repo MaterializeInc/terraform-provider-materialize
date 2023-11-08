@@ -10,13 +10,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var databaseSchema = map[string]*schema.Schema{
 	"name":           ObjectNameSchema("database", true, true),
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func Database() *schema.Resource {
@@ -39,7 +39,12 @@ func Database() *schema.Resource {
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanDatabase(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	s, err := materialize.ScanDatabase(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -67,8 +72,13 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{ObjectType: "DATABASE", Name: databaseName}
-	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewDatabaseBuilder(metaDb, o)
 
 	// create resource
 	if err := b.Create(); err != nil {
@@ -77,7 +87,7 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -88,7 +98,7 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -98,7 +108,7 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	// set id
-	i, err := materialize.DatabaseId(meta.(*sqlx.DB), o)
+	i, err := materialize.DatabaseId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -110,8 +120,13 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{ObjectType: "DATABASE", Name: databaseName}
-	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewOwnershipBuilder(metaDb, o)
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
@@ -122,7 +137,7 @@ func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -135,8 +150,13 @@ func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 func databaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	databaseName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{Name: databaseName}
-	b := materialize.NewDatabaseBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewDatabaseBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

@@ -6,7 +6,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func CurrentCluster() *schema.Resource {
@@ -17,6 +16,10 @@ func CurrentCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"region": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -24,7 +27,11 @@ func CurrentCluster() *schema.Resource {
 func currentClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	conn := metaDb
 	var name string
 	conn.QueryRow("SHOW CLUSTER;").Scan(&name)
 

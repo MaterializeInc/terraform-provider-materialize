@@ -30,6 +30,7 @@ data "materialize_schema" "materialize" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `region` (String)
 - `schemas` (List of Object) The schemas in the account (see [below for nested schema](#nestedatt--schemas))
 
 <a id="nestedatt--schemas"></a>

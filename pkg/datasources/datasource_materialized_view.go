@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func MaterializedView() *schema.Resource {
@@ -50,6 +50,10 @@ func MaterializedView() *schema.Resource {
 					},
 				},
 			},
+			"region": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -60,7 +64,11 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	var diags diag.Diagnostics
 
-	dataSource, err := materialize.ListMaterializedViews(meta.(*sqlx.DB), schemaName, databaseName)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dataSource, err := materialize.ListMaterializedViews(metaDb, schemaName, databaseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}

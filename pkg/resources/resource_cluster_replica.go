@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var clusterReplicaSchema = map[string]*schema.Schema{
@@ -29,6 +28,7 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	"introspection_interval":        IntrospectionIntervalSchema(true, []string{}),
 	"introspection_debugging":       IntrospectionDebuggingSchema(true, []string{}),
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(true, []string{}),
+	"region":                        RegionSchema(),
 }
 
 func ClusterReplica() *schema.Resource {
@@ -53,7 +53,11 @@ func ClusterReplica() *schema.Resource {
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanClusterReplica(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanClusterReplica(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -94,12 +98,17 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{
 		ObjectType:  "CLUSTER REPLICA",
 		Name:        replicaName,
 		ClusterName: clusterName,
 	}
-	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewClusterReplicaBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("size"); ok {
 		b.Size(v.(string))
@@ -132,7 +141,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -142,7 +151,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	// set id
-	i, err := materialize.ClusterReplicaId(meta.(*sqlx.DB), o)
+	i, err := materialize.ClusterReplicaId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,6 +164,10 @@ func clusterReplicaUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{
 		ObjectType:  "CLUSTER REPLICA",
 		Name:        replicaName,
@@ -163,7 +176,7 @@ func clusterReplicaUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -177,8 +190,12 @@ func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{Name: replicaName, ClusterName: clusterName}
-	b := materialize.NewClusterReplicaBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewClusterReplicaBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

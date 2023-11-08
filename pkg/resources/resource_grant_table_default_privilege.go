@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var grantTableDefaultPrivilegeSchema = map[string]*schema.Schema{
@@ -17,6 +16,7 @@ var grantTableDefaultPrivilegeSchema = map[string]*schema.Schema{
 	"database_name":    GrantDefaultDatabaseNameSchema(),
 	"schema_name":      GrantDefaultSchemaNameSchema(),
 	"privilege":        PrivilegeSchema("TABLE"),
+	"region":           RegionSchema(),
 }
 
 func GrantTableDefaultPrivilege() *schema.Resource {
@@ -40,7 +40,12 @@ func grantTableDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDat
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "TABLE", granteeName, targetName, privilege)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewDefaultPrivilegeBuilder(metaDb, "TABLE", granteeName, targetName, privilege)
 
 	var database, schema string
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
@@ -59,26 +64,26 @@ func grantTableDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// Query ids
-	gId, err := materialize.RoleId(meta.(*sqlx.DB), granteeName)
+	gId, err := materialize.RoleId(metaDb, granteeName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	tId, err := materialize.RoleId(meta.(*sqlx.DB), targetName)
+	tId, err := materialize.RoleId(metaDb, targetName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	var dId, sId string
 	if database != "" {
-		dId, err = materialize.DatabaseId(meta.(*sqlx.DB), materialize.MaterializeObject{Name: database})
+		dId, err = materialize.DatabaseId(metaDb, materialize.MaterializeObject{Name: database})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	if schema != "" {
-		sId, err = materialize.SchemaId(meta.(*sqlx.DB), materialize.MaterializeObject{Name: schema, DatabaseName: database})
+		sId, err = materialize.SchemaId(metaDb, materialize.MaterializeObject{Name: schema, DatabaseName: database})
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -95,7 +100,12 @@ func grantTableDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceDat
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "TABLE", granteenName, targetName, privilege)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewDefaultPrivilegeBuilder(metaDb, "TABLE", granteenName, targetName, privilege)
 
 	if v, ok := d.GetOk("database_name"); ok && v.(string) != "" {
 		b.DatabaseName(v.(string))

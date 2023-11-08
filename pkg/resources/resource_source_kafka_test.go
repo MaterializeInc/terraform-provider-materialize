@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,7 +57,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafka)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"

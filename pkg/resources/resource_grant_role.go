@@ -10,7 +10,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/exp/slices"
 )
 
@@ -27,6 +26,7 @@ var grantRoleSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"region": RegionSchema(),
 }
 
 func GrantRole() *schema.Resource {
@@ -68,8 +68,13 @@ func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.FromErr(err)
 	}
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	// Scan role members
-	roles, err := materialize.ScanRolePrivilege(meta.(*sqlx.DB), key.roleId, key.memberId)
+	roles, err := materialize.ScanRolePrivilege(metaDb, key.roleId, key.memberId)
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -93,18 +98,23 @@ func grantRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	roleName := d.Get("role_name").(string)
 	memberName := d.Get("member_name").(string)
 
-	b := materialize.NewRolePrivilegeBuilder(meta.(*sqlx.DB), roleName, memberName)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewRolePrivilegeBuilder(metaDb, roleName, memberName)
 
 	if err := b.Grant(); err != nil {
 		return diag.FromErr(err)
 	}
 
-	rId, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
+	rId, err := materialize.RoleId(metaDb, roleName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	mId, err := materialize.RoleId(meta.(*sqlx.DB), memberName)
+	mId, err := materialize.RoleId(metaDb, memberName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +129,12 @@ func grantRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	roleName := d.Get("role_name").(string)
 	memberName := d.Get("member_name").(string)
 
-	b := materialize.NewRolePrivilegeBuilder(meta.(*sqlx.DB), roleName, memberName)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewRolePrivilegeBuilder(metaDb, roleName, memberName)
 
 	if err := b.Revoke(); err != nil {
 		return diag.FromErr(err)

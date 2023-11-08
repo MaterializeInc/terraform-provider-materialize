@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +23,7 @@ func TestResourceGrantDatabaseDefaultPrivilegeCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantDatabaseDefaultPrivilege().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" GRANT USAGE ON DATABASES TO "project_managers";`,
@@ -66,7 +65,7 @@ func TestResourceGrantDatabaseDefaultPrivilegeDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantDatabaseDefaultPrivilege().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" REVOKE USAGE ON DATABASES FROM "project_managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantDatabaseDefaultPrivilegeDelete(context.TODO(), d, db); err != nil {

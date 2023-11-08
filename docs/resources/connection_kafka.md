@@ -85,6 +85,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
 - `sasl_password` (Block List, Max: 1) The SASL password for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_password))
 - `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))

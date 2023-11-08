@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccSinkKafka_basic(t *testing.T) {
@@ -336,26 +335,38 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 
 func testAccCheckSinkKafkaExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		r, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("sink kafka not found: %s", name)
 		}
-		_, err := materialize.ScanSink(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanSink(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
 
 func testAccCheckSinkKafkaDisappears(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`DROP SINK "%s";`, name))
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
+		_, err = db.Exec(fmt.Sprintf(`DROP SINK "%s";`, name))
 		return err
 	}
 }
 
 func testAccCheckAllSinkKafkaDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
+	meta := testAccProvider.Meta()
+	db, err := utils.GetDBClientFromMeta(meta, nil)
+	if err != nil {
+		return fmt.Errorf("error getting DB client: %s", err)
+	}
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "materialize_sink_kafka" {

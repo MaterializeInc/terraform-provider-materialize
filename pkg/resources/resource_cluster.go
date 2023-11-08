@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var clusterSchema = map[string]*schema.Schema{
@@ -36,6 +35,7 @@ var clusterSchema = map[string]*schema.Schema{
 	"introspection_interval":        IntrospectionIntervalSchema(false, []string{"size"}),
 	"introspection_debugging":       IntrospectionDebuggingSchema(false, []string{"size"}),
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(false, []string{"size"}),
+	"region":                        RegionSchema(),
 }
 
 func Cluster() *schema.Resource {
@@ -57,7 +57,12 @@ func Cluster() *schema.Resource {
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	s, err := materialize.ScanCluster(meta.(*sqlx.DB), utils.ExtractId(i))
+
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanCluster(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -97,8 +102,12 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
-	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewClusterBuilder(metaDb, o)
 
 	// managed cluster options
 	if size, ok := d.GetOk("size"); ok {
@@ -139,7 +148,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -150,7 +159,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -160,7 +169,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	// set id
-	i, err := materialize.ClusterId(meta.(*sqlx.DB), o)
+	i, err := materialize.ClusterId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -172,17 +181,21 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewOwnershipBuilder(metaDb, o)
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewClusterBuilder(metaDb, o)
 	if _, ok := d.GetOk("size"); ok {
 		if d.HasChange("size") {
 			_, newSize := d.GetChange("size")
@@ -209,7 +222,7 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		// if d.HasChange("availability_zones") {
 		// 	_, n := d.GetChange("availability_zones")
 		// 	azs := materialize.GetSliceValueString(n.([]interface{}))
-		// 	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+		// 	b := materialize.NewClusterBuilder(metaDb, o)
 		// 	if err := b.SetAvailabilityZones(azs); err != nil {
 		// 		return diag.FromErr(err)
 		// 	}
@@ -239,7 +252,7 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -252,8 +265,12 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{Name: clusterName}
-	b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewClusterBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

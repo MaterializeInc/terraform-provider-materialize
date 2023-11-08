@@ -36,6 +36,7 @@ data "materialize_source" "materialize_schema" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `region` (String)
 - `sources` (List of Object) The sources in the account (see [below for nested schema](#nestedatt--sources))
 
 <a id="nestedatt--sources"></a>

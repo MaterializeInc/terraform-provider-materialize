@@ -30,6 +30,10 @@ resource "materialize_database_grant_default_privilege" "example" {
 - `privilege` (String) The privilege to grant to the object.
 - `target_role_name` (String) The default privilege will apply to objects created by this role. If this is left blank, then the current role is assumed. Use the `PUBLIC` pseudo-role to target objects created by all roles.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +24,8 @@ func TestResourceSecretCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+
 		// Create
 		mock.ExpectExec(
 			`CREATE SECRET "database"."schema"."secret" AS 'value';`,
@@ -78,7 +79,7 @@ func TestResourceSecretUpdate(t *testing.T) {
 	d.Set("value", "old_value")
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SECRET "database"."schema"."" RENAME TO "secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SECRET "database"."schema"."old_secret" AS 'value';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -104,7 +105,7 @@ func TestResourceSecretDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Secret().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP SECRET "database"."schema"."secret";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := secretDelete(context.TODO(), d, db); err != nil {

@@ -9,7 +9,6 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +29,7 @@ func TestResourceClusterCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Cluster().Schema, inCluster)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`
 			CREATE CLUSTER "cluster"
@@ -98,7 +97,7 @@ func TestResourceClusterZeroReplicationCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Cluster().Schema, inClusterZeroReplication)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`
 			CREATE CLUSTER "cluster"
@@ -127,7 +126,7 @@ func TestResourceClusterDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Cluster().Schema, inCluster)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CLUSTER "cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := clusterDelete(context.TODO(), d, db); err != nil {

@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccSourceWebhook_basic(t *testing.T) {
@@ -336,18 +335,26 @@ func testAccSourceWebhookRudderstackResource(sourceName string) string {
 
 func testAccCheckSourceWebhookExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		r, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("source webhook not found: %s", name)
 		}
-		_, err := materialize.ScanSource(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanSource(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
 
 func testAccCheckAllSourceWebhookDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
+	meta := testAccProvider.Meta()
+	db, err := utils.GetDBClientFromMeta(meta, nil)
+	if err != nil {
+		return fmt.Errorf("error getting DB client: %s", err)
+	}
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "materialize_source_webhook" {

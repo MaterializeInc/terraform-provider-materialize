@@ -87,3 +87,15 @@ services:
       TF_LOG: INFO
     command: >
       sh -c "tail -F /dev/null"
+
+  frontegg:
+    container_name: frontegg
+    build: mocks/frontegg
+    ports:
+      - "3000:3000"
+
+  cloud:
+    container_name: cloud
+    build: mocks/cloud
+    ports:
+      - "3001:3001"

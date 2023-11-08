@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var sourceKafkaSchema = map[string]*schema.Schema{
@@ -141,6 +140,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
 	"subsource":       SubsourceSchema(),
 	"ownership_role":  OwnershipRoleSchema(),
+	"region":          RegionSchema(),
 }
 
 func SourceKafka() *schema.Resource {
@@ -165,8 +165,12 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSourceKafkaBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewSourceKafkaBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
@@ -266,7 +270,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -277,7 +281,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -287,7 +291,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	// set id
-	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
+	i, err := materialize.SourceId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

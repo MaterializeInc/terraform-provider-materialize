@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var roleSchema = map[string]*schema.Schema{
@@ -22,6 +21,7 @@ var roleSchema = map[string]*schema.Schema{
 		Type:        schema.TypeBool,
 		Computed:    true,
 	},
+	"region": RegionSchema(),
 }
 
 func Role() *schema.Resource {
@@ -43,7 +43,12 @@ func Role() *schema.Resource {
 
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	s, err := materialize.ScanRole(meta.(*sqlx.DB), utils.ExtractId(i))
+
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanRole(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -76,8 +81,13 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
-	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewRoleBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("inherit"); ok && v.(bool) {
 		b.Inherit()
@@ -90,7 +100,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -100,7 +110,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	// set id
-	i, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
+	i, err := materialize.RoleId(metaDb, roleName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,9 +124,14 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -129,8 +144,13 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 func roleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
-	b := materialize.NewRoleBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewRoleBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

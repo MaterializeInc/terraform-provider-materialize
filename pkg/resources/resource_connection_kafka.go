@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/jmoiron/sqlx"
 )
 
 var connectionKafkaSchema = map[string]*schema.Schema{
@@ -83,6 +82,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The default SSH tunnel configuration for the Kafka brokers.", false),
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func ConnectionKafka() *schema.Resource {
@@ -107,8 +107,12 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewConnectionKafkaBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewConnectionKafkaBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
 		brokers := materialize.GetKafkaBrokersStruct(v)
@@ -168,7 +172,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -179,7 +183,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -189,7 +193,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	// set id
-	i, err := materialize.ConnectionId(meta.(*sqlx.DB), o)
+	i, err := materialize.ConnectionId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}

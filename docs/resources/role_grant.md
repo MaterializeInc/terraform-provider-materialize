@@ -28,6 +28,10 @@ resource "materialize_role_grant" "role_grant_user" {
 - `member_name` (String) The role name to add to role_name as a member.
 - `role_name` (String) The role name to add member_name as a member.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

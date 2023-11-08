@@ -27,3 +27,4 @@ output "cluster_name" {
 
 - `id` (String) The ID of this resource.
 - `name` (String)
+- `region` (String)

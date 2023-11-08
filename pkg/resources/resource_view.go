@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var viewSchema = map[string]*schema.Schema{
@@ -26,6 +25,7 @@ var viewSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func View() *schema.Resource {
@@ -48,7 +48,11 @@ func View() *schema.Resource {
 func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanView(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanView(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -91,8 +95,12 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "VIEW", Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewViewBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
 		b.SelectStmt(v.(string))
@@ -105,7 +113,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -116,7 +124,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -126,7 +134,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	// set id
-	i, err := materialize.ViewId(meta.(*sqlx.DB), o)
+	i, err := materialize.ViewId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -140,12 +148,16 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "VIEW", Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newViewName := d.GetChange("name")
 		o := materialize.MaterializeObject{ObjectType: "VIEW", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewViewBuilder(metaDb, o)
 
 		if err := b.Rename(newViewName.(string)); err != nil {
 			return diag.FromErr(err)
@@ -154,7 +166,7 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
@@ -163,7 +175,7 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -178,8 +190,12 @@ func viewDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewViewBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewViewBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

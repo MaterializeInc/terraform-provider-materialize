@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +25,7 @@ func TestResourceGrantSecretCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSecret().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT USAGE ON SECRET "database"."schema"."secret" TO "joe";`,
@@ -67,7 +66,7 @@ func TestResourceGrantSecretDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSecret().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE USAGE ON SECRET "database"."schema"."secret" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSecretDelete(context.TODO(), d, db); err != nil {

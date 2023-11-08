@@ -8,13 +8,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var grantDatabaseDefaultPrivilegeSchema = map[string]*schema.Schema{
 	"grantee_name":     GranteeNameSchema(),
 	"target_role_name": TargetRoleNameSchema(),
 	"privilege":        PrivilegeSchema("DATABASE"),
+	"region":           RegionSchema(),
 }
 
 func GrantDatabaseDefaultPrivilege() *schema.Resource {
@@ -38,7 +38,12 @@ func grantDatabaseDefaultPrivilegeCreate(ctx context.Context, d *schema.Resource
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "DATABASE", granteeName, targetName, privilege)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewDefaultPrivilegeBuilder(metaDb, "DATABASE", granteeName, targetName, privilege)
 
 	// create resource
 	if err := b.Grant(); err != nil {
@@ -46,12 +51,12 @@ func grantDatabaseDefaultPrivilegeCreate(ctx context.Context, d *schema.Resource
 	}
 
 	// Query ids
-	gId, err := materialize.RoleId(meta.(*sqlx.DB), granteeName)
+	gId, err := materialize.RoleId(metaDb, granteeName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	tId, err := materialize.RoleId(meta.(*sqlx.DB), targetName)
+	tId, err := materialize.RoleId(metaDb, targetName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -67,7 +72,12 @@ func grantDatabaseDefaultPrivilegeDelete(ctx context.Context, d *schema.Resource
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "DATABASE", granteenName, targetName, privilege)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewDefaultPrivilegeBuilder(metaDb, "DATABASE", granteenName, targetName, privilege)
 
 	if err := b.Revoke(); err != nil {
 		return diag.FromErr(err)

@@ -46,6 +46,7 @@ resource "materialize_index" "loadgen_index" {
 - `default` (Boolean) Creates a default index using all inferred columns are used.
 - `method` (String) The name of the index method to use.
 - `name` (String) The identifier for the index.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 
 ### Read-Only
 

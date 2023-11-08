@@ -11,7 +11,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/exp/slices"
 )
 
@@ -38,6 +37,11 @@ func parsePrivilegeKey(id string) (GrantPrivilegeKey, error) {
 func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	key, err := parsePrivilegeKey(i)
 	if err != nil {
 		log.Printf("[WARN] malformed privilege (%s), removing from state file", d.Id())
@@ -45,7 +49,7 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return nil
 	}
 
-	p, err := materialize.ScanPrivileges(meta.(*sqlx.DB), key.objectType, key.objectId)
+	p, err := materialize.ScanPrivileges(metaDb, key.objectType, key.objectId)
 	if err == sql.ErrNoRows {
 		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
@@ -55,6 +59,9 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	privilegeMap, err := materialize.MapGrantPrivileges(p)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	privilege := d.Get("privilege").(string)
 	if !slices.Contains(privilegeMap[key.roleId], privilege) {
 		log.Printf("[DEBUG] %s object does not contain privilege %s", i, privilege)

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/jmoiron/sqlx"
 )
 
 var indexSchema = map[string]*schema.Schema{
@@ -71,6 +70,7 @@ var indexSchema = map[string]*schema.Schema{
 		Required: true,
 		ForceNew: true,
 	},
+	"region": RegionSchema(),
 }
 
 func Index() *schema.Resource {
@@ -92,7 +92,12 @@ func Index() *schema.Resource {
 
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	s, err := materialize.ScanIndex(meta.(*sqlx.DB), utils.ExtractId(i))
+
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanIndex(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -124,7 +129,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// Index columns
-	indexColumns, err := materialize.ListIndexColumns(meta.(*sqlx.DB), utils.ExtractId(i))
+	indexColumns, err := materialize.ListIndexColumns(metaDb, utils.ExtractId(i))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -149,9 +154,14 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
 	b := materialize.NewIndexBuilder(
-		meta.(*sqlx.DB),
+		metaDb,
 		o,
 		indexDefault,
 		materialize.IdentifierSchemaStruct{
@@ -189,7 +199,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 
 	// set id
-	i, err := materialize.IndexId(meta.(*sqlx.DB), indexName)
+	i, err := materialize.IndexId(metaDb, indexName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,9 +212,14 @@ func indexUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	indexName := d.Get("name").(string)
 	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -218,9 +233,14 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
 	name := d.Get("name").(string)
 
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: name}
 	b := materialize.NewIndexBuilder(
-		meta.(*sqlx.DB),
+		metaDb,
 		o,
 		d.Get("default").(bool),
 		materialize.IdentifierSchemaStruct{

@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantSystemPrivilege_basic(t *testing.T) {
@@ -71,7 +71,11 @@ resource "materialize_grant_system_privilege" "test" {
 
 func testAccCheckGrantSystemPrivilegeExists(grantName, roleName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		_, ok := s.RootModule().Resources[grantName]
 		if !ok {
 			return fmt.Errorf("grant not found")
@@ -82,7 +86,7 @@ func testAccCheckGrantSystemPrivilegeExists(grantName, roleName, privilege strin
 		// 	return err
 		// }
 
-		_, err := materialize.ScanSystemPrivileges(db)
+		_, err = materialize.ScanSystemPrivileges(db)
 		if err != nil {
 			return err
 		}
@@ -93,8 +97,12 @@ func testAccCheckGrantSystemPrivilegeExists(grantName, roleName, privilege strin
 
 func testAccCheckGrantSystemPrivilegeRevoked(roleName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %[1]s ON SYSTEM FROM %[2]s;`, roleName, privilege))
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
+		_, err = db.Exec(fmt.Sprintf(`REVOKE %[1]s ON SYSTEM FROM %[2]s;`, roleName, privilege))
 		return err
 	}
 }

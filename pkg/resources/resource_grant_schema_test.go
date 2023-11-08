@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +24,7 @@ func TestResourceGrantSchemaCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSchema().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT CREATE ON SCHEMA "database"."schema" TO "joe";`,
@@ -65,7 +64,7 @@ func TestResourceGrantSchemaDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSchema().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON SCHEMA "database"."schema" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSchemaDelete(context.TODO(), d, db); err != nil {

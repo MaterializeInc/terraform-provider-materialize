@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +22,7 @@ func TestResourceGrantSystemPrivilegeCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSystemPrivilege().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT CREATEDB ON SYSTEM TO "role";`,
@@ -85,7 +84,7 @@ func TestResourceGrantSystemPrivilegeDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSystemPrivilege().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATEDB ON SYSTEM FROM "role";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSystemPrivilegeDelete(context.TODO(), d, db); err != nil {

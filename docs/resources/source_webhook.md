@@ -67,6 +67,7 @@ resource "materialize_source_webhook" "example_webhook" {
 - `include_header` (Block List) Map a header value from a request into a column. (see [below for nested schema](#nestedblock--include_header))
 - `include_headers` (Block List, Max: 1) Include headers in the webhook. (see [below for nested schema](#nestedblock--include_headers))
 - `ownership_role` (String) The owernship role of the object.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 
 ### Read-Only

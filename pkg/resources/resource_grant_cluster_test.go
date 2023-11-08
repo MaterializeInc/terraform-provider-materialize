@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +23,7 @@ func TestResourceGrantClusterCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT CREATE ON CLUSTER "materialize" TO "joe";`,
@@ -63,7 +62,7 @@ func TestResourceGrantClusterDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON CLUSTER "materialize" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantClusterDelete(context.TODO(), d, db); err != nil {

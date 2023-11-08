@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccGrantRole_basic(t *testing.T) {
@@ -85,7 +85,11 @@ resource "materialize_role_grant" "test" {
 
 func testAccCheckGrantRoleExists(grantName, roleName, granteeName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		_, ok := s.RootModule().Resources[grantName]
 		if !ok {
 			return fmt.Errorf("grant not found")
@@ -112,8 +116,12 @@ func testAccCheckGrantRoleExists(grantName, roleName, granteeName string) resour
 
 func testAccCheckGrantRoleRevoked(roleName, granteeName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
-		_, err := db.Exec(fmt.Sprintf(`REVOKE %[1]s FROM %[2]s;`, roleName, granteeName))
+		meta := testAccProvider.Meta()
+		db, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
+		_, err = db.Exec(fmt.Sprintf(`REVOKE %[1]s FROM %[2]s;`, roleName, granteeName))
 		return err
 	}
 }

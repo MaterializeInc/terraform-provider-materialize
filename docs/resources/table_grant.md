@@ -35,6 +35,10 @@ resource "materialize_table_grant" "table_grant_usage" {
 - `schema_name` (String) The schema that the table being to.
 - `table_name` (String) The table that is being granted on.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

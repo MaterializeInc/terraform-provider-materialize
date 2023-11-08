@@ -10,7 +10,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func EgressIps() *schema.Resource {
@@ -23,6 +22,10 @@ func EgressIps() *schema.Resource {
 				Description: "The egress IPs in the account",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"region": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -30,7 +33,11 @@ func EgressIps() *schema.Resource {
 func EgressIpsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
+	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	conn := metaDb
 
 	q := materialize.ReadEgressIpsDatasource()
 
