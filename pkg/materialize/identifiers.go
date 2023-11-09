@@ -14,15 +14,11 @@ func GetIdentifierSchemaStruct(databaseName string, schemaName string, v interfa
 	if v, ok := u["name"]; ok {
 		conn.Name = v.(string)
 	}
-	if v, ok := u["schema_name"]; ok && v.(string) != "" {
+	if v, ok := u["schema_name"]; ok {
 		conn.SchemaName = v.(string)
-	} else {
-		conn.SchemaName = schemaName
 	}
-	if v, ok := u["database_name"]; ok && v.(string) != "" {
+	if v, ok := u["database_name"]; ok {
 		conn.DatabaseName = v.(string)
-	} else {
-		conn.DatabaseName = databaseName
 	}
 	return conn
 }

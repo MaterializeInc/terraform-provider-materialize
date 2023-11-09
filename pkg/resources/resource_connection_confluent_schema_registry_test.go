@@ -20,11 +20,21 @@ var inConfluentSchemaRegistry = map[string]interface{}{
 	"url":                       "http://localhost:8081",
 	"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
 	"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
-	"ssl_key":                   []interface{}{map[string]interface{}{"name": "ssl"}},
-	"password":                  []interface{}{map[string]interface{}{"name": "password"}},
-	"username":                  []interface{}{map[string]interface{}{"text": "user"}},
-	"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "tunnel"}},
-	"aws_privatelink":           []interface{}{map[string]interface{}{"name": "privatelink"}},
+	"ssl_key": []interface{}{
+		map[string]interface{}{
+			"name":          "ssl",
+			"database_name": "ssl_key",
+		},
+	},
+	"password": []interface{}{map[string]interface{}{"name": "password"}},
+	"username": []interface{}{map[string]interface{}{"text": "user"}},
+	"ssh_tunnel": []interface{}{
+		map[string]interface{}{
+			"name":        "tunnel",
+			"schema_name": "tunnel_schema",
+		},
+	},
+	"aws_privatelink": []interface{}{map[string]interface{}{"name": "privatelink"}},
 }
 
 func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
@@ -35,7 +45,7 @@ func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "database"."schema"."password", SSL CERTIFICATE AUTHORITY = SECRET "database"."schema"."ssl", SSL CERTIFICATE = SECRET "database"."schema"."ssl", SSL KEY = SECRET "database"."schema"."ssl", AWS PRIVATELINK "database"."schema"."privatelink", SSH TUNNEL "database"."schema"."tunnel"\)`,
+			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "materialize"."public"."password", SSL CERTIFICATE AUTHORITY = SECRET "materialize"."public"."ssl", SSL CERTIFICATE = SECRET "materialize"."public"."ssl", SSL KEY = SECRET "ssl_key"."public"."ssl", AWS PRIVATELINK "materialize"."public"."privatelink", SSH TUNNEL "materialize"."tunnel_schema"."tunnel"\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
