@@ -1,17 +1,27 @@
 # Changelog
 
-## 0.2.0 - 2023-10-30
+## 0.2.1 - 2023-11-09
 
-### Breaking Changes
-* Provider configuration parameters so that they are consistent across all components [#339](https://github.com/MaterializeInc/terraform-provider-materialize/pull/339):
-    * The configuration variable `username` is changed to `user`
-    * The environment variable `MZ_PW` is changed to `MZ_PASSWORD`
+### Features
+* Support `ASSERT NOT NULL` for materialized view resource [#341](https://github.com/MaterializeInc/terraform-provider-materialize/pull/341)
+
+### BugFixes
+
+### Misc
+* Update testing plugin [#345](https://github.com/MaterializeInc/terraform-provider-materialize/pull/345)
+
+## 0.2.0 - 2023-10-30
 
 ### Features
 
 ### BugFixes
 
 ### Misc
+
+### Breaking Changes
+* Provider configuration parameters so that they are consistent across all components [#339](https://github.com/MaterializeInc/terraform-provider-materialize/pull/339):
+    * The configuration variable `username` is changed to `user`
+    * The environment variable `MZ_PW` is changed to `MZ_PASSWORD`
 
 ## 0.1.14 - 2023-10-25
 
