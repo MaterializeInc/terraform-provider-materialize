@@ -10,6 +10,9 @@
 ### Misc
 * Update testing plugin [#345](https://github.com/MaterializeInc/terraform-provider-materialize/pull/345)
 
+### Breaking Changes
+* Update header attributes for `materialize_source_webhook`. Adds `include_header` and is now a complex type `include_headers` and no longer boolean [#346](https://github.com/MaterializeInc/terraform-provider-materialize/pull/346)
+
 ## 0.2.0 - 2023-10-30
 
 ### Features
