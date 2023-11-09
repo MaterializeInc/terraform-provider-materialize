@@ -104,12 +104,12 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("from"); ok {
-		from := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		from := materialize.GetIdentifierSchemaStruct(v)
 		b.From(from)
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.KafkaConnection(conn)
 	}
 

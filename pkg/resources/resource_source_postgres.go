@@ -106,7 +106,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("postgres_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.PostgresConnection(conn)
 	}
 

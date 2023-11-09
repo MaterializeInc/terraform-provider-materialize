@@ -223,7 +223,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 			var secret = materialize.IdentifierSchemaStruct{}
 			if secretMap, ok := fieldMap["secret"].([]interface{}); ok && len(secretMap) > 0 && secretMap[0] != nil {
-				secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, secretMap)
+				secret = materialize.GetIdentifierSchemaStruct(secretMap)
 			}
 
 			field := materialize.FieldStruct{
