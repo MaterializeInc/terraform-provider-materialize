@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 - 2023-11-10
+
+### Features
+* Include detail and hint messages for SQL errors [#354](https://github.com/MaterializeInc/terraform-provider-materialize/pull/354)
+
+### BugFixes
+
+### Misc
+
 ## 0.2.1 - 2023-11-09
 
 ### Features
