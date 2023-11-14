@@ -31,10 +31,25 @@ var inSourceKafka = map[string]interface{}{
 	"include_offset_alias":    "offset",
 	"include_timestamp":       true,
 	"include_timestamp_alias": "timestamp",
-	"format":                  []interface{}{map[string]interface{}{"avro": []interface{}{map[string]interface{}{"value_strategy": "avro_key_fullname", "schema_registry_connection": []interface{}{map[string]interface{}{"name": "csr_conn", "database_name": "database", "schema_name": "schema"}}}}}},
-	"envelope":                []interface{}{map[string]interface{}{"upsert": true}},
-	"start_offset":            []interface{}{1, 2, 3},
-	"start_timestamp":         -1000,
+	"format": []interface{}{
+		map[string]interface{}{
+			"avro": []interface{}{
+				map[string]interface{}{
+					"value_strategy": "avro_key_fullname",
+					"schema_registry_connection": []interface{}{
+						map[string]interface{}{
+							"name":          "csr_conn",
+							"database_name": "database",
+							"schema_name":   "schema",
+						},
+					},
+				},
+			},
+		},
+	},
+	"envelope":        []interface{}{map[string]interface{}{"upsert": true}},
+	"start_offset":    []interface{}{1, 2, 3},
+	"start_timestamp": -1000,
 }
 
 func TestResourceSourceKafkaCreate(t *testing.T) {
@@ -45,7 +60,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic', START TIMESTAMP -1000\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" VALUE STRATEGY avro_key_fullname START OFFSET \[1, 2, 3\] INCLUDE KEY AS key, HEADERS AS headers, PARTITION AS partition, OFFSET AS offset, TIMESTAMP AS timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM KAFKA CONNECTION "materialize"."public"."kafka_conn" \(TOPIC 'topic', START TIMESTAMP -1000\) FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" VALUE STRATEGY avro_key_fullname START OFFSET \[1, 2, 3\] INCLUDE KEY AS key, HEADERS AS headers, PARTITION AS partition, OFFSET AS offset, TIMESTAMP AS timestamp ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

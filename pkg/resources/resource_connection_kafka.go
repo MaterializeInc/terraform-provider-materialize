@@ -95,7 +95,7 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	b := materialize.NewConnectionKafkaBuilder(meta.(*sqlx.DB), o)
 
 	if v, ok := d.GetOk("kafka_broker"); ok {
-		brokers := materialize.GetKafkaBrokersStruct(databaseName, schemaName, v)
+		brokers := materialize.GetKafkaBrokersStruct(v)
 		b.KafkaBrokers(brokers)
 	}
 
@@ -104,17 +104,17 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		ssl_ca := materialize.GetValueSecretStruct(v)
 		b.KafkaSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		ssl_cert := materialize.GetValueSecretStruct(v)
 		b.KafkaSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
-		key := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		key := materialize.GetIdentifierSchemaStruct(v)
 		b.KafkaSSLKey(key)
 	}
 
@@ -123,17 +123,17 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	if v, ok := d.GetOk("sasl_username"); ok {
-		sasl_username := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		sasl_username := materialize.GetValueSecretStruct(v)
 		b.KafkaSASLUsername(sasl_username)
 	}
 
 	if v, ok := d.GetOk("sasl_password"); ok {
-		pass := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		pass := materialize.GetIdentifierSchemaStruct(v)
 		b.KafkaSASLPassword(pass)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.KafkaSSHTunnel(conn)
 	}
 
