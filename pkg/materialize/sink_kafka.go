@@ -103,13 +103,13 @@ func (b *SinkKafkaBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
 	}
 
+	if b.topic != "" {
+		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
+	}
+
 	if len(b.key) > 0 {
 		o := strings.Join(b.key[:], ", ")
 		q.WriteString(fmt.Sprintf(` KEY (%s)`, o))
-	}
-
-	if b.topic != "" {
-		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
 	}
 
 	if b.format.Json {
