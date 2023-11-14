@@ -34,6 +34,7 @@ type SinkKafkaBuilder struct {
 	format          SinkFormatSpecStruct
 	envelope        KafkaSinkEnvelopeStruct
 	snapshot        bool
+	notEnforced     bool
 }
 
 func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder {
@@ -88,6 +89,11 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 	return b
 }
 
+func (b *SinkKafkaBuilder) NotEnforced(s bool) *SinkKafkaBuilder {
+	b.notEnforced = true
+	return b
+}
+
 func (b *SinkKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
@@ -110,6 +116,10 @@ func (b *SinkKafkaBuilder) Create() error {
 	if len(b.key) > 0 {
 		o := strings.Join(b.key[:], ", ")
 		q.WriteString(fmt.Sprintf(` KEY (%s)`, o))
+	}
+
+	if b.notEnforced {
+		q.WriteString(` NOT ENFORCED`)
 	}
 
 	if b.format.Json {
