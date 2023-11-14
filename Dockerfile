@@ -1,4 +1,4 @@
-FROM golang:1.19-alpine
+FROM golang:1.20-alpine
 
 COPY --from=hashicorp/terraform:1.3.1 /bin/terraform /bin/terraform
 
