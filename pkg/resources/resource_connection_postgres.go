@@ -91,12 +91,12 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if v, ok := d.GetOk("user"); ok {
-		user := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		user := materialize.GetValueSecretStruct(v)
 		b.PostgresUser(user)
 	}
 
 	if v, ok := d.GetOk("password"); ok {
-		pass := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		pass := materialize.GetIdentifierSchemaStruct(v)
 		b.PostgresPassword(pass)
 	}
 
@@ -109,27 +109,27 @@ func connectionPostgresCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		ssl_ca := materialize.GetValueSecretStruct(v)
 		b.PostgresSSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		ssl_cert := materialize.GetValueSecretStruct(v)
 		b.PostgresSSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
-		k := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		k := materialize.GetIdentifierSchemaStruct(v)
 		b.PostgresSSLKey(k)
 	}
 
 	if v, ok := d.GetOk("aws_privatelink"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.PostgresAWSPrivateLink(conn)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.PostgresSSHTunnel(conn)
 	}
 

@@ -63,37 +63,37 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		ssl_ca := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		ssl_ca := materialize.GetValueSecretStruct(v)
 		b.ConfluentSchemaRegistrySSLCa(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("ssl_certificate"); ok {
-		ssl_cert := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		ssl_cert := materialize.GetValueSecretStruct(v)
 		b.ConfluentSchemaRegistrySSLCert(ssl_cert)
 	}
 
 	if v, ok := d.GetOk("ssl_key"); ok {
-		key := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		key := materialize.GetIdentifierSchemaStruct(v)
 		b.ConfluentSchemaRegistrySSLKey(key)
 	}
 
 	if v, ok := d.GetOk("username"); ok {
-		user := materialize.GetValueSecretStruct(databaseName, schemaName, v)
+		user := materialize.GetValueSecretStruct(v)
 		b.ConfluentSchemaRegistryUsername(user)
 	}
 
 	if v, ok := d.GetOk("password"); ok {
-		pass := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		pass := materialize.GetIdentifierSchemaStruct(v)
 		b.ConfluentSchemaRegistryPassword(pass)
 	}
 
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.ConfluentSchemaRegistrySSHTunnel(conn)
 	}
 
 	if v, ok := d.GetOk("aws_privatelink"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.ConfluentSchemaRegistryAWSPrivateLink(conn)
 	}
 

@@ -11,14 +11,14 @@ type ValueSecretStruct struct {
 	Secret IdentifierSchemaStruct
 }
 
-func GetValueSecretStruct(databaseName string, schemaName string, v interface{}) ValueSecretStruct {
+func GetValueSecretStruct(v interface{}) ValueSecretStruct {
 	var value ValueSecretStruct
 	u := v.([]interface{})[0].(map[string]interface{})
 	if v, ok := u["text"]; ok {
 		value.Text = v.(string)
 	}
 	if v, ok := u["secret"]; ok && len(v.([]interface{})) > 0 {
-		value.Secret = GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		value.Secret = GetIdentifierSchemaStruct(v)
 	}
 	return value
 }

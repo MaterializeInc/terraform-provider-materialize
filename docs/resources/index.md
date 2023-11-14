@@ -71,8 +71,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The obj_name database name.
-- `schema_name` (String) The obj_name schema name.
+- `database_name` (String) The obj_name database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The obj_name schema name. Defaults to `public`
 
 ## Import
 

@@ -14,13 +14,13 @@ type KafkaBroker struct {
 	PrivateLinkConnection IdentifierSchemaStruct
 }
 
-func GetKafkaBrokersStruct(databaseName, schemaName string, v interface{}) []KafkaBroker {
+func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
 	var brokers []KafkaBroker
 	for _, broker := range v.([]interface{}) {
 		b := broker.(map[string]interface{})
 		privateLinkConn := IdentifierSchemaStruct{}
 		if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
-			privateLinkConn = GetIdentifierSchemaStruct(databaseName, schemaName, b["privatelink_connection"].([]interface{}))
+			privateLinkConn = GetIdentifierSchemaStruct(b["privatelink_connection"].([]interface{}))
 		}
 		brokers = append(brokers, KafkaBroker{
 			Broker:                b["broker"].(string),
