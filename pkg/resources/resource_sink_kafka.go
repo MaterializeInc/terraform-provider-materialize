@@ -68,7 +68,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Default:     true,
 	},
 	"ownership_role": OwnershipRoleSchema(),
-	"not_enforced": {
+	"key_not_enforced": {
 		Description: "Disable Materialize's validation of the key's uniqueness.",
 		Type:        schema.TypeBool,
 		Optional:    true,
@@ -129,8 +129,8 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		b.Key(keys)
 	}
 
-	if v, ok := d.GetOk("not_enforced"); ok {
-		b.NotEnforced(v.(bool))
+	if v, ok := d.GetOk("key_not_enforced"); ok {
+		b.KeyNotEnforced(v.(bool))
 	}
 
 	if v, ok := d.GetOk("format"); ok {
