@@ -76,6 +76,30 @@ func TestAccTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
 				),
 			},
+			{
+				Config: testAccTableResourceWithUpdatedColumnName(roleName, tableName, tableRoleName, "mz_system", "new_column_1"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTableExists("materialize_table.test"),
+					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.name", "new_column_1"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.type", "text"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.name", "column_2"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.type", "int"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.name", "column_3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.type", "text"),
+					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					testAccCheckTableExists("materialize_table.test_role"),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
+				),
+				ResourceName:      "materialize_table.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -179,4 +203,43 @@ func testAccCheckAllTablesDestroyed(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func testAccTableResourceWithUpdatedColumnName(roleName, tableName, tableRoleName, tableOwnership, newColumnName string) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%s"
+}
+
+resource "materialize_table" "test" {
+	name = "%s"
+	comment = "comment"
+	column {
+		name = "%s"
+		type = "text"
+	}
+	column {
+		name    = "column_2"
+		type    = "int"
+		comment = "comment"
+	}
+	column {
+		name     = "column_3"
+		type     = "text"
+		nullable = true
+	}
+}
+
+resource "materialize_table" "test_role" {
+	name = "%s"
+	ownership_role = "%s"
+
+	column {
+		name = "column_1"
+		type = "text"
+	}
+
+	depends_on = [materialize_role.test]
+}
+`, roleName, tableName, newColumnName, tableRoleName, tableOwnership)
 }

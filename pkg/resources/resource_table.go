@@ -27,6 +27,7 @@ var tableSchema = map[string]*schema.Schema{
 					Description: "The name of the column to be created in the table.",
 					Type:        schema.TypeString,
 					Required:    true,
+					ForceNew:    true,
 				},
 				"type": {
 					Description: "The data type of the column indicated by name.",
