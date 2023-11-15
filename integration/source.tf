@@ -128,15 +128,32 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
 }
 
 resource "materialize_source_webhook" "example_webhook_source" {
-  name    = "example_webhook_source"
-  comment = "source webhook comment"
+  name             = "example_webhook_source"
+  comment          = "source webhook comment"
+  cluster_name     = materialize_cluster.cluster_source.name
+  body_format      = "json"
+  check_expression = "headers->'x-mz-api-key' = secret"
 
   include_headers {
-    all = true
+    not = ["x-mz-api-key"]
   }
 
-  cluster_name = materialize_cluster.cluster_source.name
-  body_format  = "json"
+  check_options {
+    field {
+      headers = true
+    }
+  }
+
+  check_options {
+    field {
+      secret {
+        name          = materialize_secret.postgres_password.name
+        database_name = materialize_secret.postgres_password.database_name
+        schema_name   = materialize_secret.postgres_password.schema_name
+      }
+    }
+    alias = "secret"
+  }
 }
 
 resource "materialize_source_grant" "source_grant_select" {
