@@ -27,7 +27,8 @@ resource "materialize_sink_kafka" "sink_kafka" {
   envelope {
     debezium = true
   }
-  key = ["counter"]
+  key              = ["counter"]
+  key_not_enforced = true
 }
 
 output "qualified_sink_kafka" {
