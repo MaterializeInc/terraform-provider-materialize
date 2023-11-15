@@ -77,7 +77,7 @@ func TestAccTable_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccTableResourceWithUpdatedColumnName(roleName, tableName, tableRoleName, "mz_system", "new_column_1"),
+				Config: testAccTableResourceWithUpdates(roleName, tableName, tableRoleName, "mz_system", "new_column_1", ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
@@ -99,6 +99,16 @@ func TestAccTable_update(t *testing.T) {
 				ResourceName:      "materialize_table.test",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config: testAccTableResourceWithUpdates(roleName, tableName, tableRoleName, "mz_system", "", "Updated comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTableExists("materialize_table.test"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.comment", "Updated comment"),
+					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.name", "column_1"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.type", "text"),
+				),
 			},
 		},
 	})
@@ -205,41 +215,52 @@ func testAccCheckAllTablesDestroyed(s *terraform.State) error {
 	return nil
 }
 
-func testAccTableResourceWithUpdatedColumnName(roleName, tableName, tableRoleName, tableOwnership, newColumnName string) string {
+func testAccTableResourceWithUpdates(roleName, tableName, tableRoleName, tableOwnership, newColumnName, updatedComment string) string {
+	columnName1 := "column_1"
+	if newColumnName != "" {
+		columnName1 = newColumnName
+	}
+
+	commentColumn2 := "comment"
+	if updatedComment != "" {
+		commentColumn2 = updatedComment
+	}
+
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
-	name = "%s"
+    name = "%s"
 }
 
 resource "materialize_table" "test" {
-	name = "%s"
-	comment = "comment"
-	column {
-		name = "%s"
-		type = "text"
-	}
-	column {
-		name    = "column_2"
-		type    = "int"
-		comment = "comment"
-	}
-	column {
-		name     = "column_3"
-		type     = "text"
-		nullable = true
-	}
+    name = "%s"
+    comment = "Initial table comment"
+    column {
+        name = "%s"
+        type = "text"
+    }
+    column {
+        name    = "column_2"
+        type    = "int"
+        comment = "%s"
+    }
+    column {
+        name     = "column_3"
+        type     = "text"
+        nullable = true
+    }
+    ownership_role = "%s"
 }
 
 resource "materialize_table" "test_role" {
-	name = "%s"
-	ownership_role = "%s"
+    name = "%s"
+    ownership_role = "%s"
 
-	column {
-		name = "column_1"
-		type = "text"
-	}
+    column {
+        name = "%s"
+        type = "text"
+    }
 
-	depends_on = [materialize_role.test]
+    depends_on = [materialize_role.test]
 }
-`, roleName, tableName, newColumnName, tableRoleName, tableOwnership)
+`, roleName, tableName, columnName1, commentColumn2, tableOwnership, tableRoleName, tableOwnership, columnName1)
 }
