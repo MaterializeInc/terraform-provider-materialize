@@ -70,14 +70,14 @@ func TestConnectionKafkaSshCreate(t *testing.T) {
 		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
-				Broker: "localhost:9092",
+				Broker:    "localhost:9092",
+				SSHTunnel: IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"},
 			},
 		})
 		b.KafkaProgressTopic("topic")
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
-		b.KafkaSSHTunnel(IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"})
 		b.Validate(true)
 
 		if err := b.Create(); err != nil {
@@ -116,23 +116,24 @@ func TestConnectionKafkaBrokersCreate(t *testing.T) {
 func TestConnectionKafkaBrokersSshCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092' USING SSH TUNNEL "database"."schema"."ssh_conn",'localhost:9093' USING SSH TUNNEL "database"."schema"."ssh_conn"\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
+			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092' USING SSH TUNNEL "database"."schema"."ssh_conn", 'localhost:9093' USING SSH TUNNEL "database"."schema"."ssh_conn"\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewConnectionKafkaBuilder(db, connKafka)
 		b.KafkaBrokers([]KafkaBroker{
 			{
-				Broker: "localhost:9092",
+				Broker:    "localhost:9092",
+				SSHTunnel: IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"},
 			},
 			{
-				Broker: "localhost:9093",
+				Broker:    "localhost:9093",
+				SSHTunnel: IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"},
 			},
 		})
 		b.KafkaProgressTopic("topic")
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
-		b.KafkaSSHTunnel(IdentifierSchemaStruct{Name: "ssh_conn", DatabaseName: "database", SchemaName: "schema"})
 		b.Validate(true)
 
 		if err := b.Create(); err != nil {

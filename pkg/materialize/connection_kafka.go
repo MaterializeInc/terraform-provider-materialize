@@ -12,6 +12,7 @@ type KafkaBroker struct {
 	TargetGroupPort       int
 	AvailabilityZone      string
 	PrivateLinkConnection IdentifierSchemaStruct
+	SSHTunnel             IdentifierSchemaStruct
 }
 
 func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
@@ -22,11 +23,16 @@ func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
 		if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
 			privateLinkConn = GetIdentifierSchemaStruct(b["privatelink_connection"].([]interface{}))
 		}
+		SshTunnel := IdentifierSchemaStruct{}
+		if b["ssh_tunnel"] != nil && len(b["ssh_tunnel"].([]interface{})) > 0 {
+			SshTunnel = GetIdentifierSchemaStruct(b["ssh_tunnel"].([]interface{}))
+		}
 		brokers = append(brokers, KafkaBroker{
 			Broker:                b["broker"].(string),
 			TargetGroupPort:       b["target_group_port"].(int),
 			AvailabilityZone:      b["availability_zone"].(string),
 			PrivateLinkConnection: privateLinkConn,
+			SSHTunnel:             SshTunnel,
 		})
 	}
 	return brokers
@@ -105,34 +111,59 @@ func (b *ConnectionKafkaBuilder) Validate(validate bool) *ConnectionKafkaBuilder
 
 func (b *ConnectionKafkaBuilder) Create() error {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.QualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA`, b.QualifiedName()))
+
+	var brokers = []string{}
+	for _, broker := range b.kafkaBrokers {
+		fb := strings.Builder{}
+		fb.WriteString(QuoteString(broker.Broker))
+
+		if broker.SSHTunnel.Name != "" {
+			fb.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`,
+				QualifiedName(
+					broker.SSHTunnel.DatabaseName,
+					broker.SSHTunnel.SchemaName,
+					broker.SSHTunnel.Name,
+				),
+			))
+		}
+
+		if broker.PrivateLinkConnection.Name != "" {
+			p := strings.Builder{}
+			p.WriteString(fmt.Sprintf(` USING AWS PRIVATELINK %s`,
+				QualifiedName(
+					broker.PrivateLinkConnection.DatabaseName,
+					broker.PrivateLinkConnection.SchemaName,
+					broker.PrivateLinkConnection.Name,
+				),
+			))
+			fb.WriteString(p.String())
+
+			options := []string{}
+			if broker.TargetGroupPort != 0 {
+				o := fmt.Sprintf(`PORT %d`, broker.TargetGroupPort)
+				options = append(options, o)
+			}
+			if broker.AvailabilityZone != "" {
+				o := fmt.Sprintf(`AVAILABILITY ZONE %s`, QuoteString(broker.AvailabilityZone))
+				options = append(options, o)
+			}
+			if len(options) > 0 {
+				fb.WriteString(fmt.Sprintf(` (%s)`, strings.Join(options[:], ", ")))
+			}
+		}
+		brokers = append(brokers, fb.String())
+	}
+	q.WriteString(fmt.Sprintf(` (BROKERS (%s)`, strings.Join(brokers[:], ", ")))
 
 	if b.kafkaSSHTunnel.Name != "" {
-		q.WriteString(`BROKERS (`)
-		for i, broker := range b.kafkaBrokers {
-			q.WriteString(fmt.Sprintf(`%s USING SSH TUNNEL %s`, QuoteString(broker.Broker), QualifiedName(b.kafkaSSHTunnel.DatabaseName, b.kafkaSSHTunnel.SchemaName, b.kafkaSSHTunnel.Name)))
-			if i < len(b.kafkaBrokers)-1 {
-				q.WriteString(`,`)
-			}
-		}
-		q.WriteString(`)`)
-	} else {
-		q.WriteString(`BROKERS (`)
-		for i, broker := range b.kafkaBrokers {
-			if broker.TargetGroupPort != 0 && broker.AvailabilityZone != "" && broker.PrivateLinkConnection.Name != "" {
-				q.WriteString(fmt.Sprintf(`%s USING AWS PRIVATELINK %s (PORT %d, AVAILABILITY ZONE %s)`, QuoteString(broker.Broker),
-					QualifiedName(broker.PrivateLinkConnection.DatabaseName, broker.PrivateLinkConnection.SchemaName, broker.PrivateLinkConnection.Name), broker.TargetGroupPort, QuoteString(broker.AvailabilityZone)))
-				if i < len(b.kafkaBrokers)-1 {
-					q.WriteString(`, `)
-				}
-			} else {
-				q.WriteString(QuoteString(broker.Broker))
-				if i < len(b.kafkaBrokers)-1 {
-					q.WriteString(`, `)
-				}
-			}
-		}
-		q.WriteString(`)`)
+		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`,
+			QualifiedName(
+				b.kafkaSSHTunnel.DatabaseName,
+				b.kafkaSSHTunnel.SchemaName,
+				b.kafkaSSHTunnel.Name,
+			),
+		))
 	}
 
 	if b.kafkaProgressTopic != "" {
@@ -172,6 +203,5 @@ func (b *ConnectionKafkaBuilder) Create() error {
 		q.WriteString(` WITH (VALIDATE = false)`)
 	}
 
-	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
