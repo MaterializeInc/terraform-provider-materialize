@@ -10,6 +10,7 @@
 * Correct `ForceNew` for column attributes in `materialize_table` [#363](https://github.com/MaterializeInc/terraform-provider-materialize/pull/363)
 
 ### Misc
+* Update go.mod version to `1.20` [#369](https://github.com/MaterializeInc/terraform-provider-materialize/pull/369)
 
 ### Breaking Changes
 * Previously, blocks within resources that included optional `schema_name` and `database_name` attributes would inherit the top level attributes of the resource if set. So in the following example:
