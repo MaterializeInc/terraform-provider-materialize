@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - pkg/**
+      - main.go
+      - go.mod
   schedule:
     - cron: 0 11 * * 0
 
