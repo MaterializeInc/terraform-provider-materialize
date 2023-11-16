@@ -24,7 +24,7 @@
     }
   }
   ```
-  The postgres connectiion would have the schema name of `my_schema` and database name `my_database`. Now if `schema_name` or `database_name` are not set, they will use the same defaults as top level attributes (`public` for schema and `materialize` for database) [#353](https://github.com/MaterializeInc/terraform-provider-materialize/pull/353)
+  The Postgres connection would have the schema name of `my_schema` and database name `my_database`. Now, if `schema_name` or `database_name` are not set, they will use the same defaults as top level attributes (`public` for schema and `materialize` for database) [#353](https://github.com/MaterializeInc/terraform-provider-materialize/pull/353)
 
 
 ## 0.2.2 - 2023-11-10
