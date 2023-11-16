@@ -38,7 +38,7 @@ var clusterSchema = map[string]*schema.Schema{
 
 func Cluster() *schema.Resource {
 	return &schema.Resource{
-		Description: "Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.",
+		Description: "Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views. Managed clusters are created by setting the `size` attribute",
 
 		CreateContext: clusterCreate,
 		ReadContext:   clusterRead,

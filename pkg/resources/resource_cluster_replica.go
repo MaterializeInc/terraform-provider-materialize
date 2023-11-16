@@ -39,6 +39,8 @@ func ClusterReplica() *schema.Resource {
 		UpdateContext: clusterReplicaUpdate,
 		DeleteContext: clusterReplicaDelete,
 
+		DeprecationMessage: "Cluster replicas are deprecated. We recommend migrating to a managed cluster using the `materialize_cluster` resource and selecting `size`.",
+
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
