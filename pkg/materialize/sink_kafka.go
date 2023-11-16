@@ -23,6 +23,25 @@ func GetSinkKafkaEnelopeStruct(v interface{}) KafkaSinkEnvelopeStruct {
 	return envelope
 }
 
+type AvroColumnStruct struct {
+	Key    string
+	Value  string
+	Column string
+}
+
+func GetAvroColumnStruct(v []interface{}) []AvroColumnStruct {
+	var comments []AvroColumnStruct
+	for _, comment := range v {
+		c := comment.(map[string]interface{})
+		comments = append(comments, AvroColumnStruct{
+			Key:    c["key"].(string),
+			Value:  c["value"].(string),
+			Column: c["column"].(string),
+		})
+	}
+	return comments
+}
+
 type SinkKafkaBuilder struct {
 	Sink
 	clusterName     string
@@ -35,6 +54,8 @@ type SinkKafkaBuilder struct {
 	envelope        KafkaSinkEnvelopeStruct
 	snapshot        bool
 	keyNotEnforced  bool
+	avroDoc         string
+	avroColumnDoc   []AvroColumnStruct
 }
 
 func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder {
@@ -91,6 +112,16 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 
 func (b *SinkKafkaBuilder) KeyNotEnforced(s bool) *SinkKafkaBuilder {
 	b.keyNotEnforced = true
+	return b
+}
+
+func (b *SinkKafkaBuilder) AvroDoc(a string) *SinkKafkaBuilder {
+	b.avroDoc = a
+	return b
+}
+
+func (b *SinkKafkaBuilder) AvroColumnDoc(a []AvroColumnStruct) *SinkKafkaBuilder {
+	b.avroColumnDoc = a
 	return b
 }
 
@@ -158,6 +189,19 @@ func (b *SinkKafkaBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` WITH (%s)`, w.String()))
 	}
 
-	q.WriteString(`;`)
+	// Avro Comments
+	var v = []string{}
+	if b.avroDoc != "" {
+		v = append(v, fmt.Sprintf(`DOC ON TYPE %s = %s`, b.from.QualifiedName(), QuoteString(b.avroDoc)))
+	}
+	for _, ac := range b.avroColumnDoc {
+		c := b.from.QualifiedName() + "." + QuoteIdentifier(ac.Column)
+		v = append(v, fmt.Sprintf(`KEY DOC ON COLUMN %s = %s`, c, QuoteString(ac.Key)))
+		v = append(v, fmt.Sprintf(`VALUE DOC ON COLUMN TYPE %s = %s`, c, QuoteString(ac.Value)))
+	}
+	if len(v) > 0 {
+		q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(v[:], ", ")))
+	}
+
 	return b.ddl.exec(q.String())
 }
