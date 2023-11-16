@@ -6,7 +6,7 @@
 * Add `key_not_enforced` to `materialize_sink_kafka` [#361](https://github.com/MaterializeInc/terraform-provider-materialize/pull/361)
 
 ### BugFixes
-* Topics should be defined before keys in `materialize_sink_kafka` create statements [#358](https://github.com/MaterializeInc/terraform-provider-materialize/pull/358)
+* Fix a bug where topics were defined after keys in `materialize_sink_kafka` create statements [#358](https://github.com/MaterializeInc/terraform-provider-materialize/pull/358)
 * Correct `ForceNew` for column attributes in `materialize_table` [#363](https://github.com/MaterializeInc/terraform-provider-materialize/pull/363)
 
 ### Misc
