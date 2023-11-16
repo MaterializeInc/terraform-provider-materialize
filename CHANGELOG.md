@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.3.0 - 2023-11-16
+
+### Features
+* Add `key_not_enforced` to `materialize_sink_kafka` [#361](https://github.com/MaterializeInc/terraform-provider-materialize/pull/361)
+
+### BugFixes
+* Fix a bug where topics were defined after keys in `materialize_sink_kafka` create statements [#358](https://github.com/MaterializeInc/terraform-provider-materialize/pull/358)
+* Correct `ForceNew` for column attributes in `materialize_table` [#363](https://github.com/MaterializeInc/terraform-provider-materialize/pull/363)
+
+### Misc
+
+### Breaking Changes
+* Previously, blocks within resources that included optional `schema_name` and `database_name` attributes would inherit the top level attributes of the resource if set. So in the following example:
+  ```
+  resource "materialize_source_postgres" "example_source_postgres" {
+    name          = "source_postgres"
+    schema_name   = "my_schema"
+    database_name = "my_database"
+  
+    postgres_connection {
+        name          = "postgres_connection"
+    }
+  }
+  ```
+  The Postgres connection would have the schema name of `my_schema` and database name `my_database`. Now, if `schema_name` or `database_name` are not set, they will use the same defaults as top level attributes (`public` for schema and `materialize` for database) [#353](https://github.com/MaterializeInc/terraform-provider-materialize/pull/353)
+
+
 ## 0.2.2 - 2023-11-10
 
 ### Features
