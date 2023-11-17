@@ -28,10 +28,6 @@ func TestProvider(t *testing.T) {
 	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-
-	// Do not reach limits for certains resources during parallel acceptance tests
-	db := testAccProvider.Meta().(*sqlx.DB)
-	db.Exec(`ALTER SYSTEM SET max_clusters = 100;`)
 }
 
 func TestProvider_impl(t *testing.T) {
