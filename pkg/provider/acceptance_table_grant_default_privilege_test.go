@@ -70,12 +70,16 @@ resource "materialize_table_grant_default_privilege" "test" {
 	grantee_name     = materialize_role.test_grantee.name
 	privilege        = "%[3]s"
 	target_role_name = materialize_role.test_target.name
+
+	depends_on = [materialize_role.test_grantee, materialize_role.test_target]
 }
 
 resource "materialize_table_grant_default_privilege" "test_all" {
 	grantee_name     = materialize_role.test_grantee.name
 	privilege        = "%[3]s"
 	target_role_name = "PUBLIC"
+
+	depends_on = [materialize_role.test_grantee, materialize_role.test_target]
 }
 `, granteeName, targetName, privilege)
 }
