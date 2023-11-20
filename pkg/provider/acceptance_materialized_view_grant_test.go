@@ -21,7 +21,7 @@ func TestAccGrantMaterializedView_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, "default", privilege),
+				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
 						materialize.MaterializeObject{
@@ -61,7 +61,7 @@ func TestAccGrantMaterializedView_disappears(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, "default", privilege),
+				Config: testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(o, "materialize_materialized_view_grant.materialized_view_grant", roleName, privilege),
 					testAccCheckGrantRevoked(o, roleName, privilege),
@@ -73,32 +73,26 @@ func TestAccGrantMaterializedView_disappears(t *testing.T) {
 	})
 }
 
-func testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, clusterName, privilege string) string {
+func testAccGrantMaterializedViewResource(roleName, materializedViewName, schemaName, databaseName, privilege string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
-	name = "%s"
+	name = "%[1]s"
 }
 
 resource "materialize_database" "test" {
-	name = "%s"
+	name = "%[2]s"
 }
 
 resource "materialize_schema" "test" {
-	name = "%s"
+	name = "%[3]s"
 	database_name = materialize_database.test.name
 }
 
-resource "materialize_cluster" "test" {
-	name               = "test"
-	size               = "3xsmall"
-	replication_factor = 1
-  }
-
 resource "materialize_materialized_view" "test" {
-	name = "%s"
+	name = "%[4]s"
 	schema_name = materialize_schema.test.name
 	database_name = materialize_database.test.name
-	cluster_name  = "%s"
+	cluster_name  = "default"
 
 	depends_on = [materialize_cluster.test]
   
@@ -110,10 +104,10 @@ resource "materialize_materialized_view" "test" {
 
 resource "materialize_materialized_view_grant" "materialized_view_grant" {
 	role_name              = materialize_role.test.name
-	privilege              = "%s"
+	privilege              = "%[5]s"
 	database_name          = materialize_database.test.name
 	schema_name            = materialize_schema.test.name
 	materialized_view_name = materialize_materialized_view.test.name
 }
-`, roleName, databaseName, schemaName, materializedViewName, clusterName, privilege)
+`, roleName, databaseName, schemaName, materializedViewName, privilege)
 }
