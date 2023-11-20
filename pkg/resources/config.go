@@ -60,7 +60,7 @@ var aliases = map[string]string{
 	"uint":    "uint4",
 }
 
-var session_variables = []string{
+var sessionVariables = []string{
 	"cluster",
 	"cluster_replica",
 	"database",
@@ -90,4 +90,11 @@ var session_variables = []string{
 	"standard_conforming_strings",
 	"statement_timeout",
 	"timezone",
+}
+
+var securityProtocols = []string{
+	"PLAINTEXT",
+	"SASL_PLAINTEXT",
+	"SSL",
+	"SASL_SSL",
 }

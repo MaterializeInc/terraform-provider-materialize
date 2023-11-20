@@ -34,7 +34,7 @@ var roleSchema = map[string]*schema.Schema{
 					Description:  "The name of the session variable.",
 					Type:         schema.TypeString,
 					Required:     true,
-					ValidateFunc: validation.StringInSlice(session_variables, true),
+					ValidateFunc: validation.StringInSlice(sessionVariables, true),
 				},
 				"value": {
 					Description: "The value for the session variable.",
