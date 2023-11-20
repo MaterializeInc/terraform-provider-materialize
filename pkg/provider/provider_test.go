@@ -9,32 +9,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/require"
 )
 
-func TestConnectionString(t *testing.T) {
-	r := require.New(t)
-	c := connectionString("host", "user", "pass", 6875, "database", true, "tf")
-	r.Equal(`postgres://user:pass@host:6875/database?sslmode=require&application_name=tf`, c)
-}
-
-func TestConnectionStringTesting(t *testing.T) {
-	r := require.New(t)
-	c := connectionString("host", "user", "pass", 6875, "database", false, "tf")
-	r.Equal(`postgres://user:pass@host:6875/database?sslmode=disable&application_name=tf`, c)
-}
-
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := Provider("test").InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = Provider()
+	var _ *schema.Provider = Provider("test")
 }
 
-var testAccProvider = Provider()
+var testAccProvider = Provider("test")
 var testAccProviderFactories = map[string]func() (*schema.Provider, error){
 	"materialize": func() (*schema.Provider, error) { return testAccProvider, nil },
 }

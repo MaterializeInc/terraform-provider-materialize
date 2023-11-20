@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### BugFixes
+
+* Handle `user` values that contain special characters, without requiring manual
+  URL escaping (e.g., escaping `you@corp.com` as `you%40corp.com`).
+
 ## 0.3.0 - 2023-11-16
 
 ### Features
@@ -19,7 +26,7 @@
     name          = "source_postgres"
     schema_name   = "my_schema"
     database_name = "my_database"
-  
+
     postgres_connection {
         name          = "postgres_connection"
     }

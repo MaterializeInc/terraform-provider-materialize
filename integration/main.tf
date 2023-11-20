@@ -12,5 +12,5 @@ provider "materialize" {
   password = "password"
   port     = 6877
   database = "materialize"
-  sslmode  = false
+  sslmode  = "disable"
 }
