@@ -51,6 +51,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 ### Required
 
+- `avro_doc_column` (Block List, Min: 1) (see [below for nested schema](#nestedblock--avro_doc_column))
 - `from` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--from))
 - `kafka_connection` (Block List, Min: 1, Max: 1) The name of the Kafka connection to use in the sink. (see [below for nested schema](#nestedblock--kafka_connection))
 - `name` (String) The identifier for the sink.
@@ -58,6 +59,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 ### Optional
 
+- `avro_doc` (String)
 - `cluster_name` (String) The cluster to maintain this sink. If not specified, the `size` option must be specified.
 - `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the sink database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
@@ -74,6 +76,19 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the sink.
+
+<a id="nestedblock--avro_doc_column"></a>
+### Nested Schema for `avro_doc_column`
+
+Required:
+
+- `column` (String)
+
+Optional:
+
+- `key` (String)
+- `value` (String)
+
 
 <a id="nestedblock--from"></a>
 ### Nested Schema for `from`
