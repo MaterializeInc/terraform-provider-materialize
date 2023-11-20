@@ -22,7 +22,7 @@ jobs:
         env:
           MZ_HOST: localhost
           MZ_USER: mz_system
-          MZ_SSLMODE: "false"
+          MZ_SSLMODE: disable
           MZ_PORT: 6877
 
       - name: Docker Compose Down
