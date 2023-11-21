@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -56,25 +57,21 @@ func testAccCheckGrantExists(object materialize.MaterializeObject, grantName, ro
 		if !ok {
 			return fmt.Errorf("grant not found")
 		}
-
 		id, err := materialize.ObjectId(db, object)
 		if err != nil {
 			return err
 		}
-
 		roleId, err := materialize.RoleId(db, roleName)
 		if err != nil {
 			return err
 		}
-
 		g, err := materialize.ScanPrivileges(db, object.ObjectType, id)
 		if err != nil {
 			return err
 		}
-
-		privilegeMap := materialize.ParsePrivileges(g)
-		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("object %s does not include privilege %s", g, privilege)
+		p, _ := materialize.MapGrantPrivileges(g)
+		if !slices.Contains(p[roleId], privilege) {
+			return fmt.Errorf("object %s does not include privilege %s", p, privilege)
 		}
 		return nil
 	}
@@ -95,25 +92,21 @@ func testAccCheckGrantDefaultPrivilegeExists(objectType, grantName, granteeName,
 		if !ok {
 			return fmt.Errorf("default grant not found")
 		}
-
 		granteeId, err := materialize.RoleId(db, grantName)
 		if err != nil {
 			return err
 		}
-
 		targetId, err := materialize.RoleId(db, targetName)
 		if err != nil {
 			return err
 		}
-
 		g, err := materialize.ScanDefaultPrivilege(db, objectType, granteeId, targetId, "", "")
 		if err != nil {
 			return err
 		}
-
-		privilegeMap := materialize.ParsePrivileges(g[0].Privileges.String)
-		if !materialize.HasPrivilege(privilegeMap[granteeId], privilege) {
-			return fmt.Errorf("default privilege %s does not include privilege %s", g[0].Privileges.String, privilege)
+		p, _ := materialize.MapDefaultGrantPrivileges(g)
+		if !slices.Contains(p[granteeId], privilege) {
+			return fmt.Errorf("object %s does not include privilege %s", p, privilege)
 		}
 		return nil
 	}

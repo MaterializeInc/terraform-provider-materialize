@@ -64,7 +64,7 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	privileges, err := materialize.ScanSystemPrivileges(meta.(*sqlx.DB))
+	p, err := materialize.ScanSystemPrivileges(meta.(*sqlx.DB))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -73,9 +73,13 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	// Check if system role contains privilege
-	mapping, _ := materialize.ParseSystemPrivileges(privileges)
-
-	if !slices.Contains(mapping[key.roleId], key.privilege) {
+	var privileges = []string{}
+	for _, pr := range p {
+		privileges = append(privileges, pr.Privileges)
+	}
+	privilegeMap, err := materialize.MapGrantPrivileges(privileges)
+	if !slices.Contains(privilegeMap[key.roleId], key.privilege) {
+		log.Printf("[DEBUG] privilege map %s", privilegeMap)
 		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")

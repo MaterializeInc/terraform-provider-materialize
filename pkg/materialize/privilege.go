@@ -66,37 +66,62 @@ var ObjectPermissions = map[string]ObjectType{
 	},
 }
 
-func ParsePrivileges(privileges string) map[string][]string {
-	o := map[string][]string{}
-
-	privileges = strings.TrimPrefix(privileges, "{")
-	privileges = strings.TrimSuffix(privileges, "}")
-
-	for _, p := range strings.Split(privileges, ",") {
-		e := strings.Split(p, "=")
-
-		roleId := e[0]
-		roleprivileges := strings.Split(e[1], "/")[0]
-
-		privilegeMap := []string{}
-		for _, rp := range strings.Split(roleprivileges, "") {
-			v := Permissions[rp]
-			privilegeMap = append(privilegeMap, v)
-		}
-
-		o[roleId] = privilegeMap
+// Converts a privilege abbrevation to name
+// "a" would become INSERT
+func PrivilegeName(privilegeAbbreviation string) (string, error) {
+	val, ok := Permissions[privilegeAbbreviation]
+	if ok {
+		return val, nil
 	}
-
-	return o
+	return "", fmt.Errorf("%s is not a valid privilege", privilegeAbbreviation)
 }
 
-func HasPrivilege(privileges []string, checkPrivilege string) bool {
-	for _, v := range privileges {
-		if v == checkPrivilege {
-			return true
-		}
+type MzCatalogPrivilege struct {
+	Grantee    string
+	Privileges []string
+	Grantor    string
+}
+
+// Converts a mz catalog privilege string into a struct
+// "s1=arwd/s1" would become
+//
+//	var x = MzCatalogPrivilege{
+//		Grantee:    "s1",
+//		Privileges: ["INSERT", "SELECT", "UPDATE", "DELETE"],
+//		Grantor:    "s1",
+//	}
+func ParseMzCatalogPrivileges(mzCatalogPrivilegeString string) MzCatalogPrivilege {
+	splitEqual := strings.Split(mzCatalogPrivilegeString, "=")
+	splitSlash := strings.Split(splitEqual[1], "/")
+
+	var parsedPrivileges = []string{}
+	for _, p := range strings.Split(splitSlash[0], "") {
+		pName, _ := PrivilegeName(p)
+		parsedPrivileges = append(parsedPrivileges, pName)
 	}
-	return false
+
+	return MzCatalogPrivilege{
+		Grantee:    splitEqual[0],
+		Privileges: parsedPrivileges,
+		Grantor:    splitSlash[1],
+	}
+}
+
+// Converts a list of catalog privileges into a map for easy access
+// {s1=arwd/s1,u3=wd/s1} would become
+// map[string][]string
+//
+//	{
+//		"s1": ["INSERT", "SELECT", "UPDATE", "DELETE"]
+//		"u3": ["UPDATE", "DELETE"]
+//	}
+func MapGrantPrivileges(privileges []string) (map[string][]string, error) {
+	mapping := make(map[string][]string)
+	for _, p := range privileges {
+		f := ParseMzCatalogPrivileges(p)
+		mapping[f.Grantee] = f.Privileges
+	}
+	return mapping, nil
 }
 
 // DDL
@@ -152,64 +177,64 @@ func (b *PrivilegeBuilder) GrantKey(objectId, roleId, privilege string) string {
 	return fmt.Sprintf(`GRANT|%[1]s|%[2]s|%[3]s|%[4]s`, b.object.ObjectType, objectId, roleId, privilege)
 }
 
-func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) (string, error) {
-	var p string
+func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) ([]string, error) {
+	var p []string
 	var e error
 
 	switch t := objectType; t {
 	case "DATABASE":
 		params, err := ScanDatabase(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "SCHEMA":
 		params, err := ScanSchema(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "TABLE":
 		params, err := ScanTable(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "VIEW":
 		params, err := ScanView(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "MATERIALIZED VIEW":
 		params, err := ScanMaterializedView(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "TYPE":
 		params, err := ScanType(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "SOURCE":
 		params, err := ScanSource(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "CONNECTION":
 		params, err := ScanConnection(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "SECRET":
 		params, err := ScanSecret(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 
 	case "CLUSTER":
 		params, err := ScanCluster(conn, objectId)
-		p = params.Privileges.String
+		p = params.Privileges
 		e = err
 	}
 
 	if e != nil {
-		return "", e
+		return []string{}, e
 	}
 
 	return p, nil

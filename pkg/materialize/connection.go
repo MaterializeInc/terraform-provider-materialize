@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type ValueSecretStruct struct {
@@ -61,7 +62,7 @@ type ConnectionParams struct {
 	ConnectionType sql.NullString `db:"connection_type"`
 	Comment        sql.NullString `db:"comment"`
 	OwnerName      sql.NullString `db:"owner_name"`
-	Privileges     sql.NullString `db:"privileges"`
+	Privileges     pq.StringArray `db:"privileges"`
 }
 
 var connectionQuery = NewBaseQuery(`

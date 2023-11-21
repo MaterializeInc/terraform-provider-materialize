@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 // DDL
@@ -175,7 +176,7 @@ type ClusterParams struct {
 	Disk              sql.NullBool   `db:"disk"`
 	Comment           sql.NullString `db:"comment"`
 	OwnerName         sql.NullString `db:"owner_name"`
-	Privileges        sql.NullString `db:"privileges"`
+	Privileges        pq.StringArray `db:"privileges"`
 }
 
 var clusterQuery = NewBaseQuery(`

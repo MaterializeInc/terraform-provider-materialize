@@ -5,7 +5,10 @@ import (
 	"strings"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/lib/pq"
 )
+
+var defaultPrivilege = pq.StringArray{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1"}
 
 func mockQueryBuilder(query, predicate, order string) string {
 	q := strings.Builder{}
@@ -74,7 +77,7 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "comment", "owner_name", "privileges"}).
-		AddRow("u1", "cluster", true, "small", 2, true, "comment", "joe", "{u1=UC/u18}")
+		AddRow("u1", "cluster", true, "small", 2, true, "comment", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -105,7 +108,7 @@ func MockConnectionScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "connection_name", "schema_name", "database_name", "connection_type", "owner_name", "privileges"}).
-		AddRow("u1", "connection", "schema", "database", "kafka", "joe", "{u1=U/u18}")
+		AddRow("u1", "connection", "schema", "database", "kafka", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -196,8 +199,9 @@ func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate, objectType string
 		ON mz_default_privileges.database_id = mz_databases.id`
 
 	q := mockQueryBuilder(b, predicate, "")
+
 	ir := mock.NewRows([]string{"object_type", "grantee_id", "grantee_name", "target_id", "target_name", "database_id", "schema_id", "privileges"}).
-		AddRow(objectType, "u1", "grantee", "u1", "target", nil, nil, "{u1=UC/u18}")
+		AddRow(objectType, "u1", "grantee", "u1", "target", nil, nil, "Ur")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -221,7 +225,7 @@ func MockDatabaseScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "database_name", "owner_name", "privileges"}).
-		AddRow("u1", "database", "joe", "{u1=UC/u18}")
+		AddRow("u1", "database", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -308,7 +312,7 @@ func MockMaterializeViewScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "materialized_view_name", "schema_name", "database_name", "cluster_name", "owner_name", "privileges"}).
-		AddRow("u1", "view", "schema", "database", "cluster", "joe", "{u1=r/u18}")
+		AddRow("u1", "view", "schema", "database", "cluster", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -375,7 +379,7 @@ func MockSchemaScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "schema_name", "database_name", "owner_name", "privileges"}).
-		AddRow("u1", "schema", "database", "joe", "{u1=UC/u18}")
+		AddRow("u1", "schema", "database", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -405,7 +409,7 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
-		AddRow("u1", "secret", "schema", "database", "joe", "{u1=U/u18}")
+		AddRow("u1", "secret", "schema", "database", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -482,7 +486,7 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", "{u1=r/u18}")
+		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -567,7 +571,7 @@ func MockTableScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "comment", "owner_name", "privileges"}).
-		AddRow("u1", "table", "schema", "database", "comment", "materialize", "{u1=arwd/u18}")
+		AddRow("u1", "table", "schema", "database", "comment", "materialize", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -598,7 +602,7 @@ func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "category", "owner_name", "privileges"}).
-		AddRow("u1", "type", "schema", "database", "category", "joe", "{u1=U/u18}")
+		AddRow("u1", "type", "schema", "database", "category", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -628,6 +632,6 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := sqlmock.NewRows([]string{"id", "name", "schema_name", "database_name", "owner_name", "privileges"}).
-		AddRow("u1", "view", "schema", "database", "joe", "{u1=r/u18}")
+		AddRow("u1", "view", "schema", "database", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }

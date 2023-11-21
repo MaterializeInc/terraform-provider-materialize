@@ -57,21 +57,11 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// Check if default privilege has expected privilege
-	mapping, _ := materialize.ParseDefaultPrivileges(privileges)
+	privilegeMap, _ := materialize.MapDefaultGrantPrivileges(privileges)
+	mapKey := strings.ToLower(key.objectType) + "|" + key.granteeId + "|" + key.databaseId + "|" + key.schemaId
 
-	mapKey := materialize.DefaultPrivilegeMapKey{
-		ObjectType: strings.ToLower(key.objectType), GranteeId: key.granteeId,
-	}
-
-	if key.databaseId != "" {
-		mapKey.DatabaseId = key.databaseId
-	}
-
-	if key.schemaId != "" {
-		mapKey.SchemaId = key.schemaId
-	}
-
-	if !slices.Contains(mapping[mapKey], key.privilege) {
+	if !slices.Contains(privilegeMap[mapKey], key.privilege) {
+		log.Printf("[DEBUG] privilege map %s", privilegeMap)
 		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")

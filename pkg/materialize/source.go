@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type TableStruct struct {
@@ -109,7 +110,7 @@ type SourceParams struct {
 	ClusterName    sql.NullString `db:"cluster_name"`
 	Comment        sql.NullString `db:"comment"`
 	OwnerName      sql.NullString `db:"owner_name"`
-	Privileges     sql.NullString `db:"privileges"`
+	Privileges     pq.StringArray `db:"privileges"`
 }
 
 var sourceQuery = NewBaseQuery(`
