@@ -28,7 +28,8 @@ services:
       sh -c '
       echo "Waiting for materialized to start..." &&
       sleep 15 &&
-      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_clusters = 100;"
+      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_clusters = 100;" &&
+      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_sources = 100;"
       '
 
   redpanda:

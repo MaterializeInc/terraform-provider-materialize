@@ -36,6 +36,30 @@ resource "materialize_source_load_generator" "load_generator_auction" {
   }
 }
 
+resource "materialize_source_load_generator" "load_generator_marketing" {
+  name                = "load_gen_marketing"
+  schema_name         = materialize_schema.schema.name
+  database_name       = materialize_database.database.name
+  cluster_name        = materialize_cluster.cluster_source.name
+  load_generator_type = "MARKETING"
+
+  marketing_options {
+    tick_interval = "500ms"
+  }
+}
+
+resource "materialize_source_load_generator" "load_generator_tpch" {
+  name                = "load_gen_tpch"
+  schema_name         = materialize_schema.schema.name
+  database_name       = materialize_database.database.name
+  cluster_name        = materialize_cluster.cluster_source.name
+  load_generator_type = "TPCH"
+
+  tpch_options {
+    tick_interval = "500ms"
+  }
+}
+
 resource "materialize_source_postgres" "example_source_postgres" {
   name    = "source_postgres"
   comment = "source postgres comment"
