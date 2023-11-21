@@ -39,6 +39,7 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	key, err := parsePrivilegeKey(i)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 

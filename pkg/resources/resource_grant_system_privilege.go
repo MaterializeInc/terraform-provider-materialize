@@ -61,6 +61,7 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	key, err := parseSystemPrivilegeKey(i)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 

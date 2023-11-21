@@ -27,7 +27,7 @@ func parseDefaultPrivilegeKey(id string) (DefaultPrivilegeKey, error) {
 	ie := strings.Split(id, "|")
 
 	if len(ie) != 7 {
-		return DefaultPrivilegeKey{}, fmt.Errorf("%s cannot be parsed correctly", id)
+		return DefaultPrivilegeKey{}, fmt.Errorf("%s: cannot be parsed correctly", id)
 	}
 
 	return DefaultPrivilegeKey{
@@ -45,6 +45,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 
 	key, err := parseDefaultPrivilegeKey(i)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 
