@@ -47,7 +47,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		},
 	},
 	"security_protocol": {
-		Description:  "The security protocol to use.",
+		Description:  "**Private Preview** The security protocol to use.",
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,

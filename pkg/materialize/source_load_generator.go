@@ -173,7 +173,7 @@ func (b *SourceLoadgenBuilder) Create() error {
 	}
 
 	// Include for multi-output sources
-	if b.loadGeneratorType == "AUCTION" || b.loadGeneratorType == "MARKETING" {
+	if b.loadGeneratorType == "AUCTION" || b.loadGeneratorType == "MARKETING" || b.loadGeneratorType == "TPCH" {
 		q.WriteString(` FOR ALL TABLES`)
 	}
 

@@ -33,7 +33,12 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.50\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source"
+			IN CLUSTER "cluster"
+			FROM LOAD GENERATOR TPCH
+			\(TICK INTERVAL '1s', SCALE FACTOR 0.50\)
+			FOR ALL TABLES
+			WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

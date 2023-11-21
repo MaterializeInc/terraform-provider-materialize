@@ -13,7 +13,10 @@ var sourceLoadgen = MaterializeObject{Name: "source", SchemaName: "schema", Data
 func TestSourceLoadgenCounterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR COUNTER \(TICK INTERVAL '1s', MAX CARDINALITY 8\) WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source"
+			FROM LOAD GENERATOR COUNTER
+			\(TICK INTERVAL '1s', MAX CARDINALITY 8\)
+			WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
@@ -33,7 +36,11 @@ func TestSourceLoadgenCounterCreate(t *testing.T) {
 func TestSourceLoadgenAuctionCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR AUCTION \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR ALL TABLES WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source"
+			FROM LOAD GENERATOR AUCTION
+			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
+			FOR ALL TABLES
+			WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
@@ -53,7 +60,11 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 func TestSourceLoadgenMarketingCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR MARKETING \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) FOR ALL TABLES WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source"
+			FROM LOAD GENERATOR MARKETING
+			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
+			FOR ALL TABLES
+			WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
@@ -73,7 +84,11 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM LOAD GENERATOR TPCH \(TICK INTERVAL '1s', SCALE FACTOR 0.01\) WITH \(SIZE = 'xsmall'\);`,
+			`CREATE SOURCE "database"."schema"."source"
+			FROM LOAD GENERATOR TPCH
+			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
+			FOR ALL TABLES
+			WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
