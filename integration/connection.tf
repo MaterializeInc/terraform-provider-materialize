@@ -42,9 +42,9 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   }
   # TODO: Enable when image supports
   # security_protocol = "SASL_PLAINTEXT"
-  sasl_mechanisms   = "SCRAM-SHA-256"
-  progress_topic    = "progress_topic"
-  validate          = false
+  sasl_mechanisms = "SCRAM-SHA-256"
+  progress_topic  = "progress_topic"
+  validate        = false
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
