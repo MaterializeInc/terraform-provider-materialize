@@ -8,6 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// https://github.com/MaterializeInc/materialize/blob/main/test/sqllogictest/managed_cluster.slt
+// https://materialize.com/docs/sql/create-cluster/
+
 func TestClusterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -19,13 +22,27 @@ func TestClusterCreate(t *testing.T) {
 	})
 }
 
-func TestClusterManagedSizeCreate(t *testing.T) {
+func TestClusterManagedCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestClusterManagedReplicationFactorCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 3;`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+		b.ReplicationFactor(3)
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
 		}
@@ -46,23 +63,17 @@ func TestClusterManagedSizeDiskCreate(t *testing.T) {
 	})
 }
 
-func TestClusterManagedSizeReplicationCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2;`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		o := MaterializeObject{Name: "cluster"}
-		b := NewClusterBuilder(db, o)
-		b.Size("xsmall")
-		b.ReplicationFactor(2)
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
 func TestClusterManagedAllCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 2, AVAILABILITY ZONES = \['us-east-1'\], INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			CREATE CLUSTER "cluster"
+			SIZE 'xsmall',
+			REPLICATION FACTOR 2,
+			AVAILABILITY ZONES = \['us-east-1'\],
+			INTROSPECTION INTERVAL = '1s',
+			INTROSPECTION DEBUGGING = TRUE,
+			IDLE ARRANGEMENT MERGE EFFORT = 1;
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)

@@ -8,6 +8,7 @@ import (
 )
 
 // DDL
+// Not including TEMP / TEMPORARY since a user would not use Terraform for temporary view
 type ViewBuilder struct {
 	ddl          Builder
 	viewName     string

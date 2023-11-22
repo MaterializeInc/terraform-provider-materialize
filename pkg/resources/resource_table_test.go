@@ -18,7 +18,13 @@ var inTable = map[string]interface{}{
 	"database_name":  "database",
 	"ownership_role": "joe",
 	"comment":        "object comment",
-	"column":         []interface{}{map[string]interface{}{"name": "column", "type": "text", "nullable": true, "comment": "column comment"}},
+	"column": []interface{}{map[string]interface{}{
+		"name":     "column",
+		"type":     "text",
+		"nullable": true,
+		"comment":  "column comment",
+	},
+	},
 }
 
 func TestResourceTableCreate(t *testing.T) {
@@ -28,7 +34,9 @@ func TestResourceTableCreate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			CREATE TABLE "database"."schema"."table" \(column text NOT NULL\);
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))

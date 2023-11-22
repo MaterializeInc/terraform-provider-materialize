@@ -1,3 +1,18 @@
+resource "materialize_type" "row_type" {
+  name          = "int4_row"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  row_properties {
+    field_name  = "a"
+    field_type = "int4"
+  }
+  row_properties {
+    field_name  = "b"
+    field_type = "text"
+  }
+}
+
 resource "materialize_type" "list_type" {
   name          = "int4_list"
   schema_name   = materialize_schema.schema.name

@@ -8,6 +8,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type RowProperties struct {
+	FieldName string
+	FieldType string
+}
+
+func GetRowProperties(v interface{}) []RowProperties {
+	var rp []RowProperties
+	for _, properties := range v.([]interface{}) {
+		b := properties.(map[string]interface{})
+		rp = append(rp, RowProperties{
+			FieldName: b["field_name"].(string),
+			FieldType: b["field_type"].(string),
+		})
+	}
+	return rp
+}
+
 type ListProperties struct {
 	ElementType string
 }
@@ -45,6 +62,7 @@ type Type struct {
 	typeName       string
 	schemaName     string
 	databaseName   string
+	rowProperties  []RowProperties
 	listProperties []ListProperties
 	mapProperties  []MapProperties
 }
@@ -60,6 +78,11 @@ func NewTypeBuilder(conn *sqlx.DB, obj MaterializeObject) *Type {
 
 func (c *Type) QualifiedName() string {
 	return QualifiedName(c.databaseName, c.schemaName, c.typeName)
+}
+
+func (b *Type) RowProperties(r []RowProperties) *Type {
+	b.rowProperties = r
+	return b
 }
 
 func (b *Type) ListProperties(l []ListProperties) *Type {
@@ -78,6 +101,13 @@ func (b *Type) Create() error {
 	q.WriteString(fmt.Sprintf(`CREATE TYPE %s AS `, b.QualifiedName()))
 
 	var properties []string
+	if len(b.rowProperties) > 0 {
+		for _, p := range b.rowProperties {
+			f := fmt.Sprintf(`%s %s`, p.FieldName, p.FieldType)
+			properties = append(properties, f)
+		}
+	}
+
 	if len(b.listProperties) > 0 {
 		q.WriteString(`LIST `)
 
