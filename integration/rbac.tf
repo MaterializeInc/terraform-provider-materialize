@@ -52,22 +52,22 @@ variable "database_grants" {
     bi_usage = {
       grantee : "bi",
       privilege : "USAGE",
-      target_role: "target_1",
+      target_role : "target_1",
     },
     bi_create_t1 = {
       grantee : "bi",
       privilege : "CREATE",
-      target_role: "target_1",
+      target_role : "target_1",
     },
     bi_create_t2 = {
       grantee : "bi",
       privilege : "CREATE",
-      target_role: "target_2",
+      target_role : "target_2",
     },
     de_usage = {
       grantee : "de",
       privilege : "USAGE",
-      target_role: "target_2",
+      target_role : "target_2",
     },
   }
 }
