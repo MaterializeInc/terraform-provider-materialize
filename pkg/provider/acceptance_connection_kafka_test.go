@@ -113,6 +113,7 @@ resource "materialize_connection_kafka" "test" {
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
+	security_protocol = "PLAINTEXT"
 }
 
 resource "materialize_connection_kafka" "test_role" {
@@ -120,6 +121,7 @@ resource "materialize_connection_kafka" "test_role" {
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
+	security_protocol = "PLAINTEXT"
 	ownership_role = "%[4]s"
 
 	depends_on = [materialize_role.test]

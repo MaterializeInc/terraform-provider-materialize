@@ -1,6 +1,7 @@
 resource "materialize_connection_kafka" "kafka_connection" {
-  name    = "kafka_connection"
-  comment = "connection kafka comment"
+  name              = "kafka_connection"
+  comment           = "connection kafka comment"
+  security_protocol = "PLAINTEXT"
 
   kafka_broker {
     broker = "redpanda:9092"
@@ -40,11 +41,10 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
     database_name = materialize_secret.kafka_password.database_name
     schema_name   = materialize_secret.kafka_password.schema_name
   }
-  # TODO: Enable when image supports
-  # security_protocol = "SASL_PLAINTEXT"
-  sasl_mechanisms = "SCRAM-SHA-256"
-  progress_topic  = "progress_topic"
-  validate        = false
+  security_protocol = "SASL_PLAINTEXT"
+  sasl_mechanisms   = "SCRAM-SHA-256"
+  progress_topic    = "progress_topic"
+  validate          = false
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
