@@ -47,3 +47,17 @@ func TestParseDefaultPrivilegeIdComplex(t *testing.T) {
 		t.Fatalf("schema id %s: expected to u4", i.schemaId)
 	}
 }
+
+func TestParseDefaultPrivilegeIdError(t *testing.T) {
+	_, err := parseDefaultPrivilegeKey("incorrect|key|string")
+	if err.Error() != "incorrect|key|string: cannot be parsed correctly" {
+		t.Fatalf("error not handled")
+	}
+}
+
+func TestParseDefaultPrivilegeIdErrorEmpty(t *testing.T) {
+	_, err := parseDefaultPrivilegeKey("")
+	if err.Error() != ": cannot be parsed correctly" {
+		t.Fatal(err)
+	}
+}

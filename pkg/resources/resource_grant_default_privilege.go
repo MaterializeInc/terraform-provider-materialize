@@ -27,7 +27,7 @@ func parseDefaultPrivilegeKey(id string) (DefaultPrivilegeKey, error) {
 	ie := strings.Split(id, "|")
 
 	if len(ie) != 7 {
-		return DefaultPrivilegeKey{}, fmt.Errorf("%s cannot be parsed correctly", id)
+		return DefaultPrivilegeKey{}, fmt.Errorf("%s: cannot be parsed correctly", id)
 	}
 
 	return DefaultPrivilegeKey{
@@ -45,11 +45,14 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 
 	key, err := parseDefaultPrivilegeKey(i)
 	if err != nil {
-		return diag.FromErr(err)
+		log.Printf("[WARN] malformed privilege (%s), removing from state file", d.Id())
+		d.SetId("")
+		return nil
 	}
 
 	privileges, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), key.objectType, key.granteeId, key.targetRoleId, key.databaseId, key.schemaId)
 	if err == sql.ErrNoRows {
+		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -57,22 +60,11 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// Check if default privilege has expected privilege
-	mapping, _ := materialize.ParseDefaultPrivileges(privileges)
+	privilegeMap, _ := materialize.MapDefaultGrantPrivileges(privileges)
+	mapKey := strings.ToLower(key.objectType) + "|" + key.granteeId + "|" + key.databaseId + "|" + key.schemaId
 
-	mapKey := materialize.DefaultPrivilegeMapKey{
-		ObjectType: strings.ToLower(key.objectType), GranteeId: key.granteeId,
-	}
-
-	if key.databaseId != "" {
-		mapKey.DatabaseId = key.databaseId
-	}
-
-	if key.schemaId != "" {
-		mapKey.SchemaId = key.schemaId
-	}
-
-	if !slices.Contains(mapping[mapKey], key.privilege) {
-		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
+	if !slices.Contains(privilegeMap[mapKey], key.privilege) {
+		log.Printf("[DEBUG] %s object does not contain privilege %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")
 	}

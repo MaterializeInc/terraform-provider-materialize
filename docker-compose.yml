@@ -23,7 +23,7 @@ services:
     image: postgres
     container_name: materialized_init
     depends_on:
-      - materialized
+      materialized: {condition: service_healthy}
     command: >-
       sh -c '
       echo "Waiting for materialized to start..." &&
@@ -77,6 +77,7 @@ services:
     container_name: provider
     depends_on:
       materialized: {condition: service_healthy}
+      redpanda: {condition: service_healthy}
     volumes:
       - ./integration:/usr/src/app/integration
     environment:
