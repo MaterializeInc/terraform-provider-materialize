@@ -9,6 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.5.1
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/lib/pq v1.2.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
 )

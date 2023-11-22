@@ -36,26 +36,31 @@ func TestParseDefaultPrivileges(t *testing.T) {
 		},
 	}
 
-	output, err := ParseDefaultPrivileges(input)
+	o, err := MapDefaultGrantPrivileges(input)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := map[DefaultPrivilegeMapKey][]string{
-		{GranteeId: "p", ObjectType: "TYPE"}:                                     {"USAGE"},
-		{GranteeId: "s2", ObjectType: "CLUSTER"}:                                 {"USAGE"},
-		{GranteeId: "u9", ObjectType: "TABLE"}:                                   {"INSERT", "SELECT"},
-		{GranteeId: "u9", ObjectType: "TABLE", DatabaseId: "u3", SchemaId: "u9"}: {"UPDATE"},
+	e := map[string][]string{
+		"TYPE|p||":       {"USAGE"},
+		"CLUSTER|s2||":   {"USAGE"},
+		"TABLE|u9||":     {"INSERT", "SELECT"},
+		"TABLE|u9|u3|u9": {"UPDATE"},
 	}
 
-	if !reflect.DeepEqual(output, expected) {
+	if !reflect.DeepEqual(o, e) {
+		t.Log(o)
+		t.Log(e)
 		t.Fatal("ouptut does not equal expected")
 	}
 }
 
 func TestDefaultPrivilegeGrantSimple(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE "emily" GRANT SELECT ON TABLES TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			ALTER DEFAULT PRIVILEGES FOR ROLE "emily"
+			GRANT SELECT ON TABLES TO "joe";
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewDefaultPrivilegeBuilder(db, "TABLE", "joe", "emily", "SELECT")
 		if err := b.Grant(); err != nil {
@@ -66,7 +71,11 @@ func TestDefaultPrivilegeGrantSimple(t *testing.T) {
 
 func TestDefaultPrivilegeGrantComplex(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE "interns" IN DATABASE "dev" GRANT ALL PRIVILEGES ON TABLES TO "intern_managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			ALTER DEFAULT PRIVILEGES FOR ROLE "interns"
+			IN DATABASE "dev"
+			GRANT ALL PRIVILEGES ON TABLES TO "intern_managers";
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewDefaultPrivilegeBuilder(db, "TABLE", "intern_managers", "interns", "ALL PRIVILEGES")
 		b.DatabaseName("dev")
@@ -78,7 +87,10 @@ func TestDefaultPrivilegeGrantComplex(t *testing.T) {
 
 func TestDefaultPrivilegeRevokeSimple(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" REVOKE USAGE ON SECRETS FROM "project_managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			ALTER DEFAULT PRIVILEGES FOR ROLE "developers"
+			REVOKE USAGE ON SECRETS FROM "project_managers";
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewDefaultPrivilegeBuilder(db, "SECRET", "project_managers", "developers", "USAGE")
 		if err := b.Revoke(); err != nil {
@@ -89,7 +101,10 @@ func TestDefaultPrivilegeRevokeSimple(t *testing.T) {
 
 func TestDefaultPrivilegeGrantAllRoles(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ALL ROLES GRANT SELECT ON TABLES TO "managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			ALTER DEFAULT PRIVILEGES FOR ALL ROLES
+			GRANT SELECT ON TABLES TO "managers";
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewDefaultPrivilegeBuilder(db, "TABLE", "managers", "PUBLIC", "SELECT")
 		if err := b.Grant(); err != nil {

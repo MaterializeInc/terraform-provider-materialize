@@ -139,32 +139,25 @@ func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, da
 	return c, nil
 }
 
-type DefaultPrivilegeMapKey struct {
-	ObjectType string
-	GranteeId  string
-	DatabaseId string
-	SchemaId   string
-}
-
-func ParseDefaultPrivileges(privileges []DefaultPrivilegeParams) (map[DefaultPrivilegeMapKey][]string, error) {
-	mapping := make(map[DefaultPrivilegeMapKey][]string)
-
+// Converts a list of DefaultPrivilegeParamss into a map
+// list of DefaultPrivilegeParamss would become
+// map[string][]string
+//
+//	{
+//		"TYPE|p||":         {"USAGE", "INSERT"},
+//		"CLUSTER|s2|u3|u8": {"USAGE"},
+//	}
+func MapDefaultGrantPrivileges(privileges []DefaultPrivilegeParams) (map[string][]string, error) {
+	mapping := make(map[string][]string)
 	for _, p := range privileges {
-		key := DefaultPrivilegeMapKey{
-			ObjectType: p.ObjectType.String,
-			GranteeId:  p.GranteeId.String,
-			DatabaseId: p.DatabaseId.String,
-			SchemaId:   p.SchemaId.String,
-		}
-
+		// Construct compund grant key
+		key := p.ObjectType.String + "|" + p.GranteeId.String + "|" + p.DatabaseId.String + "|" + p.SchemaId.String
 		parsedPrivileges := []string{}
 		for _, rp := range strings.Split(p.Privileges.String, "") {
-			v := Permissions[rp]
-			parsedPrivileges = append(parsedPrivileges, v)
+			pName, _ := PrivilegeName(rp)
+			parsedPrivileges = append(parsedPrivileges, pName)
 		}
-
 		mapping[key] = parsedPrivileges
 	}
-
 	return mapping, nil
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type RowProperties struct {
@@ -144,7 +145,7 @@ type TypeParams struct {
 	Category     sql.NullString `db:"category"`
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
-	Privileges   sql.NullString `db:"privileges"`
+	Privileges   pq.StringArray `db:"privileges"`
 }
 
 var typeQuery = NewBaseQuery(`

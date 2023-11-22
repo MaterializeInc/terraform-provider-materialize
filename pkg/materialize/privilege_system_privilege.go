@@ -1,9 +1,7 @@
 package materialize
 
 import (
-	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -37,7 +35,7 @@ func (b *SystemPrivilegeBuilder) GrantKey(roleId, privilege string) string {
 }
 
 type SytemPrivilegeParams struct {
-	Privileges sql.NullString `db:"privileges"`
+	Privileges string `db:"privileges"`
 }
 
 var systemPrivilegeQuery = `SELECT privileges FROM mz_system_privileges`
@@ -49,25 +47,4 @@ func ScanSystemPrivileges(conn *sqlx.DB) ([]SytemPrivilegeParams, error) {
 	}
 
 	return c, nil
-}
-
-func ParseSystemPrivileges(privileges []SytemPrivilegeParams) (map[string][]string, error) {
-	mapping := make(map[string][]string)
-
-	for _, p := range privileges {
-		s := strings.Split(p.Privileges.String, "=")
-
-		rId := s[0]
-		rPrivileges := strings.Split(s[1], "/")[0]
-
-		parsedPrivileges := []string{}
-		for _, rp := range strings.Split(rPrivileges, "") {
-			v := Permissions[rp]
-			parsedPrivileges = append(parsedPrivileges, v)
-		}
-
-		mapping[rId] = parsedPrivileges
-	}
-
-	return mapping, nil
 }

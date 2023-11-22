@@ -2,10 +2,21 @@
 
 ## Unreleased
 
+## 0.3.1 - 2023-11-21
+
+### Features
+* Add `security_protocol` to `materialize_connection_kafka` [#365](https://github.com/MaterializeInc/terraform-provider-materialize/pull/365)
+
 ### BugFixes
 
 * Handle `user` values that contain special characters, without requiring manual
-  URL escaping (e.g., escaping `you@corp.com` as `you%40corp.com`).
+  URL escaping (e.g., escaping `you@corp.com` as `you%40corp.com`) [#372](https://github.com/MaterializeInc/terraform-provider-materialize/pull/372)
+* Load generator source `TPCH` requires `ALL TABLES` [#377](https://github.com/MaterializeInc/terraform-provider-materialize/pull/377)
+* Improve grant reads [#378](https://github.com/MaterializeInc/terraform-provider-materialize/pull/378)
+
+### Misc
+* `materialize_cluster_replica` is deprecated [#370](https://github.com/MaterializeInc/terraform-provider-materialize/pull/370)
+* Raise `max_clusters` for testing [#371](https://github.com/MaterializeInc/terraform-provider-materialize/pull/371)
 
 ## 0.3.0 - 2023-11-16
 
@@ -33,7 +44,6 @@
   }
   ```
   The Postgres connection would have the schema name of `my_schema` and database name `my_database`. Now, if `schema_name` or `database_name` are not set, they will use the same defaults as top level attributes (`public` for schema and `materialize` for database) [#353](https://github.com/MaterializeInc/terraform-provider-materialize/pull/353)
-
 
 ## 0.2.2 - 2023-11-10
 
