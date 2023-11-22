@@ -201,7 +201,9 @@ func MockDefaultPrivilegeScan(mock sqlmock.Sqlmock, predicate, objectType string
 	q := mockQueryBuilder(b, predicate, "")
 
 	ir := mock.NewRows([]string{"object_type", "grantee_id", "grantee_name", "target_id", "target_name", "database_id", "schema_id", "privileges"}).
-		AddRow(objectType, "u1", "grantee", "u1", "target", nil, nil, "Ur")
+		AddRow(objectType, "u2", "grantee", "u4", "target", "u1", "u3", "U").
+		AddRow(objectType, "u1", "grantee", "u1", "target", nil, nil, "Ur").
+		AddRow(objectType, "u3", "grantee", "u6", "target", "u2", nil, "rw")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -353,6 +355,7 @@ func MockRoleGrantScan(mock sqlmock.Sqlmock) {
 	FROM mz_role_members`
 
 	ir := mock.NewRows([]string{"role_id", "member", "grantor"}).
+		AddRow("u2", "u3", "u3").
 		AddRow("u1", "u1", "s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
@@ -540,7 +543,8 @@ func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 
 func MockSystemGrantScan(mock sqlmock.Sqlmock) {
 	q := `SELECT privileges FROM mz_system_privileges`
-	ir := mock.NewRows([]string{"privileges"}).AddRow("u1=B/s1")
+	ir := mock.NewRows([]string{"privileges"}).
+		AddRow("u1=B/s1").AddRow("u9=RBN/s1").AddRow("u5=B/s1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

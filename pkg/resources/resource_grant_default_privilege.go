@@ -45,12 +45,14 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 
 	key, err := parseDefaultPrivilegeKey(i)
 	if err != nil {
+		log.Printf("[WARN] malformed privilege (%s), removing from state file", d.Id())
 		d.SetId("")
-		return diag.FromErr(err)
+		return nil
 	}
 
 	privileges, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), key.objectType, key.granteeId, key.targetRoleId, key.databaseId, key.schemaId)
 	if err == sql.ErrNoRows {
+		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -62,8 +64,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	mapKey := strings.ToLower(key.objectType) + "|" + key.granteeId + "|" + key.databaseId + "|" + key.schemaId
 
 	if !slices.Contains(privilegeMap[mapKey], key.privilege) {
-		log.Printf("[DEBUG] privilege map %s", privilegeMap)
-		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
+		log.Printf("[DEBUG] %s object does not contain privilege %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")
 	}

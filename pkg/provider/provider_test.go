@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"slices"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -10,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/exp/slices"
 )
 
 func TestProvider(t *testing.T) {

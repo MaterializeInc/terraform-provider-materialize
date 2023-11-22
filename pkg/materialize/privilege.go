@@ -76,22 +76,23 @@ func PrivilegeName(privilegeAbbreviation string) (string, error) {
 	return "", fmt.Errorf("%s is not a valid privilege", privilegeAbbreviation)
 }
 
-type MzCatalogPrivilege struct {
+type MzAclItem struct {
 	Grantee    string
 	Privileges []string
 	Grantor    string
 }
 
+// https://materialize.com/docs/sql/types/mz_aclitem/
 // Converts a mz catalog privilege string into a struct
 // "s1=arwd/s1" would become
 //
-//	var x = MzCatalogPrivilege{
+//	var x = MzAclItem{
 //		Grantee:    "s1",
 //		Privileges: ["INSERT", "SELECT", "UPDATE", "DELETE"],
 //		Grantor:    "s1",
 //	}
-func ParseMzCatalogPrivileges(mzCatalogPrivilegeString string) MzCatalogPrivilege {
-	splitEqual := strings.Split(mzCatalogPrivilegeString, "=")
+func ParseMzAclString(aclString string) MzAclItem {
+	splitEqual := strings.Split(aclString, "=")
 	splitSlash := strings.Split(splitEqual[1], "/")
 
 	var parsedPrivileges = []string{}
@@ -100,15 +101,15 @@ func ParseMzCatalogPrivileges(mzCatalogPrivilegeString string) MzCatalogPrivileg
 		parsedPrivileges = append(parsedPrivileges, pName)
 	}
 
-	return MzCatalogPrivilege{
+	return MzAclItem{
 		Grantee:    splitEqual[0],
 		Privileges: parsedPrivileges,
 		Grantor:    splitSlash[1],
 	}
 }
 
-// Converts a list of catalog privileges into a map for easy access
-// {s1=arwd/s1,u3=wd/s1} would become
+// Converts a list of MZ ACL item strings into a map
+// {"s1=arwd/s1", "u3=wd/s1"} would become
 // map[string][]string
 //
 //	{
@@ -118,7 +119,7 @@ func ParseMzCatalogPrivileges(mzCatalogPrivilegeString string) MzCatalogPrivileg
 func MapGrantPrivileges(privileges []string) (map[string][]string, error) {
 	mapping := make(map[string][]string)
 	for _, p := range privileges {
-		f := ParseMzCatalogPrivileges(p)
+		f := ParseMzAclString(p)
 		mapping[f.Grantee] = f.Privileges
 	}
 	return mapping, nil

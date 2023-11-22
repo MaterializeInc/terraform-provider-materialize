@@ -17,8 +17,4 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - run: go get .
-
-      - run: go build -v ./...
-
       - run: go test -v -cover ./...

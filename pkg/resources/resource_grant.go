@@ -39,12 +39,14 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	key, err := parsePrivilegeKey(i)
 	if err != nil {
+		log.Printf("[WARN] malformed privilege (%s), removing from state file", d.Id())
 		d.SetId("")
-		return diag.FromErr(err)
+		return nil
 	}
 
 	p, err := materialize.ScanPrivileges(meta.(*sqlx.DB), key.objectType, key.objectId)
 	if err == sql.ErrNoRows {
+		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -55,8 +57,7 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	privilege := d.Get("privilege").(string)
 
 	if !slices.Contains(privilegeMap[key.roleId], privilege) {
-		log.Printf("[DEBUG] privilege map %s", privilegeMap)
-		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, privilege)
+		log.Printf("[DEBUG] %s object does not contain privilege %s", i, privilege)
 		// Remove id from state
 		d.SetId("")
 	}

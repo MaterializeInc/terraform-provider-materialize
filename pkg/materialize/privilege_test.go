@@ -20,8 +20,8 @@ func TestPrivilegeName(t *testing.T) {
 }
 
 func TestParseMzCatalogPrivileges(t *testing.T) {
-	o := ParseMzCatalogPrivileges("u18=arwd/s1")
-	e := MzCatalogPrivilege{
+	o := ParseMzAclString("u18=arwd/s1")
+	e := MzAclItem{
 		Grantee:    "u18",
 		Privileges: []string{"INSERT", "SELECT", "UPDATE", "DELETE"},
 		Grantor:    "s1",

@@ -22,10 +22,6 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up --build -d
 
-      - run: go get .
-
-      - run: go build -v ./...
-
       - name: make testacc
         run: make testacc
         env:
