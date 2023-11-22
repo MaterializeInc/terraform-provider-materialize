@@ -19,10 +19,12 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - run: go mod download
-
       - name: Docker Compose Up
         run: docker compose up --build -d
+
+      - run: go get .
+
+      - run: go build -v ./...
 
       - name: make testacc
         run: make testacc

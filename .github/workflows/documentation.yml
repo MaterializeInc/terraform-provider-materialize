@@ -22,7 +22,9 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - run: go mod download
+      - run: go get .
+
+      - run: go build -v ./...
 
       - run: go generate ./...
 
