@@ -126,6 +126,7 @@ resource "materialize_connection_kafka" "test" {
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
+	security_protocol = "PLAINTEXT"
 }
 
 resource "materialize_source_kafka" "test" {
