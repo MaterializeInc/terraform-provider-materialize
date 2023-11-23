@@ -31,7 +31,20 @@ func TestAccTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "comment", "comment"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "5"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.name", "column_1"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.type", "text"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.nullable", "false"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.default", "NULL"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.name", "column_2"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.type", "integer"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.name", "column_3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.nullable", "true"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.3.name", "column_4"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.3.default", "NULL"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.4.name", "column_5"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.4.default", "NULL"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.4.default", "NULL"),
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
@@ -70,7 +83,7 @@ func TestAccTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newTableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "5"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
@@ -91,7 +104,7 @@ func TestAccTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "5"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
@@ -131,7 +144,6 @@ func TestAccTable_disappears(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
 							ObjectType: "TABLE",
@@ -167,6 +179,17 @@ resource "materialize_table" "test" {
 		name     = "column_3"
 		type     = "text"
 		nullable = true
+	}
+	column {
+		name    = "column_4"
+		type    = "text"
+		default = "NULL"
+	}
+	column {
+		name     = "column_5"
+		type     = "text"
+		nullable = true
+		default  = "NULL"
 	}
 }
 

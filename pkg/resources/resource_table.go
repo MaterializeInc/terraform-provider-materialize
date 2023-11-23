@@ -54,6 +54,7 @@ var tableSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					ForceNew:    true,
 					Optional:    true,
+					Default:     "NULL",
 				},
 				"comment": CommentSchema(false),
 			},

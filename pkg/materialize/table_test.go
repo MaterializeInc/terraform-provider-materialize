@@ -14,7 +14,8 @@ import (
 func TestTableCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" \(a int, b text\);`,
+			`CREATE TABLE "database"."schema"."table"
+			\(a int, b text, c text NOT NULL, d int DEFAULT \(1\), e text NOT NULL DEFAULT NULL\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
@@ -28,74 +29,19 @@ func TestTableCreate(t *testing.T) {
 				ColName: "b",
 				ColType: "text",
 			},
-		})
-
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func TestTableNotNullCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" \(a int, b text NOT NULL\);`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		o := MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-		b := NewTableBuilder(db, o)
-		b.Column([]TableColumn{
 			{
-				ColName: "a",
-				ColType: "int",
-			},
-			{
-				ColName: "b",
+				ColName: "c",
 				ColType: "text",
 				NotNull: true,
 			},
-		})
-
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func TestTableDefaultCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" \(a int DEFAULT 1\);`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		o := MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-		b := NewTableBuilder(db, o)
-		b.Column([]TableColumn{
 			{
-				ColName: "a",
+				ColName: "d",
 				ColType: "int",
-				Default: "1",
+				Default: "(1)",
 			},
-		})
-
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func TestTableNotNullDefaultCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" \(a int NOT NULL DEFAULT NULL\);`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		o := MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-		b := NewTableBuilder(db, o)
-		b.Column([]TableColumn{
 			{
-				ColName: "a",
-				ColType: "int",
+				ColName: "e",
+				ColType: "text",
 				NotNull: true,
 				Default: "NULL",
 			},
