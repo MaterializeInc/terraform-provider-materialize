@@ -22,7 +22,7 @@ func TestAccSchema_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSchemaResource(roleName, schemaName, schema2Name, roleName),
+				Config: testAccSchemaResource(roleName, schemaName, schema2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists("materialize_schema.test"),
 					resource.TestCheckResourceAttr("materialize_schema.test", "name", schemaName),
@@ -43,6 +43,37 @@ func TestAccSchema_basic(t *testing.T) {
 	})
 }
 
+func TestAccSchema_update(t *testing.T) {
+	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	schema2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSchemaResource(roleName, schemaName, schema2Name, "mz_system", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaExists("materialize_schema.test"),
+					testAccCheckSchemaExists("materialize_schema.test"),
+					resource.TestCheckResourceAttr("materialize_schema.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_schema.test_role", "comment", "Comment"),
+				),
+			},
+			{
+				Config: testAccSchemaResource(roleName, schemaName, schema2Name, roleName, "New Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaExists("materialize_schema.test"),
+					testAccCheckSchemaExists("materialize_schema.test"),
+					resource.TestCheckResourceAttr("materialize_schema.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_schema.test_role", "comment", "New Comment"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSchema_disappears(t *testing.T) {
 	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	schema2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -53,7 +84,7 @@ func TestAccSchema_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSchemasDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSchemaResource(roleName, schemaName, schema2Name, roleName),
+				Config: testAccSchemaResource(roleName, schemaName, schema2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists("materialize_schema.test"),
 					resource.TestCheckResourceAttr("materialize_schema.test", "name", schemaName),
@@ -72,25 +103,26 @@ func TestAccSchema_disappears(t *testing.T) {
 	})
 }
 
-func testAccSchemaResource(roleName, schemaName, schema2Name, schemaOwner string) string {
+func testAccSchemaResource(roleName, schemaName, schema2Name, schemaOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_schema" "test" {
-	name = "%[2]s"
-	database_name = "materialize"
-}
+	resource "materialize_schema" "test" {
+		name = "%[2]s"
+		database_name = "materialize"
+	}
 
-resource "materialize_schema" "test_role" {
-	name = "%[3]s"
-	database_name = "materialize"
-	ownership_role = "%[4]s"
+	resource "materialize_schema" "test_role" {
+		name = "%[3]s"
+		database_name = "materialize"
+		ownership_role = "%[4]s"
+		comment = "%[5]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, schemaName, schema2Name, schemaOwner)
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, schemaName, schema2Name, schemaOwner, comment)
 }
 
 func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
@@ -120,6 +152,5 @@ func testAccCheckAllSchemasDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

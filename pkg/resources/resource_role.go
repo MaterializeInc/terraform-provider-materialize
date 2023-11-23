@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,28 +20,6 @@ var roleSchema = map[string]*schema.Schema{
 		Description: "Grants the role the ability to inheritance of privileges of other roles. Unlike PostgreSQL, Materialize does not currently support `NOINHERIT`",
 		Type:        schema.TypeBool,
 		Computed:    true,
-	},
-	"session_variable": {
-		Description: "Session variable.",
-		Type:        schema.TypeList,
-		Optional:    true,
-		MinItems:    1,
-		ForceNew:    true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"name": {
-					Description:  "The name of the session variable.",
-					Type:         schema.TypeString,
-					Required:     true,
-					ValidateFunc: validation.StringInSlice(sessionVariables, true),
-				},
-				"value": {
-					Description: "The value for the session variable.",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
-			},
-		},
 	},
 }
 
@@ -108,18 +85,6 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
-	}
-
-	// Set session variables
-	if v, ok := d.GetOk("session_variable"); ok {
-		sessionVariables := materialize.GetSessionVariablesStruct(v)
-		for _, sv := range sessionVariables {
-			if err := b.SessionVariable(sv.Name, sv.Value); err != nil {
-				log.Printf("[DEBUG] role session variable failed, dropping object: %s", o.Name)
-				b.Drop()
-				return diag.FromErr(err)
-			}
-		}
 	}
 
 	// object comment

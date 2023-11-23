@@ -4,11 +4,11 @@ resource "materialize_type" "row_type" {
   database_name = materialize_database.database.name
 
   row_properties {
-    field_name  = "a"
+    field_name = "a"
     field_type = "int4"
   }
   row_properties {
-    field_name  = "b"
+    field_name = "b"
     field_type = "text"
   }
 }
@@ -19,11 +19,11 @@ resource "materialize_type" "row_nested_type" {
   database_name = materialize_database.database.name
 
   row_properties {
-    field_name  = "a"
+    field_name = "a"
     field_type = materialize_type.row_type.qualified_sql_name
   }
   row_properties {
-    field_name  = "b"
+    field_name = "b"
     field_type = "float8"
   }
 }

@@ -31,6 +31,7 @@ func TestAccClusterReplica_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_debugging", "false"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "disk", "true"),
 					resource.TestCheckNoResourceAttr("materialize_cluster_replica.test", "idle_arrangement_merge_effort"),
+					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "comment", ""),
 				),
 			},
 			{
@@ -57,6 +58,7 @@ func TestAccClusterReplica_update(t *testing.T) {
 				Config: testAccClusterReplicaResource(clusterName, replicaName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
+					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "comment", ""),
 				),
 			},
 			{
@@ -98,33 +100,33 @@ func TestAccClusterReplica_disappears(t *testing.T) {
 
 func testAccClusterReplicaResource(clusterName, clusterReplica string) string {
 	return fmt.Sprintf(`
-resource "materialize_cluster" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_cluster_replica" "test" {
-	cluster_name = materialize_cluster.test.name
-	name = "%[2]s"
-	size = "3xsmall"
-	disk = true
-}
-`, clusterName, clusterReplica)
+	resource "materialize_cluster_replica" "test" {
+		cluster_name = materialize_cluster.test.name
+		name = "%[2]s"
+		size = "3xsmall"
+		disk = true
+	}
+	`, clusterName, clusterReplica)
 }
 
 func testAccClusterReplicaWithComment(clusterName, clusterReplica, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_cluster" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_cluster_replica" "test" {
-	cluster_name = materialize_cluster.test.name
-	name = "%[2]s"
-	size = "3xsmall"
-	disk = true
-	comment = "%[3]s"
-}
-`, clusterName, clusterReplica, comment)
+	resource "materialize_cluster_replica" "test" {
+		cluster_name = materialize_cluster.test.name
+		name = "%[2]s"
+		size = "3xsmall"
+		disk = true
+		comment = "%[3]s"
+	}
+	`, clusterName, clusterReplica, comment)
 }
 
 func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {

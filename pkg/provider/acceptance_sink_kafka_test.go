@@ -24,7 +24,7 @@ func TestAccSinkKafka_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "name", sinkName),
@@ -38,6 +38,7 @@ func TestAccSinkKafka_basic(t *testing.T) {
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "name", sink2Name),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "comment", "Comment"),
 				),
 			},
 			{
@@ -63,10 +64,16 @@ func TestAccSinkKafka_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, "mz_system"),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, "mz_system", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
+					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "comment", "Comment"),
+				),
 			},
 			{
-				Config: testAccSinkKafkaResource(roleName, connName, tableName, newSinkName, sink2Name, roleName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, newSinkName, sink2Name, roleName, "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "name", newSinkName),
@@ -78,6 +85,7 @@ func TestAccSinkKafka_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.json", "true"),
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "comment", "New Comment"),
 				),
 			},
 		},
@@ -96,7 +104,7 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSinkKafkaDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					testAccCheckObjectDisappears(
@@ -112,76 +120,77 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 	})
 }
 
-func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, sinkOwner string) string {
+func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, sinkOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_connection_kafka" "test" {
-	name = "%[2]s"
-	kafka_broker {
-		broker = "redpanda:9092"
+	resource "materialize_connection_kafka" "test" {
+		name = "%[2]s"
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		security_protocol = "PLAINTEXT"
 	}
-	security_protocol = "PLAINTEXT"
-}
 
-resource "materialize_table" "test" {
-	name = "%[3]s"
-	column {
-		name = "column_1"
-		type = "text"
+	resource "materialize_table" "test" {
+		name = "%[3]s"
+		column {
+			name = "column_1"
+			type = "text"
+		}
+		column {
+			name = "column_2"
+			type = "int"
+		}
+		column {
+			name     = "column_3"
+			type     = "text"
+			nullable = true
+		}
 	}
-	column {
-		name = "column_2"
-		type = "int"
-	}
-	column {
-		name     = "column_3"
-		type     = "text"
-		nullable = true
-	}
-}
 
-resource "materialize_sink_kafka" "test" {
-	name = "%[4]s"
-	kafka_connection {
-		name = materialize_connection_kafka.test.name
+	resource "materialize_sink_kafka" "test" {
+		name = "%[4]s"
+		kafka_connection {
+			name = materialize_connection_kafka.test.name
+		}
+		from {
+			name = materialize_table.test.name
+		}
+		size  = "3xsmall"
+		topic = "sink_topic"
+		format {
+			json = true
+		}
+		envelope {
+			debezium = true
+		}
 	}
-	from {
-		name = materialize_table.test.name
-	}
-	size  = "3xsmall"
-	topic = "sink_topic"
-	format {
-		json = true
-	}
-	envelope {
-		debezium = true
-	}
-}
 
-resource "materialize_sink_kafka" "test_role" {
-	name = "%[5]s"
-	kafka_connection {
-		name = materialize_connection_kafka.test.name
-	}
-	from {
-		name = materialize_table.test.name
-	}
-	size  = "3xsmall"
-	topic = "sink_topic"
-	format {
-		json = true
-	}
-	envelope {
-		debezium = true
-	}
-	ownership_role = "%[6]s"
+	resource "materialize_sink_kafka" "test_role" {
+		name = "%[5]s"
+		kafka_connection {
+			name = materialize_connection_kafka.test.name
+		}
+		from {
+			name = materialize_table.test.name
+		}
+		size  = "3xsmall"
+		topic = "sink_topic"
+		format {
+			json = true
+		}
+		envelope {
+			debezium = true
+		}
+		ownership_role = "%[6]s"
+		comment = "%[7]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner)
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner, comment)
 }
 
 func testAccCheckSinkKafkaExists(name string) resource.TestCheckFunc {
@@ -219,6 +228,5 @@ func testAccCheckAllSinkKafkaDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }
