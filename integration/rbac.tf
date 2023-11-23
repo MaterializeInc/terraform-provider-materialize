@@ -49,7 +49,7 @@ resource "materialize_role" "target_2" {
 variable "database_grants" {
   type = map(any)
   default = {
-    bi_usage = {
+    bi_usage_t1 = {
       grantee : "bi",
       privilege : "USAGE",
       target_role : "target_1",
@@ -64,7 +64,7 @@ variable "database_grants" {
       privilege : "CREATE",
       target_role : "target_2",
     },
-    de_usage = {
+    de_usage_t2 = {
       grantee : "de",
       privilege : "USAGE",
       target_role : "target_2",
@@ -107,7 +107,7 @@ variable "schema_grants" {
       privilege : "USAGE",
       database : "db2",
     },
-    bi_usage = {
+    bi_usage_nodb = {
       grantee : "bi",
       privilege : "USAGE",
       database : "",
@@ -138,47 +138,53 @@ resource "materialize_schema_grant_default_privilege" "complex" {
 variable "table_grants" {
   type = map(any)
   default = {
-    bi_select = {
+    bi_select_db1_s1 = {
       grantee : "bi",
       privilege : "SELECT",
       database : "db1",
       schema : "schema1"
     },
-    bi_insert = {
+    bi_insert_db1_s2 = {
       grantee : "bi",
       privilege : "INSERT",
       database : "db1",
       schema : "schema1"
     },
-    ds_select = {
+    ds_select_db2_s3 = {
       grantee : "ds",
       privilege : "SELECT",
       database : "db1",
       schema : "schema2"
     },
-    de_select = {
+    de_select_db1_s3 = {
       grantee : "de",
       privilege : "SELECT",
       database : "db2",
       schema : "schema3"
     },
-    de_update = {
+    de_update_db1_s1 = {
       grantee : "de",
       privilege : "UPDATE",
       database : "db1",
       schema : "schema1",
     },
-    de_update_db1 = {
+    de_update_db1_nos = {
       grantee : "de",
       privilege : "UPDATE",
       database : "db1",
       schema : "",
     },
-    de_update_db2 = {
+    de_update_nodb_nos = {
       grantee : "de",
       privilege : "UPDATE",
-      database : "db2",
+      database : "",
       schema : "",
+    },
+    de_update_db1_public = {
+      grantee : "de",
+      privilege : "UPDATE",
+      database : "db1",
+      schema : "public",
     },
   }
 }
