@@ -55,12 +55,10 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	privilegeMap, err := materialize.MapGrantPrivileges(p)
 	privilege := d.Get("privilege").(string)
-
 	if !slices.Contains(privilegeMap[key.roleId], privilege) {
 		log.Printf("[DEBUG] %s object does not contain privilege %s", i, privilege)
 		// Remove id from state
 		d.SetId("")
 	}
-
 	return nil
 }
