@@ -66,7 +66,8 @@ Required:
 Optional:
 
 - `comment` (String) **Private Preview** Comment on an object in the database.
-- `nullable` (Boolean) Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.
+- `default` (String) A default value to use for the column in an INSERT statement if an explicit value is not provided. If not specified, `NULL` is assumed..
+- `nullable` (Boolean) Do not allow the column to contain `NULL` values. Columns without this constraint can contain `NULL` values.
 
 ## Import
 
