@@ -8,8 +8,9 @@ resource "materialize_cluster" "cluster_source" {
 }
 
 resource "materialize_cluster" "cluster_sink" {
-  name = "cluster_sinks"
-  size = "3xsmall"
+  name               = "cluster_sinks"
+  size               = "3xsmall"
+  replication_factor = 1
 }
 
 resource "materialize_cluster_grant" "cluster_grant_usage" {
