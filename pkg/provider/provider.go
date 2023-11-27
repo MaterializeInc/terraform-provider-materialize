@@ -48,12 +48,6 @@ func Provider(version string) *schema.Provider {
 				Description: "The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
 			},
-			"application_name_suffix": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
-				Description: "A suffix to include in the `application_name` session parameter when connecting to Materialize.",
-			},
 			"sslmode": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -134,13 +128,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	password := d.Get("password").(string)
 	port := d.Get("port").(int)
 	database := d.Get("database").(string)
-	application_name_suffix := d.Get("application_name_suffix").(string)
 	sslmode := d.Get("sslmode").(string)
-
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
-	if application_name_suffix != "" {
-		application_name += " " + application_name_suffix
-	}
 
 	url := &url.URL{
 		Scheme: "postgres",
