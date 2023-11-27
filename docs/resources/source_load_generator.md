@@ -47,6 +47,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `comment` (String) **Private Preview** Comment on an object in the database.
 - `counter_options` (Block List) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `marketing_options` (Block List) Marketing Options. (see [below for nested schema](#nestedblock--marketing_options))
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
@@ -76,6 +77,19 @@ Optional:
 - `max_cardinality` (Number) Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.
 - `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
+
+
+<a id="nestedblock--expose_progress"></a>
+### Nested Schema for `expose_progress`
+
+Required:
+
+- `name` (String) The expose_progress name.
+
+Optional:
+
+- `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The expose_progress schema name. Defaults to `public`
 
 
 <a id="nestedblock--marketing_options"></a>
