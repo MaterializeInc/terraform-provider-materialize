@@ -15,21 +15,25 @@ func TestParseDefaultPrivileges(t *testing.T) {
 		{
 			ObjectType: sql.NullString{String: "TYPE", Valid: true},
 			GranteeId:  sql.NullString{String: "p", Valid: true},
+			TargetId:   sql.NullString{String: "s1", Valid: true},
 			Privileges: sql.NullString{String: "U", Valid: true},
 		},
 		{
 			ObjectType: sql.NullString{String: "CLUSTER", Valid: true},
 			GranteeId:  sql.NullString{String: "s2", Valid: true},
+			TargetId:   sql.NullString{String: "s1", Valid: true},
 			Privileges: sql.NullString{String: "U", Valid: true},
 		},
 		{
 			ObjectType: sql.NullString{String: "TABLE", Valid: true},
 			GranteeId:  sql.NullString{String: "u9", Valid: true},
+			TargetId:   sql.NullString{String: "s2", Valid: true},
 			Privileges: sql.NullString{String: "ar", Valid: true},
 		},
 		{
 			ObjectType: sql.NullString{String: "TABLE", Valid: true},
 			GranteeId:  sql.NullString{String: "u9", Valid: true},
+			TargetId:   sql.NullString{String: "s3", Valid: true},
 			Privileges: sql.NullString{String: "w", Valid: true},
 			DatabaseId: sql.NullString{String: "u3", Valid: true},
 			SchemaId:   sql.NullString{String: "u9", Valid: true},
@@ -42,10 +46,10 @@ func TestParseDefaultPrivileges(t *testing.T) {
 	}
 
 	e := map[string][]string{
-		"TYPE|p||":       {"USAGE"},
-		"CLUSTER|s2||":   {"USAGE"},
-		"TABLE|u9||":     {"INSERT", "SELECT"},
-		"TABLE|u9|u3|u9": {"UPDATE"},
+		"TYPE|p|s1||":       {"USAGE"},
+		"CLUSTER|s2|s1||":   {"USAGE"},
+		"TABLE|u9|s2||":     {"INSERT", "SELECT"},
+		"TABLE|u9|s3|u3|u9": {"UPDATE"},
 	}
 
 	if !reflect.DeepEqual(o, e) {

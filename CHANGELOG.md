@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.3.2 - 2023-11-24
+
+### Features
+
+### BugFixes
+* Fix default grant read [#381](https://github.com/MaterializeInc/terraform-provider-materialize/pull/381)
+
+### Misc
+
 ## 0.3.1 - 2023-11-21
 
 ### Features

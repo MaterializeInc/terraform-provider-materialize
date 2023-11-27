@@ -144,14 +144,14 @@ func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, da
 // map[string][]string
 //
 //	{
-//		"TYPE|p||":         {"USAGE", "INSERT"},
-//		"CLUSTER|s2|u3|u8": {"USAGE"},
+//		"TYPE|p|s1||":         {"USAGE", "INSERT"},
+//		"CLUSTER|s2|s1|u3|u8": {"USAGE"},
 //	}
 func MapDefaultGrantPrivileges(privileges []DefaultPrivilegeParams) (map[string][]string, error) {
 	mapping := make(map[string][]string)
 	for _, p := range privileges {
 		// Construct compund grant key
-		key := p.ObjectType.String + "|" + p.GranteeId.String + "|" + p.DatabaseId.String + "|" + p.SchemaId.String
+		key := p.ObjectType.String + "|" + p.GranteeId.String + "|" + p.TargetId.String + "|" + p.DatabaseId.String + "|" + p.SchemaId.String
 		parsedPrivileges := []string{}
 		for _, rp := range strings.Split(p.Privileges.String, "") {
 			pName, _ := PrivilegeName(rp)
