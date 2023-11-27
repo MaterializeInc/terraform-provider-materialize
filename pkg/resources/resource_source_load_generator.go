@@ -36,10 +36,12 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("source"),
 	"size":               ObjectSizeSchema("source"),
+	"expose_progress":    IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
 	"load_generator_type": {
 		Description:  fmt.Sprintf("The load generator types: %s.", loadGeneratorTypes),
 		Type:         schema.TypeString,
 		Required:     true,
+		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(loadGeneratorTypes, true),
 	},
 	"counter_options": {
@@ -139,6 +141,11 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	if v, ok := d.GetOk("size"); ok {
 		b.Size(v.(string))
+	}
+
+	if v, ok := d.GetOk("expose_progress"); ok {
+		e := materialize.GetIdentifierSchemaStruct(v)
+		b.ExposeProgress(e)
 	}
 
 	if v, ok := d.GetOk("load_generator_type"); ok {
