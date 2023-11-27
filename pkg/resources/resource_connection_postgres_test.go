@@ -40,6 +40,7 @@ var inPostgres = map[string]interface{}{
 	"ssl_key":         []interface{}{map[string]interface{}{"name": "key"}},
 	"ssl_mode":        "verify-full",
 	"aws_privatelink": []interface{}{map[string]interface{}{"name": "link"}},
+	"comment":         "object comment",
 }
 
 func TestResourceConnectionPostgresCreate(t *testing.T) {
@@ -52,6 +53,9 @@ func TestResourceConnectionPostgresCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER SECRET "materialize"."public"."user", PASSWORD SECRET "materialize"."public"."password", SSL MODE 'verify-full', SSH TUNNEL "tunnel_database"."tunnel_schema"."ssh_conn", SSL CERTIFICATE AUTHORITY SECRET "ssl_database"."public"."root", SSL CERTIFICATE SECRET "materialize"."public"."cert", SSL KEY SECRET "materialize"."public"."key", AWS PRIVATELINK "materialize"."public"."link", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_connections.name = 'conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
