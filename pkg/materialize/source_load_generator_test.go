@@ -16,6 +16,7 @@ func TestSourceLoadgenCounterCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR COUNTER
 			\(TICK INTERVAL '1s', MAX CARDINALITY 8\)
+			EXPOSE PROGRESS AS "database"."schema"."progress"
 			WITH \(SIZE = 'xsmall'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -26,6 +27,7 @@ func TestSourceLoadgenCounterCreate(t *testing.T) {
 			TickInterval:   "1s",
 			MaxCardinality: 8,
 		})
+		b.ExposeProgress(IdentifierSchemaStruct{Name: "progress", DatabaseName: "database", SchemaName: "schema"})
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

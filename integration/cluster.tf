@@ -7,6 +7,11 @@ resource "materialize_cluster" "cluster_source" {
   name = "cluster_sources"
 }
 
+resource "materialize_cluster" "cluster_sink" {
+  name = "cluster_sinks"
+  size = "3xsmall"
+}
+
 resource "materialize_cluster_grant" "cluster_grant_usage" {
   role_name    = materialize_role.role_1.name
   privilege    = "USAGE"

@@ -18,6 +18,28 @@ var typeSchema = map[string]*schema.Schema{
 	"database_name":      DatabaseNameSchema("type", false),
 	"qualified_sql_name": QualifiedNameSchema("type"),
 	"comment":            CommentSchema(false),
+	"row_properties": {
+		Description: "Row properties.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"field_name": {
+					Description: "The name of a field in a row type.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"field_type": {
+					Description: "The data type of a field indicated by `FIELD NAME`.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+			},
+		},
+		Optional:     true,
+		MinItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"row_properties", "map_properties", "list_properties"},
+	},
 	"list_properties": {
 		Description: "List properties.",
 		Type:        schema.TypeList,
@@ -30,12 +52,11 @@ var typeSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Optional:      true,
-		MinItems:      1,
-		MaxItems:      1,
-		ForceNew:      true,
-		ConflictsWith: []string{"map_properties"},
-		AtLeastOneOf:  []string{"map_properties", "list_properties"},
+		Optional:     true,
+		MinItems:     1,
+		MaxItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"row_properties", "map_properties", "list_properties"},
 	},
 	"map_properties": {
 		Description: "Map properties.",
@@ -54,12 +75,11 @@ var typeSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Optional:      true,
-		MinItems:      1,
-		MaxItems:      1,
-		ForceNew:      true,
-		ConflictsWith: []string{"list_properties"},
-		AtLeastOneOf:  []string{"map_properties", "list_properties"},
+		Optional:     true,
+		MinItems:     1,
+		MaxItems:     1,
+		ForceNew:     true,
+		ExactlyOneOf: []string{"row_properties", "map_properties", "list_properties"},
 	},
 	"category": {
 		Description: "Type category.",
@@ -138,6 +158,11 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewTypeBuilder(meta.(*sqlx.DB), o)
+
+	if v, ok := d.GetOk("row_properties"); ok {
+		p := materialize.GetRowProperties(v)
+		b.RowProperties(p)
+	}
 
 	if v, ok := d.GetOk("list_properties"); ok {
 		p := materialize.GetListProperties(v)

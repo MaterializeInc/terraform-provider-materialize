@@ -8,23 +8,42 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// https://github.com/MaterializeInc/materialize/blob/main/test/testdrive/tables.td
+// https://materialize.com/docs/sql/create-table/
+
 func TestTableCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE TABLE "database"."schema"."table" \(column_1 int, column_2 text NOT NULL\);`,
+			`CREATE TABLE "database"."schema"."table"
+			\(a int, b text, c text NOT NULL, d int DEFAULT \(1\), e text NOT NULL DEFAULT NULL\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
 		b := NewTableBuilder(db, o)
 		b.Column([]TableColumn{
 			{
-				ColName: "column_1",
+				ColName: "a",
 				ColType: "int",
 			},
 			{
-				ColName: "column_2",
+				ColName: "b",
+				ColType: "text",
+			},
+			{
+				ColName: "c",
 				ColType: "text",
 				NotNull: true,
+			},
+			{
+				ColName: "d",
+				ColType: "int",
+				Default: "(1)",
+			},
+			{
+				ColName: "e",
+				ColType: "text",
+				NotNull: true,
+				Default: "NULL",
 			},
 		})
 

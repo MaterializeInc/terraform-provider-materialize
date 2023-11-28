@@ -8,6 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// https://github.com/MaterializeInc/materialize/blob/main/test/testdrive/create-views.td
+// https://materialize.com/docs/sql/create-view/
+
 func TestViewCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

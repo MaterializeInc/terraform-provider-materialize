@@ -101,7 +101,7 @@ func IdentifierSchema(elem, description string, required bool) *schema.Schema {
 					Required:    true,
 				},
 				"schema_name": {
-					Description: fmt.Sprintf("The %s schema name. Defaults to `public`", elem),
+					Description: fmt.Sprintf("The %s schema name. Defaults to `public`.", elem),
 					Type:        schema.TypeString,
 					Optional:    true,
 					Default:     defaultSchema,

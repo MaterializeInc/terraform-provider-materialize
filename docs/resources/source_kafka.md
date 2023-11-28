@@ -58,7 +58,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
-- `expose_progress` (String) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.
+- `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
 - `include_headers_alias` (String) Provide an alias for the headers column.
@@ -75,7 +75,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `start_offset` (List of Number) Read partitions from the specified offset.
-- `start_timestamp` (Number) Use the specified value to set "START OFFSET" based on the Kafka timestamp.
+- `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only
@@ -94,7 +94,7 @@ Required:
 Optional:
 
 - `database_name` (String) The kafka_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The kafka_connection schema name. Defaults to `public`
+- `schema_name` (String) The kafka_connection schema name. Defaults to `public`.
 
 
 <a id="nestedblock--envelope"></a>
@@ -105,6 +105,19 @@ Optional:
 - `debezium` (Boolean) Use the Debezium envelope, which uses a diff envelope to handle CRUD operations.
 - `none` (Boolean) Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.
 - `upsert` (Boolean) Use the upsert envelope, which uses message keys to handle CRUD operations.
+
+
+<a id="nestedblock--expose_progress"></a>
+### Nested Schema for `expose_progress`
+
+Required:
+
+- `name` (String) The expose_progress name.
+
+Optional:
+
+- `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The expose_progress schema name. Defaults to `public`.
 
 
 <a id="nestedblock--format"></a>
@@ -141,7 +154,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 
 
@@ -173,7 +186,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 
 
@@ -212,7 +225,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 
 
@@ -244,7 +257,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 
 
@@ -283,7 +296,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 
 
@@ -315,7 +328,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 
 

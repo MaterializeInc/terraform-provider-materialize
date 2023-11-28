@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -49,7 +50,7 @@ type SourceKafkaBuilder struct {
 	envelope         KafkaSourceEnvelopeStruct
 	startOffset      []int
 	startTimestamp   int
-	exposeProgress   string
+	exposeProgress   IdentifierSchemaStruct
 }
 
 func NewSourceKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceKafkaBuilder {
@@ -164,8 +165,8 @@ func (b *SourceKafkaBuilder) StartTimestamp(s int) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) ExposeProgress(s string) *SourceKafkaBuilder {
-	b.exposeProgress = s
+func (b *SourceKafkaBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourceKafkaBuilder {
+	b.exposeProgress = e
 	return b
 }
 
@@ -180,8 +181,19 @@ func (b *SourceKafkaBuilder) Create() error {
 	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
 	q.WriteString(fmt.Sprintf(` (TOPIC %s`, QuoteString(b.topic)))
 
+	// Time-based Offsets
 	if b.startTimestamp != 0 {
 		q.WriteString(fmt.Sprintf(`, START TIMESTAMP %d`, b.startTimestamp))
+	}
+	if len(b.startOffset) > 0 {
+		o := ""
+		for _, v := range b.startOffset {
+			if len(o) > 0 {
+				o += ","
+			}
+			o += strconv.Itoa((v))
+		}
+		q.WriteString(fmt.Sprintf(`, START OFFSET (%s)`, o))
 	}
 
 	q.WriteString(`)`)
@@ -323,12 +335,6 @@ func (b *SourceKafkaBuilder) Create() error {
 		q.WriteString(` VALUE FORMAT TEXT`)
 	}
 
-	// Time-based Offsets
-	if len(b.startOffset) > 0 {
-		k := strings.Join(strings.Fields(fmt.Sprint(b.startOffset)), ", ")
-		q.WriteString(fmt.Sprintf(` START OFFSET %s`, k))
-	}
-
 	// Metadata
 	var i []string
 
@@ -409,8 +415,8 @@ func (b *SourceKafkaBuilder) Create() error {
 		q.WriteString(` ENVELOPE NONE`)
 	}
 
-	if b.exposeProgress != "" {
-		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress))
+	if b.exposeProgress.Name != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
 	}
 
 	if b.size != "" {

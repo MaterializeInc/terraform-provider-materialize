@@ -107,7 +107,7 @@ Required:
 Optional:
 
 - `database_name` (String) The secret database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The secret schema name. Defaults to `public`
+- `schema_name` (String) The secret schema name. Defaults to `public`.
 
 
 
