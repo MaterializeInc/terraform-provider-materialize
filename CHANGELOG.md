@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Features
+* Add `default` to columns when defining a `materialize_table` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Add `expose_progress` to source resources [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Support the [row type](https://materialize.com/docs/sql/create-type/#row-properties) in `materialize_type` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+### BugFixes
+
+### Misc
+
+### Breaking Changes
+* Remove `session_variables` from `materialize_role` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
 ## 0.3.2 - 2023-11-24
 
 ### Features
