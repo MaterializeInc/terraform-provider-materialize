@@ -35,6 +35,7 @@ var inConfluentSchemaRegistry = map[string]interface{}{
 		},
 	},
 	"aws_privatelink": []interface{}{map[string]interface{}{"name": "privatelink"}},
+	"comment":         "object comment",
 }
 
 func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
@@ -47,6 +48,9 @@ func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."conn" TO CONFLUENT SCHEMA REGISTRY \(URL 'http://localhost:8081', USERNAME = 'user', PASSWORD = SECRET "materialize"."public"."password", SSL CERTIFICATE AUTHORITY = SECRET "materialize"."public"."ssl", SSL CERTIFICATE = SECRET "materialize"."public"."ssl", SSL KEY = SECRET "ssl_key"."public"."ssl", AWS PRIVATELINK "materialize"."public"."privatelink", SSH TUNNEL "materialize"."tunnel_schema"."tunnel"\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_connections.name = 'conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
