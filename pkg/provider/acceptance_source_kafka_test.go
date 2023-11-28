@@ -40,6 +40,13 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", connName),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "start_offset.#", "3"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_timestamp_alias", "timestamp_alias"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset", "true"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset_alias", "offset_alias"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_partition", "true"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_partition_alias", "partition_alias"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_key_alias", "key_alias"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "ownership_role", "mz_system"),
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test_role", "name", source2Name),
@@ -187,6 +194,14 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 		envelope {
 			none = true
 		}
+
+		start_offset = [0,10,100]
+		include_timestamp_alias = "timestamp_alias"
+		include_offset = true
+		include_offset_alias = "offset_alias"
+		include_partition = true
+		include_partition_alias = "partition_alias"
+		include_key_alias = "key_alias"
 	}
 
 	resource "materialize_source_kafka" "test_role" {
@@ -291,6 +306,7 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 		envelope {
 			none = true
 		}
+		start_timestamp = -1000
 		depends_on = [materialize_sink_kafka.test]
 	}
 `, sourceName)

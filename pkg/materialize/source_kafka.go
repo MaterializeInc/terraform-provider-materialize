@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -180,8 +181,19 @@ func (b *SourceKafkaBuilder) Create() error {
 	q.WriteString(fmt.Sprintf(` FROM KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
 	q.WriteString(fmt.Sprintf(` (TOPIC %s`, QuoteString(b.topic)))
 
+	// Time-based Offsets
 	if b.startTimestamp != 0 {
 		q.WriteString(fmt.Sprintf(`, START TIMESTAMP %d`, b.startTimestamp))
+	}
+	if len(b.startOffset) > 0 {
+		o := ""
+		for _, v := range b.startOffset {
+			if len(o) > 0 {
+				o += ","
+			}
+			o += strconv.Itoa((v))
+		}
+		q.WriteString(fmt.Sprintf(`, START OFFSET (%s)`, o))
 	}
 
 	q.WriteString(`)`)
@@ -321,12 +333,6 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.valueFormat.Text {
 		q.WriteString(` VALUE FORMAT TEXT`)
-	}
-
-	// Time-based Offsets
-	if len(b.startOffset) > 0 {
-		k := strings.Join(strings.Fields(fmt.Sprint(b.startOffset)), ", ")
-		q.WriteString(fmt.Sprintf(` START OFFSET %s`, k))
 	}
 
 	// Metadata
