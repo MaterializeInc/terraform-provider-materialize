@@ -5,10 +5,11 @@
 ### Features
 * Add `default` to columns when defining a `materialize_table` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
 * Add `expose_progress` to `materialize_source_load_generator` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
-* Support the [row type](https://materialize.com/docs/sql/create-type/#row-properties) in `materialize_type` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Support [row type](https://materialize.com/docs/sql/create-type/#row-properties) in `materialize_type` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
 
 ### BugFixes
 * Fix `expose_progress` in `materialize_source_postgres` and `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Fix `start_offset` in `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
 
 ### Misc
 * Set `replication_factor` as computed in `materialize_cluster` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
