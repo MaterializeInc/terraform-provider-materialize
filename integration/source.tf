@@ -9,6 +9,9 @@ resource "materialize_source_load_generator" "load_generator" {
   counter_options {
     tick_interval = "500ms"
   }
+  expose_progress {
+    name = "expose_load_gen"
+  }
 }
 
 resource "materialize_source_load_generator" "load_generator_cluster" {
@@ -79,6 +82,9 @@ resource "materialize_source_postgres" "example_source_postgres" {
     name  = "table2"
     alias = "s2_table1"
   }
+  expose_progress {
+    name = "expose_postgres"
+  }
 }
 
 resource "materialize_source_postgres" "example_source_postgres_schema" {
@@ -111,6 +117,9 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   }
   value_format {
     text = true
+  }
+  expose_progress {
+    name = "expose_kafka"
   }
 }
 

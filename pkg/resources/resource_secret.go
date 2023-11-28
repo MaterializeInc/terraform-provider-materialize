@@ -21,7 +21,7 @@ var secretSchema = map[string]*schema.Schema{
 	"value": {
 		Description: "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 		Sensitive:   true,
 	},
 	"ownership_role": OwnershipRoleSchema(),

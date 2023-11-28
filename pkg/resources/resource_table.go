@@ -59,7 +59,7 @@ var tableSchema = map[string]*schema.Schema{
 				"comment": CommentSchema(false),
 			},
 		},
-		Optional: true,
+		Required: true,
 		MinItems: 1,
 		ForceNew: true,
 	},
