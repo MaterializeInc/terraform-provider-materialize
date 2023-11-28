@@ -49,7 +49,7 @@ type SourceKafkaBuilder struct {
 	envelope         KafkaSourceEnvelopeStruct
 	startOffset      []int
 	startTimestamp   int
-	exposeProgress   string
+	exposeProgress   IdentifierSchemaStruct
 }
 
 func NewSourceKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceKafkaBuilder {
@@ -164,8 +164,8 @@ func (b *SourceKafkaBuilder) StartTimestamp(s int) *SourceKafkaBuilder {
 	return b
 }
 
-func (b *SourceKafkaBuilder) ExposeProgress(s string) *SourceKafkaBuilder {
-	b.exposeProgress = s
+func (b *SourceKafkaBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourceKafkaBuilder {
+	b.exposeProgress = e
 	return b
 }
 
@@ -409,8 +409,8 @@ func (b *SourceKafkaBuilder) Create() error {
 		q.WriteString(` ENVELOPE NONE`)
 	}
 
-	if b.exposeProgress != "" {
-		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress))
+	if b.exposeProgress.Name != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
 	}
 
 	if b.size != "" {

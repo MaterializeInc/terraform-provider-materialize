@@ -21,6 +21,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Description:  "The number of replicas of each dataflow-powered object to maintain.",
 		Type:         schema.TypeInt,
 		Optional:     true,
+		Computed:     true,
 		RequiredWith: []string{"size"},
 	},
 	"disk": DiskSchema(false),

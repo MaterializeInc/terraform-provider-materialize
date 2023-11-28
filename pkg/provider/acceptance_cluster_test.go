@@ -54,6 +54,32 @@ func TestAccCluster_basic(t *testing.T) {
 	})
 }
 
+func TestAccClusterManagedNoReplication_basic(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterManagedNoReplicationResource(clusterName, "3xsmall"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists("materialize_cluster.test"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", "3xsmall"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "1"),
+				),
+			},
+			{
+				ResourceName:            "materialize_cluster.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+			},
+		},
+	})
+}
+
 func TestAccCluster_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	oldClusterName := fmt.Sprintf("old_%s", slug)
@@ -115,29 +141,23 @@ func TestAccCluster_updateName(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	oldClusterName := fmt.Sprintf("old_%s", slug)
 	newClusterName := fmt.Sprintf("new_%s", slug)
-	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(oldClusterName, "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterExists("materialize_cluster.test_role"),
-					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", oldClusterName+"_managed"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", oldClusterName),
 				),
 			},
 			{
-				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, "mz_system", "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(newClusterName, "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterExists("materialize_cluster.test_role"),
-					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", newClusterName+"_managed"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
 				),
 			},
 		},
@@ -145,31 +165,24 @@ func TestAccCluster_updateName(t *testing.T) {
 }
 
 func TestAccCluster_updateSize(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
-	oldClusterName := fmt.Sprintf("old_%s", slug)
-	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterExists("materialize_cluster.test_role"),
-					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "2xsmall"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", "2xsmall"),
 				),
 			},
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "3xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "3xsmall", "2", "1s", "true", "2", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterExists("materialize_cluster.test_role"),
-					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "3xsmall"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", "3xsmall"),
 				),
 			},
 		},
@@ -177,31 +190,24 @@ func TestAccCluster_updateSize(t *testing.T) {
 }
 
 func TestAccCluster_updateReplicationFactor(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
-	oldClusterName := fmt.Sprintf("old_%s", slug)
-	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2xsmall", "3", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "2xsmall", "3", "1s", "true", "2", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterExists("materialize_cluster.test_role"),
-					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "3"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "3"),
 				),
 			},
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "3xsmall", "1", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "3xsmall", "1", "1s", "true", "2", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					testAccCheckClusterExists("materialize_cluster.test_role"),
-					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "1"),
 				),
 			},
 		},
@@ -275,6 +281,47 @@ func testAccClusterResource(
 		cluster1Name,
 		cluster2Name,
 		cluster2Owner,
+		clusterSize,
+		clusterReplicationFactor,
+		introspectionInterval,
+		introspectionDebugging,
+		idleArrangementMergeEffort,
+		disk,
+		comment)
+}
+
+func testAccClusterManagedNoReplicationResource(clusterName, clusterSize string) string {
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+		size = "%[2]s"
+	}
+	`,
+		clusterName, clusterSize)
+}
+
+func testAccClusterManagedResource(
+	clusterName,
+	clusterSize,
+	clusterReplicationFactor,
+	introspectionInterval,
+	introspectionDebugging,
+	idleArrangementMergeEffort,
+	disk,
+	comment string) string {
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test" {
+		name                          = "%[1]s"
+		size                          = "%[2]s"
+		replication_factor            = %[3]s
+		introspection_interval        = "%[4]s"
+		introspection_debugging       = %[5]s
+		idle_arrangement_merge_effort = %[6]s
+		disk                          = %[7]s
+		comment                       = "%[8]s"
+	}
+	`,
+		clusterName,
 		clusterSize,
 		clusterReplicationFactor,
 		introspectionInterval,

@@ -89,11 +89,11 @@ type SourceLoadgenBuilder struct {
 	clusterName       string
 	size              string
 	loadGeneratorType string
-	exposeProgress    IdentifierSchemaStruct
 	counterOptions    CounterOptions
 	auctionOptions    AuctionOptions
 	marketingOptions  MarketingOptions
 	tpchOptions       TPCHOptions
+	exposeProgress    IdentifierSchemaStruct
 }
 
 func NewSourceLoadgenBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceLoadgenBuilder {

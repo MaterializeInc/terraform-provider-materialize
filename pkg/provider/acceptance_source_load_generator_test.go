@@ -209,7 +209,6 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 	resource "materialize_cluster" "test" {
 		name               = "%[1]s_cluster"
 		size               = "3xsmall"
-		replication_factor = 1
 	}
 
 	resource "materialize_source_load_generator" "test" {

@@ -190,7 +190,6 @@ func testAccSourceWebhookResource(roleName, secretName, clusterName, sourceName,
 	resource "materialize_cluster" "example_cluster" {
 		name = "%[3]s"
 		size = "3xsmall"
-		replication_factor = 1
 	}
 
 	resource "materialize_source_webhook" "test" {
@@ -243,7 +242,6 @@ func testAccSourceWebhookSegmentResource(sourceName string) string {
 	resource "materialize_cluster" "example_cluster" {
 		name = "segment_cluster"
 		size = "3xsmall"
-		replication_factor = 1
 	}
 
 	resource "materialize_source_webhook" "test" {
@@ -298,7 +296,6 @@ func testAccSourceWebhookRudderstackResource(sourceName string) string {
 	resource "materialize_cluster" "example_cluster" {
 		name = "rudderstack_cluster"
 		size = "3xsmall"
-		replication_factor = 1
 	}
 
 	resource "materialize_source_webhook" "test" {
