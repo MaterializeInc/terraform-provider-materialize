@@ -8,23 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type SessionVariable struct {
-	Name  string
-	Value string
-}
-
-func GetSessionVariablesStruct(v interface{}) []SessionVariable {
-	var sessionVariables []SessionVariable
-	for _, sv := range v.([]interface{}) {
-		sv := sv.(map[string]interface{})
-		sessionVariables = append(sessionVariables, SessionVariable{
-			Name:  sv["name"].(string),
-			Value: sv["value"].(string),
-		})
-	}
-	return sessionVariables
-}
-
 type RoleBuilder struct {
 	ddl      Builder
 	roleName string
@@ -71,11 +54,6 @@ func (b *RoleBuilder) Create() error {
 
 func (b *RoleBuilder) Alter(permission string) error {
 	q := fmt.Sprintf(`ALTER ROLE %s %s;`, b.QualifiedName(), permission)
-	return b.ddl.exec(q)
-}
-
-func (b *RoleBuilder) SessionVariable(name, value string) error {
-	q := fmt.Sprintf(`ALTER ROLE %s SET %s = %s;`, b.QualifiedName(), name, value)
 	return b.ddl.exec(q)
 }
 

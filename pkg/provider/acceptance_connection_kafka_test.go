@@ -32,6 +32,7 @@ func TestAccConnKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "comment", "object comment"),
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "name", connection2Name),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "ownership_role", roleName),
@@ -113,6 +114,8 @@ resource "materialize_connection_kafka" "test" {
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
+	security_protocol = "PLAINTEXT"
+	comment = "object comment"
 }
 
 resource "materialize_connection_kafka" "test_role" {
@@ -120,6 +123,7 @@ resource "materialize_connection_kafka" "test_role" {
 	kafka_broker {
 		broker = "redpanda:9092"
 	}
+	security_protocol = "PLAINTEXT"
 	ownership_role = "%[4]s"
 
 	depends_on = [materialize_role.test]

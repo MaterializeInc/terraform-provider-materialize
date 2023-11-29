@@ -16,7 +16,7 @@ func TestResourceGrantSourceCreate(t *testing.T) {
 
 	in := map[string]interface{}{
 		"role_name":     "joe",
-		"privilege":     "SELECT",
+		"privilege":     "USAGE",
 		"source_name":   "source",
 		"schema_name":   "schema",
 		"database_name": "database",
@@ -27,7 +27,7 @@ func TestResourceGrantSourceCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`GRANT SELECT ON TABLE "database"."schema"."source" TO "joe";`,
+			`GRANT USAGE ON TABLE "database"."schema"."source" TO "joe";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Role Id
@@ -46,7 +46,7 @@ func TestResourceGrantSourceCreate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if d.Id() != "GRANT|SOURCE|u1|u1|SELECT" {
+		if d.Id() != "GRANT|SOURCE|u1|u1|USAGE" {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
 	})
@@ -57,7 +57,7 @@ func TestResourceGrantSourceDelete(t *testing.T) {
 
 	in := map[string]interface{}{
 		"role_name":     "joe",
-		"privilege":     "SELECT",
+		"privilege":     "USAGE",
 		"source_name":   "source",
 		"schema_name":   "schema",
 		"database_name": "database",
@@ -66,7 +66,7 @@ func TestResourceGrantSourceDelete(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`REVOKE SELECT ON TABLE "database"."schema"."source" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`REVOKE USAGE ON TABLE "database"."schema"."source" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSourceDelete(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

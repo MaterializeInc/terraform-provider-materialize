@@ -3,12 +3,12 @@
 page_title: "materialize_cluster Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.
+  Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views. Managed clusters are created by setting the size attribute
 ---
 
 # materialize_cluster (Resource)
 
-Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views.
+Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views. Managed clusters are created by setting the `size` attribute
 
 ## Example Usage
 

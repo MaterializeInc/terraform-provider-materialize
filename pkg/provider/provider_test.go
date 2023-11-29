@@ -9,32 +9,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 )
 
-func TestConnectionString(t *testing.T) {
-	r := require.New(t)
-	c := connectionString("host", "user", "pass", 6875, "database", true, "tf")
-	r.Equal(`postgres://user:pass@host:6875/database?sslmode=require&application_name=tf`, c)
-}
-
-func TestConnectionStringTesting(t *testing.T) {
-	r := require.New(t)
-	c := connectionString("host", "user", "pass", 6875, "database", false, "tf")
-	r.Equal(`postgres://user:pass@host:6875/database?sslmode=disable&application_name=tf`, c)
-}
-
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := Provider("test").InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = Provider()
+	var _ *schema.Provider = Provider("test")
 }
 
-var testAccProvider = Provider()
+var testAccProvider = Provider("test")
 var testAccProviderFactories = map[string]func() (*schema.Provider, error){
 	"materialize": func() (*schema.Provider, error) { return testAccProvider, nil },
 }
@@ -69,25 +57,21 @@ func testAccCheckGrantExists(object materialize.MaterializeObject, grantName, ro
 		if !ok {
 			return fmt.Errorf("grant not found")
 		}
-
 		id, err := materialize.ObjectId(db, object)
 		if err != nil {
 			return err
 		}
-
 		roleId, err := materialize.RoleId(db, roleName)
 		if err != nil {
 			return err
 		}
-
 		g, err := materialize.ScanPrivileges(db, object.ObjectType, id)
 		if err != nil {
 			return err
 		}
-
-		privilegeMap := materialize.ParsePrivileges(g)
-		if !materialize.HasPrivilege(privilegeMap[roleId], privilege) {
-			return fmt.Errorf("object %s does not include privilege %s", g, privilege)
+		p, _ := materialize.MapGrantPrivileges(g)
+		if !slices.Contains(p[roleId], privilege) {
+			return fmt.Errorf("object %s does not include privilege %s", p, privilege)
 		}
 		return nil
 	}
@@ -108,25 +92,21 @@ func testAccCheckGrantDefaultPrivilegeExists(objectType, grantName, granteeName,
 		if !ok {
 			return fmt.Errorf("default grant not found")
 		}
-
 		granteeId, err := materialize.RoleId(db, grantName)
 		if err != nil {
 			return err
 		}
-
 		targetId, err := materialize.RoleId(db, targetName)
 		if err != nil {
 			return err
 		}
-
 		g, err := materialize.ScanDefaultPrivilege(db, objectType, granteeId, targetId, "", "")
 		if err != nil {
 			return err
 		}
-
-		privilegeMap := materialize.ParsePrivileges(g[0].Privileges.String)
-		if !materialize.HasPrivilege(privilegeMap[granteeId], privilege) {
-			return fmt.Errorf("default privilege %s does not include privilege %s", g[0].Privileges.String, privilege)
+		p, _ := materialize.MapDefaultGrantPrivileges(g)
+		if !slices.Contains(p[granteeId], privilege) {
+			return fmt.Errorf("object %s does not include privilege %s", p, privilege)
 		}
 		return nil
 	}

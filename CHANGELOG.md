@@ -1,5 +1,47 @@
 # Changelog
 
+## Unreleased
+
+### Features
+* Add `default` to columns when defining a `materialize_table` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Add `expose_progress` to `materialize_source_load_generator` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Support [row type](https://materialize.com/docs/sql/create-type/#row-properties) in `materialize_type` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+### BugFixes
+* Fix `expose_progress` in `materialize_source_postgres` and `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Fix `start_offset` in `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+### Misc
+* Set `replication_factor` as computed in `materialize_cluster` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+### Breaking Changes
+* Remove `session_variables` from `materialize_role` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+## 0.3.2 - 2023-11-24
+
+### Features
+
+### BugFixes
+* Fix default grant read [#381](https://github.com/MaterializeInc/terraform-provider-materialize/pull/381)
+
+### Misc
+
+## 0.3.1 - 2023-11-21
+
+### Features
+* Add `security_protocol` to `materialize_connection_kafka` [#365](https://github.com/MaterializeInc/terraform-provider-materialize/pull/365)
+
+### BugFixes
+
+* Handle `user` values that contain special characters, without requiring manual
+  URL escaping (e.g., escaping `you@corp.com` as `you%40corp.com`) [#372](https://github.com/MaterializeInc/terraform-provider-materialize/pull/372)
+* Load generator source `TPCH` requires `ALL TABLES` [#377](https://github.com/MaterializeInc/terraform-provider-materialize/pull/377)
+* Improve grant reads [#378](https://github.com/MaterializeInc/terraform-provider-materialize/pull/378)
+
+### Misc
+* `materialize_cluster_replica` is deprecated [#370](https://github.com/MaterializeInc/terraform-provider-materialize/pull/370)
+* Raise `max_clusters` for testing [#371](https://github.com/MaterializeInc/terraform-provider-materialize/pull/371)
+
 ## 0.3.0 - 2023-11-16
 
 ### Features
@@ -19,14 +61,13 @@
     name          = "source_postgres"
     schema_name   = "my_schema"
     database_name = "my_database"
-  
+
     postgres_connection {
         name          = "postgres_connection"
     }
   }
   ```
   The Postgres connection would have the schema name of `my_schema` and database name `my_database`. Now, if `schema_name` or `database_name` are not set, they will use the same defaults as top level attributes (`public` for schema and `materialize` for database) [#353](https://github.com/MaterializeInc/terraform-provider-materialize/pull/353)
-
 
 ## 0.2.2 - 2023-11-10
 

@@ -13,7 +13,10 @@ var sourceWebhook = MaterializeObject{Name: "webhook_source", SchemaName: "schem
 func TestSourceWebhookCreateExposeHeaders(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADER 'timestamp' AS ts INCLUDE HEADER 'x-event-type' AS event_type;`,
+			`CREATE SOURCE "database"."schema"."webhook_source"
+			IN CLUSTER "cluster"
+			FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADER 'timestamp' AS ts
+			INCLUDE HEADER 'x-event-type' AS event_type;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		var includeHeader = []HeaderStruct{
@@ -41,7 +44,9 @@ func TestSourceWebhookCreateExposeHeaders(t *testing.T) {
 func TestSourceWebhookCreateIncludeHeaders(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADERS \(NOT 'authorization', NOT 'x-api-key'\);`,
+			`CREATE SOURCE "database"."schema"."webhook_source"
+			IN CLUSTER "cluster"
+			FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADERS \(NOT 'authorization', NOT 'x-api-key'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceWebhookBuilder(db, sourceWebhook)
@@ -60,7 +65,11 @@ func TestSourceWebhookCreateIncludeHeaders(t *testing.T) {
 func TestSourceWebhookCreateValidated(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON CHECK \( WITH \(HEADERS, BODY AS request_body, SECRET "database"."schema"."my_webhook_shared_secret"\) decode\(headers->'x-signature', 'base64'\) = hmac\(request_body, my_webhook_shared_secret, 'sha256'\)\);`,
+			`CREATE SOURCE "database"."schema"."webhook_source"
+			IN CLUSTER "cluster"
+			FROM WEBHOOK BODY FORMAT JSON CHECK
+			\( WITH \(HEADERS, BODY AS request_body, SECRET "database"."schema"."my_webhook_shared_secret"\)
+			decode\(headers->'x-signature', 'base64'\) = hmac\(request_body, my_webhook_shared_secret, 'sha256'\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		var checkOptions = []CheckOptionsStruct{
@@ -97,7 +106,11 @@ func TestSourceWebhookCreateValidated(t *testing.T) {
 func TestSourceWebhookCreateSegment(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADER 'event-type' AS event_type INCLUDE HEADERS CHECK \( WITH \(BODY BYTES, HEADERS, SECRET "database"."schema"."my_webhook_shared_secret" AS secret BYTES\) decode\(headers->'x-signature', 'hex'\) = hmac\(body, secret, 'sha1'\)\);`,
+			`CREATE SOURCE "database"."schema"."webhook_source"
+			IN CLUSTER "cluster"
+			FROM WEBHOOK BODY FORMAT JSON INCLUDE HEADER 'event-type' AS event_type INCLUDE HEADERS CHECK
+			\( WITH \(BODY BYTES, HEADERS, SECRET "database"."schema"."my_webhook_shared_secret" AS secret BYTES\)
+			decode\(headers->'x-signature', 'hex'\) = hmac\(body, secret, 'sha1'\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		var includeHeader = []HeaderStruct{

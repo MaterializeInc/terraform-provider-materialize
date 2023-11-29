@@ -18,7 +18,17 @@ resource "materialize_table" "simple_table" {
     type     = "text"
     nullable = true
   }
-
+  column {
+    name    = "column_4"
+    type    = "text"
+    default = "NULL"
+  }
+  column {
+    name     = "column_5"
+    type     = "text"
+    nullable = true
+    default  = "NULL"
+  }
 }
 
 resource "materialize_table_grant" "table_grant_select" {

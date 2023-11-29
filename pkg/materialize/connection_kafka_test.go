@@ -13,7 +13,7 @@ var connKafka = MaterializeObject{Name: "kafka_conn", SchemaName: "schema", Data
 func TestConnectionKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
+			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SECURITY PROTOCOL = 'PLAIN', PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewConnectionKafkaBuilder(db, connKafka)
@@ -23,6 +23,7 @@ func TestConnectionKafkaCreate(t *testing.T) {
 			},
 		})
 		b.KafkaProgressTopic("topic")
+		b.KafkaSecurityProtocol("PLAIN")
 		b.KafkaSASLMechanisms("PLAIN")
 		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
 		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
@@ -144,7 +145,7 @@ func TestConnectionKafkaBrokersSshCreate(t *testing.T) {
 func TestConnectionKafkaSslCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET "database"."schema"."ca", SSL CERTIFICATE = SECRET "database"."schema"."cert", SSL KEY = SECRET "database"."schema"."key"\);`,
+			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SECURITY PROTOCOL = 'SSL', PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET "database"."schema"."ca", SSL CERTIFICATE = SECRET "database"."schema"."cert", SSL KEY = SECRET "database"."schema"."key"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewConnectionKafkaBuilder(db, connKafka)
@@ -154,6 +155,7 @@ func TestConnectionKafkaSslCreate(t *testing.T) {
 			},
 		})
 		b.KafkaProgressTopic("topic")
+		b.KafkaSecurityProtocol("SSL")
 		b.KafkaSSLKey(IdentifierSchemaStruct{SchemaName: "schema", Name: "key", DatabaseName: "database"})
 		b.KafkaSSLCert(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "cert", DatabaseName: "database"}})
 		b.KafkaSSLCa(ValueSecretStruct{Secret: IdentifierSchemaStruct{SchemaName: "schema", Name: "ca", DatabaseName: "database"}})

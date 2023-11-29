@@ -33,6 +33,7 @@ func TestAccConnSshTunnel_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "comment", "object comment"),
 					testAccCheckConnKafkaExists("materialize_connection_ssh_tunnel.test_role"),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test_role", "name", connection2Name),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test_role", "ownership_role", roleName),
@@ -115,6 +116,7 @@ resource "materialize_connection_ssh_tunnel" "test" {
 	host        = "ssh_host"
 	user        = "ssh_user"
 	port        = 22
+	comment     = "object comment"
 }
 
 resource "materialize_connection_ssh_tunnel" "test_role" {

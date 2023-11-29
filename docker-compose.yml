@@ -19,7 +19,21 @@ services:
       - 6878:6878
     healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
 
+  init:
+    image: postgres
+    container_name: materialized_init
+    depends_on:
+      materialized: {condition: service_healthy}
+    command: >-
+      sh -c '
+      echo "Waiting for materialized to start..." &&
+      sleep 15 &&
+      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_clusters = 100;" &&
+      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_sources = 100;"
+      '
+
   redpanda:
+    container_name: redpanda
     image: docker.vectorized.io/vectorized/redpanda:v21.11.2
     command:
       - redpanda start
@@ -64,6 +78,7 @@ services:
     container_name: provider
     depends_on:
       materialized: {condition: service_healthy}
+      redpanda: {condition: service_healthy}
     volumes:
       - ./integration:/usr/src/app/integration
     environment:

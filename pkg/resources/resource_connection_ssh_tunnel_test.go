@@ -20,6 +20,7 @@ var inSshTunnel = map[string]interface{}{
 	"host":          "localhost",
 	"port":          123,
 	"user":          "user",
+	"comment":       "object comment",
 }
 
 func TestResourceConnectionSshTunnelCreate(t *testing.T) {
@@ -33,6 +34,9 @@ func TestResourceConnectionSshTunnelCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."conn" TO SSH TUNNEL \(HOST 'localhost', USER 'user', PORT 123\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_connections.name = 'conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
@@ -59,6 +63,9 @@ func TestResourceConnectionSshTunnelUpdate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."old_conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_connections.id = 'u1'`

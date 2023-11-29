@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type TableColumn struct {
 	ColName string
 	ColType string
 	NotNull bool
+	Default string
 	Comment string
 }
 
@@ -23,12 +25,15 @@ func GetTableColumnStruct(v []interface{}) []TableColumn {
 			ColName: c["name"].(string),
 			ColType: c["type"].(string),
 			NotNull: c["nullable"].(bool),
+			Default: c["default"].(string),
 			Comment: c["comment"].(string),
 		})
 	}
 	return columns
 }
 
+// DDL
+// Not including TEMP / TEMPORARY since a user would not use Terraform for temporary table
 type TableBuilder struct {
 	ddl          Builder
 	tableName    string
@@ -65,11 +70,13 @@ func (b *TableBuilder) Create() error {
 
 		s.WriteString(fmt.Sprintf(`%s %s`, c.ColName, c.ColType))
 		if c.NotNull {
-			s.WriteString(` NOT NULL`)
+			s.WriteString(" NOT NULL")
+		}
+		if c.Default != "" {
+			s.WriteString(fmt.Sprintf(` DEFAULT %s`, c.Default))
 		}
 		o := s.String()
 		column = append(column, o)
-
 	}
 	p := strings.Join(column[:], ", ")
 	q.WriteString(fmt.Sprintf(` (%s);`, p))
@@ -94,7 +101,7 @@ type TableParams struct {
 	DatabaseName sql.NullString `db:"database_name"`
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
-	Privileges   sql.NullString `db:"privileges"`
+	Privileges   pq.StringArray `db:"privileges"`
 }
 
 var tableQuery = NewBaseQuery(`

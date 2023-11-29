@@ -35,6 +35,7 @@ func TestAccIndex_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_index.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_index.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_index.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, indexName)),
+					resource.TestCheckResourceAttr("materialize_index.test", "comment", ""),
 				),
 			},
 			{
@@ -60,6 +61,7 @@ func TestAccIndex_update(t *testing.T) {
 				Config: testAccIndexResource(viewName, indexName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIndexExists("materialize_index.test"),
+					resource.TestCheckResourceAttr("materialize_index.test", "comment", ""),
 				),
 			},
 			{
@@ -95,59 +97,59 @@ func TestAccIndex_disappears(t *testing.T) {
 
 func testAccIndexResource(viewName, indexName string) string {
 	return fmt.Sprintf(`
-resource "materialize_view" "test" {
-	name = "%[1]s"
+	resource "materialize_view" "test" {
+		name = "%[1]s"
 
-	statement = <<SQL
-  SELECT
-	  1 AS id
-  SQL
-  }
-
-resource "materialize_index" "test" {
-	name = "%[2]s"
-	cluster_name = "default"
-
-	obj_name {
-		name = materialize_view.test.name
-		schema_name = materialize_view.test.schema_name
-		database_name = materialize_view.test.database_name
+		statement = <<SQL
+	SELECT
+		1 AS id
+	SQL
 	}
 
-	col_expr {
-		field = "id"
+	resource "materialize_index" "test" {
+		name = "%[2]s"
+		cluster_name = "default"
+
+		obj_name {
+			name = materialize_view.test.name
+			schema_name = materialize_view.test.schema_name
+			database_name = materialize_view.test.database_name
+		}
+
+		col_expr {
+			field = "id"
+		}
 	}
-}
-`, viewName, indexName)
+	`, viewName, indexName)
 }
 
 func testAccIndexWithComment(viewName, indexName, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_view" "test" {
-	name = "%[1]s"
+	resource "materialize_view" "test" {
+		name = "%[1]s"
 
-	statement = <<SQL
-  SELECT
-	  1 AS id
-  SQL
-}
-
-resource "materialize_index" "test" {
-	name = "%[2]s"
-	cluster_name = "default"
-	comment = "%[3]s"
-
-	obj_name {
-		name = materialize_view.test.name
-		schema_name = materialize_view.test.schema_name
-		database_name = materialize_view.test.database_name
+		statement = <<SQL
+	SELECT
+		1 AS id
+	SQL
 	}
 
-	col_expr {
-		field = "id"
+	resource "materialize_index" "test" {
+		name = "%[2]s"
+		cluster_name = "default"
+		comment = "%[3]s"
+
+		obj_name {
+			name = materialize_view.test.name
+			schema_name = materialize_view.test.schema_name
+			database_name = materialize_view.test.database_name
+		}
+
+		col_expr {
+			field = "id"
+		}
 	}
-}
-`, viewName, indexName, comment)
+	`, viewName, indexName, comment)
 }
 
 func testAccCheckIndexExists(name string) resource.TestCheckFunc {
@@ -185,6 +187,5 @@ func testAccCheckAllIndexDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

@@ -9,27 +9,43 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestParsePrivileges(t *testing.T) {
-	o := ParsePrivileges("{u2=r/u18,u3=r/u18,u18=arwd/u18}")
-	e := map[string][]string{
-		"u2":  {"SELECT"},
-		"u3":  {"SELECT"},
-		"u18": {"INSERT", "SELECT", "UPDATE", "DELETE"},
+func TestPrivilegeName(t *testing.T) {
+	p, err := PrivilegeName("r")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(o, e) {
-		t.Fatalf("unexpected privilege mapping")
+	if p != "SELECT" {
+		t.Fatal("unexpected privilege name mapping")
 	}
 }
 
-func TestHasPrivilege(t *testing.T) {
-	p := []string{"SELECT", "INSERT", "UPDATE"}
-
-	if !HasPrivilege(p, "INSERT") {
-		t.Fatalf("expected priviledge %s to contain 'INSERT'", p)
+func TestParseMzCatalogPrivileges(t *testing.T) {
+	o := ParseMzAclString("u18=arwd/s1")
+	e := MzAclItem{
+		Grantee:    "u18",
+		Privileges: []string{"INSERT", "SELECT", "UPDATE", "DELETE"},
+		Grantor:    "s1",
 	}
+	if !reflect.DeepEqual(o, e) {
+		t.Log(o)
+		t.Log(e)
+		t.Fatalf("could not parse into expected MzCatalogPrivilege")
+	}
+}
 
-	if HasPrivilege(p, "DELETE") {
-		t.Fatalf("expected priviledge %s to not contain 'DELETE", p)
+func TestMapGrantPrivileges(t *testing.T) {
+	o, err := MapGrantPrivileges([]string{"s1=arwd/s1", "u3=wd/s1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := map[string][]string{
+		"s1": {"INSERT", "SELECT", "UPDATE", "DELETE"},
+		"u3": {"UPDATE", "DELETE"},
+	}
+	if !reflect.DeepEqual(o, e) {
+		t.Log(o)
+		t.Log(e)
+		t.Fatalf("could not parse into expected mapping")
 	}
 }
 
@@ -71,13 +87,14 @@ func TestScanPrivileges(t *testing.T) {
 		ip := `WHERE mz_databases.id = 'u1'`
 		testhelpers.MockDatabaseScan(mock, ip)
 
-		p, err := ScanPrivileges(db, "DATABASE", "u1")
+		o, err := ScanPrivileges(db, "DATABASE", "u1")
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if p != "{u1=UC/u18}" {
-			t.Fatalf("unexpected privileges %s", p)
+		e := []string{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1"}
+		if !reflect.DeepEqual(o, e) {
+			t.Fatalf("unexpected privileges %s", o)
 		}
 	})
 }

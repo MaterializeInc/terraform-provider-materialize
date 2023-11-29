@@ -18,6 +18,7 @@ var inKafka = map[string]interface{}{
 	"database_name":             "database",
 	"service_name":              "service",
 	"kafka_broker":              []interface{}{map[string]interface{}{"broker": "b-1.hostname-1:9096", "target_group_port": 9001, "availability_zone": "use1-az1", "privatelink_conn": "privatelink_conn"}},
+	"security_protocol":         "SASL_PLAINTEXT",
 	"progress_topic":            "topic",
 	"ssl_certificate_authority": []interface{}{map[string]interface{}{"text": "key"}},
 	"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
@@ -26,6 +27,7 @@ var inKafka = map[string]interface{}{
 	"sasl_username":             []interface{}{map[string]interface{}{"text": "username"}},
 	"sasl_password":             []interface{}{map[string]interface{}{"name": "password"}},
 	"ssh_tunnel":                []interface{}{map[string]interface{}{"name": "tunnel"}},
+	"comment":                   "object comment",
 }
 
 func TestResourceConnectionKafkaCreate(t *testing.T) {
@@ -37,8 +39,11 @@ func TestResourceConnectionKafkaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING SSH TUNNEL "materialize"."public"."tunnel"\), PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = 'key', SSL CERTIFICATE = SECRET "materialize"."public"."cert", SSL KEY = SECRET "materialize"."public"."key", SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'username', SASL PASSWORD = SECRET "materialize"."public"."password"\);`,
+			`CREATE CONNECTION "database"."schema"."conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING SSH TUNNEL "materialize"."public"."tunnel"\), SECURITY PROTOCOL = 'SASL_PLAINTEXT', PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = 'key', SSL CERTIFICATE = SECRET "materialize"."public"."cert", SSL KEY = SECRET "materialize"."public"."key", SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'username', SASL PASSWORD = SECRET "materialize"."public"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_connections.name = 'conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`

@@ -14,6 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
       - name: Docker Compose Up
         run: docker compose up --build -d
 
@@ -22,7 +27,7 @@ jobs:
         env:
           MZ_HOST: localhost
           MZ_USER: mz_system
-          MZ_SSLMODE: "false"
+          MZ_SSLMODE: disable
           MZ_PORT: 6877
 
       - name: Docker Compose Down

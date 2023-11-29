@@ -89,6 +89,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `sasl_password` (Block List, Max: 1) The SASL password for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_password))
 - `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
+- `security_protocol` (String) The security protocol to use: `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Kafka broker. (see [below for nested schema](#nestedblock--ssh_tunnel))
 - `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
@@ -123,7 +124,7 @@ Required:
 Optional:
 
 - `database_name` (String) The privatelink_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The privatelink_connection schema name. Defaults to `public`
+- `schema_name` (String) The privatelink_connection schema name. Defaults to `public`.
 
 
 
@@ -137,7 +138,7 @@ Required:
 Optional:
 
 - `database_name` (String) The sasl_password database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The sasl_password schema name. Defaults to `public`
+- `schema_name` (String) The sasl_password schema name. Defaults to `public`.
 
 
 <a id="nestedblock--sasl_username"></a>
@@ -158,7 +159,7 @@ Required:
 Optional:
 
 - `database_name` (String) The sasl_username database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The sasl_username schema name. Defaults to `public`
+- `schema_name` (String) The sasl_username schema name. Defaults to `public`.
 
 
 
@@ -172,7 +173,7 @@ Required:
 Optional:
 
 - `database_name` (String) The ssh_tunnel database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The ssh_tunnel schema name. Defaults to `public`
+- `schema_name` (String) The ssh_tunnel schema name. Defaults to `public`.
 
 
 <a id="nestedblock--ssl_certificate"></a>
@@ -193,7 +194,7 @@ Required:
 Optional:
 
 - `database_name` (String) The ssl_certificate database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The ssl_certificate schema name. Defaults to `public`
+- `schema_name` (String) The ssl_certificate schema name. Defaults to `public`.
 
 
 
@@ -215,7 +216,7 @@ Required:
 Optional:
 
 - `database_name` (String) The ssl_certificate_authority database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The ssl_certificate_authority schema name. Defaults to `public`
+- `schema_name` (String) The ssl_certificate_authority schema name. Defaults to `public`.
 
 
 
@@ -229,7 +230,7 @@ Required:
 Optional:
 
 - `database_name` (String) The ssl_key database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The ssl_key schema name. Defaults to `public`
+- `schema_name` (String) The ssl_key schema name. Defaults to `public`.
 
 ## Import
 

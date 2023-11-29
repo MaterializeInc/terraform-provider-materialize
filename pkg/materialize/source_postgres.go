@@ -16,7 +16,7 @@ type SourcePostgresBuilder struct {
 	textColumns        []string
 	table              []TableStruct
 	schema             []string
-	exposeProgress     string
+	exposeProgress     IdentifierSchemaStruct
 }
 
 func NewSourcePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *SourcePostgresBuilder {
@@ -61,7 +61,7 @@ func (b *SourcePostgresBuilder) Schema(t []string) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) ExposeProgress(e string) *SourcePostgresBuilder {
+func (b *SourcePostgresBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourcePostgresBuilder {
 	b.exposeProgress = e
 	return b
 }
@@ -105,8 +105,8 @@ func (b *SourcePostgresBuilder) Create() error {
 		q.WriteString(` FOR ALL TABLES`)
 	}
 
-	if b.exposeProgress != "" {
-		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress))
+	if b.exposeProgress.Name != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
 	}
 
 	if b.size != "" {

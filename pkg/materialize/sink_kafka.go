@@ -168,25 +168,21 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	if b.envelope.Debezium {
 		q.WriteString(` ENVELOPE DEBEZIUM`)
-	}
-
-	if b.envelope.Upsert {
+	} else if b.envelope.Upsert {
 		q.WriteString(` ENVELOPE UPSERT`)
 	}
 
 	// With Options
-	if b.size != "" || !b.snapshot {
-		w := strings.Builder{}
+	withOptions := []string{}
+	if b.size != "" {
+		withOptions = append(withOptions, fmt.Sprintf(`SIZE = %s`, QuoteString(b.size)))
+	}
+	if b.snapshot {
+		withOptions = append(withOptions, "SNAPSHOT = true")
+	}
 
-		if b.size != "" {
-			w.WriteString(fmt.Sprintf(` SIZE = %s`, QuoteString(b.size)))
-		}
-
-		if !b.snapshot {
-			w.WriteString(` SNAPSHOT = false`)
-		}
-
-		q.WriteString(fmt.Sprintf(` WITH (%s)`, w.String()))
+	if len(withOptions) > 0 {
+		q.WriteString(fmt.Sprintf(` WITH (%s)`, strings.Join(withOptions, ", ")))
 	}
 
 	// Avro Comments
