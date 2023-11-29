@@ -12,6 +12,12 @@ resource "materialize_cluster" "cluster_sink" {
   size = "3xsmall"
 }
 
+resource "materialize_cluster" "no_replication" {
+  name               = "no_replication"
+  size               = "3xsmall"
+  replication_factor = 0
+}
+
 resource "materialize_cluster_grant" "cluster_grant_usage" {
   role_name    = materialize_role.role_1.name
   privilege    = "USAGE"

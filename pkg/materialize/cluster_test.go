@@ -38,11 +38,11 @@ func TestClusterManagedCreate(t *testing.T) {
 func TestClusterManagedReplicationFactorCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 3;`).WillReturnResult(sqlmock.NewResult(1, 1))
-
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
-		b.ReplicationFactor(3)
+		r := 3
+		b.ReplicationFactor(&r)
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
 		}
@@ -78,7 +78,8 @@ func TestClusterManagedAllCreate(t *testing.T) {
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
-		b.ReplicationFactor(2)
+		r := 2
+		b.ReplicationFactor(&r)
 		b.AvailabilityZones([]string{"us-east-1"})
 		b.IntrospectionInterval("1s")
 		b.IntrospectionDebugging()

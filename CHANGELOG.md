@@ -10,6 +10,7 @@
 ### BugFixes
 * Fix `expose_progress` in `materialize_source_postgres` and `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
 * Fix `start_offset` in `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Allow `replication_factor` of 0 for `materialize_cluster` [#390](https://github.com/MaterializeInc/terraform-provider-materialize/pull/390)
 
 ### Misc
 * Set `replication_factor` as computed in `materialize_cluster` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
