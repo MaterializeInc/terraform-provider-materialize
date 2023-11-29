@@ -285,6 +285,66 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								Optional:    true,
 								ForceNew:    true,
 							},
+							"avro_doc_type": {
+								Description: "**Private Preview** Add top level documentation comment to the generated Avro schemas.",
+								Type:        schema.TypeList,
+								MinItems:    1,
+								MaxItems:    1,
+								Optional:    true,
+								ForceNew:    true,
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true),
+										"doc": {
+											Description: "Documentation string.",
+											Type:        schema.TypeString,
+											Required:    true,
+										},
+										"key": {
+											Description: "Applies to the key schema.",
+											Type:        schema.TypeBool,
+											Optional:    true,
+										},
+										"value": {
+											Description: "Applies to the value schema.",
+											Type:        schema.TypeBool,
+											Optional:    true,
+										},
+									},
+								},
+							},
+							"avro_doc_column": {
+								Description: "**Private Preview** Add column level documentation comment to the generated Avro schemas.",
+								Type:        schema.TypeList,
+								MinItems:    1,
+								Optional:    true,
+								ForceNew:    true,
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true),
+										"column": {
+											Description: "Name of the column in the Avro schema to apply to.",
+											Type:        schema.TypeString,
+											Required:    true,
+										},
+										"doc": {
+											Description: "Documentation string.",
+											Type:        schema.TypeString,
+											Required:    true,
+										},
+										"key": {
+											Description: "Applies to the key schema.",
+											Type:        schema.TypeBool,
+											Optional:    true,
+										},
+										"value": {
+											Description: "Applies to the value schema.",
+											Type:        schema.TypeBool,
+											Optional:    true,
+										},
+									},
+								},
+							},
 						},
 					},
 				},

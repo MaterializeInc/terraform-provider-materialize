@@ -42,20 +42,50 @@ var inSinkKafka = map[string]interface{}{
 							"schema_name":   "schema",
 						},
 					},
+					"avro_doc_type": []interface{}{
+						map[string]interface{}{
+							"object": []interface{}{
+								map[string]interface{}{
+									"name":          "item",
+									"schema_name":   "public",
+									"database_name": "database",
+								},
+							},
+							"doc": "top-level comment",
+						},
+					},
+					"avro_doc_column": []interface{}{
+						map[string]interface{}{
+							"object": []interface{}{
+								map[string]interface{}{
+									"name":          "item",
+									"schema_name":   "public",
+									"database_name": "database",
+								},
+							},
+							"column": "c1",
+							"doc":    "comment on column only in key schema",
+							"key":    true,
+						},
+						map[string]interface{}{
+							"object": []interface{}{
+								map[string]interface{}{
+									"name":          "item",
+									"schema_name":   "public",
+									"database_name": "database",
+								},
+							},
+							"column": "c1",
+							"doc":    "comment on column only in value schema",
+							"value":  true,
+						},
+					},
 				},
 			},
 		},
 	},
 	"envelope": []interface{}{map[string]interface{}{"upsert": true}},
 	"snapshot": false,
-	"avro_doc": "top-level comment",
-	"avro_doc_column": []interface{}{
-		map[string]interface{}{
-			"key":    "comment on column only in key schema",
-			"value":  "comment on column only in value schema",
-			"column": "c1",
-		},
-	},
 }
 
 func TestResourceSinkKafkaCreate(t *testing.T) {
@@ -71,11 +101,11 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 			INTO KAFKA CONNECTION "materialize"."public"."kafka_conn"
 			\(TOPIC 'topic'\) KEY \(key_1, key_2\)
 			NOT ENFORCED FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn"
-			WITH \(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname'\)
-			ENVELOPE UPSERT WITH \(SIZE = 'small'\)
-			\(DOC ON TYPE "database"."public"."item" = 'top-level comment',
+			\(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname',
+			DOC ON TYPE "database"."public"."item" = 'top-level comment',
 			KEY DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in key schema',
-			VALUE DOC ON COLUMN TYPE "database"."public"."item"."c1" = 'comment on column only in value schema'\);`,
+			VALUE DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in value schema'\)
+			ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

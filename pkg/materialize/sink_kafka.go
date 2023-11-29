@@ -23,25 +23,6 @@ func GetSinkKafkaEnelopeStruct(v interface{}) KafkaSinkEnvelopeStruct {
 	return envelope
 }
 
-type AvroColumnStruct struct {
-	Key    string
-	Value  string
-	Column string
-}
-
-func GetAvroColumnStruct(v []interface{}) []AvroColumnStruct {
-	var comments []AvroColumnStruct
-	for _, comment := range v {
-		c := comment.(map[string]interface{})
-		comments = append(comments, AvroColumnStruct{
-			Key:    c["key"].(string),
-			Value:  c["value"].(string),
-			Column: c["column"].(string),
-		})
-	}
-	return comments
-}
-
 type SinkKafkaBuilder struct {
 	Sink
 	clusterName     string
@@ -54,8 +35,6 @@ type SinkKafkaBuilder struct {
 	envelope        KafkaSinkEnvelopeStruct
 	snapshot        bool
 	keyNotEnforced  bool
-	avroDoc         string
-	avroColumnDoc   []AvroColumnStruct
 }
 
 func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder {
@@ -115,16 +94,6 @@ func (b *SinkKafkaBuilder) KeyNotEnforced(s bool) *SinkKafkaBuilder {
 	return b
 }
 
-func (b *SinkKafkaBuilder) AvroDoc(a string) *SinkKafkaBuilder {
-	b.avroDoc = a
-	return b
-}
-
-func (b *SinkKafkaBuilder) AvroColumnDoc(a []AvroColumnStruct) *SinkKafkaBuilder {
-	b.avroColumnDoc = a
-	return b
-}
-
 func (b *SinkKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
@@ -161,8 +130,45 @@ func (b *SinkKafkaBuilder) Create() error {
 		if b.format.Avro.SchemaRegistryConnection.Name != "" {
 			q.WriteString(fmt.Sprintf(` FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.format.Avro.SchemaRegistryConnection.QualifiedName()))
 		}
+
+		// CSR Connection Options
+		var v = []string{}
 		if b.format.Avro.AvroValueFullname != "" && b.format.Avro.AvroKeyFullname != "" {
-			q.WriteString(fmt.Sprintf(` WITH (AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s)`, QuoteString(b.format.Avro.AvroKeyFullname), QuoteString(b.format.Avro.AvroValueFullname)))
+			v = append(v, fmt.Sprintf(`AVRO KEY FULLNAME %s AVRO VALUE FULLNAME %s`,
+				QuoteString(b.format.Avro.AvroKeyFullname),
+				QuoteString(b.format.Avro.AvroValueFullname)),
+			)
+		}
+
+		// Doc Type
+		if b.format.Avro.DocType.Object.Name != "" {
+			c := strings.Builder{}
+			if b.format.Avro.DocType.Key {
+				c.WriteString("KEY ")
+			} else if b.format.Avro.DocType.Value {
+				c.WriteString("VALUE ")
+			}
+			c.WriteString(fmt.Sprintf("DOC ON TYPE %[1]s = %[2]s",
+				b.format.Avro.DocType.Object.QualifiedName(),
+				QuoteString(b.format.Avro.DocType.Doc),
+			))
+			v = append(v, c.String())
+		}
+
+		// Doc Column
+		for _, ac := range b.format.Avro.DocColumn {
+			c := strings.Builder{}
+			if ac.Key {
+				c.WriteString("KEY")
+			} else if ac.Value {
+				c.WriteString("VALUE")
+			}
+			f := b.from.QualifiedName() + "." + QuoteIdentifier(ac.Column)
+			c.WriteString(fmt.Sprintf(" DOC ON COLUMN %[1]s = %[2]s", f, QuoteString(ac.Doc)))
+			v = append(v, c.String())
+		}
+		if len(v) > 0 {
+			q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(v[:], ", ")))
 		}
 	}
 
@@ -183,20 +189,6 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	if len(withOptions) > 0 {
 		q.WriteString(fmt.Sprintf(` WITH (%s)`, strings.Join(withOptions, ", ")))
-	}
-
-	// Avro Comments
-	var v = []string{}
-	if b.avroDoc != "" {
-		v = append(v, fmt.Sprintf(`DOC ON TYPE %s = %s`, b.from.QualifiedName(), QuoteString(b.avroDoc)))
-	}
-	for _, ac := range b.avroColumnDoc {
-		c := b.from.QualifiedName() + "." + QuoteIdentifier(ac.Column)
-		v = append(v, fmt.Sprintf(`KEY DOC ON COLUMN %s = %s`, c, QuoteString(ac.Key)))
-		v = append(v, fmt.Sprintf(`VALUE DOC ON COLUMN TYPE %s = %s`, c, QuoteString(ac.Value)))
-	}
-	if len(v) > 0 {
-		q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(v[:], ", ")))
 	}
 
 	return b.ddl.exec(q.String())

@@ -75,38 +75,6 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Default:     false,
 	},
-	"avro_doc": {
-		Description: "",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"avro_doc_column": {
-		Description: "",
-		Type:        schema.TypeList,
-		Required:    true,
-		MinItems:    1,
-		ForceNew:    true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"key": {
-					Description: "",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
-				"value": {
-					Description: "",
-					Type:        schema.TypeString,
-					Optional:    true,
-				},
-				"column": {
-					Description: "",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
-			},
-		},
-	},
 }
 
 func SinkKafka() *schema.Resource {
@@ -177,15 +145,6 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	if v, ok := d.GetOk("snapshot"); ok {
 		b.Snapshot(v.(bool))
-	}
-
-	if v, ok := d.GetOk("avro_doc"); ok {
-		b.AvroDoc(v.(string))
-	}
-
-	if v, ok := d.GetOk("avro_doc_column"); ok {
-		keys := materialize.GetAvroColumnStruct(v.([]interface{}))
-		b.AvroColumnDoc(keys)
 	}
 
 	// create resource

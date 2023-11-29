@@ -185,6 +185,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		envelope {
 			debezium = true
 		}
+
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 

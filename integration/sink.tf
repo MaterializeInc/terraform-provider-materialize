@@ -24,6 +24,34 @@ resource "materialize_sink_kafka" "sink_kafka" {
         database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
         schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
       }
+      avro_doc_type {
+        object {
+          name          = materialize_source_load_generator.load_generator.name
+          database_name = materialize_source_load_generator.load_generator.database_name
+          schema_name   = materialize_source_load_generator.load_generator.schema_name
+        }
+        doc = "top level comment"
+      }
+      avro_doc_column {
+        object {
+          name          = materialize_source_load_generator.load_generator.name
+          database_name = materialize_source_load_generator.load_generator.database_name
+          schema_name   = materialize_source_load_generator.load_generator.schema_name
+        }
+        column = "counter"
+        doc    = "comment key"
+        key    = true
+      }
+      avro_doc_column {
+        object {
+          name          = materialize_source_load_generator.load_generator.name
+          database_name = materialize_source_load_generator.load_generator.database_name
+          schema_name   = materialize_source_load_generator.load_generator.schema_name
+        }
+        column = "counter"
+        doc    = "comment value"
+        value  = true
+      }
     }
   }
   envelope {
