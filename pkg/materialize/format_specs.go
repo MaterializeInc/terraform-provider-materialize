@@ -106,24 +106,34 @@ func GetSinkFormatSpecStruc(v interface{}) SinkFormatSpecStruct {
 		if csr, ok := avro.([]interface{})[0].(map[string]interface{})["schema_registry_connection"]; ok {
 			key := avro.([]interface{})[0].(map[string]interface{})["avro_key_fullname"].(string)
 			value := avro.([]interface{})[0].(map[string]interface{})["avro_value_fullname"].(string)
-			dType := avro.([]interface{})[0].(map[string]interface{})["avro_doc_type"].([]interface{})
-			dColumn := avro.([]interface{})[0].(map[string]interface{})["avro_doc_column"].([]interface{})
 
-			docType := AvroDocType{
-				Object: GetIdentifierSchemaStruct(dType[0].(map[string]interface{})["object"]),
-				Doc:    dType[0].(map[string]interface{})["doc"].(string),
-				Key:    dType[0].(map[string]interface{})["key"].(bool),
-				Value:  dType[0].(map[string]interface{})["value"].(bool),
+			var docType AvroDocType
+			if adt, ok := avro.([]interface{})[0].(map[string]interface{})["avro_doc_type"].([]interface{}); ok {
+				if v, ok := adt[0].(map[string]interface{})["object"]; ok {
+					docType.Object = GetIdentifierSchemaStruct(v)
+				}
+				if v, ok := adt[0].(map[string]interface{})["doc"]; ok {
+					docType.Doc = v.(string)
+				}
+				if v, ok := adt[0].(map[string]interface{})["key"]; ok {
+					docType.Key = v.(bool)
+				}
+				if v, ok := adt[0].(map[string]interface{})["value"]; ok {
+					docType.Value = v.(bool)
+				}
 			}
+
 			var docColumn []AvroDocColumn
-			for _, column := range dColumn {
-				docColumn = append(docColumn, AvroDocColumn{
-					Object: GetIdentifierSchemaStruct(column.(map[string]interface{})["object"]),
-					Column: column.(map[string]interface{})["column"].(string),
-					Doc:    column.(map[string]interface{})["doc"].(string),
-					Key:    column.(map[string]interface{})["key"].(bool),
-					Value:  column.(map[string]interface{})["value"].(bool),
-				})
+			if adc, ok := avro.([]interface{})[0].(map[string]interface{})["avro_doc_column"]; ok {
+				for _, column := range adc.([]interface{}) {
+					docColumn = append(docColumn, AvroDocColumn{
+						Object: GetIdentifierSchemaStruct(column.(map[string]interface{})["object"]),
+						Column: column.(map[string]interface{})["column"].(string),
+						Doc:    column.(map[string]interface{})["doc"].(string),
+						Key:    column.(map[string]interface{})["key"].(bool),
+						Value:  column.(map[string]interface{})["value"].(bool),
+					})
+				}
 			}
 
 			format.Avro = &SinkAvroFormatSpec{
