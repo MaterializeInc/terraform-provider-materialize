@@ -38,6 +38,7 @@ resource "materialize_cluster" "example_cluster" {
 
 ### Read-Only
 
+- `availability_zones` (List of String) The specific availability zones of the cluster.
 - `id` (String) The ID of this resource.
 
 ## Import
