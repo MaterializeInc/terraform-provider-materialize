@@ -13,10 +13,10 @@ import (
 )
 
 var inCluster = map[string]interface{}{
-	"name":               "cluster",
-	"size":               "3xsmall",
-	"replication_factor": 2,
-	// "availability_zones":            []interface{}{"use1-az1", "use1-az2"},
+	"name":                          "cluster",
+	"size":                          "3xsmall",
+	"replication_factor":            2,
+	"availability_zones":            []interface{}{"use1-az1", "use1-az2"},
 	"introspection_interval":        "10s",
 	"introspection_debugging":       true,
 	"idle_arrangement_merge_effort": 100,
@@ -35,6 +35,7 @@ func TestResourceClusterCreate(t *testing.T) {
 			CREATE CLUSTER "cluster"
 			SIZE '3xsmall',
 			REPLICATION FACTOR 2,
+			AVAILABILITY ZONES = \['use1-az1','use1-az2'\],
 			INTROSPECTION INTERVAL = '10s',
 			INTROSPECTION DEBUGGING = TRUE,
 			IDLE ARRANGEMENT MERGE EFFORT = 100;
