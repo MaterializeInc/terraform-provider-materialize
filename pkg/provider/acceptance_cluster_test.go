@@ -80,6 +80,32 @@ func TestAccClusterManagedNoReplication_basic(t *testing.T) {
 	})
 }
 
+func TestAccClusterManagedZeroReplication_basic(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterManagedZeroReplicationResource(clusterName, "3xsmall"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists("materialize_cluster.test"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", "3xsmall"),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "0"),
+				),
+			},
+			{
+				ResourceName:            "materialize_cluster.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+			},
+		},
+	})
+}
+
 func TestAccCluster_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	oldClusterName := fmt.Sprintf("old_%s", slug)
@@ -295,6 +321,17 @@ func testAccClusterManagedNoReplicationResource(clusterName, clusterSize string)
 	resource "materialize_cluster" "test" {
 		name = "%[1]s"
 		size = "%[2]s"
+	}
+	`,
+		clusterName, clusterSize)
+}
+
+func testAccClusterManagedZeroReplicationResource(clusterName, clusterSize string) string {
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+		size = "%[2]s"
+		replication_factor = 0
 	}
 	`,
 		clusterName, clusterSize)

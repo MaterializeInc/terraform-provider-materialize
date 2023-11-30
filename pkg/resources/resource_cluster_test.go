@@ -14,8 +14,8 @@ import (
 
 var inCluster = map[string]interface{}{
 	"name":               "cluster",
+	"size":               "3xsmall",
 	"replication_factor": 2,
-	"size":               "1",
 	// "availability_zones":            []interface{}{"use1-az1", "use1-az2"},
 	"introspection_interval":        "10s",
 	"introspection_debugging":       true,
@@ -31,10 +31,51 @@ func TestResourceClusterCreate(t *testing.T) {
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE '1', REPLICATION FACTOR 2, INTROSPECTION INTERVAL = '10s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 100;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`
+			CREATE CLUSTER "cluster"
+			SIZE '3xsmall',
+			REPLICATION FACTOR 2,
+			INTROSPECTION INTERVAL = '10s',
+			INTROSPECTION DEBUGGING = TRUE,
+			IDLE ARRANGEMENT MERGE EFFORT = 100;
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership
 		mock.ExpectExec(`ALTER CLUSTER "cluster" OWNER TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_clusters.name = 'cluster'`
+		testhelpers.MockClusterScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_clusters.id = 'u1'`
+		testhelpers.MockClusterScan(mock, pp)
+
+		if err := clusterCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceClusterZeroReplicationCreate(t *testing.T) {
+	r := require.New(t)
+
+	var inClusterZeroReplication = map[string]interface{}{
+		"name":               "cluster",
+		"size":               "3xsmall",
+		"replication_factor": 0,
+	}
+	d := schema.TestResourceDataRaw(t, Cluster().Schema, inClusterZeroReplication)
+	r.NotNil(d)
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(`
+			CREATE CLUSTER "cluster"
+			SIZE '3xsmall',
+			REPLICATION FACTOR 0,
+			INTROSPECTION INTERVAL = '1s';
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_clusters.name = 'cluster'`

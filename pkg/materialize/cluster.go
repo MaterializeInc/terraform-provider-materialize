@@ -13,7 +13,7 @@ import (
 type ClusterBuilder struct {
 	ddl                        Builder
 	clusterName                string
-	replicationFactor          int
+	replicationFactor          *int
 	size                       string
 	disk                       bool
 	availabilityZones          []string
@@ -33,7 +33,7 @@ func (b *ClusterBuilder) QualifiedName() string {
 	return QualifiedName(b.clusterName)
 }
 
-func (b *ClusterBuilder) ReplicationFactor(r int) *ClusterBuilder {
+func (b *ClusterBuilder) ReplicationFactor(r *int) *ClusterBuilder {
 	b.replicationFactor = r
 	return b
 }
@@ -72,7 +72,7 @@ func (b *ClusterBuilder) Create() error {
 	q := strings.Builder{}
 
 	q.WriteString(fmt.Sprintf(`CREATE CLUSTER %s`, b.QualifiedName()))
-	// Only create empty clusters, manage replicas with separate resource if replication factor is not set
+	// Only create empty clusters, manage replicas with separate resource if size is not set
 	if b.size != "" {
 		q.WriteString(fmt.Sprintf(` SIZE %s`, QuoteString(b.size)))
 
@@ -83,8 +83,8 @@ func (b *ClusterBuilder) Create() error {
 			p = append(p, i)
 		}
 
-		if b.replicationFactor > 0 {
-			i := fmt.Sprintf(` REPLICATION FACTOR %d`, b.replicationFactor)
+		if b.replicationFactor != nil {
+			i := fmt.Sprintf(` REPLICATION FACTOR %v`, *b.replicationFactor)
 			p = append(p, i)
 		}
 

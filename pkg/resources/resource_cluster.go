@@ -103,8 +103,9 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if size, ok := d.GetOk("size"); ok {
 		b.Size(size.(string))
 
-		if v, ok := d.GetOk("replication_factor"); ok {
-			b.ReplicationFactor(v.(int))
+		if v, ok := d.GetOkExists("replication_factor"); ok {
+			r := v.(int)
+			b.ReplicationFactor(&r)
 		}
 
 		if v, ok := d.GetOk("disk"); ok {
