@@ -42,7 +42,7 @@ To run the acceptance tests which will simulate running Terraform commands you w
 ```bash
 export MZ_HOST=localhost
 export MZ_USER=mz_system
-export MZ_SSLMODE="false"
+export MZ_SSLMODE=disable
 export MZ_PORT=6877
 
 # Start all containers
@@ -175,7 +175,7 @@ Schema: map[string]*schema.Schema{
 					Type:     schema.TypeString,
 					Computed: true,
 				},
-				"size": { // Add new field 
+				"size": { // Add new field
 					Type:     schema.TypeString,
 					Computed: true,
 				},

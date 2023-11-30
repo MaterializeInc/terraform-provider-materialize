@@ -85,7 +85,7 @@ Required:
 Optional:
 
 - `database_name` (String) The from database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The from schema name. Defaults to `public`
+- `schema_name` (String) The from schema name. Defaults to `public`.
 
 
 <a id="nestedblock--kafka_connection"></a>
@@ -98,7 +98,7 @@ Required:
 Optional:
 
 - `database_name` (String) The kafka_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The kafka_connection schema name. Defaults to `public`
+- `schema_name` (String) The kafka_connection schema name. Defaults to `public`.
 
 
 <a id="nestedblock--envelope"></a>
@@ -140,7 +140,7 @@ Required:
 Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 ## Import
 

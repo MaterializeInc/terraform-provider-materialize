@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
@@ -46,6 +47,16 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"security_protocol": {
+		Description:  "The security protocol to use: `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(securityProtocols, true),
+		StateFunc: func(val any) string {
+			return strings.ToUpper(val.(string))
+		},
+	},
 	"progress_topic": {
 		Description: "The name of a topic that Kafka sinks can use to track internal consistency metadata.",
 		Type:        schema.TypeString,
@@ -61,7 +72,10 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Optional:     true,
 		ValidateFunc: validation.StringInSlice(saslMechanisms, true),
 		RequiredWith: []string{"sasl_username", "sasl_password"},
-		ForceNew:     true,
+		StateFunc: func(val any) string {
+			return strings.ToUpper(val.(string))
+		},
+		ForceNew: true,
 	},
 	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
@@ -98,6 +112,10 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if v, ok := d.GetOk("kafka_broker"); ok {
 		brokers := materialize.GetKafkaBrokersStruct(v)
 		b.KafkaBrokers(brokers)
+	}
+
+	if v, ok := d.GetOk("security_protocol"); ok {
+		b.KafkaSecurityProtocol(v.(string))
 	}
 
 	if v, ok := d.GetOk("progress_topic"); ok {

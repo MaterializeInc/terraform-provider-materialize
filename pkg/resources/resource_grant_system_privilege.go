@@ -61,11 +61,14 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	key, err := parseSystemPrivilegeKey(i)
 	if err != nil {
-		return diag.FromErr(err)
+		log.Printf("[WARN] malformed privilege (%s), removing from state file", d.Id())
+		d.SetId("")
+		return nil
 	}
 
-	privileges, err := materialize.ScanSystemPrivileges(meta.(*sqlx.DB))
+	p, err := materialize.ScanSystemPrivileges(meta.(*sqlx.DB))
 	if err == sql.ErrNoRows {
+		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -73,16 +76,16 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	// Check if system role contains privilege
-	mapping, _ := materialize.ParseSystemPrivileges(privileges)
-
-	if !slices.Contains(mapping[key.roleId], key.privilege) {
-		log.Printf("[DEBUG] %s: object does not contain privilege: %s", i, key.privilege)
+	var privileges = []string{}
+	for _, pr := range p {
+		privileges = append(privileges, pr.Privileges)
+	}
+	privilegeMap, err := materialize.MapGrantPrivileges(privileges)
+	if !slices.Contains(privilegeMap[key.roleId], key.privilege) {
+		log.Printf("[DEBUG] %s object does not contain privilege %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")
 	}
-
-	d.SetId(i)
-
 	return nil
 }
 

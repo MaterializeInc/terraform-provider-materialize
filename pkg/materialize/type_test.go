@@ -8,7 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestTypeCreateList(t *testing.T) {
+// https://materialize.com/docs/sql/create-type/
+
+func TestTypeCustomListCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TYPE "database"."schema"."type" AS LIST \(ELEMENT TYPE = int4\);`,
@@ -28,7 +30,7 @@ func TestTypeCreateList(t *testing.T) {
 	})
 }
 
-func TestTypeCreateMap(t *testing.T) {
+func TestTypeCustomMapCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TYPE "database"."schema"."type" AS MAP \(KEY TYPE text, VALUE TYPE = int\);`,
@@ -40,6 +42,31 @@ func TestTypeCreateMap(t *testing.T) {
 			{
 				KeyType:   "text",
 				ValueType: "int",
+			},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestTypeCustomRowCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE TYPE "database"."schema"."type" AS \(a int, b text\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "type", SchemaName: "schema", DatabaseName: "database"}
+		b := NewTypeBuilder(db, o)
+		b.RowProperties([]RowProperties{
+			{
+				FieldName: "a",
+				FieldType: "int",
+			},
+			{
+				FieldName: "b",
+				FieldType: "text",
 			},
 		})
 

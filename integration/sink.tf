@@ -1,15 +1,22 @@
 resource "materialize_sink_kafka" "sink_kafka" {
-  name          = "sink_kafka"
-  schema_name   = materialize_schema.schema.name
-  database_name = materialize_database.database.name
-  comment       = "sink comment"
-  size          = "3xsmall"
+  name             = "sink_kafka"
+  schema_name      = materialize_schema.schema.name
+  database_name    = materialize_database.database.name
+  comment          = "sink comment"
+  size             = "3xsmall"
+  topic            = "topic1"
+  key              = ["counter"]
+  key_not_enforced = true
   from {
     name          = materialize_source_load_generator.load_generator.name
     database_name = materialize_source_load_generator.load_generator.database_name
     schema_name   = materialize_source_load_generator.load_generator.schema_name
   }
-  topic = "topic1"
+  kafka_connection {
+    name          = materialize_connection_kafka.kafka_connection.name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+    schema_name   = materialize_connection_kafka.kafka_connection.schema_name
+  }
   format {
     avro {
       schema_registry_connection {
@@ -19,16 +26,36 @@ resource "materialize_sink_kafka" "sink_kafka" {
       }
     }
   }
+  envelope {
+    debezium = true
+  }
+}
+
+resource "materialize_sink_kafka" "sink_kafka_cluster" {
+  name             = "sink_kafka_cluster"
+  schema_name      = materialize_schema.schema.name
+  database_name    = materialize_database.database.name
+  cluster_name     = materialize_cluster.cluster_sink.name
+  topic            = "topic1"
+  key              = ["counter"]
+  key_not_enforced = true
+  snapshot         = true
+  from {
+    name          = materialize_source_load_generator.load_generator.name
+    database_name = materialize_source_load_generator.load_generator.database_name
+    schema_name   = materialize_source_load_generator.load_generator.schema_name
+  }
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     database_name = materialize_connection_kafka.kafka_connection.database_name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
   }
-  envelope {
-    debezium = true
+  format {
+    json = true
   }
-  key              = ["counter"]
-  key_not_enforced = true
+  envelope {
+    upsert = true
+  }
 }
 
 output "qualified_sink_kafka" {

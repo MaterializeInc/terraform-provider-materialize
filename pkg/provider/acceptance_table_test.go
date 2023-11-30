@@ -22,7 +22,7 @@ func TestAccTable_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName),
+				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
@@ -31,11 +31,25 @@ func TestAccTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "comment", "comment"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "5"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.name", "column_1"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.type", "text"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.nullable", "false"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.default", "NULL"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.name", "column_2"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.type", "integer"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.name", "column_3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.nullable", "true"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.3.name", "column_4"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.3.default", "NULL"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.4.name", "column_5"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.4.default", "NULL"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.4.default", "NULL"),
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "comment", "Comment"),
 				),
 			},
 			{
@@ -59,10 +73,16 @@ func TestAccTable_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTableResource(roleName, tableName, tableRoleName, "mz_system"),
+				Config: testAccTableResource(roleName, tableName, tableRoleName, "mz_system", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTableExists("materialize_table.test"),
+					testAccCheckTableExists("materialize_table.test_role"),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "comment", "Comment"),
+				),
 			},
 			{
-				Config: testAccTableResource(roleName, newTableName, tableRoleName, roleName),
+				Config: testAccTableResource(roleName, newTableName, tableRoleName, roleName, "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", newTableName),
@@ -70,10 +90,11 @@ func TestAccTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newTableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "5"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_table.test_role", "comment", "New Comment"),
 				),
 			},
 			{
@@ -91,7 +112,7 @@ func TestAccTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "5"),
 					testAccCheckTableExists("materialize_table.test_role"),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "name", tableRoleName),
 					resource.TestCheckResourceAttr("materialize_table.test_role", "ownership_role", roleName),
@@ -124,14 +145,13 @@ func TestAccTable_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllTablesDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName),
+				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
 					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
-					resource.TestCheckResourceAttr("materialize_table.test", "column.#", "3"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
 							ObjectType: "TABLE",
@@ -145,43 +165,55 @@ func TestAccTable_disappears(t *testing.T) {
 	})
 }
 
-func testAccTableResource(roleName, tableName, tableRoleName, tableOwnership string) string {
+func testAccTableResource(roleName, tableName, tableRoleName, tableOwnership, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%s"
-}
-
-resource "materialize_table" "test" {
-	name = "%s"
-	comment = "comment"
-	column {
-		name = "column_1"
-		type = "text"
+	resource "materialize_role" "test" {
+		name = "%[1]s"
 	}
-	column {
-		name    = "column_2"
-		type    = "int"
+
+	resource "materialize_table" "test" {
+		name = "%[2]s"
 		comment = "comment"
+		column {
+			name = "column_1"
+			type = "text"
+		}
+		column {
+			name    = "column_2"
+			type    = "int"
+			comment = "comment"
+		}
+		column {
+			name     = "column_3"
+			type     = "text"
+			nullable = true
+		}
+		column {
+			name    = "column_4"
+			type    = "text"
+			default = "NULL"
+		}
+		column {
+			name     = "column_5"
+			type     = "text"
+			nullable = true
+			default  = "NULL"
+		}
 	}
-	column {
-		name     = "column_3"
-		type     = "text"
-		nullable = true
+
+	resource "materialize_table" "test_role" {
+		name = "%[3]s"
+		ownership_role = "%[4]s"
+		comment = "%[5]s"
+
+		column {
+			name = "column_1"
+			type = "text"
+		}
+
+		depends_on = [materialize_role.test]
 	}
-}
-
-resource "materialize_table" "test_role" {
-	name = "%s"
-	ownership_role = "%s"
-
-	column {
-		name = "column_1"
-		type = "text"
-	}
-
-	depends_on = [materialize_role.test]
-}
-`, roleName, tableName, tableRoleName, tableOwnership)
+	`, roleName, tableName, tableRoleName, tableOwnership, comment)
 }
 
 func testAccCheckTableExists(name string) resource.TestCheckFunc {
@@ -211,7 +243,6 @@ func testAccCheckAllTablesDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -227,40 +258,40 @@ func testAccTableResourceWithUpdates(roleName, tableName, tableRoleName, tableOw
 	}
 
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-    name = "%s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_table" "test" {
-    name = "%s"
-    comment = "Initial table comment"
-    column {
-        name = "%s"
-        type = "text"
-    }
-    column {
-        name    = "column_2"
-        type    = "int"
-        comment = "%s"
-    }
-    column {
-        name     = "column_3"
-        type     = "text"
-        nullable = true
-    }
-    ownership_role = "%s"
-}
+	resource "materialize_table" "test" {
+		name = "%[2]s"
+		comment = "Initial table comment"
+		column {
+			name = "%[3]s"
+			type = "text"
+		}
+		column {
+			name    = "column_2"
+			type    = "int"
+			comment = "%[4]s"
+		}
+		column {
+			name     = "column_3"
+			type     = "text"
+			nullable = true
+		}
+		ownership_role = "%[5]s"
+	}
 
-resource "materialize_table" "test_role" {
-    name = "%s"
-    ownership_role = "%s"
+	resource "materialize_table" "test_role" {
+		name = "%[6]s"
+		ownership_role = "%[7]s"
 
-    column {
-        name = "%s"
-        type = "text"
-    }
+		column {
+			name = "%[3]s"
+			type = "text"
+		}
 
-    depends_on = [materialize_role.test]
-}
-`, roleName, tableName, columnName1, commentColumn2, tableOwnership, tableRoleName, tableOwnership, columnName1)
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, tableName, columnName1, commentColumn2, tableOwnership, tableRoleName, tableOwnership)
 }
