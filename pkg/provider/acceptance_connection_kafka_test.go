@@ -26,16 +26,82 @@ func TestAccConnKafka_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "name", connectionName),
-					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.#", "1"),
-					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.broker", "redpanda:9092"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.broker", "redpanda:9092"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "comment", "object comment"),
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "name", connection2Name),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "ownership_role", roleName),
+				),
+			},
+			{
+				ResourceName:      "materialize_connection_kafka.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func TestAccConnKafkaMultipleBrokers_basic(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaMultipleBrokerResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.#", "3"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.broker", "redpanda:9092"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.1.broker", "redpanda:9092"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.2.broker", "redpanda:9092"),
+				),
+			},
+			{
+				ResourceName:      "materialize_connection_kafka.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func TestAccConnKafkaMultipleSsh_basic(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaSshResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.#", "3"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.broker", "redpanda:9092"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.ssh_tunnel.0.name", connectionName+"_ssh_conn_1"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.1.broker", "redpanda:9092"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.1.ssh_tunnel.0.name", connectionName+"_ssh_conn_2"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.2.broker", "redpanda:9092"),
+					resource.TestCheckNoResourceAttr("materialize_connection_kafka.test", "kafka_broker.2.ssh_tunnel.0.name"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ssh_tunnel.0.name", connectionName+"_ssh_conn_2"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ssh_tunnel.0.database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ssh_tunnel.0.schema_name", "public"),
 				),
 			},
 			{
@@ -131,6 +197,67 @@ resource "materialize_connection_kafka" "test_role" {
 	validate = false
 }
 `, roleName, connectionName, connection2Name, connectionOwner)
+}
+
+func testAccConnKafkaMultipleBrokerResource(connectionName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "test" {
+		name = "%[1]s"
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		security_protocol = "PLAINTEXT"
+		validate = false
+	}
+	`, connectionName)
+}
+
+func testAccConnKafkaSshResource(connectionName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_ssh_tunnel" "ssh_connection_1" {
+		name = "%[1]s_ssh_conn_1"	  
+		host = "ssh_host"
+		user = "ssh_user"
+		port = 22
+	}
+
+	resource "materialize_connection_ssh_tunnel" "ssh_connection_2" {
+		name = "%[1]s_ssh_conn_2"	  
+		host = "ssh_host"
+		user = "ssh_user"
+		port = 22
+	}
+
+	resource "materialize_connection_kafka" "test" {
+		name = "%[1]s"
+		kafka_broker {
+			broker = "redpanda:9092"
+			ssh_tunnel {
+				name = materialize_connection_ssh_tunnel.ssh_connection_1.name
+			}
+		}
+		kafka_broker {
+			broker = "redpanda:9092"
+			ssh_tunnel {
+				name = materialize_connection_ssh_tunnel.ssh_connection_2.name
+			}
+		}
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		ssh_tunnel {
+			name = materialize_connection_ssh_tunnel.ssh_connection_2.name
+		}
+		security_protocol = "PLAINTEXT"
+		validate = false
+	}
+	`, connectionName)
 }
 
 func testAccCheckConnKafkaExists(name string) resource.TestCheckFunc {
