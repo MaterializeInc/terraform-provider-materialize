@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.3 - 2023-11-30
+
 ### Features
 * Add `default` to columns when defining a `materialize_table` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
 * Add `expose_progress` to `materialize_source_load_generator` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
