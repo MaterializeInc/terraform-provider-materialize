@@ -34,6 +34,7 @@ type SinkKafkaBuilder struct {
 	format          SinkFormatSpecStruct
 	envelope        KafkaSinkEnvelopeStruct
 	snapshot        bool
+	keyNotEnforced  bool
 }
 
 func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder {
@@ -88,6 +89,11 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 	return b
 }
 
+func (b *SinkKafkaBuilder) KeyNotEnforced(s bool) *SinkKafkaBuilder {
+	b.keyNotEnforced = true
+	return b
+}
+
 func (b *SinkKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
@@ -103,13 +109,17 @@ func (b *SinkKafkaBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` INTO KAFKA CONNECTION %s`, b.kafkaConnection.QualifiedName()))
 	}
 
+	if b.topic != "" {
+		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
+	}
+
 	if len(b.key) > 0 {
 		o := strings.Join(b.key[:], ", ")
 		q.WriteString(fmt.Sprintf(` KEY (%s)`, o))
 	}
 
-	if b.topic != "" {
-		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
+	if b.keyNotEnforced {
+		q.WriteString(` NOT ENFORCED`)
 	}
 
 	if b.format.Json {
@@ -127,25 +137,21 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	if b.envelope.Debezium {
 		q.WriteString(` ENVELOPE DEBEZIUM`)
-	}
-
-	if b.envelope.Upsert {
+	} else if b.envelope.Upsert {
 		q.WriteString(` ENVELOPE UPSERT`)
 	}
 
 	// With Options
-	if b.size != "" || !b.snapshot {
-		w := strings.Builder{}
+	withOptions := []string{}
+	if b.size != "" {
+		withOptions = append(withOptions, fmt.Sprintf(`SIZE = %s`, QuoteString(b.size)))
+	}
+	if b.snapshot {
+		withOptions = append(withOptions, "SNAPSHOT = true")
+	}
 
-		if b.size != "" {
-			w.WriteString(fmt.Sprintf(` SIZE = %s`, QuoteString(b.size)))
-		}
-
-		if !b.snapshot {
-			w.WriteString(` SNAPSHOT = false`)
-		}
-
-		q.WriteString(fmt.Sprintf(` WITH (%s)`, w.String()))
+	if len(withOptions) > 0 {
+		q.WriteString(fmt.Sprintf(` WITH (%s)`, strings.Join(withOptions, ", ")))
 	}
 
 	q.WriteString(`;`)

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
+	"net/url"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
@@ -14,7 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func Provider() *schema.Provider {
+func Provider(version string) *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"host": {
@@ -48,17 +48,11 @@ func Provider() *schema.Provider {
 				Description: "The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", "materialize"),
 			},
-			"application_name": {
+			"sslmode": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "terraform-provider-materialize",
-				Description: "The application name to include in the connection string",
-			},
-			"sslmode": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", true),
-				Description: "For testing purposes, disable SSL.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", "require"),
+				Description: "For testing purposes, the SSL mode to use.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -122,42 +116,34 @@ func Provider() *schema.Provider {
 			"materialize_type":              datasources.Type(),
 			"materialize_view":              datasources.View(),
 		},
-		ConfigureContextFunc: providerConfigure,
+		ConfigureContextFunc: func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+			return providerConfigure(ctx, d, version)
+		},
 	}
 }
 
-func connectionString(host, user, password string, port int, database string, sslmode bool, application string) string {
-	c := strings.Builder{}
-	c.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, database))
-
-	params := []string{}
-
-	if sslmode {
-		params = append(params, "sslmode=require")
-	} else {
-		params = append(params, "sslmode=disable")
-	}
-
-	params = append(params, fmt.Sprintf("application_name=%s", application))
-	p := strings.Join(params[:], "&")
-
-	c.WriteString(fmt.Sprintf("?%s", p))
-	return c.String()
-}
-
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func providerConfigure(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
 	host := d.Get("host").(string)
 	user := d.Get("user").(string)
 	password := d.Get("password").(string)
 	port := d.Get("port").(int)
 	database := d.Get("database").(string)
-	application := d.Get("application_name").(string)
-	sslmode := d.Get("sslmode").(bool)
+	sslmode := d.Get("sslmode").(string)
+	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
-	connStr := connectionString(host, user, password, port, database, sslmode, application)
+	url := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(user, password),
+		Host:   fmt.Sprintf("%s:%d", host, port),
+		Path:   database,
+		RawQuery: url.Values{
+			"application_name": {application_name},
+			"sslmode":          {sslmode},
+		}.Encode(),
+	}
 
 	var diags diag.Diagnostics
-	db, err := sqlx.Open("pgx", connStr)
+	db, err := sqlx.Open("pgx", url.String())
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,

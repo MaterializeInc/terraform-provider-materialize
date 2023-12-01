@@ -39,11 +39,65 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 			"BYTES",
 		}, true),
 	},
+	"include_header": {
+		Description: "Map a header value from a request into a column.",
+		Type:        schema.TypeList,
+		Optional:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"header": {
+					Description: "The name for the header.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"alias": {
+					Description: "The alias for the header.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+				"bytes": {
+					Description: "Change type to `bytea`.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+				},
+			},
+		},
+		ForceNew: true,
+	},
 	"include_headers": {
 		Description: "Include headers in the webhook.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		ForceNew:    true,
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"all": {
+					Description:   "Include all headers.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ConflictsWith: []string{"include_headers.0.only", "include_headers.0.not"},
+					AtLeastOneOf:  []string{"include_headers.0.all", "include_headers.0.only", "include_headers.0.not"},
+				},
+				"only": {
+					Description:   "Headers that should be included.",
+					Type:          schema.TypeList,
+					Elem:          &schema.Schema{Type: schema.TypeString},
+					Optional:      true,
+					ConflictsWith: []string{"include_headers.0.all"},
+					AtLeastOneOf:  []string{"include_headers.0.all", "include_headers.0.only", "include_headers.0.not"},
+				},
+				"not": {
+					Description:   "Headers that should be excluded.",
+					Type:          schema.TypeList,
+					Elem:          &schema.Schema{Type: schema.TypeString},
+					Optional:      true,
+					ConflictsWith: []string{"include_headers.0.all"},
+					AtLeastOneOf:  []string{"include_headers.0.all", "include_headers.0.only", "include_headers.0.not"},
+				},
+			},
+		},
+		Optional: true,
+		MinItems: 1,
+		MaxItems: 1,
+		ForceNew: true,
 	},
 	"check_options": {
 		Description: "The check options for the webhook.",
@@ -78,8 +132,14 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 				},
+				"bytes": {
+					Description: "Change type to `bytea`.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+				},
 			},
 		},
+		ForceNew: true,
 	},
 	"check_expression": {
 		Description: "The check expression for the webhook.",
@@ -121,8 +181,39 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	b.ClusterName(clusterName).
 		BodyFormat(bodyFormat).
-		IncludeHeaders(d.Get("include_headers").(bool)).
 		CheckExpression(d.Get("check_expression").(string))
+
+	if v, ok := d.GetOk("include_header"); ok {
+		var headers []materialize.HeaderStruct
+		for _, header := range v.([]interface{}) {
+			h := header.(map[string]interface{})
+			headers = append(headers, materialize.HeaderStruct{
+				Header: h["header"].(string),
+				Alias:  h["alias"].(string),
+				Bytes:  h["bytes"].(bool),
+			})
+		}
+		b.IncludeHeader(headers)
+	}
+
+	if v, ok := d.GetOk("include_headers"); ok {
+		var i materialize.IncludeHeadersStruct
+		u := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := u["all"]; ok {
+			i.All = v.(bool)
+		}
+
+		if v, ok := u["only"]; ok {
+			o := materialize.GetSliceValueString(v.([]interface{}))
+			i.Only = o
+		}
+
+		if v, ok := u["not"]; ok {
+			n := materialize.GetSliceValueString(v.([]interface{}))
+			i.Not = n
+		}
+		b.IncludeHeaders(i)
+	}
 
 	if v, ok := d.GetOk("check_options"); ok {
 		var options []materialize.CheckOptionsStruct
@@ -132,7 +223,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 			var secret = materialize.IdentifierSchemaStruct{}
 			if secretMap, ok := fieldMap["secret"].([]interface{}); ok && len(secretMap) > 0 && secretMap[0] != nil {
-				secret = materialize.GetIdentifierSchemaStruct(databaseName, schemaName, secretMap)
+				secret = materialize.GetIdentifierSchemaStruct(secretMap)
 			}
 
 			field := materialize.FieldStruct{
@@ -144,6 +235,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 			options = append(options, materialize.CheckOptionsStruct{
 				Field: field,
 				Alias: t["alias"].(string),
+				Bytes: t["bytes"].(bool),
 			})
 		}
 		b.CheckOptions(options)

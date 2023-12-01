@@ -1,17 +1,111 @@
 # Changelog
 
-## 0.2.0 - 2023-10-30
+## Unreleased
+
+## 0.3.3 - 2023-11-30
+
+### Features
+* Add `default` to columns when defining a `materialize_table` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Add `expose_progress` to `materialize_source_load_generator` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Support [row type](https://materialize.com/docs/sql/create-type/#row-properties) in `materialize_type` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+### BugFixes
+* Fix `expose_progress` in `materialize_source_postgres` and `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Fix `start_offset` in `materialize_source_kafka` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+* Allow `replication_factor` of 0 for `materialize_cluster` [#390](https://github.com/MaterializeInc/terraform-provider-materialize/pull/390)
+
+### Misc
+* Set `replication_factor` as computed in `materialize_cluster` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
 
 ### Breaking Changes
-* Provider configuration parameters so that they are consistent across all components [#339](https://github.com/MaterializeInc/terraform-provider-materialize/pull/339):
-    * The configuration variable `username` is changed to `user`
-    * The environment variable `MZ_PW` is changed to `MZ_PASSWORD`
+* Remove `session_variables` from `materialize_role` [#374](https://github.com/MaterializeInc/terraform-provider-materialize/pull/374)
+
+## 0.3.2 - 2023-11-24
+
+### Features
+
+### BugFixes
+* Fix default grant read [#381](https://github.com/MaterializeInc/terraform-provider-materialize/pull/381)
+
+### Misc
+
+## 0.3.1 - 2023-11-21
+
+### Features
+* Add `security_protocol` to `materialize_connection_kafka` [#365](https://github.com/MaterializeInc/terraform-provider-materialize/pull/365)
+
+### BugFixes
+
+* Handle `user` values that contain special characters, without requiring manual
+  URL escaping (e.g., escaping `you@corp.com` as `you%40corp.com`) [#372](https://github.com/MaterializeInc/terraform-provider-materialize/pull/372)
+* Load generator source `TPCH` requires `ALL TABLES` [#377](https://github.com/MaterializeInc/terraform-provider-materialize/pull/377)
+* Improve grant reads [#378](https://github.com/MaterializeInc/terraform-provider-materialize/pull/378)
+
+### Misc
+* `materialize_cluster_replica` is deprecated [#370](https://github.com/MaterializeInc/terraform-provider-materialize/pull/370)
+* Raise `max_clusters` for testing [#371](https://github.com/MaterializeInc/terraform-provider-materialize/pull/371)
+
+## 0.3.0 - 2023-11-16
+
+### Features
+* Add `key_not_enforced` to `materialize_sink_kafka` [#361](https://github.com/MaterializeInc/terraform-provider-materialize/pull/361)
+
+### BugFixes
+* Fix a bug where topics were defined after keys in `materialize_sink_kafka` create statements [#358](https://github.com/MaterializeInc/terraform-provider-materialize/pull/358)
+* Correct `ForceNew` for column attributes in `materialize_table` [#363](https://github.com/MaterializeInc/terraform-provider-materialize/pull/363)
+
+### Misc
+* Update go.mod version to `1.20` [#369](https://github.com/MaterializeInc/terraform-provider-materialize/pull/369)
+
+### Breaking Changes
+* Previously, blocks within resources that included optional `schema_name` and `database_name` attributes would inherit the top level attributes of the resource if set. So in the following example:
+  ```
+  resource "materialize_source_postgres" "example_source_postgres" {
+    name          = "source_postgres"
+    schema_name   = "my_schema"
+    database_name = "my_database"
+
+    postgres_connection {
+        name          = "postgres_connection"
+    }
+  }
+  ```
+  The Postgres connection would have the schema name of `my_schema` and database name `my_database`. Now, if `schema_name` or `database_name` are not set, they will use the same defaults as top level attributes (`public` for schema and `materialize` for database) [#353](https://github.com/MaterializeInc/terraform-provider-materialize/pull/353)
+
+## 0.2.2 - 2023-11-10
+
+### Features
+* Include detail and hint messages for SQL errors [#354](https://github.com/MaterializeInc/terraform-provider-materialize/pull/354)
+
+### BugFixes
+
+### Misc
+
+## 0.2.1 - 2023-11-09
+
+### Features
+* Support `ASSERT NOT NULL` for materialized view resource [#341](https://github.com/MaterializeInc/terraform-provider-materialize/pull/341)
+
+### BugFixes
+
+### Misc
+* Update testing plugin [#345](https://github.com/MaterializeInc/terraform-provider-materialize/pull/345)
+
+### Breaking Changes
+* Update header attributes for `materialize_source_webhook`. Adds `include_header` and is now a complex type `include_headers` and no longer boolean [#346](https://github.com/MaterializeInc/terraform-provider-materialize/pull/346)
+
+## 0.2.0 - 2023-10-30
 
 ### Features
 
 ### BugFixes
 
 ### Misc
+
+### Breaking Changes
+* Provider configuration parameters so that they are consistent across all components [#339](https://github.com/MaterializeInc/terraform-provider-materialize/pull/339):
+    * The configuration variable `username` is changed to `user`
+    * The environment variable `MZ_PW` is changed to `MZ_PASSWORD`
 
 ## 0.1.14 - 2023-10-25
 

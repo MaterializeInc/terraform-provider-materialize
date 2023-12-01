@@ -14,14 +14,18 @@ import (
 )
 
 var inSourcePostgresTable = map[string]interface{}{
-	"name":                "source",
-	"schema_name":         "schema",
-	"database_name":       "database",
-	"cluster_name":        "cluster",
-	"size":                "small",
-	"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
-	"publication":         "mz_source",
-	"text_columns":        []interface{}{"table.unsupported_type_1"},
+	"name":          "source",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"cluster_name":  "cluster",
+	"size":          "small",
+	"postgres_connection": []interface{}{
+		map[string]interface{}{
+			"name": "pg_connection",
+		},
+	},
+	"publication":  "mz_source",
+	"text_columns": []interface{}{"table.unsupported_type_1"},
 	"table": []interface{}{
 		map[string]interface{}{"name": "name1", "alias": "alias"},
 		map[string]interface{}{"name": "name2"},
@@ -37,7 +41,7 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR TABLES \(name1 AS alias, name2 AS name2\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "materialize"."public"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR TABLES \(name1 AS alias, name2 AS name2\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -59,15 +63,19 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 }
 
 var inSourcePostgresSchema = map[string]interface{}{
-	"name":                "source",
-	"schema_name":         "schema",
-	"database_name":       "database",
-	"cluster_name":        "cluster",
-	"size":                "small",
-	"postgres_connection": []interface{}{map[string]interface{}{"name": "pg_connection"}},
-	"publication":         "mz_source",
-	"text_columns":        []interface{}{"table.unsupported_type_1"},
-	"schema":              []interface{}{"schema1", "schema2"},
+	"name":          "source",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"cluster_name":  "cluster",
+	"size":          "small",
+	"postgres_connection": []interface{}{
+		map[string]interface{}{
+			"name": "pg_connection",
+		},
+	},
+	"publication":  "mz_source",
+	"text_columns": []interface{}{"table.unsupported_type_1"},
+	"schema":       []interface{}{"schema1", "schema2"},
 }
 
 func TestResourceSourcePostgresCreateSchema(t *testing.T) {
@@ -78,7 +86,7 @@ func TestResourceSourcePostgresCreateSchema(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR SCHEMAS \(schema1, schema2\) WITH \(SIZE = 'small'\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "materialize"."public"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR SCHEMAS \(schema1, schema2\) WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -65,18 +65,18 @@ func TestAccGrantCluster_disappears(t *testing.T) {
 
 func testAccGrantClusterResource(roleName, clusterName, privilege string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%s"
-}
+	resource "materialize_role" "test" {
+		name = "%s"
+	}
 
-resource "materialize_cluster" "cluster" {
-	name = "%s"
-}
+	resource "materialize_cluster" "cluster" {
+		name = "%s"
+	}
 
-resource "materialize_cluster_grant" "cluster_grant" {
-	role_name    = materialize_role.test.name
-	privilege    = "%s"
-	cluster_name = materialize_cluster.cluster.name
-}
-`, roleName, clusterName, privilege)
+	resource "materialize_cluster_grant" "cluster_grant" {
+		role_name    = materialize_role.test.name
+		privilege    = "%s"
+		cluster_name = materialize_cluster.cluster.name
+	}
+	`, roleName, clusterName, privilege)
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// https://materialize.com/docs/sql/create-secret/
+
 var secret = MaterializeObject{Name: "secret", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSecretCreate(t *testing.T) {

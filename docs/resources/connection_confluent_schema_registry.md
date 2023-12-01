@@ -71,8 +71,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The aws_privatelink database name.
-- `schema_name` (String) The aws_privatelink schema name.
+- `database_name` (String) The aws_privatelink database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The aws_privatelink schema name. Defaults to `public`.
 
 
 <a id="nestedblock--password"></a>
@@ -84,8 +84,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The password database name.
-- `schema_name` (String) The password schema name.
+- `database_name` (String) The password database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The password schema name. Defaults to `public`.
 
 
 <a id="nestedblock--ssh_tunnel"></a>
@@ -97,8 +97,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The ssh_tunnel database name.
-- `schema_name` (String) The ssh_tunnel schema name.
+- `database_name` (String) The ssh_tunnel database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssh_tunnel schema name. Defaults to `public`.
 
 
 <a id="nestedblock--ssl_certificate"></a>
@@ -118,8 +118,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The ssl_certificate database name.
-- `schema_name` (String) The ssl_certificate schema name.
+- `database_name` (String) The ssl_certificate database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssl_certificate schema name. Defaults to `public`.
 
 
 
@@ -140,8 +140,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The ssl_certificate_authority database name.
-- `schema_name` (String) The ssl_certificate_authority schema name.
+- `database_name` (String) The ssl_certificate_authority database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssl_certificate_authority schema name. Defaults to `public`.
 
 
 
@@ -154,8 +154,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The ssl_key database name.
-- `schema_name` (String) The ssl_key schema name.
+- `database_name` (String) The ssl_key database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssl_key schema name. Defaults to `public`.
 
 
 <a id="nestedblock--username"></a>
@@ -175,8 +175,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The username database name.
-- `schema_name` (String) The username schema name.
+- `database_name` (String) The username database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The username schema name. Defaults to `public`.
 
 ## Import
 

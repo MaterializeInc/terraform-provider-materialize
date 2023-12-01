@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
@@ -38,6 +38,7 @@ func TestAccConnPostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "comment", "object comment"),
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test_role", "name", connection2Name),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test_role", "ownership_role", roleName),
@@ -134,6 +135,7 @@ resource "materialize_connection_postgres" "test" {
 		database_name = materialize_secret.postgres_password.database_name
 	}
 	database = "postgres"
+	comment  = "object comment"
 }
 
 resource "materialize_connection_postgres" "test_role" {

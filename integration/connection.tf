@@ -1,27 +1,89 @@
 resource "materialize_connection_kafka" "kafka_connection" {
-  name    = "kafka_connection"
-  comment = "connection kafka comment"
+  name              = "kafka_connection"
+  comment           = "connection kafka comment"
+  security_protocol = "PLAINTEXT"
 
   kafka_broker {
     broker = "redpanda:9092"
   }
+  validate = true
 }
 
-resource "materialize_connection_confluent_schema_registry" "schema_registry" {
-  name    = "schema_registry_connection"
-  comment = "connection schema registry comment"
+resource "materialize_connection_kafka" "kafka_conn_ssl_auth" {
+  name              = "kafka_conn_ssl_auth"
+  security_protocol = "SSL"
 
-  url = "http://redpanda:8081"
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+
+  ssl_certificate {
+    text = "certificate-content"
+  }
+
+  ssl_key {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  ssl_certificate_authority {
+    text = "ca-content"
+  }
+
+  validate = false
 }
 
-resource "materialize_connection_ssh_tunnel" "ssh_connection" {
-  name        = "ssh_connection"
-  schema_name = "public"
-  comment     = "connection ssh tunnel comment"
+resource "materialize_connection_kafka" "kafka_ssh_tunnel_connection" {
+  name              = "kafka_ssh_tunnel_connection"
+  security_protocol = "PLAINTEXT"
 
-  host = "ssh_host"
-  user = "ssh_user"
-  port = 22
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+
+  ssh_tunnel {
+    name = materialize_connection_ssh_tunnel.ssh_connection.name
+  }
+
+  validate = false
+}
+
+resource "materialize_connection_kafka" "kafka_sasl_ssl" {
+  name              = "kafka_sasl_ssl"
+  security_protocol = "SASL_SSL"
+
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+
+  sasl_mechanisms = "SCRAM-SHA-256"
+
+  sasl_username {
+    text = "sasl_username"
+  }
+
+  sasl_password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  ssl_certificate {
+    text = "ssl_certificate_content"
+  }
+
+  ssl_key {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  ssl_certificate_authority {
+    text = "ssl_ca_content"
+  }
+
+  validate = false
 }
 
 resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
@@ -40,9 +102,86 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
     database_name = materialize_secret.kafka_password.database_name
     schema_name   = materialize_secret.kafka_password.schema_name
   }
-  sasl_mechanisms = "SCRAM-SHA-256"
-  progress_topic  = "progress_topic"
-  validate        = false
+  security_protocol = "SASL_PLAINTEXT"
+  sasl_mechanisms   = "SCRAM-SHA-256"
+  progress_topic    = "progress_topic"
+  validate          = false
+}
+
+resource "materialize_connection_confluent_schema_registry" "schema_registry" {
+  name    = "schema_registry_connection"
+  comment = "connection schema registry comment"
+
+  url = "http://redpanda:8081"
+}
+
+resource "materialize_connection_confluent_schema_registry" "csr_with_basic_auth" {
+  name = "csr_with_basic_auth"
+  url  = "http://redpanda:8081"
+
+  username {
+    text = "username"
+  }
+
+  password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  validate = false
+}
+
+resource "materialize_connection_confluent_schema_registry" "schema_registry_basic_auth_ssl" {
+  name = "schema_registry_basic_auth_ssl"
+  url  = "http://redpanda:8081"
+
+  username {
+    text = "schema_registry_user"
+  }
+
+  password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  ssl_certificate {
+    text = "ssl_certificate_content"
+  }
+
+  ssl_key {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  ssl_certificate_authority {
+    text = "ssl_ca_content" #
+  }
+
+  validate = false
+}
+
+resource "materialize_connection_confluent_schema_registry" "schema_registry_ssh_tunnel" {
+  name = "schema_registry_ssh_tunnel"
+  url  = "http://redpanda:8081"
+
+  ssh_tunnel {
+    name = materialize_connection_ssh_tunnel.ssh_connection.name
+  }
+
+  validate = false
+}
+
+resource "materialize_connection_ssh_tunnel" "ssh_connection" {
+  name        = "ssh_connection"
+  schema_name = "public"
+  comment     = "connection ssh tunnel comment"
+
+  host = "ssh_host"
+  user = "ssh_user"
+  port = 22
 }
 
 resource "materialize_connection_postgres" "postgres_connection" {
@@ -79,6 +218,53 @@ resource "materialize_connection_postgres" "postgres_connection_with_secret" {
     schema_name   = materialize_secret.postgres_password.schema_name
   }
   database = "postgres"
+  validate = false
+}
+
+resource "materialize_connection_postgres" "postgres_ssh_tunnel_connection" {
+  name     = "postgres_ssh_tunnel_connection"
+  host     = "postgres"
+  port     = 5432
+  database = "postgres"
+  user {
+    text = "postgres"
+  }
+  password {
+    name          = materialize_secret.postgres_password.name
+    database_name = materialize_secret.postgres_password.database_name
+    schema_name   = materialize_secret.postgres_password.schema_name
+  }
+  ssh_tunnel {
+    name = materialize_connection_ssh_tunnel.ssh_connection.name
+  }
+  validate = false
+}
+
+resource "materialize_connection_postgres" "postgres_ssl_connection" {
+  name     = "postgres_ssl_connection"
+  host     = "postgres"
+  port     = 5432
+  database = "postgres"
+  user {
+    text = "postgres"
+  }
+  password {
+    name          = materialize_secret.postgres_password.name
+    database_name = materialize_secret.postgres_password.database_name
+    schema_name   = materialize_secret.postgres_password.schema_name
+  }
+  ssl_mode = "require"
+  ssl_certificate {
+    text = "client_certificate_content"
+  }
+  ssl_key {
+    name          = materialize_secret.postgres_password.name
+    database_name = materialize_secret.postgres_password.database_name
+    schema_name   = materialize_secret.postgres_password.schema_name
+  }
+  ssl_certificate_authority {
+    text = "ca_certificate_content"
+  }
   validate = false
 }
 

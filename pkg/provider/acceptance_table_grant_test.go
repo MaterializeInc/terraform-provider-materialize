@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 

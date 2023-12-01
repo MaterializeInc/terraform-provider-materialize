@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -25,9 +25,6 @@ func TestAccGrantTableDefaultPrivilege_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test", "target_role_name", targetName),
 					resource.TestCheckNoResourceAttr("materialize_table_grant_default_privilege.test", "schema_name"),
 					resource.TestCheckNoResourceAttr("materialize_table_grant_default_privilege.test", "database_name"),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_all", "grantee_name", granteeName),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_all", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_all", "target_role_name", "PUBLIC"),
 				),
 			},
 		},
@@ -70,12 +67,6 @@ resource "materialize_table_grant_default_privilege" "test" {
 	grantee_name     = materialize_role.test_grantee.name
 	privilege        = "%[3]s"
 	target_role_name = materialize_role.test_target.name
-}
-
-resource "materialize_table_grant_default_privilege" "test_all" {
-	grantee_name     = materialize_role.test_grantee.name
-	privilege        = "%[3]s"
-	target_role_name = "PUBLIC"
 }
 `, granteeName, targetName, privilege)
 }

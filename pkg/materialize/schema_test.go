@@ -8,6 +8,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// https://materialize.com/docs/sql/create-schema/
+
 func TestSchemaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

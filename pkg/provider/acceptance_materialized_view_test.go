@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
@@ -14,15 +14,13 @@ import (
 
 func TestAccMaterializedView_basic(t *testing.T) {
 	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	view2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName, "default"),
+				Config: testAccMaterializedViewResource(viewName, viewName, "default", "mz_system", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
@@ -32,8 +30,9 @@ func TestAccMaterializedView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "statement", "SELECT 1 AS id"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "ownership_role", "mz_system"),
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test_role"),
-					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "name", view2Name),
-					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "name", viewName+"_role"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "comment", "Comment"),
 				),
 			},
 			{
@@ -47,30 +46,37 @@ func TestAccMaterializedView_basic(t *testing.T) {
 }
 
 func TestAccMaterializedView_update(t *testing.T) {
-	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
-	viewName := fmt.Sprintf("old_%s", slug)
-	newViewName := fmt.Sprintf("new_%s", slug)
-	view2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	viewName := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
+	newViewName := fmt.Sprintf("new_%s", viewName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, "mz_system", "default"),
-			},
-			{
-				Config: testAccMaterializedViewResource(roleName, newViewName, view2Name, roleName, "new_cluster"),
+				Config: testAccMaterializedViewResource(viewName, viewName, "default", "mz_system", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
-					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", newViewName),
+					testAccCheckMaterializedViewExists("materialize_materialized_view.test_role"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "cluster_name", "default"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "comment", "Comment"),
+				),
+			},
+			{
+				Config: testAccMaterializedViewResource(viewName, newViewName, viewName+"_cluster", viewName+"_role", "New Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newViewName)),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "statement", "SELECT 1 AS id"),
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test_role"),
-					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "name", newViewName+"_role"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "cluster_name", viewName+"_cluster"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "ownership_role", viewName+"_role"),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "comment", "New Comment"),
 				),
 			},
 		},
@@ -79,15 +85,13 @@ func TestAccMaterializedView_update(t *testing.T) {
 
 func TestAccMaterializedView_disappears(t *testing.T) {
 	viewName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	view2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckAllMaterializedViewsDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName, "default"),
+				Config: testAccMaterializedViewResource(viewName, viewName, "default", "mz_system", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
@@ -104,34 +108,34 @@ func TestAccMaterializedView_disappears(t *testing.T) {
 	})
 }
 
-func testAccMaterializedViewResource(roleName, materializeViewName, materializeView2Name, materializeViewOwner, clusterName string) string {
+func testAccMaterializedViewResource(baseName, newMaterializeViewName, clusterName, materializeViewOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s_role"
+	}
 
-resource "materialize_materialized_view" "test" {
-	name = "%[2]s"
-	statement = "SELECT 1 AS id"
-	cluster_name = "default"
-	not_null_assertion = ["id"]
-}
+	resource "materialize_cluster" "test" {
+		name = "%[1]s_cluster"
+		size = "3xsmall"
+	}
 
-resource "materialize_cluster" "test" {
-	name = "new_cluster"
-	size = "3xsmall"
-	replication_factor = 1
-}
+	resource "materialize_materialized_view" "test" {
+		name = "%[1]s"
+		statement = "SELECT 1 AS id"
+		cluster_name = "default"
+		not_null_assertion = ["id"]
+	}
 
-resource "materialize_materialized_view" "test_role" {
-	name = "%[3]s"
-	statement = "SELECT 1 AS id"
-	cluster_name = "%[5]s"
-	ownership_role = "%[4]s"
+	resource "materialize_materialized_view" "test_role" {
+		name = "%[2]s_role"
+		statement = "SELECT 1 AS id"
+		cluster_name = "%[3]s"
+		ownership_role = "%[4]s"
+		comment = "%[5]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, materializeViewName, materializeView2Name, materializeViewOwner, clusterName)
+		depends_on = [materialize_role.test, materialize_cluster.test]
+	}
+`, baseName, newMaterializeViewName, clusterName, materializeViewOwner, comment)
 }
 
 func testAccCheckMaterializedViewExists(name string) resource.TestCheckFunc {
@@ -161,6 +165,5 @@ func testAccCheckAllMaterializedViewsDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

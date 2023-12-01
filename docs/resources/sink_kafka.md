@@ -64,6 +64,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
+- `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness.
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the sink schema. Defaults to `public`.
 - `size` (String) The size of the sink. If not specified, the `cluster_name` option must be specified.
@@ -83,8 +84,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The from database name.
-- `schema_name` (String) The from schema name.
+- `database_name` (String) The from database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The from schema name. Defaults to `public`.
 
 
 <a id="nestedblock--kafka_connection"></a>
@@ -96,8 +97,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The kafka_connection database name.
-- `schema_name` (String) The kafka_connection schema name.
+- `database_name` (String) The kafka_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The kafka_connection schema name. Defaults to `public`.
 
 
 <a id="nestedblock--envelope"></a>
@@ -138,8 +139,8 @@ Required:
 
 Optional:
 
-- `database_name` (String) The schema_registry_connection database name.
-- `schema_name` (String) The schema_registry_connection schema name.
+- `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
 
 ## Import
 

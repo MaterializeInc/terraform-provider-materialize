@@ -27,11 +27,13 @@ var tableSchema = map[string]*schema.Schema{
 					Description: "The name of the column to be created in the table.",
 					Type:        schema.TypeString,
 					Required:    true,
+					ForceNew:    true,
 				},
 				"type": {
 					Description: "The data type of the column indicated by name.",
 					Type:        schema.TypeString,
 					Required:    true,
+					ForceNew:    true,
 					StateFunc: func(val any) string {
 						alias, ok := aliases[val.(string)]
 						if ok {
@@ -41,15 +43,23 @@ var tableSchema = map[string]*schema.Schema{
 					},
 				},
 				"nullable": {
-					Description: "Do not allow the column to contain NULL values. Columns without this constraint can contain NULL values.",
+					Description: "Do not allow the column to contain `NULL` values. Columns without this constraint can contain `NULL` values.",
 					Type:        schema.TypeBool,
+					ForceNew:    true,
 					Optional:    true,
 					Default:     false,
+				},
+				"default": {
+					Description: "A default value to use for the column in an INSERT statement if an explicit value is not provided. If not specified, `NULL` is assumed..",
+					Type:        schema.TypeString,
+					ForceNew:    true,
+					Optional:    true,
+					Default:     "NULL",
 				},
 				"comment": CommentSchema(false),
 			},
 		},
-		Optional: true,
+		Required: true,
 		MinItems: 1,
 		ForceNew: true,
 	},
@@ -119,7 +129,13 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 	var tc []interface{}
 	for _, t := range tableColumns {
-		column := map[string]interface{}{"name": t.Name.String, "type": t.Type.String, "nullable": !t.Nullable.Bool, "comment": t.Comment.String}
+		column := map[string]interface{}{
+			"name":     t.Name.String,
+			"type":     t.Type.String,
+			"nullable": !t.Nullable.Bool,
+			"default":  t.Default.String,
+			"comment":  t.Comment.String,
+		}
 		tc = append(tc, column)
 	}
 	if err := d.Set("column", tc); err != nil {
@@ -232,15 +248,22 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-	if d.HasChange("columns") {
-		_, newColumns := d.GetChange("columns")
-		columns := materialize.GetTableColumnStruct(newColumns.([]interface{}))
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+	if d.HasChange("column") {
+		oldColumns, newColumns := d.GetChange("column")
+		oldColumnsList := oldColumns.([]interface{})
+		newColumnsList := newColumns.([]interface{})
 
-		// Reset all comments if change present
-		for _, c := range columns {
-			if c.Comment != "" {
-				if err := comment.Column(c.ColName, c.Comment); err != nil {
+		for index, newColMap := range newColumnsList {
+			newCol := newColMap.(map[string]interface{})
+			oldCol := oldColumnsList[index].(map[string]interface{})
+
+			// Check specifically if the column comment has changed.
+			if newCol["comment"] != oldCol["comment"] {
+				// Apply the comment change
+				comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+				colName := newCol["name"].(string)
+				colComment := newCol["comment"].(string)
+				if err := comment.Column(colName, colComment); err != nil {
 					return diag.FromErr(err)
 				}
 			}

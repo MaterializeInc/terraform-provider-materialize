@@ -49,6 +49,7 @@ resource "materialize_type" "map_type" {
 - `list_properties` (Block List, Max: 1) List properties. (see [below for nested schema](#nestedblock--list_properties))
 - `map_properties` (Block List, Max: 1) Map properties. (see [below for nested schema](#nestedblock--map_properties))
 - `ownership_role` (String) The owernship role of the object.
+- `row_properties` (Block List) Row properties. (see [below for nested schema](#nestedblock--row_properties))
 - `schema_name` (String) The identifier for the type schema. Defaults to `public`.
 
 ### Read-Only
@@ -72,6 +73,15 @@ Required:
 
 - `key_type` (String) Creates a custom map whose keys are of `KEY TYPE`. `KEY TYPE` must resolve to text.
 - `value_type` (String) Creates a custom map whose values are of `VALUE TYPE`.
+
+
+<a id="nestedblock--row_properties"></a>
+### Nested Schema for `row_properties`
+
+Required:
+
+- `field_name` (String) The name of a field in a row type.
+- `field_type` (String) The data type of a field indicated by `FIELD NAME`.
 
 ## Import
 

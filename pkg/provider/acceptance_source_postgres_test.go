@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
@@ -24,7 +24,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName),
@@ -40,9 +40,41 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, connName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "comment", ""),
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "name", source2Name),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "comment", "Comment"),
+				),
+			},
+			{
+				ResourceName:      "materialize_source_postgres.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func TestAccSourcePostgresSchema_basic(t *testing.T) {
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourcePostgresResourceSchema(sourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "cluster_name", sourceName+"_cluster"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.0", "PUBLIC"),
 				),
 			},
 			{
@@ -68,32 +100,46 @@ func TestAccSourcePostgres_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, "mz_system"),
-			},
-			{
-				Config: testAccSourcePostgresResourceUpdate(roleName, secretName, connName, newSourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, "mz_system", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
+					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table2"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "comment", "Comment"),
+				),
+			},
+			{
+				Config: testAccSourcePostgresResourceUpdate(roleName, secretName, connName, newSourceName, source2Name, roleName, "New Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
+					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", newSourceName),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, connName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table3"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table3`, connName)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "comment", "New Comment"),
 				),
 			},
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, newSourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, newSourceName, source2Name, roleName, "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
+					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, connName)),
@@ -115,7 +161,7 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSourcePostgresDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName),
+				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
 					testAccCheckObjectDisappears(
@@ -131,140 +177,183 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 	})
 }
 
-func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, sourceOwner string) string {
+func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, sourceOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
+
+	resource "materialize_secret" "postgres_password" {
+		name  = "%[2]s"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_postgres" "test" {
+		name = "%[3]s"
+		host = "postgres"
+		port = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name          = materialize_secret.postgres_password.name
+			schema_name   = materialize_secret.postgres_password.schema_name
+			database_name = materialize_secret.postgres_password.database_name
+		}
+		database = "postgres"
+	}
+
+	resource "materialize_source_postgres" "test" {
+		name = "%[4]s"
+		postgres_connection {
+			name = materialize_connection_postgres.test.name
+		}
+
+		size  = "3xsmall"
+		publication = "mz_source"
+		table {
+			name  = "table1"
+			alias = "%[3]s_table1"
+		}
+		table {
+			name  = "table2"
+			alias = "%[3]s_table2"
+		}
+		text_columns = ["table1.id"]
+	}
+
+	resource "materialize_source_postgres" "test_role" {
+		name = "%[5]s"
+		postgres_connection {
+			name = materialize_connection_postgres.test.name
+		}
+
+		size  = "3xsmall"
+		publication = "mz_source"
+		table {
+			name  = "table1"
+			alias = "%[3]s_table_role_1"
+		}
+		table {
+			name  = "table2"
+			alias = "%[3]s_table_role_2"
+		}
+		ownership_role = "%[6]s"
+		comment = "%[7]s"
+
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, secretName, connName, sourceName, source2Name, sourceOwner, comment)
 }
 
-resource "materialize_secret" "postgres_password" {
-	name  = "%[2]s"
-	value = "c2VjcmV0Cg=="
-}
-
-resource "materialize_connection_postgres" "test" {
-	name = "%[3]s"
-	host = "postgres"
-	port = 5432
-	user {
-		text = "postgres"
-	}
-	password {
-		name          = materialize_secret.postgres_password.name
-		schema_name   = materialize_secret.postgres_password.schema_name
-		database_name = materialize_secret.postgres_password.database_name
-	}
-	database = "postgres"
-}
-
-resource "materialize_source_postgres" "test" {
-	name = "%[4]s"
-	postgres_connection {
-		name = materialize_connection_postgres.test.name
-	}
-
-	size  = "3xsmall"
-	publication = "mz_source"
-	table {
-		name  = "table1"
-		alias = "%[3]s_table1"
-	}
-	table {
-		name  = "table2"
-		alias = "%[3]s_table2"
-	}
-	text_columns = ["table1.id"]
-}
-
-resource "materialize_source_postgres" "test_role" {
-	name = "%[5]s"
-	postgres_connection {
-		name = materialize_connection_postgres.test.name
-	}
-
-	size  = "3xsmall"
-	publication = "mz_source"
-	table {
-		name  = "table1"
-		alias = "%[3]s_table_role_1"
-	}
-	table {
-		name  = "table2"
-		alias = "%[3]s_table_role_2"
-	}
-	ownership_role = "%[6]s"
-
-	depends_on = [materialize_role.test]
-}
-`, roleName, secretName, connName, sourceName, source2Name, sourceOwner)
-}
-
-func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceName, source2Name, sourceOwner string) string {
+func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceName, source2Name, sourceOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
+
+	resource "materialize_secret" "postgres_password" {
+		name          = "%[2]s"
+		value         = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_postgres" "test" {
+		name = "%[3]s"
+		host = "postgres"
+		port = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name          = materialize_secret.postgres_password.name
+			schema_name   = materialize_secret.postgres_password.schema_name
+			database_name = materialize_secret.postgres_password.database_name
+		}
+		database = "postgres"
+	}
+
+	resource "materialize_source_postgres" "test" {
+		name = "%[4]s"
+		postgres_connection {
+			name = materialize_connection_postgres.test.name
+		}
+
+		size  = "3xsmall"
+		publication = "mz_source"
+		table {
+			name  = "table1"
+			alias = "%[3]s_table1"
+		}
+		table {
+			name  = "table3"
+			alias = "%[3]s_table3"
+		}
+		text_columns = ["table1.id", "table3.id"]
+	}
+
+	resource "materialize_source_postgres" "test_role" {
+		name = "%[5]s"
+		postgres_connection {
+			name = materialize_connection_postgres.test.name
+		}
+
+		size  = "3xsmall"
+		publication = "mz_source"
+		table {
+			name  = "table1"
+			alias = "%[3]s_table_role_1"
+		}
+		table {
+			name  = "table2"
+			alias = "%[3]s_table_role_2"
+		}
+		ownership_role = "%[6]s"
+		comment = "%[7]s"
+
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, secretName, connName, sourceName, source2Name, sourceOwner, comment)
 }
 
-resource "materialize_secret" "postgres_password" {
-	name          = "%[2]s"
-	value         = "c2VjcmV0Cg=="
-}
-
-resource "materialize_connection_postgres" "test" {
-	name = "%[3]s"
-	host = "postgres"
-	port = 5432
-	user {
-		text = "postgres"
-	}
-	password {
-		name          = materialize_secret.postgres_password.name
-		schema_name   = materialize_secret.postgres_password.schema_name
-		database_name = materialize_secret.postgres_password.database_name
-	}
-	database = "postgres"
-}
-
-resource "materialize_source_postgres" "test" {
-	name = "%[4]s"
-	postgres_connection {
-		name = materialize_connection_postgres.test.name
+func testAccSourcePostgresResourceSchema(sourceName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "test" {
+		name          = "%[1]s_secret"
+		value         = "c2VjcmV0Cg=="
 	}
 
-	size  = "3xsmall"
-	publication = "mz_source"
-	table {
-		name  = "table1"
-		alias = "%[3]s_table1"
-	}
-	table {
-		name  = "table3"
-		alias = "%[3]s_table3"
-	}
-	text_columns = ["table1.id", "table3.id"]
-}
-
-resource "materialize_source_postgres" "test_role" {
-	name = "%[5]s"
-	postgres_connection {
-		name = materialize_connection_postgres.test.name
+	resource "materialize_cluster" "test" {
+		name               = "%[1]s_cluster"
+		size               = "3xsmall"
 	}
 
-	size  = "3xsmall"
-	publication = "mz_source"
-	table {
-		name  = "table1"
-		alias = "%[3]s_table_role_1"
+	resource "materialize_connection_postgres" "test" {
+		name = "%[1]s_conn"
+		host = "postgres"
+		port = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name          = materialize_secret.test.name
+			schema_name   = materialize_secret.test.schema_name
+			database_name = materialize_secret.test.database_name
+		}
+		database = "postgres"
 	}
-	table {
-		name  = "table2"
-		alias = "%[3]s_table_role_2"
-	}
-	ownership_role = "%[6]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, secretName, connName, sourceName, source2Name, sourceOwner)
+	resource "materialize_source_postgres" "test" {
+		name = "%[1]s_source"
+		cluster_name = materialize_cluster.test.name
+		postgres_connection {
+			name          = materialize_connection_postgres.test.name
+			schema_name   = materialize_connection_postgres.test.schema_name
+			database_name = materialize_connection_postgres.test.database_name
+		}
+		publication = "mz_source"
+		schema      = ["PUBLIC"]
+	}
+	`, sourceName)
 }
 
 func testAccCheckSourcePostgresExists(name string) resource.TestCheckFunc {
@@ -294,6 +383,5 @@ func testAccCheckAllSourcePostgresDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

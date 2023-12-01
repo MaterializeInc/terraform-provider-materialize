@@ -123,26 +123,23 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"start_offset": {
-		Description: "Read partitions from the specified offset.",
-		Type:        schema.TypeList,
-		Elem:        &schema.Schema{Type: schema.TypeInt},
-		Optional:    true,
-		ForceNew:    true,
+		Description:   "Read partitions from the specified offset.",
+		Type:          schema.TypeList,
+		Elem:          &schema.Schema{Type: schema.TypeInt},
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"start_timestamp"},
 	},
 	"start_timestamp": {
-		Description: "Use the specified value to set \"START OFFSET\" based on the Kafka timestamp.",
-		Type:        schema.TypeInt,
-		Optional:    true,
-		ForceNew:    true,
+		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp.",
+		Type:          schema.TypeInt,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"start_offset"},
 	},
-	"expose_progress": {
-		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"subsource":      SubsourceSchema(),
-	"ownership_role": OwnershipRoleSchema(),
+	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
+	"subsource":       SubsourceSchema(),
+	"ownership_role":  OwnershipRoleSchema(),
 }
 
 func SourceKafka() *schema.Resource {
@@ -179,7 +176,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(databaseName, schemaName, v)
+		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.KafkaConnection(conn)
 	}
 
@@ -257,7 +254,8 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
-		b.ExposeProgress(v.(string))
+		e := materialize.GetIdentifierSchemaStruct(v)
+		b.ExposeProgress(e)
 	}
 
 	// create resource

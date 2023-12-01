@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
@@ -22,7 +22,7 @@ func TestAccSecret_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, roleName),
+				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
 					resource.TestCheckResourceAttr("materialize_secret.test", "name", secretName),
@@ -34,6 +34,7 @@ func TestAccSecret_basic(t *testing.T) {
 					testAccCheckSecretExists("materialize_secret.test_role"),
 					resource.TestCheckResourceAttr("materialize_secret.test_role", "name", secret2Name),
 					resource.TestCheckResourceAttr("materialize_secret.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_secret.test_role", "comment", "Comment"),
 				),
 			},
 			{
@@ -58,10 +59,17 @@ func TestAccSecret_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, "mz_system"),
+				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, "mz_system", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecretExists("materialize_secret.test"),
+					testAccCheckSecretExists("materialize_secret.test_role"),
+					resource.TestCheckResourceAttr("materialize_secret.test", "value", "sekret"),
+					resource.TestCheckResourceAttr("materialize_secret.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_secret.test_role", "comment", "Comment"),
+				),
 			},
 			{
-				Config: testAccSecretResource(roleName, newSecretName, "sek", secret2Name, roleName),
+				Config: testAccSecretResource(roleName, newSecretName, "sek", secret2Name, roleName, "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
 					resource.TestCheckResourceAttr("materialize_secret.test", "name", newSecretName),
@@ -87,7 +95,7 @@ func TestAccSecret_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllSecretsDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, roleName),
+				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
 					testAccCheckObjectDisappears(
@@ -103,25 +111,26 @@ func TestAccSecret_disappears(t *testing.T) {
 	})
 }
 
-func testAccSecretResource(roleName, secretName, secretValue, secret2Name, secretOwner string) string {
+func testAccSecretResource(roleName, secretName, secretValue, secret2Name, secretOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_secret" "test" {
-	name = "%[2]s"
-	value = "%[3]s"
-}
+	resource "materialize_secret" "test" {
+		name = "%[2]s"
+		value = "%[3]s"
+	}
 
-resource "materialize_secret" "test_role" {
-	name = "%[4]s"
-	value = "%[3]s"
-	ownership_role = "%[5]s"
+	resource "materialize_secret" "test_role" {
+		name = "%[4]s"
+		value = "%[3]s"
+		ownership_role = "%[5]s"
+		comment = "%[6]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, secretName, secretValue, secret2Name, secretOwner)
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, secretName, secretValue, secret2Name, secretOwner, comment)
 }
 
 func testAccCheckSecretExists(name string) resource.TestCheckFunc {
@@ -151,6 +160,5 @@ func testAccCheckAllSecretsDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

@@ -18,7 +18,7 @@ var (
 func main() {
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() *schema.Provider {
-			return provider.Provider()
+			return provider.Provider(version)
 		},
 	})
 }

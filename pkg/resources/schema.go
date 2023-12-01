@@ -101,14 +101,16 @@ func IdentifierSchema(elem, description string, required bool) *schema.Schema {
 					Required:    true,
 				},
 				"schema_name": {
-					Description: fmt.Sprintf("The %s schema name.", elem),
+					Description: fmt.Sprintf("The %s schema name. Defaults to `public`.", elem),
 					Type:        schema.TypeString,
 					Optional:    true,
+					Default:     defaultSchema,
 				},
 				"database_name": {
-					Description: fmt.Sprintf("The %s database name.", elem),
+					Description: fmt.Sprintf("The %s database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.", elem),
 					Type:        schema.TypeString,
 					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", defaultDatabase),
 				},
 			},
 		},

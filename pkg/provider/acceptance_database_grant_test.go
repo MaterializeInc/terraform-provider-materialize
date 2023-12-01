@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -71,18 +71,18 @@ func TestAccGrantDatabase_disappears(t *testing.T) {
 
 func testAccGrantDatabaseResource(roleName, databaseName, privilege string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%s"
-}
+	resource "materialize_role" "test" {
+		name = "%s"
+	}
 
-resource "materialize_database" "test" {
-	name = "%s"
-}
+	resource "materialize_database" "test" {
+		name = "%s"
+	}
 
-resource "materialize_database_grant" "database_grant" {
-	role_name     = materialize_role.test.name
-	privilege     = "%s"
-	database_name = materialize_database.test.name
-}
-`, roleName, databaseName, privilege)
+	resource "materialize_database_grant" "database_grant" {
+		role_name     = materialize_role.test.name
+		privilege     = "%s"
+		database_name = materialize_database.test.name
+	}
+	`, roleName, databaseName, privilege)
 }

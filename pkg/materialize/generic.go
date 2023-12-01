@@ -1,9 +1,11 @@
 package materialize
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
+	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -34,9 +36,26 @@ type Builder struct {
 }
 
 func (b *Builder) exec(statement string) error {
+	if statement[len(statement)-1:] != ";" {
+		statement += ";"
+	}
+
 	_, err := b.conn.Exec(statement)
 	if err != nil {
 		log.Printf("[DEBUG] error executing: %s", statement)
+		var pgErr pgx.PgError
+		pgErr, ok := err.(pgx.PgError)
+		if ok {
+			msg := fmt.Sprintf("%s: %s", pgErr.Severity, pgErr.Message)
+			if pgErr.Detail != "" {
+				msg += fmt.Sprintf(" DETAIL: %s", pgErr.Detail)
+			}
+			if pgErr.Hint != "" {
+				msg += fmt.Sprintf(" HINT: %s", pgErr.Hint)
+			}
+			msg += fmt.Sprintf(" (SQLSTATE %s)", pgErr.SQLState())
+			return errors.New(msg)
+		}
 		return err
 	}
 

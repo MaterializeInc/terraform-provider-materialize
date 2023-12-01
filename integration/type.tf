@@ -1,3 +1,33 @@
+resource "materialize_type" "row_type" {
+  name          = "row_type"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  row_properties {
+    field_name = "a"
+    field_type = "int4"
+  }
+  row_properties {
+    field_name = "b"
+    field_type = "text"
+  }
+}
+
+resource "materialize_type" "row_nested_type" {
+  name          = "nested_row_type"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  row_properties {
+    field_name = "a"
+    field_type = materialize_type.row_type.qualified_sql_name
+  }
+  row_properties {
+    field_name = "b"
+    field_type = "float8"
+  }
+}
+
 resource "materialize_type" "list_type" {
   name          = "int4_list"
   schema_name   = materialize_schema.schema.name
@@ -5,6 +35,16 @@ resource "materialize_type" "list_type" {
 
   list_properties {
     element_type = "int4"
+  }
+}
+
+resource "materialize_type" "list_nested_type" {
+  name          = "int4_nested_list"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  list_properties {
+    element_type = materialize_type.list_type.qualified_sql_name
   }
 }
 
@@ -16,6 +56,17 @@ resource "materialize_type" "map_type" {
   map_properties {
     key_type   = "text"
     value_type = "int4"
+  }
+}
+
+resource "materialize_type" "map_nested_type" {
+  name          = "int4_nested_map"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  map_properties {
+    key_type   = "text"
+    value_type = materialize_type.map_type.qualified_sql_name
   }
 }
 

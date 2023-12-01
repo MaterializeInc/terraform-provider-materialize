@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -97,6 +97,7 @@ resource "materialize_connection_kafka" "test" {
 	kafka_broker {
 	  broker = "redpanda:9092"
 	}
+	security_protocol = "PLAINTEXT"
 }
 
 resource "materialize_connection_grant" "connection_grant" {

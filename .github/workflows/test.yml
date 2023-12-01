@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - pkg/**
+      - main.go
+      - go.mod
 
 jobs:
   test:
@@ -12,8 +14,7 @@ jobs:
 
       - uses: actions/setup-go@v4
         with:
-          go-version: 1.19
-
-      - run: go mod download
+          go-version-file: "go.mod"
+          cache: true
 
       - run: go test -v -cover ./...

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
@@ -26,14 +26,16 @@ func TestAccDatabase_basic(t *testing.T) {
 				CheckDestroy:      nil,
 				Steps: []resource.TestStep{
 					{
-						Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName),
+						Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName, "Comment"),
 						Check: resource.ComposeTestCheckFunc(
 							testAccCheckDatabaseExists("materialize_database.test"),
+							testAccCheckDatabaseExists("materialize_database.test_role"),
 							resource.TestCheckResourceAttr("materialize_database.test", "name", databaseName),
 							resource.TestCheckResourceAttr("materialize_database.test", "ownership_role", "mz_system"),
 							testAccCheckDatabaseExists("materialize_database.test_role"),
 							resource.TestCheckResourceAttr("materialize_database.test_role", "name", database2Name),
 							resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", roleName),
+							resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "Comment"),
 						),
 					},
 					{
@@ -47,6 +49,37 @@ func TestAccDatabase_basic(t *testing.T) {
 	}
 }
 
+func TestAccDatabase_update(t *testing.T) {
+	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	database2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDatabaseResource(roleName, databaseName, database2Name, "mz_system", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDatabaseExists("materialize_database.test"),
+					testAccCheckDatabaseExists("materialize_database.test_role"),
+					resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "Comment"),
+				),
+			},
+			{
+				Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName, "New Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDatabaseExists("materialize_database.test"),
+					testAccCheckDatabaseExists("materialize_database.test_role"),
+					resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "New Comment"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDatabase_disappears(t *testing.T) {
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	database2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -57,9 +90,10 @@ func TestAccDatabase_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllDatabasesDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName),
+				Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatabaseExists("materialize_database.test"),
+					testAccCheckDatabaseExists("materialize_database.test_role"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
 							ObjectType: "DATABASE",
@@ -73,23 +107,24 @@ func TestAccDatabase_disappears(t *testing.T) {
 	})
 }
 
-func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner string) string {
+func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_database" "test" {
-	name = "%[2]s"
-}
+	resource "materialize_database" "test" {
+		name = "%[2]s"
+	}
 
-resource "materialize_database" "test_role" {
-	name = "%[3]s"
-	ownership_role = "%[4]s"
+	resource "materialize_database" "test_role" {
+		name = "%[3]s"
+		ownership_role = "%[4]s"
+		comment = "%[5]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, databaseName, databse2Name, databaseOwner)
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, databaseName, databse2Name, databaseOwner, comment)
 }
 
 func testAccCheckDatabaseExists(name string) resource.TestCheckFunc {
@@ -119,6 +154,5 @@ func testAccCheckAllDatabasesDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

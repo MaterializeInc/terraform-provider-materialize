@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
@@ -22,7 +22,7 @@ func TestAccView_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccViewResource(roleName, viewName, view2Name, roleName),
+				Config: testAccViewResource(roleName, viewName, view2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckViewExists("materialize_view.test"),
 					resource.TestCheckResourceAttr("materialize_view.test", "name", viewName),
@@ -34,6 +34,7 @@ func TestAccView_basic(t *testing.T) {
 					testAccCheckViewExists("materialize_view.test_role"),
 					resource.TestCheckResourceAttr("materialize_view.test_role", "name", view2Name),
 					resource.TestCheckResourceAttr("materialize_view.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_view.test_role", "comment", "Comment"),
 				),
 			},
 			{
@@ -58,10 +59,16 @@ func TestAccView_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccViewResource(roleName, viewName, view2Name, "mz_system"),
+				Config: testAccViewResource(roleName, viewName, view2Name, "mz_system", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckViewExists("materialize_view.test"),
+					testAccCheckViewExists("materialize_view.test_role"),
+					resource.TestCheckResourceAttr("materialize_view.test_role", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_view.test_role", "comment", "Comment"),
+				),
 			},
 			{
-				Config: testAccViewResource(roleName, newViewName, view2Name, roleName),
+				Config: testAccViewResource(roleName, newViewName, view2Name, roleName, "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckViewExists("materialize_view.test"),
 					resource.TestCheckResourceAttr("materialize_view.test", "name", newViewName),
@@ -72,6 +79,7 @@ func TestAccView_update(t *testing.T) {
 					testAccCheckViewExists("materialize_view.test_role"),
 					resource.TestCheckResourceAttr("materialize_view.test_role", "name", view2Name),
 					resource.TestCheckResourceAttr("materialize_view.test_role", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_view.test_role", "comment", "New Comment"),
 				),
 			},
 		},
@@ -88,7 +96,7 @@ func TestAccView_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllViewsDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccViewResource(roleName, viewName, view2Name, roleName),
+				Config: testAccViewResource(roleName, viewName, view2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckViewExists("materialize_view.test"),
 					resource.TestCheckResourceAttr("materialize_view.test", "name", viewName),
@@ -105,25 +113,26 @@ func TestAccView_disappears(t *testing.T) {
 	})
 }
 
-func testAccViewResource(roleName, viewName, view2Name, viewOwner string) string {
+func testAccViewResource(roleName, viewName, view2Name, viewOwner, comment string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
 
-resource "materialize_view" "test" {
-	name = "%[2]s"
-	statement = "SELECT 1 AS id"
-}
+	resource "materialize_view" "test" {
+		name = "%[2]s"
+		statement = "SELECT 1 AS id"
+	}
 
-resource "materialize_view" "test_role" {
-	name = "%[3]s"
-	statement = "SELECT 1 AS id"
-	ownership_role = "%[4]s"
+	resource "materialize_view" "test_role" {
+		name = "%[3]s"
+		statement = "SELECT 1 AS id"
+		ownership_role = "%[4]s"
+		comment = "%[5]s"
 
-	depends_on = [materialize_role.test]
-}
-`, roleName, viewName, view2Name, viewOwner)
+		depends_on = [materialize_role.test]
+	}
+	`, roleName, viewName, view2Name, viewOwner, comment)
 }
 
 func testAccCheckViewExists(name string) resource.TestCheckFunc {
@@ -153,6 +162,5 @@ func testAccCheckAllViewsDestroyed(s *terraform.State) error {
 			return err
 		}
 	}
-
 	return nil
 }

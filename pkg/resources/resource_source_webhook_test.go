@@ -13,12 +13,16 @@ import (
 )
 
 var inSourceWebhook = map[string]interface{}{
-	"name":            "webhook_source",
-	"schema_name":     "schema",
-	"database_name":   "database",
-	"cluster_name":    "cluster",
-	"body_format":     "JSON",
-	"include_headers": true,
+	"name":          "webhook_source",
+	"schema_name":   "schema",
+	"database_name": "database",
+	"cluster_name":  "cluster",
+	"body_format":   "JSON",
+	"include_headers": []interface{}{
+		map[string]interface{}{
+			"all": true,
+		},
+	},
 	"check_options": []interface{}{
 		map[string]interface{}{
 			"field": []interface{}{map[string]interface{}{

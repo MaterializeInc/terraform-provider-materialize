@@ -1,14 +1,16 @@
 resource "materialize_source_load_generator" "load_generator" {
-  name          = "load_gen"
-  schema_name   = materialize_schema.schema.name
-  database_name = materialize_database.database.name
-  comment       = "source load generator comment"
-
+  name                = "load_gen"
+  schema_name         = materialize_schema.schema.name
+  database_name       = materialize_database.database.name
+  comment             = "source load generator comment"
   size                = "3xsmall"
   load_generator_type = "COUNTER"
 
   counter_options {
     tick_interval = "500ms"
+  }
+  expose_progress {
+    name = "expose_load_gen"
   }
 }
 
@@ -36,11 +38,36 @@ resource "materialize_source_load_generator" "load_generator_auction" {
   }
 }
 
-resource "materialize_source_postgres" "example_source_postgres" {
-  name    = "source_postgres"
-  comment = "source postgres comment"
+resource "materialize_source_load_generator" "load_generator_marketing" {
+  name                = "load_gen_marketing"
+  schema_name         = materialize_schema.schema.name
+  database_name       = materialize_database.database.name
+  cluster_name        = materialize_cluster.cluster_source.name
+  load_generator_type = "MARKETING"
 
-  size = "3xsmall"
+  marketing_options {
+    tick_interval = "500ms"
+  }
+}
+
+resource "materialize_source_load_generator" "load_generator_tpch" {
+  name                = "load_gen_tpch"
+  schema_name         = materialize_schema.schema.name
+  database_name       = materialize_database.database.name
+  cluster_name        = materialize_cluster.cluster_source.name
+  load_generator_type = "TPCH"
+
+  tpch_options {
+    tick_interval = "500ms"
+  }
+}
+
+resource "materialize_source_postgres" "example_source_postgres" {
+  name         = "source_postgres"
+  comment      = "source postgres comment"
+  size         = "3xsmall"
+  text_columns = ["table1.id"]
+
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name
     schema_name   = materialize_connection_postgres.postgres_connection.schema_name
@@ -55,57 +82,66 @@ resource "materialize_source_postgres" "example_source_postgres" {
     name  = "table2"
     alias = "s2_table1"
   }
-  text_columns = ["table1.id"]
+  expose_progress {
+    name = "expose_postgres"
+  }
 }
 
 resource "materialize_source_postgres" "example_source_postgres_schema" {
-  name = "source_postgres_schema"
-  size = "3xsmall"
+  name        = "source_postgres_schema"
+  size        = "3xsmall"
+  publication = "mz_source"
+  schema      = ["PUBLIC"]
+
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name
     schema_name   = materialize_connection_postgres.postgres_connection.schema_name
     database_name = materialize_connection_postgres.postgres_connection.database_name
   }
-  publication = "mz_source"
-  schema      = ["PUBLIC"]
+
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name    = "source_kafka_text"
   comment = "source kafka comment"
+  size    = "3xsmall"
+  topic   = "topic1"
 
-  size = "3xsmall"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
-  topic = "topic1"
   key_format {
     text = true
   }
   value_format {
     text = true
   }
+  expose_progress {
+    name = "expose_kafka"
+  }
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
-  name = "source_kafka_bytes"
-  size = "2xsmall"
+  name  = "source_kafka_bytes"
+  size  = "2xsmall"
+  topic = "topic1"
+
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
-  topic = "topic1"
   format {
     bytes = true
   }
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
-  name = "source_kafka_avro"
-  size = "3xsmall"
+  name  = "source_kafka_avro"
+  size  = "3xsmall"
+  topic = "topic1"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
@@ -123,17 +159,34 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   envelope {
     none = true
   }
-  topic      = "topic1"
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
 resource "materialize_source_webhook" "example_webhook_source" {
-  name    = "example_webhook_source"
-  comment = "source webhook comment"
+  name             = "example_webhook_source"
+  comment          = "source webhook comment"
+  cluster_name     = materialize_cluster.cluster_source.name
+  body_format      = "json"
+  check_expression = "headers->'x-mz-api-key' = secret"
 
-  cluster_name    = materialize_cluster.cluster_source.name
-  body_format     = "json"
-  include_headers = false
+  include_headers {
+    not = ["x-mz-api-key"]
+  }
+  check_options {
+    field {
+      headers = true
+    }
+  }
+  check_options {
+    field {
+      secret {
+        name          = materialize_secret.postgres_password.name
+        database_name = materialize_secret.postgres_password.database_name
+        schema_name   = materialize_secret.postgres_password.schema_name
+      }
+    }
+    alias = "secret"
+  }
 }
 
 resource "materialize_source_grant" "source_grant_select" {

@@ -8,20 +8,39 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func TestIndexCreate(t *testing.T) {
+// https://materialize.com/docs/sql/create-index/
+
+func TestIndexFieldCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(column\);`,
+			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" \(column\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "index"}
 		b := NewIndexBuilder(db, o, false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
 		b.ClusterName("cluster")
-		b.Method("ARRANGEMENT")
 		b.ColExpr([]IndexColumn{
-			{
-				Field: "column",
-			},
+			{Field: "column"},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestIndexFieldLiteralCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" \(upper\(guid\), geo_id\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "index"}
+		b := NewIndexBuilder(db, o, false, IdentifierSchemaStruct{SchemaName: "schema", Name: "source", DatabaseName: "database"})
+		b.ClusterName("cluster")
+		b.ColExpr([]IndexColumn{
+			{Field: "upper(guid)"},
+			{Field: "geo_id"},
 		})
 
 		if err := b.Create(); err != nil {

@@ -14,13 +14,13 @@ type KafkaBroker struct {
 	PrivateLinkConnection IdentifierSchemaStruct
 }
 
-func GetKafkaBrokersStruct(databaseName, schemaName string, v interface{}) []KafkaBroker {
+func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
 	var brokers []KafkaBroker
 	for _, broker := range v.([]interface{}) {
 		b := broker.(map[string]interface{})
 		privateLinkConn := IdentifierSchemaStruct{}
 		if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
-			privateLinkConn = GetIdentifierSchemaStruct(databaseName, schemaName, b["privatelink_connection"].([]interface{}))
+			privateLinkConn = GetIdentifierSchemaStruct(b["privatelink_connection"].([]interface{}))
 		}
 		brokers = append(brokers, KafkaBroker{
 			Broker:                b["broker"].(string),
@@ -34,16 +34,17 @@ func GetKafkaBrokersStruct(databaseName, schemaName string, v interface{}) []Kaf
 
 type ConnectionKafkaBuilder struct {
 	Connection
-	kafkaBrokers        []KafkaBroker
-	kafkaProgressTopic  string
-	kafkaSSLCa          ValueSecretStruct
-	kafkaSSLCert        ValueSecretStruct
-	kafkaSSLKey         IdentifierSchemaStruct
-	kafkaSASLMechanisms string
-	kafkaSASLUsername   ValueSecretStruct
-	kafkaSASLPassword   IdentifierSchemaStruct
-	kafkaSSHTunnel      IdentifierSchemaStruct
-	validate            bool
+	kafkaBrokers          []KafkaBroker
+	kafkaSecurityProtocol string
+	kafkaProgressTopic    string
+	kafkaSSLCa            ValueSecretStruct
+	kafkaSSLCert          ValueSecretStruct
+	kafkaSSLKey           IdentifierSchemaStruct
+	kafkaSASLMechanisms   string
+	kafkaSASLUsername     ValueSecretStruct
+	kafkaSASLPassword     IdentifierSchemaStruct
+	kafkaSSHTunnel        IdentifierSchemaStruct
+	validate              bool
 }
 
 func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionKafkaBuilder {
@@ -55,6 +56,11 @@ func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *Connection
 
 func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionKafkaBuilder {
 	b.kafkaBrokers = kafkaBrokers
+	return b
+}
+
+func (b *ConnectionKafkaBuilder) KafkaSecurityProtocol(kafkaSecurityProtocol string) *ConnectionKafkaBuilder {
+	b.kafkaSecurityProtocol = kafkaSecurityProtocol
 	return b
 }
 
@@ -135,6 +141,9 @@ func (b *ConnectionKafkaBuilder) Create() error {
 		q.WriteString(`)`)
 	}
 
+	if b.kafkaSecurityProtocol != "" {
+		q.WriteString(fmt.Sprintf(`, SECURITY PROTOCOL = %s`, QuoteString(b.kafkaSecurityProtocol)))
+	}
 	if b.kafkaProgressTopic != "" {
 		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC %s`, QuoteString(b.kafkaProgressTopic)))
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -60,18 +60,18 @@ func TestAccGrantDatabaseDefaultPrivilege_disappears(t *testing.T) {
 
 func testAccGrantDatabaseDefaultPrivilegeResource(granteeName, targetName, privilege string) string {
 	return fmt.Sprintf(`
-resource "materialize_role" "test_grantee" {
-	name = "%[1]s"
-}
+	resource "materialize_role" "test_grantee" {
+		name = "%[1]s"
+	}
 
-resource "materialize_role" "test_target" {
-	name = "%[2]s"
-}
+	resource "materialize_role" "test_target" {
+		name = "%[2]s"
+	}
 
-resource "materialize_database_grant_default_privilege" "test" {
-	grantee_name     = materialize_role.test_grantee.name
-	privilege        = "%[3]s"
-	target_role_name = materialize_role.test_target.name
-}
-`, granteeName, targetName, privilege)
+	resource "materialize_database_grant_default_privilege" "test" {
+		grantee_name     = materialize_role.test_grantee.name
+		privilege        = "%[3]s"
+		target_role_name = materialize_role.test_target.name
+	}
+	`, granteeName, targetName, privilege)
 }
