@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -16,6 +17,13 @@ var databaseSchema = map[string]*schema.Schema{
 	"name":           ObjectNameSchema("database", true, true),
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
+}
+
+// Define the V0 schema function
+func databaseSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: databaseSchema,
+	}
 }
 
 func Database() *schema.Resource {
@@ -31,7 +39,15 @@ func Database() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: databaseSchema,
+		Schema:        databaseSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    databaseSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -46,6 +62,11 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(err)
 	}
 
+	// set id with the region
+	i, err = utils.TransformIdWithRegion(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	d.SetId(i)
 
 	if err := d.Set("name", s.DatabaseName.String); err != nil {
@@ -98,6 +119,12 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	// set id
 	i, err := materialize.DatabaseId(meta.(*sqlx.DB), o)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// set id with the region
+	i, err = utils.TransformIdWithRegion(i)
 	if err != nil {
 		return diag.FromErr(err)
 	}
