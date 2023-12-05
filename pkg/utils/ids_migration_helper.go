@@ -26,15 +26,12 @@ func SetRegionFromHostname(host string) error {
 }
 
 // Helper function to prepend region to the ID
-func TransformIdWithRegion(oldID string) (string, error) {
-	if Region == "" {
-		return "", fmt.Errorf("failed to extract region from hostname")
-	}
+func TransformIdWithRegion(oldID string) string {
 	// If the ID already has a region, return the original ID
 	if strings.Contains(oldID, ":") {
-		return oldID, nil
+		return oldID
 	}
-	return fmt.Sprintf("%s:%s", Region, oldID), nil
+	return fmt.Sprintf("%s:%s", Region, oldID)
 }
 
 // Function to get the ID from the region + ID string
@@ -53,10 +50,7 @@ func IdStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta
 		return nil, fmt.Errorf("unexpected type for ID")
 	}
 
-	newID, err := TransformIdWithRegion(oldID)
-	if err != nil {
-		return nil, err
-	}
+	newID := TransformIdWithRegion(oldID)
 	rawState["id"] = newID
 
 	return rawState, nil
