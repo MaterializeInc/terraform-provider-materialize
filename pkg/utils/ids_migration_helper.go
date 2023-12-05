@@ -6,34 +6,35 @@ import (
 	"strings"
 )
 
-var Host string
+var Region string
 
-func ExtractRegionFromHostname() string {
+func SetRegionFromHostname(host string) error {
 	defaultRegion := "aws/us-east-1"
-	if Host == "localhost" || Host == "materialize" || Host == "materialized" || Host == "127.0.0.1" {
-		return defaultRegion
+	if host == "localhost" || host == "materialize" || host == "materialized" || host == "127.0.0.1" {
+		Region = defaultRegion
+		return nil
 	}
 
-	parts := strings.Split(Host, ".")
+	parts := strings.Split(host, ".")
 	if len(parts) < 3 {
-		return defaultRegion
+		Region = defaultRegion
+		return nil
 	}
 
-	region := fmt.Sprintf("aws/%s", parts[1])
-	return region
+	Region = fmt.Sprintf("aws/%s", parts[1])
+	return nil
 }
 
 // Helper function to prepend region to the ID
 func TransformIdWithRegion(oldID string) (string, error) {
-	region := ExtractRegionFromHostname()
-	if region == "" {
+	if Region == "" {
 		return "", fmt.Errorf("failed to extract region from hostname")
 	}
 	// If the ID already has a region, return the original ID
 	if strings.Contains(oldID, ":") {
 		return oldID, nil
 	}
-	return fmt.Sprintf("%s:%s", region, oldID), nil
+	return fmt.Sprintf("%s:%s", Region, oldID), nil
 }
 
 // Function to get the ID from the region + ID string

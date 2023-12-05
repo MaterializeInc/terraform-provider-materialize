@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
@@ -72,9 +71,6 @@ func DatabaseId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanDatabase(conn *sqlx.DB, id string) (DatabaseParams, error) {
-	// Get the database id from the state id
-	id, _ = utils.ExtractId(id)
-
 	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.id": id})
 
 	var c DatabaseParams
