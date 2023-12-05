@@ -108,7 +108,7 @@ func GetSinkFormatSpecStruc(v interface{}) SinkFormatSpecStruct {
 			value := avro.([]interface{})[0].(map[string]interface{})["avro_value_fullname"].(string)
 
 			var docType AvroDocType
-			if adt, ok := avro.([]interface{})[0].(map[string]interface{})["avro_doc_type"].([]interface{}); ok {
+			if adt, ok := avro.([]interface{})[0].(map[string]interface{})["avro_doc_type"].([]interface{}); ok && len(adt) > 0 {
 				if v, ok := adt[0].(map[string]interface{})["object"]; ok {
 					docType.Object = GetIdentifierSchemaStruct(v)
 				}
