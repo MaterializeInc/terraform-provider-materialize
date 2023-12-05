@@ -184,6 +184,35 @@ resource "materialize_connection_ssh_tunnel" "ssh_connection" {
   port = 22
 }
 
+resource "materialize_connection_kafka" "kafka_conn_ssh_default" {
+  name = "kafka_conn_ssh_default"
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+  ssh_tunnel {
+    name          = materialize_connection_ssh_tunnel.ssh_connection.name
+    database_name = materialize_connection_ssh_tunnel.ssh_connection.database_name
+    schema_name   = materialize_connection_ssh_tunnel.ssh_connection.schema_name
+  }
+  validate = false
+}
+
+resource "materialize_connection_kafka" "kafka_conn_ssh_broker" {
+  name = "kafka_conn_ssh_broker"
+  kafka_broker {
+    broker = "redpanda:9092"
+    ssh_tunnel {
+      name          = materialize_connection_ssh_tunnel.ssh_connection.name
+      database_name = materialize_connection_ssh_tunnel.ssh_connection.database_name
+      schema_name   = materialize_connection_ssh_tunnel.ssh_connection.schema_name
+    }
+  }
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+  validate = false
+}
+
 resource "materialize_connection_postgres" "postgres_connection" {
   name    = "postgres_connection"
   comment = "connection postgres comment"

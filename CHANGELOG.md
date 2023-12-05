@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Features
+* Add `ssh_tunnel` as a broker level attribute for `materialize_connection_kafka`. `ssh_tunnel` can be applied as a top level attribute (the default for all brokers) or both the individual broker level [#366](https://github.com/MaterializeInc/terraform-provider-materialize/pull/366)
+
 ## 0.3.3 - 2023-11-30
 
 ### Features

@@ -90,7 +90,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))
 - `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
 - `security_protocol` (String) The security protocol to use: `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.
-- `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Kafka broker. (see [below for nested schema](#nestedblock--ssh_tunnel))
+- `ssh_tunnel` (Block List, Max: 1) The default SSH tunnel configuration for the Kafka brokers. (see [below for nested schema](#nestedblock--ssh_tunnel))
 - `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the Kafka broker. (see [below for nested schema](#nestedblock--ssl_key))
@@ -112,6 +112,7 @@ Optional:
 
 - `availability_zone` (String) The availability zone of the Kafka broker.
 - `privatelink_connection` (Block List, Max: 1) The AWS PrivateLink connection name in Materialize. (see [below for nested schema](#nestedblock--kafka_broker--privatelink_connection))
+- `ssh_tunnel` (Block List, Max: 1) The name of an SSH tunnel connection to route network traffic through by default. (see [below for nested schema](#nestedblock--kafka_broker--ssh_tunnel))
 - `target_group_port` (Number) The port of the target group associated with the Kafka broker.
 
 <a id="nestedblock--kafka_broker--privatelink_connection"></a>
@@ -125,6 +126,19 @@ Optional:
 
 - `database_name` (String) The privatelink_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The privatelink_connection schema name. Defaults to `public`.
+
+
+<a id="nestedblock--kafka_broker--ssh_tunnel"></a>
+### Nested Schema for `kafka_broker.ssh_tunnel`
+
+Required:
+
+- `name` (String) The ssh_tunnel name.
+
+Optional:
+
+- `database_name` (String) The ssh_tunnel database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssh_tunnel schema name. Defaults to `public`.
 
 
 
