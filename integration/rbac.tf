@@ -69,6 +69,21 @@ variable "database_grants" {
       privilege : "USAGE",
       target_role : "target_2",
     },
+    public_usage_t2 = {
+      grantee : "PUBLIC",
+      privilege : "USAGE",
+      target_role : "target_2",
+    },
+    de_usage_t2_public = {
+      grantee : "de",
+      privilege : "USAGE",
+      target_role : "PUBLIC",
+    },
+    public_usage_t2_public = {
+      grantee : "PUBLIC",
+      privilege : "USAGE",
+      target_role : "PUBLIC",
+    },
   }
 }
 
