@@ -66,12 +66,7 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(err)
 	}
 
-	// set id with the region
-	i, err = utils.TransformIdWithRegion(i)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
