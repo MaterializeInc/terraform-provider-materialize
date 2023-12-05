@@ -35,13 +35,13 @@ func TransformIdWithRegion(oldID string) string {
 }
 
 // Function to get the ID from the region + ID string
-func ExtractId(oldID string) (string, error) {
+func ExtractId(oldID string) string {
 	parts := strings.Split(oldID, ":")
 	if len(parts) < 2 {
 		// Return the original ID if it doesn't have a region
-		return oldID, nil
+		return oldID
 	}
-	return parts[1], nil
+	return parts[1]
 }
 
 func IdStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
