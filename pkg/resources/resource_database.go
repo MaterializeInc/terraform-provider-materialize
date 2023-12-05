@@ -53,6 +53,10 @@ func Database() *schema.Resource {
 
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
+	i, err := utils.ExtractId(i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	s, err := materialize.ScanDatabase(meta.(*sqlx.DB), i)
 	if err == sql.ErrNoRows {

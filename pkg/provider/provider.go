@@ -133,7 +133,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
 	// Set the host in the utils package so that the region can be extracted from it
-	utils.Host = host
+	err := utils.SetRegionFromHostname(host)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
 
 	url := &url.URL{
 		Scheme: "postgres",
