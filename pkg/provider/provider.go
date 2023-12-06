@@ -7,6 +7,7 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -130,6 +131,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	database := d.Get("database").(string)
 	sslmode := d.Get("sslmode").(string)
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
+
+	// Set the host in the utils package so that the region can be extracted from it
+	err := utils.SetRegionFromHostname(host)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
 
 	url := &url.URL{
 		Scheme: "postgres",
