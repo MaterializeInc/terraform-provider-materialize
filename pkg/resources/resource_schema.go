@@ -21,6 +21,13 @@ var schemaSchema = map[string]*schema.Schema{
 	"ownership_role":     OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func schemaSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: schemaSchema,
+	}
+}
+
 func Schema() *schema.Resource {
 	return &schema.Resource{
 		Description: "The second highest level namespace hierarchy in Materialize.",
@@ -34,7 +41,15 @@ func Schema() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: schemaSchema,
+		Schema:        schemaSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    schemaSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
