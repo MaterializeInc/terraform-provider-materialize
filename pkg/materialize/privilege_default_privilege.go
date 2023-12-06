@@ -65,9 +65,14 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 		grantDirection = "FROM"
 	}
 
-	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s %[5]s`, action, b.privilege, b.objectType, grantDirection, b.granteeRole.QualifiedName()))
+	q.WriteString(fmt.Sprintf(` %[1]s %[2]s ON %[3]sS %[4]s`, action, b.privilege, b.objectType, grantDirection))
 
-	q.WriteString(`;`)
+	if b.granteeRole.name == "PUBLIC" {
+		q.WriteString(" PUBLIC")
+	} else {
+		q.WriteString(fmt.Sprintf(` %[1]s`, b.granteeRole.QualifiedName()))
+	}
+
 	return b.ddl.exec(q.String())
 }
 

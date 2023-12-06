@@ -43,6 +43,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 					Optional:    true,
 				},
 				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", false),
+				"ssh_tunnel":             IdentifierSchema("ssh_tunnel", "The name of an SSH tunnel connection to route network traffic through by default.", false),
 			},
 		},
 	},
@@ -78,7 +79,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	},
 	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false),
 	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false),
-	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Kafka broker.", false),
+	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The default SSH tunnel configuration for the Kafka brokers.", false),
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 }
