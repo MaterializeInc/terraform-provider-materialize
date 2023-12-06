@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -45,7 +46,15 @@ func GrantTable() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: grantTableSchema,
+		Schema:        grantTableSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    databaseSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -81,7 +90,7 @@ func grantTableCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(i, roleId, privilege)
+	key := b.GrantKey(utils.Region, i, roleId, privilege)
 	d.SetId(key)
 
 	return grantRead(ctx, d, meta)

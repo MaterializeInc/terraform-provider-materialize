@@ -30,8 +30,8 @@ func (b *SystemPrivilegeBuilder) Revoke() error {
 	return b.ddl.exec(q)
 }
 
-func (b *SystemPrivilegeBuilder) GrantKey(roleId, privilege string) string {
-	return fmt.Sprintf(`GRANT SYSTEM|%[1]s|%[2]s`, roleId, privilege)
+func (b *SystemPrivilegeBuilder) GrantKey(region, roleId, privilege string) string {
+	return fmt.Sprintf(`%[1]s:GRANT SYSTEM|%[2]s|%[3]s`, region, roleId, privilege)
 }
 
 type SytemPrivilegeParams struct {

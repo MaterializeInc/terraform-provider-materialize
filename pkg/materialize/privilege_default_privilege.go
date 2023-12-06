@@ -79,8 +79,8 @@ func (b *DefaultPrivilegeBuilder) Revoke() error {
 	return b.baseQuery("REVOKE")
 }
 
-func (b *DefaultPrivilegeBuilder) GrantKey(objectType, granteeId, targetId, databaseId, schemaId, privilege string) string {
-	return fmt.Sprintf(`GRANT DEFAULT|%[1]s|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s`, objectType, granteeId, targetId, databaseId, schemaId, privilege)
+func (b *DefaultPrivilegeBuilder) GrantKey(region, objectType, granteeId, targetId, databaseId, schemaId, privilege string) string {
+	return fmt.Sprintf(`%[1]s:GRANT DEFAULT|%[2]s|%[3]s|%[4]s|%[5]s|%[6]s|%[7]s`, region, objectType, granteeId, targetId, databaseId, schemaId, privilege)
 }
 
 type DefaultPrivilegeParams struct {

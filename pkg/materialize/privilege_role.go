@@ -31,8 +31,8 @@ func (b *RolePrivilegeBuilder) Revoke() error {
 	return b.ddl.exec(q)
 }
 
-func (b *RolePrivilegeBuilder) GrantKey(roleId, memberId string) string {
-	return fmt.Sprintf(`ROLE MEMBER|%[1]s|%[2]s`, roleId, memberId)
+func (b *RolePrivilegeBuilder) GrantKey(region, roleId, memberId string) string {
+	return fmt.Sprintf(`%[1]s:ROLE MEMBER|%[2]s|%[3]s`, region, roleId, memberId)
 }
 
 type RolePrivilegeParams struct {
