@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,6 +34,13 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"ownership_role":            OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func connectionConfluentSchemaRegistrySchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: connectionConfluentSchemaRegistrySchema,
+	}
+}
+
 func ConnectionConfluentSchemaRegistry() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Confluent Schema Registry connection establishes a link to a Confluent Schema Registry server.",
@@ -46,7 +54,15 @@ func ConnectionConfluentSchemaRegistry() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: connectionConfluentSchemaRegistrySchema,
+		Schema:        connectionConfluentSchemaRegistrySchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    connectionConfluentSchemaRegistrySchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -133,7 +149,7 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return connectionRead(ctx, d, meta)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -37,6 +38,13 @@ var clusterSchema = map[string]*schema.Schema{
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(false, []string{"size"}),
 }
 
+// Define the V0 schema function
+func clusterSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: clusterSchema,
+	}
+}
+
 func Cluster() *schema.Resource {
 	return &schema.Resource{
 		Description: "Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views. Managed clusters are created by setting the `size` attribute",
@@ -50,13 +58,21 @@ func Cluster() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: clusterSchema,
+		Schema:        clusterSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    clusterSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	s, err := materialize.ScanCluster(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanCluster(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -64,7 +80,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
@@ -163,7 +179,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return clusterRead(ctx, d, meta)
 }

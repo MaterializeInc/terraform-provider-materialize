@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,6 +24,13 @@ var roleSchema = map[string]*schema.Schema{
 	},
 }
 
+// Define the V0 schema function
+func roleSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: roleSchema,
+	}
+}
+
 func Role() *schema.Resource {
 	return &schema.Resource{
 		Description: "A role is a collection of privileges you can apply to users.",
@@ -36,13 +44,21 @@ func Role() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: roleSchema,
+		Schema:        roleSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    roleSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	s, err := materialize.ScanRole(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanRole(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -50,7 +66,7 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.RoleName.String); err != nil {
 		return diag.FromErr(err)
@@ -103,7 +119,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return roleRead(ctx, d, meta)
 }

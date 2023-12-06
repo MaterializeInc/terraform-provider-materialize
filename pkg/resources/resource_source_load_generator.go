@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -114,6 +115,13 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func sourceLoadgenSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: sourceLoadgenSchema,
+	}
+}
+
 func SourceLoadgen() *schema.Resource {
 	return &schema.Resource{
 		Description: "A load generator source produces synthetic data for use in demos and performance tests.",
@@ -127,7 +135,15 @@ func SourceLoadgen() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sourceLoadgenSchema,
+		Schema:        sourceLoadgenSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    sourceLoadgenSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -208,7 +224,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return sourceRead(ctx, d, meta)
 }

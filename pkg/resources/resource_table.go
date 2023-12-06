@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -66,6 +67,13 @@ var tableSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func tableSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: tableSchema,
+	}
+}
+
 func Table() *schema.Resource {
 	return &schema.Resource{
 		Description: "A table persists durable storage that can be written to, updated and seamlessly joined with other tables, views or sources",
@@ -79,14 +87,22 @@ func Table() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: tableSchema,
+		Schema:        tableSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    tableSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanTable(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanTable(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -94,7 +110,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.TableName.String); err != nil {
 		return diag.FromErr(err)
@@ -208,7 +224,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return tableRead(ctx, d, meta)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -72,6 +73,13 @@ var indexSchema = map[string]*schema.Schema{
 	},
 }
 
+// Define the V0 schema function
+func indexSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: indexSchema,
+	}
+}
+
 func Index() *schema.Resource {
 	return &schema.Resource{
 		Description: "Indexes represent query results stored in memory.",
@@ -85,13 +93,21 @@ func Index() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: indexSchema,
+		Schema:        indexSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    indexSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	s, err := materialize.ScanIndex(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanIndex(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -99,7 +115,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.IndexName.String); err != nil {
 		return diag.FromErr(err)
@@ -192,7 +208,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return indexRead(ctx, d, meta)
 }

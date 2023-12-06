@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -142,6 +143,13 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func sourceKafkaSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: sourceKafkaSchema,
+	}
+}
+
 func SourceKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Kafka source describes a Kafka cluster you want Materialize to read data from.",
@@ -155,7 +163,15 @@ func SourceKafka() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sourceKafkaSchema,
+		Schema:        sourceKafkaSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    sourceKafkaSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -290,7 +306,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return sourceRead(ctx, d, meta)
 }

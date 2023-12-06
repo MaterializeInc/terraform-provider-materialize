@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -67,6 +68,13 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func sourcePostgresSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: databaseSchema,
+	}
+}
+
 func SourcePostgres() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Postgres source describes a PostgreSQL instance you want Materialize to read data from.",
@@ -80,7 +88,15 @@ func SourcePostgres() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sourcePostgresSchema,
+		Schema:        sourcePostgresSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    sourcePostgresSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -161,7 +177,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return sourceRead(ctx, d, meta)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -40,6 +41,13 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func connectionAwsPrivatelinkSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: connectionAwsPrivatelinkSchema,
+	}
+}
+
 func ConnectionAwsPrivatelink() *schema.Resource {
 	return &schema.Resource{
 		Description: "An AWS PrivateLink connection establishes a link to an AWS PrivateLink service.",
@@ -53,7 +61,15 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: connectionAwsPrivatelinkSchema,
+		Schema:        connectionAwsPrivatelinkSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    connectionAwsPrivatelinkSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -67,7 +83,7 @@ type ConnectionAwsPrivatelinkParams struct {
 func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanConnectionAwsPrivatelink(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanConnectionAwsPrivatelink(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -75,7 +91,7 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.ConnectionName.String); err != nil {
 		return diag.FromErr(err)
@@ -158,7 +174,7 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return connectionAwsPrivatelinkRead(ctx, d, meta)
 }

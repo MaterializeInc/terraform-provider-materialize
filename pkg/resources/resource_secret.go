@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -27,6 +28,13 @@ var secretSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func secretSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: secretSchema,
+	}
+}
+
 func Secret() *schema.Resource {
 	return &schema.Resource{
 		Description: "A secret securely stores sensitive credentials (like passwords and SSL keys) in Materialize’s secret management system.",
@@ -40,14 +48,22 @@ func Secret() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: secretSchema,
+		Schema:        secretSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    secretSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanSecret(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanSecret(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -55,7 +71,7 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.SecretName.String); err != nil {
 		return diag.FromErr(err)
@@ -129,7 +145,7 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return secretRead(ctx, d, meta)
 }

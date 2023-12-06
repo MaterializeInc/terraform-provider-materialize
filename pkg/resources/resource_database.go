@@ -117,7 +117,6 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	d.SetId(utils.TransformIdWithRegion(i))
 
 	return databaseRead(ctx, d, meta)

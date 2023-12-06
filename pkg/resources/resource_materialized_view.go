@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,6 +44,13 @@ var materializedViewSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func materializedViewSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: materializedViewSchema,
+	}
+}
+
 func MaterializedView() *schema.Resource {
 	return &schema.Resource{
 		Description: "Materialized views represent query results stored durably.",
@@ -56,14 +64,22 @@ func MaterializedView() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: materializedViewSchema,
+		Schema:        materializedViewSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    materializedViewSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanMaterializedView(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanMaterializedView(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -71,7 +87,7 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.MaterializedViewName.String); err != nil {
 		return diag.FromErr(err)
@@ -158,7 +174,7 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return materializedViewRead(ctx, d, meta)
 }

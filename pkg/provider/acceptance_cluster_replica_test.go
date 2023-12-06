@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -136,7 +137,7 @@ func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("cluster replica not found: %s", name)
 		}
-		_, err := materialize.ScanClusterReplica(db, r.Primary.ID)
+		_, err := materialize.ScanClusterReplica(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
@@ -149,9 +150,9 @@ func testAccCheckAllClusterReplicaDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err := materialize.ScanClusterReplica(db, r.Primary.ID)
+		_, err := materialize.ScanClusterReplica(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
-			return fmt.Errorf("Cluster replica %v still exists", r.Primary.ID)
+			return fmt.Errorf("Cluster replica %v still exists", utils.ExtractId(r.Primary.ID))
 		} else if err != sql.ErrNoRows {
 			return err
 		}

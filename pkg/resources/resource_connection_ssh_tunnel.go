@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -49,6 +50,13 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
+// Define the V0 schema function
+func connectionSshTunnelSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: connectionSshTunnelSchema,
+	}
+}
+
 func ConnectionSshTunnel() *schema.Resource {
 	return &schema.Resource{
 		Description: "An SSH tunnel connection establishes a link to an SSH bastion server.",
@@ -62,14 +70,22 @@ func ConnectionSshTunnel() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: connectionSshTunnelSchema,
+		Schema:        connectionSshTunnelSchema,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    connectionSshTunnelSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: utils.IdStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanConnectionSshTunnel(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanConnectionSshTunnel(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -77,7 +93,7 @@ func connectionSshTunnelRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.ConnectionName.String); err != nil {
 		return diag.FromErr(err)
@@ -159,7 +175,7 @@ func connectionSshTunnelCreate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return connectionSshTunnelRead(ctx, d, meta)
 }

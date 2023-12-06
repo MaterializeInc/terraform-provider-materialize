@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -200,7 +201,7 @@ func testAccCheckSinkKafkaExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("sink kafka not found: %s", name)
 		}
-		_, err := materialize.ScanSink(db, r.Primary.ID)
+		_, err := materialize.ScanSink(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
@@ -221,9 +222,9 @@ func testAccCheckAllSinkKafkaDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err := materialize.ScanSink(db, r.Primary.ID)
+		_, err := materialize.ScanSink(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
-			return fmt.Errorf("sink %v still exists", r.Primary.ID)
+			return fmt.Errorf("sink %v still exists", utils.ExtractId(r.Primary.ID))
 		} else if err != sql.ErrNoRows {
 			return err
 		}

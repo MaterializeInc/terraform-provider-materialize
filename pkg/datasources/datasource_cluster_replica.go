@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -77,6 +78,6 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	d.SetId("cluster_replicas")
+	d.SetId(utils.TransformIdWithRegion("cluster_replicas"))
 	return diags
 }
