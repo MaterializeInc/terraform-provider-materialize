@@ -59,7 +59,7 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	// Subsources
-	deps, err := materialize.ListDependencies(meta.(*sqlx.DB), i, "source")
+	deps, err := materialize.ListDependencies(meta.(*sqlx.DB), utils.ExtractId(i), "source")
 	if err != nil {
 		return diag.FromErr(err)
 	}

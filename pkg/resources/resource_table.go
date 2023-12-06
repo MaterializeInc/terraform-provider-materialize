@@ -138,7 +138,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// Table columns
-	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), i)
+	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err != nil {
 		log.Print("[DEBUG] cannot query list tables")
 		return diag.FromErr(err)

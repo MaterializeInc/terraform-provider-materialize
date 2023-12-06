@@ -139,7 +139,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// Index columns
-	indexColumns, err := materialize.ListIndexColumns(meta.(*sqlx.DB), i)
+	indexColumns, err := materialize.ListIndexColumns(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err != nil {
 		return diag.FromErr(err)
 	}
