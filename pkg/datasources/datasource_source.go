@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -89,7 +90,7 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	for _, p := range dataSource {
 		sourceMap := map[string]interface{}{}
 
-		sourceMap["id"] = p.SourceId.String
+		sourceMap["id"] = utils.TransformIdWithRegion(p.SourceId.String)
 		sourceMap["name"] = p.SourceName.String
 		sourceMap["schema_name"] = p.SchemaName.String
 		sourceMap["database_name"] = p.DatabaseName.String

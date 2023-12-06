@@ -3,6 +3,7 @@ package datasources
 import (
 	"context"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -28,7 +29,7 @@ func currentDatabaseRead(ctx context.Context, d *schema.ResourceData, meta inter
 	conn.QueryRow("SHOW DATABASE;").Scan(&name)
 
 	d.Set("name", name)
-	d.SetId("current_database")
+	d.SetId(utils.TransformIdWithRegion("current_database"))
 
 	return diags
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -73,7 +74,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	for _, p := range dataSource {
 		indexMap := map[string]interface{}{}
 
-		indexMap["id"] = p.IndexId.String
+		indexMap["id"] = utils.TransformIdWithRegion(p.IndexId.String)
 		indexMap["name"] = p.IndexName.String
 		indexMap["obj_name"] = p.ObjectName.String
 		indexMap["obj_schema"] = p.ObjectSchemaName.String

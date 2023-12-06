@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -89,7 +90,7 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	for _, p := range dataSource {
 		sinkMap := map[string]interface{}{}
 
-		sinkMap["id"] = p.SinkId.String
+		sinkMap["id"] = utils.TransformIdWithRegion(p.SinkId.String)
 		sinkMap["name"] = p.SinkName.String
 		sinkMap["schema_name"] = p.SchemaName.String
 		sinkMap["database_name"] = p.DatabaseName.String

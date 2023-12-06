@@ -64,7 +64,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	for _, p := range dataSource {
 		clusterMap := map[string]interface{}{}
 
-		clusterMap["id"] = p.ClusterId.String
+		clusterMap["id"] = utils.TransformIdWithRegion(p.ClusterId.String)
 		clusterMap["name"] = p.ClusterName.String
 		clusterMap["managed"] = p.Managed.Bool
 		clusterMap["size"] = p.Size.String
