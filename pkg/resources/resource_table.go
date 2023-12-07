@@ -67,13 +67,6 @@ var tableSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func tableSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: tableSchema,
-	}
-}
-
 func Table() *schema.Resource {
 	return &schema.Resource{
 		Description: "A table persists durable storage that can be written to, updated and seamlessly joined with other tables, views or sources",
@@ -87,15 +80,7 @@ func Table() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        tableSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    tableSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: tableSchema,
 	}
 }
 

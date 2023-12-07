@@ -143,13 +143,6 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func sourceKafkaSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: sourceKafkaSchema,
-	}
-}
-
 func SourceKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Kafka source describes a Kafka cluster you want Materialize to read data from.",
@@ -163,15 +156,7 @@ func SourceKafka() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        sourceKafkaSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    sourceKafkaSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: sourceKafkaSchema,
 	}
 }
 

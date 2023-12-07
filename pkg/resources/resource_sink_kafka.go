@@ -78,13 +78,6 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	},
 }
 
-// Define the V0 schema function
-func sinkKafkaSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: sinkKafkaSchema,
-	}
-}
-
 func SinkKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Kafka sink establishes a link to a Kafka cluster that you want Materialize to write data to.",
@@ -98,15 +91,7 @@ func SinkKafka() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        sinkKafkaSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    sinkKafkaSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: sinkKafkaSchema,
 	}
 }
 

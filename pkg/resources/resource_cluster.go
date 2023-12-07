@@ -38,13 +38,6 @@ var clusterSchema = map[string]*schema.Schema{
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(false, []string{"size"}),
 }
 
-// Define the V0 schema function
-func clusterSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: clusterSchema,
-	}
-}
-
 func Cluster() *schema.Resource {
 	return &schema.Resource{
 		Description: "Clusters describe logical compute resources that can be used by sources, sinks, indexes, and materialized views. Managed clusters are created by setting the `size` attribute",
@@ -58,15 +51,7 @@ func Cluster() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        clusterSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    clusterSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: clusterSchema,
 	}
 }
 

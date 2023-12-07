@@ -34,13 +34,6 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"ownership_role":            OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func connectionConfluentSchemaRegistrySchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: connectionConfluentSchemaRegistrySchema,
-	}
-}
-
 func ConnectionConfluentSchemaRegistry() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Confluent Schema Registry connection establishes a link to a Confluent Schema Registry server.",
@@ -54,15 +47,7 @@ func ConnectionConfluentSchemaRegistry() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        connectionConfluentSchemaRegistrySchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    connectionConfluentSchemaRegistrySchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: connectionConfluentSchemaRegistrySchema,
 	}
 }
 

@@ -31,13 +31,6 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(true, []string{}),
 }
 
-// Define the V0 schema function
-func clusterReplicaSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: clusterReplicaSchema,
-	}
-}
-
 func ClusterReplica() *schema.Resource {
 	return &schema.Resource{
 		Description: "Cluster replicas allocate physical compute resources for a cluster.",
@@ -53,15 +46,7 @@ func ClusterReplica() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        clusterReplicaSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    clusterReplicaSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: clusterReplicaSchema,
 	}
 }
 

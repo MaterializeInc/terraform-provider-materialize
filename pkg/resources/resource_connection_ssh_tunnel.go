@@ -50,13 +50,6 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func connectionSshTunnelSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: connectionSshTunnelSchema,
-	}
-}
-
 func ConnectionSshTunnel() *schema.Resource {
 	return &schema.Resource{
 		Description: "An SSH tunnel connection establishes a link to an SSH bastion server.",
@@ -70,15 +63,7 @@ func ConnectionSshTunnel() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        connectionSshTunnelSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    connectionSshTunnelSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: connectionSshTunnelSchema,
 	}
 }
 

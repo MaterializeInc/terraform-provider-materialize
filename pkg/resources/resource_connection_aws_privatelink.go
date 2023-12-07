@@ -41,13 +41,6 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func connectionAwsPrivatelinkSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: connectionAwsPrivatelinkSchema,
-	}
-}
-
 func ConnectionAwsPrivatelink() *schema.Resource {
 	return &schema.Resource{
 		Description: "An AWS PrivateLink connection establishes a link to an AWS PrivateLink service.",
@@ -61,15 +54,7 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        connectionAwsPrivatelinkSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    connectionAwsPrivatelinkSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: connectionAwsPrivatelinkSchema,
 	}
 }
 

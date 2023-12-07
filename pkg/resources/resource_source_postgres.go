@@ -68,13 +68,6 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func sourcePostgresSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: databaseSchema,
-	}
-}
-
 func SourcePostgres() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Postgres source describes a PostgreSQL instance you want Materialize to read data from.",
@@ -88,15 +81,7 @@ func SourcePostgres() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        sourcePostgresSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    sourcePostgresSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: sourcePostgresSchema,
 	}
 }
 

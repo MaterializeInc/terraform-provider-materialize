@@ -28,13 +28,6 @@ var secretSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-// func secretSchemaV0() *schema.Resource {
-// 	return &schema.Resource{
-// 		Schema: secretSchema,
-// 	}
-// }
-
 func Secret() *schema.Resource {
 	return &schema.Resource{
 		Description: "A secret securely stores sensitive credentials (like passwords and SSL keys) in Materialize’s secret management system.",
@@ -49,14 +42,6 @@ func Secret() *schema.Resource {
 		},
 
 		Schema: secretSchema,
-		// SchemaVersion: 1,
-		// StateUpgraders: []schema.StateUpgrader{
-		// 	{
-		// 		Type:    secretSchemaV0().CoreConfigSchema().ImpliedType(),
-		// 		Upgrade: utils.IdStateUpgradeV0,
-		// 		Version: 0,
-		// 	},
-		// },
 	}
 }
 

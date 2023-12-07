@@ -54,13 +54,6 @@ var connectionPostgresSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func connectionPostgresSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: connectionPostgresSchema,
-	}
-}
-
 func ConnectionPostgres() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Postgres connection establishes a link to a single database of a PostgreSQL server.",
@@ -74,15 +67,7 @@ func ConnectionPostgres() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        connectionPostgresSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    connectionPostgresSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: connectionPostgresSchema,
 	}
 }
 

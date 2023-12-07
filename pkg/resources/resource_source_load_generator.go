@@ -115,13 +115,6 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func sourceLoadgenSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: sourceLoadgenSchema,
-	}
-}
-
 func SourceLoadgen() *schema.Resource {
 	return &schema.Resource{
 		Description: "A load generator source produces synthetic data for use in demos and performance tests.",
@@ -135,15 +128,7 @@ func SourceLoadgen() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        sourceLoadgenSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    sourceLoadgenSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: sourceLoadgenSchema,
 	}
 }
 

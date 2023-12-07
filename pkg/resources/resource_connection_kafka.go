@@ -85,13 +85,6 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func connectionKafkaSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: connectionKafkaSchema,
-	}
-}
-
 func ConnectionKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Kafka connection establishes a link to a Kafka cluster.",
@@ -105,15 +98,7 @@ func ConnectionKafka() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        connectionKafkaSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    connectionKafkaSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: connectionKafkaSchema,
 	}
 }
 

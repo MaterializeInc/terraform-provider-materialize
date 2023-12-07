@@ -73,13 +73,6 @@ var indexSchema = map[string]*schema.Schema{
 	},
 }
 
-// Define the V0 schema function
-func indexSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: indexSchema,
-	}
-}
-
 func Index() *schema.Resource {
 	return &schema.Resource{
 		Description: "Indexes represent query results stored in memory.",
@@ -93,15 +86,7 @@ func Index() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        indexSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    indexSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: indexSchema,
 	}
 }
 

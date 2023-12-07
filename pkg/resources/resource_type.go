@@ -90,13 +90,6 @@ var typeSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func typeSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: typeSchema,
-	}
-}
-
 func Type() *schema.Resource {
 	return &schema.Resource{
 		Description: "A custom types, which let you create named versions of anonymous types.",
@@ -110,15 +103,7 @@ func Type() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        typeSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    typeSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: typeSchema,
 	}
 }
 

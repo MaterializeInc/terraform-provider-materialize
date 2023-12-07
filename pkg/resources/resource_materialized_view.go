@@ -44,13 +44,6 @@ var materializedViewSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func materializedViewSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: materializedViewSchema,
-	}
-}
-
 func MaterializedView() *schema.Resource {
 	return &schema.Resource{
 		Description: "Materialized views represent query results stored durably.",
@@ -64,15 +57,7 @@ func MaterializedView() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        materializedViewSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    materializedViewSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: materializedViewSchema,
 	}
 }
 

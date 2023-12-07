@@ -24,13 +24,6 @@ var roleSchema = map[string]*schema.Schema{
 	},
 }
 
-// Define the V0 schema function
-func roleSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: roleSchema,
-	}
-}
-
 func Role() *schema.Resource {
 	return &schema.Resource{
 		Description: "A role is a collection of privileges you can apply to users.",
@@ -44,15 +37,7 @@ func Role() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        roleSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    roleSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: roleSchema,
 	}
 }
 

@@ -28,13 +28,6 @@ var viewSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func viewSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: viewSchema,
-	}
-}
-
 func View() *schema.Resource {
 	return &schema.Resource{
 		Description: "Views represent queries of sources and other views that you want to save for repeated execution.",
@@ -48,15 +41,7 @@ func View() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        viewSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    viewSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: viewSchema,
 	}
 }
 

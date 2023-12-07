@@ -152,13 +152,6 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 	"ownership_role": OwnershipRoleSchema(),
 }
 
-// Define the V0 schema function
-func sourceWebhookSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: sourceWebhookSchema,
-	}
-}
-
 func SourceWebhook() *schema.Resource {
 	return &schema.Resource{
 		Description: "**Private Preview** A webhook source describes a webhook you want Materialize to read data from.",
@@ -172,15 +165,7 @@ func SourceWebhook() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        sourceWebhookSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    sourceWebhookSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: sourceWebhookSchema,
 	}
 }
 
