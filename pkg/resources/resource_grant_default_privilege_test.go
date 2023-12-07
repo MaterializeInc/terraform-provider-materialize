@@ -5,7 +5,7 @@ import (
 )
 
 func TestParseDefaultPrivilegeId(t *testing.T) {
-	i, err := parseDefaultPrivilegeKey("GRANT DEFAULT|TABLE|u1||||SELECT")
+	i, err := parseDefaultPrivilegeKey("aws/us-east-1:GRANT DEFAULT|TABLE|u1||||SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestParseDefaultPrivilegeId(t *testing.T) {
 }
 
 func TestParseDefaultPrivilegeIdComplex(t *testing.T) {
-	i, err := parseDefaultPrivilegeKey("GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
+	i, err := parseDefaultPrivilegeKey("aws/us-east-1:GRANT DEFAULT|TABLE|u1|u2|u3|u4|SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}

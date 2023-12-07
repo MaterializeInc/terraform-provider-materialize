@@ -31,15 +31,7 @@ func GrantSecretDefaultPrivilege() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        grantSecretDefaultPrivilegeSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    databaseSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: grantSecretDefaultPrivilegeSchema,
 	}
 }
 

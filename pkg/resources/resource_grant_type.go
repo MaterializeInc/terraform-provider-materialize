@@ -46,15 +46,7 @@ func GrantType() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        grantTypeSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    databaseSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: grantTypeSchema,
 	}
 }
 
