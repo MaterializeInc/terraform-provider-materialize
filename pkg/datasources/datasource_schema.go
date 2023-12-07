@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -72,9 +73,9 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if databaseName != "" {
 		id := fmt.Sprintf("%s|schemas", databaseName)
-		d.SetId(id)
+		d.SetId(utils.TransformIdWithRegion(id))
 	} else {
-		d.SetId("schemas")
+		d.SetId(utils.TransformIdWithRegion("schemas"))
 	}
 
 	return diags

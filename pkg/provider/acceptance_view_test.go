@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -142,7 +143,7 @@ func testAccCheckViewExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("View not found: %s", name)
 		}
-		_, err := materialize.ScanView(db, r.Primary.ID)
+		_, err := materialize.ScanView(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
@@ -155,9 +156,9 @@ func testAccCheckAllViewsDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err := materialize.ScanView(db, r.Primary.ID)
+		_, err := materialize.ScanView(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
-			return fmt.Errorf("View %v still exists", r.Primary.ID)
+			return fmt.Errorf("View %v still exists", utils.ExtractId(r.Primary.ID))
 		} else if err != sql.ErrNoRows {
 			return err
 		}

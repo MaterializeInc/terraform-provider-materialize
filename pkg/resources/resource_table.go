@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -86,7 +87,7 @@ func Table() *schema.Resource {
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanTable(meta.(*sqlx.DB), i)
+	s, err := materialize.ScanTable(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -94,7 +95,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	if err := d.Set("name", s.TableName.String); err != nil {
 		return diag.FromErr(err)
@@ -122,7 +123,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// Table columns
-	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), i)
+	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), utils.ExtractId(i))
 	if err != nil {
 		log.Print("[DEBUG] cannot query list tables")
 		return diag.FromErr(err)
@@ -208,7 +209,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(i)
+	d.SetId(utils.TransformIdWithRegion(i))
 
 	return tableRead(ctx, d, meta)
 }

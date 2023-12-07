@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -139,7 +140,7 @@ func testAccCheckConnSshTunnelExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("connection ssh tunnel not found: %s", name)
 		}
-		_, err := materialize.ScanConnectionSshTunnel(db, r.Primary.ID)
+		_, err := materialize.ScanConnectionSshTunnel(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
@@ -152,9 +153,9 @@ func testAccCheckAllConnSshTunnelDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err := materialize.ScanConnectionSshTunnel(db, r.Primary.ID)
+		_, err := materialize.ScanConnectionSshTunnel(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
-			return fmt.Errorf("connection %v still exists", r.Primary.ID)
+			return fmt.Errorf("connection %v still exists", utils.ExtractId(r.Primary.ID))
 		} else if err != sql.ErrNoRows {
 			return err
 		}

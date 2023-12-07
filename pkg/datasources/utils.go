@@ -3,6 +3,7 @@ package datasources
 import (
 	"fmt"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -16,5 +17,5 @@ func SetId(resource, databaseName, schemaName string, d *schema.ResourceData) {
 		id = resource
 	}
 
-	d.SetId(id)
+	d.SetId(utils.TransformIdWithRegion(id))
 }
