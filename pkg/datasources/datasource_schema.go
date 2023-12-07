@@ -60,7 +60,7 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	for _, p := range dataSource {
 		schemaMap := map[string]interface{}{}
 
-		schemaMap["id"] = utils.TransformIdWithRegion(p.SchemaId.String)
+		schemaMap["id"] = p.SchemaId.String
 		schemaMap["name"] = p.SchemaName.String
 		schemaMap["database_name"] = p.DatabaseName.String
 

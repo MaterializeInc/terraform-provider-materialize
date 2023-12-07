@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -74,7 +73,7 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	for _, p := range dataSource {
 		connectionMap := map[string]interface{}{}
 
-		connectionMap["id"] = utils.TransformIdWithRegion(p.ConnectionId.String)
+		connectionMap["id"] = p.ConnectionId.String
 		connectionMap["name"] = p.ConnectionName.String
 		connectionMap["schema_name"] = p.SchemaName.String
 		connectionMap["database_name"] = p.DatabaseName.String

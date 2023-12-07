@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -74,7 +73,7 @@ func typeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	for _, p := range dataSource {
 		typeMap := map[string]interface{}{}
 
-		typeMap["id"] = utils.TransformIdWithRegion(p.TypeId.String)
+		typeMap["id"] = p.TypeId.String
 		typeMap["name"] = p.TypeName.String
 		typeMap["schema_name"] = p.SchemaName.String
 		typeMap["database_name"] = p.DatabaseName.String

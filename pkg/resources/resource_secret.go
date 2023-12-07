@@ -29,11 +29,11 @@ var secretSchema = map[string]*schema.Schema{
 }
 
 // Define the V0 schema function
-func secretSchemaV0() *schema.Resource {
-	return &schema.Resource{
-		Schema: secretSchema,
-	}
-}
+// func secretSchemaV0() *schema.Resource {
+// 	return &schema.Resource{
+// 		Schema: secretSchema,
+// 	}
+// }
 
 func Secret() *schema.Resource {
 	return &schema.Resource{
@@ -48,15 +48,15 @@ func Secret() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        secretSchema,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Type:    secretSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: utils.IdStateUpgradeV0,
-				Version: 0,
-			},
-		},
+		Schema: secretSchema,
+		// SchemaVersion: 1,
+		// StateUpgraders: []schema.StateUpgrader{
+		// 	{
+		// 		Type:    secretSchemaV0().CoreConfigSchema().ImpliedType(),
+		// 		Upgrade: utils.IdStateUpgradeV0,
+		// 		Version: 0,
+		// 	},
+		// },
 	}
 }
 

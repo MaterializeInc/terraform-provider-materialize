@@ -48,7 +48,7 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	for _, p := range dataSource {
 		databaseMap := map[string]interface{}{}
 
-		databaseMap["id"] = utils.TransformIdWithRegion(p.DatabaseId.String)
+		databaseMap["id"] = p.DatabaseId.String
 		databaseMap["name"] = p.DatabaseName.String
 
 		databaseFormats = append(databaseFormats, databaseMap)

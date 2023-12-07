@@ -64,7 +64,7 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 	for _, p := range dataSource {
 		clusterReplicaMap := map[string]interface{}{}
 
-		clusterReplicaMap["id"] = utils.TransformIdWithRegion(p.ReplicaId.String)
+		clusterReplicaMap["id"] = p.ReplicaId.String
 		clusterReplicaMap["name"] = p.ReplicaName.String
 		clusterReplicaMap["cluster"] = p.ClusterName.String
 		clusterReplicaMap["size"] = p.Size.String
