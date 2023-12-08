@@ -174,8 +174,8 @@ func (b *PrivilegeBuilder) Revoke() error {
 	return b.ddl.exec(q)
 }
 
-func (b *PrivilegeBuilder) GrantKey(objectId, roleId, privilege string) string {
-	return fmt.Sprintf(`GRANT|%[1]s|%[2]s|%[3]s|%[4]s`, b.object.ObjectType, objectId, roleId, privilege)
+func (b *PrivilegeBuilder) GrantKey(region, objectId, roleId, privilege string) string {
+	return fmt.Sprintf(`%[1]s:GRANT|%[2]s|%[3]s|%[4]s|%[5]s`, region, b.object.ObjectType, objectId, roleId, privilege)
 }
 
 func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) ([]string, error) {

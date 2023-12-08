@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -65,7 +66,7 @@ func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(i, roleId, privilege)
+	key := b.GrantKey(utils.Region, i, roleId, privilege)
 	d.SetId(key)
 
 	return grantRead(ctx, d, meta)

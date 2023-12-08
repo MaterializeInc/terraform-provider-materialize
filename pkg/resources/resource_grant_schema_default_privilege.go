@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -70,7 +71,7 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	key := b.GrantKey("SCHEMA", gId, tId, dId, "", privilege)
+	key := b.GrantKey(utils.Region, "SCHEMA", gId, tId, dId, "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)

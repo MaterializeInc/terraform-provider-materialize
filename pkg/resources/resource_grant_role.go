@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
@@ -109,7 +110,7 @@ func grantRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(rId, mId)
+	key := b.GrantKey(utils.Region, rId, mId)
 	d.SetId(key)
 
 	return grantRoleRead(ctx, d, meta)

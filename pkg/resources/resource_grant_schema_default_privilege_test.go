@@ -6,12 +6,14 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResourceGrantSchemaDefaultPrivilegeCreate(t *testing.T) {
+	utils.SetRegionFromHostname("localhost")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -47,7 +49,7 @@ func TestResourceGrantSchemaDefaultPrivilegeCreate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if d.Id() != "GRANT DEFAULT|SCHEMA|u1|u1|||USAGE" {
+		if d.Id() != "aws/us-east-1:GRANT DEFAULT|SCHEMA|u1|u1|||USAGE" {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
 	})
