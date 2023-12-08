@@ -28,6 +28,7 @@ func TestAccSinkKafka_basic(t *testing.T) {
 				Config: testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
+					resource.TestMatchResourceAttr("materialize_sink_kafka.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "name", sinkName),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "schema_name", "public"),

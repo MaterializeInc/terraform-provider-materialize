@@ -27,6 +27,7 @@ func TestAccGrantSchema_basic(t *testing.T) {
 						Name:         schemaName,
 						DatabaseName: databaseName,
 					}, "materialize_schema_grant.schema_grant", roleName, privilege),
+					resource.TestMatchResourceAttr("materialize_schema_grant.schema_grant", "id", terraformGrantIdRegex),
 					resource.TestCheckResourceAttr("materialize_schema_grant.schema_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_schema_grant.schema_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_schema_grant.schema_grant", "schema_name", schemaName),

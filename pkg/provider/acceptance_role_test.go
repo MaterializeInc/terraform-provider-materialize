@@ -24,6 +24,7 @@ func TestAccRole_basic(t *testing.T) {
 				Config: testAccRoleResource(roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleExists("materialize_role.test"),
+					resource.TestMatchResourceAttr("materialize_role.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_role.test", "name", roleName),
 					resource.TestCheckResourceAttr("materialize_role.test", "inherit", "true"),
 				),

@@ -26,6 +26,7 @@ func TestAccSchema_basic(t *testing.T) {
 				Config: testAccSchemaResource(roleName, schemaName, schema2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists("materialize_schema.test"),
+					resource.TestMatchResourceAttr("materialize_schema.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_schema.test", "name", schemaName),
 					resource.TestCheckResourceAttr("materialize_schema.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_schema.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."%s"`, schemaName)),

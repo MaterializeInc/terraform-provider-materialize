@@ -26,6 +26,7 @@ func TestAccCluster_basic(t *testing.T) {
 				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "1s", "true", "2", "true", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
+					resource.TestMatchResourceAttr("materialize_cluster.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "size", ""),

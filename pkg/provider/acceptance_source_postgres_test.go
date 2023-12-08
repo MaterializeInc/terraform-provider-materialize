@@ -28,6 +28,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 				Config: testAccSourcePostgresResource(roleName, secretName, connName, sourceName, source2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
+					resource.TestMatchResourceAttr("materialize_source_postgres.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),

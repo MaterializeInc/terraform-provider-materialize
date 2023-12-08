@@ -30,6 +30,7 @@ func TestAccGrantDatabase_basic(t *testing.T) {
 									ObjectType: "DATABASE",
 									Name:       databaseName,
 								}, "materialize_database_grant.database_grant", roleName, privilege),
+							resource.TestMatchResourceAttr("materialize_database_grant.test", "id", terraformGrantIdRegex),
 							resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "role_name", roleName),
 							resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "privilege", privilege),
 							resource.TestCheckResourceAttr("materialize_database_grant.database_grant", "database_name", databaseName),

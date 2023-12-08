@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -10,6 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/exp/slices"
+)
+
+var (
+	terraformObjectIdRegex       = regexp.MustCompile("^aws/us-east-1:")
+	terraformGrantIdRegex        = regexp.MustCompile("^aws/us-east-1:GRANT|")
+	terraformGrantDefaultIdRegex = regexp.MustCompile("^aws/us-east-1:GRANT DEFAULT|")
+	terraformGrantSystemIdRegex  = regexp.MustCompile("^aws/us-east-1:GRANT ROLE|")
+	terraformGrantRoleIdRegex    = regexp.MustCompile("^aws/us-east-1:GRANT SYSTEM|")
 )
 
 func TestProvider(t *testing.T) {

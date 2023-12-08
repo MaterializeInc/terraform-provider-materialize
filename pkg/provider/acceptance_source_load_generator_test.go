@@ -26,6 +26,7 @@ func TestAccSourceLoadGeneratorCounter_basic(t *testing.T) {
 				Config: testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, "3xsmall", roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
+					resource.TestMatchResourceAttr("materialize_source_load_generator.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),

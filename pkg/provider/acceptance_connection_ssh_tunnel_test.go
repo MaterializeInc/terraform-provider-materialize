@@ -26,6 +26,7 @@ func TestAccConnSshTunnel_basic(t *testing.T) {
 				Config: testAccConnSshTunnelResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnSshTunnelExists("materialize_connection_ssh_tunnel.test"),
+					resource.TestMatchResourceAttr("materialize_connection_ssh_tunnel.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "name", connectionName),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "host", "ssh_host"),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "user", "ssh_user"),

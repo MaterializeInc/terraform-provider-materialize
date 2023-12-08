@@ -27,6 +27,7 @@ func TestAccSourceKafka_basic(t *testing.T) {
 				Config: testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
+					resource.TestMatchResourceAttr("materialize_source_kafka.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", "public"),

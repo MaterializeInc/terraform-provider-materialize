@@ -26,6 +26,7 @@ func TestAccTable_basic(t *testing.T) {
 				Config: testAccTableResource(roleName, tableName, tableRoleName, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableExists("materialize_table.test"),
+					resource.TestMatchResourceAttr("materialize_table.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_table.test", "name", tableName),
 					resource.TestCheckResourceAttr("materialize_table.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_table.test", "database_name", "materialize"),

@@ -33,6 +33,7 @@ func TestAccGrantRole_basic(t *testing.T) {
 					{
 						Config: testAccGrantRoleResource(r["roleName"], r["granteeName"]),
 						Check: resource.ComposeTestCheckFunc(
+							resource.TestMatchResourceAttr("materialize_role_grant.test", "id", terraformGrantRoleIdRegex),
 							resource.TestCheckResourceAttr("materialize_role_grant.test", "role_name", r["roleName"]),
 							resource.TestCheckResourceAttr("materialize_role_grant.test", "member_name", r["granteeName"]),
 						),

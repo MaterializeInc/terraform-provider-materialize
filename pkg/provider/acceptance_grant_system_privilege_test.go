@@ -25,6 +25,7 @@ func TestAccGrantSystemPrivilege_basic(t *testing.T) {
 					{
 						Config: testAccGrantSystemPrivilegeResource(roleName),
 						Check: resource.ComposeTestCheckFunc(
+							resource.TestMatchResourceAttr("materialize_grant_system_privilege.test", "id", terraformGrantSystemIdRegex),
 							resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "role_name", roleName),
 							resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "privilege", "CREATEDB"),
 						),
