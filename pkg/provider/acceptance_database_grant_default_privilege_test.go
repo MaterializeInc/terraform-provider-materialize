@@ -24,6 +24,7 @@ func TestAccGrantDatabaseDefaultPrivilege_basic(t *testing.T) {
 					{
 						Config: testAccGrantDatabaseDefaultPrivilegeResource(granteeName, targetName, privilege),
 						Check: resource.ComposeTestCheckFunc(
+							resource.TestMatchResourceAttr("materialize_database_grant_default_privilege.test", "id", terraformGrantDefaultIdRegex),
 							resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "grantee_name", granteeName),
 							resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "privilege", privilege),
 							resource.TestCheckResourceAttr("materialize_database_grant_default_privilege.test", "target_role_name", targetName),

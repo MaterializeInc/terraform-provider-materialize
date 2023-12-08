@@ -31,6 +31,7 @@ func TestAccGrantConnection_basic(t *testing.T) {
 							DatabaseName: databaseName,
 						},
 						"materialize_connection_grant.connection_grant", roleName, privilege),
+					resource.TestMatchResourceAttr("materialize_connection_grant.connection_grant", "id", terraformGrantIdRegex),
 					resource.TestCheckResourceAttr("materialize_connection_grant.connection_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_connection_grant.connection_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_connection_grant.connection_grant", "connection_name", connectionName),

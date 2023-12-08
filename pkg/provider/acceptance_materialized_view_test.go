@@ -26,6 +26,7 @@ func TestAccMaterializedView_basic(t *testing.T) {
 				Config: testAccMaterializedViewResource(roleName, viewName, view2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test"),
+					resource.TestMatchResourceAttr("materialize_materialized_view.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "name", viewName),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "database_name", "materialize"),

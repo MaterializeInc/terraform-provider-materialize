@@ -26,6 +26,7 @@ func TestAccSecret_basic(t *testing.T) {
 				Config: testAccSecretResource(roleName, secretName, "sekret", secret2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSecretExists("materialize_secret.test"),
+					resource.TestMatchResourceAttr("materialize_secret.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_secret.test", "name", secretName),
 					resource.TestCheckResourceAttr("materialize_secret.test", "value", "sekret"),
 					resource.TestCheckResourceAttr("materialize_secret.test", "database_name", "materialize"),

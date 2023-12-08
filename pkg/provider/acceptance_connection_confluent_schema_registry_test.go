@@ -26,6 +26,7 @@ func TestAccConnConfluentSchemaRegistry_basic(t *testing.T) {
 				Config: testAccConnConfluentSchemaRegistryResource(roleName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.test"),
+					resource.TestMatchResourceAttr("materialize_connection_confluent_schema_registry.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.test", "name", connectionName),
 					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.test", "url", "http://redpanda:8081"),
 					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.test", "database_name", "materialize"),

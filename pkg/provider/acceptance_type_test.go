@@ -26,6 +26,7 @@ func TestAccTypeList_basic(t *testing.T) {
 				Config: testAccTypeResource(roleName, typeName, type2Name, roleName, "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTypeExists("materialize_type.test"),
+					resource.TestMatchResourceAttr("materialize_type.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_type.test", "name", typeName),
 					resource.TestCheckResourceAttr("materialize_type.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_type.test", "database_name", "materialize"),

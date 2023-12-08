@@ -25,6 +25,7 @@ func TestAccClusterReplica_basic(t *testing.T) {
 				Config: testAccClusterReplicaResource(clusterName, replicaName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
+					resource.TestMatchResourceAttr("materialize_cluster_replica.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "cluster_name", clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "name", replicaName),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "size", "3xsmall"),

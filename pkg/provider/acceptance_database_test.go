@@ -30,7 +30,7 @@ func TestAccDatabase_basic(t *testing.T) {
 						Config: testAccDatabaseResource(roleName, databaseName, database2Name, roleName, "Comment"),
 						Check: resource.ComposeTestCheckFunc(
 							testAccCheckDatabaseExists("materialize_database.test"),
-							testAccCheckDatabaseExists("materialize_database.test_role"),
+							resource.TestMatchResourceAttr("materialize_database.test", "id", terraformObjectIdRegex),
 							resource.TestCheckResourceAttr("materialize_database.test", "name", databaseName),
 							resource.TestCheckResourceAttr("materialize_database.test", "ownership_role", "mz_system"),
 							testAccCheckDatabaseExists("materialize_database.test_role"),

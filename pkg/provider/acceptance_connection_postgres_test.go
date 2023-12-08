@@ -27,6 +27,7 @@ func TestAccConnPostgres_basic(t *testing.T) {
 				Config: testAccConnPostgresResource(roleName, secretName, connectionName, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
+					resource.TestMatchResourceAttr("materialize_connection_postgres.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "name", connectionName),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "user.#", "1"),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "user.0.text", "postgres"),

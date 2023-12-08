@@ -27,6 +27,7 @@ func TestAccSourceWebhook_basic(t *testing.T) {
 				Config: testAccSourceWebhookResource(roleName, secretName, clusterName, sourceName, "mz_system", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
+					resource.TestMatchResourceAttr("materialize_source_webhook.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "cluster_name", clusterName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "body_format", "json"),
@@ -64,6 +65,7 @@ func TestAccSourceWebhookSegment_basic(t *testing.T) {
 				Config: testAccSourceWebhookSegmentResource(sourceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
+					resource.TestMatchResourceAttr("materialize_source_webhook.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "cluster_name", "segment_cluster"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "body_format", "json"),
@@ -97,6 +99,7 @@ func TestAccSourceWebhookRudderstack_basic(t *testing.T) {
 				Config: testAccSourceWebhookRudderstackResource(sourceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
+					resource.TestMatchResourceAttr("materialize_source_webhook.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "cluster_name", "rudderstack_cluster"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "body_format", "json"),

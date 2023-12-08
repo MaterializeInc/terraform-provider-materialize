@@ -26,6 +26,7 @@ func TestAccGrantCluster_basic(t *testing.T) {
 							ObjectType: "CLUSTER",
 							Name:       clusterName,
 						}, "materialize_cluster_grant.cluster_grant", roleName, privilege),
+					resource.TestMatchResourceAttr("materialize_cluster_grant.cluster_grant", "id", terraformGrantIdRegex),
 					resource.TestCheckResourceAttr("materialize_cluster_grant.cluster_grant", "role_name", roleName),
 					resource.TestCheckResourceAttr("materialize_cluster_grant.cluster_grant", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_cluster_grant.cluster_grant", "cluster_name", clusterName),

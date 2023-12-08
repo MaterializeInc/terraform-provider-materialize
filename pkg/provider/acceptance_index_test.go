@@ -25,6 +25,7 @@ func TestAccIndex_basic(t *testing.T) {
 				Config: testAccIndexResource(viewName, indexName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIndexExists("materialize_index.test"),
+					resource.TestMatchResourceAttr("materialize_index.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_index.test", "name", indexName),
 					resource.TestCheckResourceAttr("materialize_index.test", "method", "ARRANGEMENT"),
 					resource.TestCheckResourceAttr("materialize_index.test", "obj_name.#", "1"),
