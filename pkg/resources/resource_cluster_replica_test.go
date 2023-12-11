@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -52,6 +53,35 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 
 		if err := clusterReplicaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
+		}
+	})
+}
+
+// Confirm id is updated with region for 0.4.0
+func TestResourceClusterReplicaReadIdMigration(t *testing.T) {
+	utils.SetRegionFromHostname("localhost")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"name": "replica",
+	}
+	d := schema.TestResourceDataRaw(t, ClusterReplica().Schema, in)
+	r.NotNil(d)
+
+	// Set id before migration
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_cluster_replicas.id = 'u1'`
+		testhelpers.MockClusterReplicaScan(mock, pp)
+
+		if err := clusterReplicaRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:u1" {
+			t.Fatalf("unexpected id of %s", d.Id())
 		}
 	})
 }

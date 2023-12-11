@@ -63,6 +63,34 @@ func TestResourceTableCreate(t *testing.T) {
 	})
 }
 
+// Confirm id is updated with region for 0.4.0
+func TestResourceTableReadIdMigration(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
+	r.NotNil(d)
+
+	// Set id before migration
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockTableScan(mock, pp)
+
+		// Query Columns
+		cp := `WHERE mz_columns.id = 'u1'`
+		testhelpers.MockTableColumnScan(mock, cp)
+
+		if err := tableRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:u1" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
 func TestResourceTableDelete(t *testing.T) {
 	r := require.New(t)
 

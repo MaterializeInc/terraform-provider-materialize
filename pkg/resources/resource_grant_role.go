@@ -85,8 +85,7 @@ func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.Errorf("role does contain member %s", key.memberId)
 	}
 
-	d.SetId(i)
-
+	d.SetId(utils.TransformIdWithRegion(i))
 	return nil
 }
 

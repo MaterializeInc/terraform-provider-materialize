@@ -46,6 +46,30 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 	})
 }
 
+// Confirm id is updated with region for 0.4.0
+func TestResourceMaterializedViewReadIdMigration(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)
+	r.NotNil(d)
+
+	// Set id before migration
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_materialized_views.id = 'u1'`
+		testhelpers.MockMaterializeViewScan(mock, pp)
+
+		if err := materializedViewRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:u1" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
 func TestResourceMaterializedViewUpdate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)

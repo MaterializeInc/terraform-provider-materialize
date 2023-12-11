@@ -42,6 +42,30 @@ func TestResourceTypeCreate(t *testing.T) {
 	})
 }
 
+// Confirm id is updated with region for 0.4.0
+func TestResourceTypeReadIdMigration(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Type().Schema, inType)
+	r.NotNil(d)
+
+	// Set id before migration
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_types.id = 'u1'`
+		testhelpers.MockTypeScan(mock, pp)
+
+		if err := typeRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:u1" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
 func TestResourceTypeDelete(t *testing.T) {
 	r := require.New(t)
 

@@ -87,6 +87,8 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 		// Remove id from state
 		d.SetId("")
 	}
+
+	d.SetId(utils.TransformIdWithRegion(i))
 	return nil
 }
 
