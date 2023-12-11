@@ -46,6 +46,35 @@ func TestResourceGrantSystemPrivilegeCreate(t *testing.T) {
 	})
 }
 
+// Confirm id is updated with region for 0.4.0
+func TestResourceGrantSystemPrivilegeReadIdMigration(t *testing.T) {
+	utils.SetRegionFromHostname("localhost")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name": "role",
+		"privilege": "CREATEDB",
+	}
+	d := schema.TestResourceDataRaw(t, GrantSystemPrivilege().Schema, in)
+	r.NotNil(d)
+
+	// Set id before migration
+	d.SetId("GRANT SYSTEM|u1|CREATEDB")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Query Params
+		testhelpers.MockSystemGrantScan(mock)
+
+		if err := grantSystemPrivilegeRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:GRANT SYSTEM|u1|CREATEDB" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
 func TestResourceGrantSystemPrivilegeDelete(t *testing.T) {
 	r := require.New(t)
 

@@ -11,6 +11,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Confirm id is updated with region for 0.4.0
+func TestResourceSinkReadIdMigration(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka)
+	r.NotNil(d)
+
+	// Set current state
+	d.SetId("u1")
+
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_sinks.id = 'u1'`
+		testhelpers.MockSinkScan(mock, pp)
+
+		if err := sinkRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:u1" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
 func TestResourceSinkUpdate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka)
