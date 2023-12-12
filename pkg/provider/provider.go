@@ -136,7 +136,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
 	// TODO: Rework the logic to set the region from the default region or the resource specific region.
-	err := utils.SetRegionFromHostname("materialize")
+	err := utils.SetDefaultRegion(string(defaultRegion))
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}

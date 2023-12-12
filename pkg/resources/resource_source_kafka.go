@@ -165,7 +165,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -295,7 +295,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return sourceRead(ctx, d, meta)
 }

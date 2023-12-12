@@ -126,7 +126,7 @@ resource "materialize_connection_confluent_schema_registry" "test_role" {
 func testAccCheckConnConfluentSchemaRegistryExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -141,7 +141,7 @@ func testAccCheckConnConfluentSchemaRegistryExists(name string) resource.TestChe
 
 func testAccCheckAllConnConfluentSchemaRegistryDestroyed(s *terraform.State) error {
 	meta := testAccProvider.Meta()
-	db, err := utils.GetDBClientFromMeta(meta, nil)
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
 	if err != nil {
 		return fmt.Errorf("error getting DB client: %s", err)
 	}

@@ -58,7 +58,7 @@ func Cluster() *schema.Resource {
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -70,7 +70,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
@@ -102,7 +102,7 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -173,7 +173,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return clusterRead(ctx, d, meta)
 }
@@ -181,7 +181,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -265,7 +265,7 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

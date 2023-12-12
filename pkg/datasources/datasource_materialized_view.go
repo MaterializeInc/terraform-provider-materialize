@@ -64,7 +64,7 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,6 +89,6 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	SetId("materialized_views", databaseName, schemaName, d)
+	SetId(string(region), "materialized_views", databaseName, schemaName, d)
 	return diags
 }

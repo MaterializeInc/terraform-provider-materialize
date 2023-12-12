@@ -54,7 +54,7 @@ func TestResourceSecretReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_secrets.id = 'u1'`
 		testhelpers.MockSecretScan(mock, pp)

@@ -40,7 +40,7 @@ func Schema() *schema.Resource {
 
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -52,7 +52,7 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.SchemaName.String); err != nil {
 		return diag.FromErr(err)
@@ -82,7 +82,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -121,7 +121,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return schemaRead(ctx, d, meta)
 }
@@ -130,7 +130,7 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -160,7 +160,7 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

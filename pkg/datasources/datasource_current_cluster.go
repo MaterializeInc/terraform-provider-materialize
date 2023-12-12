@@ -27,7 +27,7 @@ func CurrentCluster() *schema.Resource {
 func currentClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -36,7 +36,7 @@ func currentClusterRead(ctx context.Context, d *schema.ResourceData, meta interf
 	conn.QueryRow("SHOW CLUSTER;").Scan(&name)
 
 	d.Set("name", name)
-	d.SetId(utils.TransformIdWithRegion("current_cluster"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "current_cluster"))
 
 	return diags
 }

@@ -45,7 +45,7 @@ func TestResourceConnectionUpdate(t *testing.T) {
 // All connections (other than AWS Privatelink and SSH Tunnel)
 // share the same read function
 func TestResourceConnectionReadIdMigration(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
 	r.NotNil(d)
@@ -53,7 +53,7 @@ func TestResourceConnectionReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		p := `WHERE mz_connections.id = 'u1'`
 		testhelpers.MockConnectionScan(mock, p)

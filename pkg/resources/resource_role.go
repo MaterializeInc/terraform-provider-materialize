@@ -44,7 +44,7 @@ func Role() *schema.Resource {
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -56,7 +56,7 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.RoleName.String); err != nil {
 		return diag.FromErr(err)
@@ -81,7 +81,7 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,7 +114,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return roleRead(ctx, d, meta)
 }
@@ -124,7 +124,7 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 func roleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

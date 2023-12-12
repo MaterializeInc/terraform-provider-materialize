@@ -64,7 +64,7 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,6 +89,6 @@ func secretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	SetId("secrets", databaseName, schemaName, d)
+	SetId(string(region), "secrets", databaseName, schemaName, d)
 	return diags
 }

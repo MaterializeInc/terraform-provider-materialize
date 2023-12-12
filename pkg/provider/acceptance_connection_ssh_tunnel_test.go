@@ -136,7 +136,7 @@ resource "materialize_connection_ssh_tunnel" "test_role" {
 func testAccCheckConnSshTunnelExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -151,7 +151,7 @@ func testAccCheckConnSshTunnelExists(name string) resource.TestCheckFunc {
 
 func testAccCheckAllConnSshTunnelDestroyed(s *terraform.State) error {
 	meta := testAccProvider.Meta()
-	db, err := utils.GetDBClientFromMeta(meta, nil)
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
 	if err != nil {
 		return fmt.Errorf("error getting DB client: %s", err)
 	}

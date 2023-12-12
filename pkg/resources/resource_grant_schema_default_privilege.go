@@ -39,7 +39,7 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,7 +76,7 @@ func grantSchemaDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	key := b.GrantKey(utils.Region, "SCHEMA", gId, tId, dId, "", privilege)
+	key := b.GrantKey(string(region), "SCHEMA", gId, tId, dId, "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -87,7 +87,7 @@ func grantSchemaDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceDa
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

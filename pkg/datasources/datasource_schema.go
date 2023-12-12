@@ -54,7 +54,7 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,9 +80,9 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if databaseName != "" {
 		id := fmt.Sprintf("%s|schemas", databaseName)
-		d.SetId(utils.TransformIdWithRegion(id))
+		d.SetId(utils.TransformIdWithRegion(string(region), id))
 	} else {
-		d.SetId(utils.TransformIdWithRegion("schemas"))
+		d.SetId(utils.TransformIdWithRegion(string(region), "schemas"))
 	}
 
 	return diags

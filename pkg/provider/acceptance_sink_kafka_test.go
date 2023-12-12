@@ -336,7 +336,7 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 func testAccCheckSinkKafkaExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -352,7 +352,7 @@ func testAccCheckSinkKafkaExists(name string) resource.TestCheckFunc {
 func testAccCheckSinkKafkaDisappears(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -363,7 +363,7 @@ func testAccCheckSinkKafkaDisappears(name string) resource.TestCheckFunc {
 
 func testAccCheckAllSinkKafkaDestroyed(s *terraform.State) error {
 	meta := testAccProvider.Meta()
-	db, err := utils.GetDBClientFromMeta(meta, nil)
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
 	if err != nil {
 		return fmt.Errorf("error getting DB client: %s", err)
 	}

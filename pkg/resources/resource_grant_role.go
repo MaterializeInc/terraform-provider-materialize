@@ -68,7 +68,7 @@ func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.FromErr(err)
 	}
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,7 +90,7 @@ func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.Errorf("role does contain member %s", key.memberId)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 	return nil
 }
 
@@ -98,7 +98,7 @@ func grantRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	roleName := d.Get("role_name").(string)
 	memberName := d.Get("member_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func grantRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, rId, mId)
+	key := b.GrantKey(string(region), rId, mId)
 	d.SetId(key)
 
 	return grantRoleRead(ctx, d, meta)
@@ -129,7 +129,7 @@ func grantRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	roleName := d.Get("role_name").(string)
 	memberName := d.Get("member_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

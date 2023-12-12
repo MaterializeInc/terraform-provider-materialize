@@ -53,7 +53,7 @@ func ClusterReplica() *schema.Resource {
 func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -65,7 +65,7 @@ func clusterReplicaRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.ReplicaName.String); err != nil {
 		return diag.FromErr(err)
@@ -98,7 +98,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,7 +155,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return clusterReplicaRead(ctx, d, meta)
 }
@@ -164,7 +164,7 @@ func clusterReplicaUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func clusterReplicaDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	replicaName := d.Get("name").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

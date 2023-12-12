@@ -38,7 +38,7 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -61,7 +61,7 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, "CLUSTER", gId, tId, "", "", privilege)
+	key := b.GrantKey(string(region), "CLUSTER", gId, tId, "", "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -72,7 +72,7 @@ func grantClusterDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceD
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -55,7 +55,7 @@ func testAccAddColumnComment(object materialize.MaterializeObject, column, comme
 func testAccCheckObjectDisappears(object materialize.MaterializeObject) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -67,7 +67,7 @@ func testAccCheckObjectDisappears(object materialize.MaterializeObject) resource
 func testAccCheckGrantRevoked(object materialize.MaterializeObject, roleName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -82,7 +82,7 @@ func testAccCheckGrantRevoked(object materialize.MaterializeObject, roleName, pr
 func testAccCheckGrantExists(object materialize.MaterializeObject, grantName, roleName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -113,7 +113,7 @@ func testAccCheckGrantExists(object materialize.MaterializeObject, grantName, ro
 func testAccCheckGrantDefaultPrivilegeRevoked(objectType, granteeName, targetName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -125,7 +125,7 @@ func testAccCheckGrantDefaultPrivilegeRevoked(objectType, granteeName, targetNam
 func testAccCheckGrantDefaultPrivilegeExists(objectType, grantName, granteeName, targetName, privilege string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}

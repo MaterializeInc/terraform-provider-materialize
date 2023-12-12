@@ -42,7 +42,7 @@ func Database() *schema.Resource {
 func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -66,6 +66,6 @@ func databaseRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion("databases"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "databases"))
 	return diags
 }

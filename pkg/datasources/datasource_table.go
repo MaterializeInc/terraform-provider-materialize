@@ -64,7 +64,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	SetId("tables", databaseName, schemaName, d)
+	SetId(string(region), "tables", databaseName, schemaName, d)
 
 	return diags
 }

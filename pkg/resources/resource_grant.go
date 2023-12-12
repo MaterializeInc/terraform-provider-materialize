@@ -37,7 +37,7 @@ func parsePrivilegeKey(id string) (GrantPrivilegeKey, error) {
 func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,6 +69,6 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		d.SetId("")
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 	return nil
 }

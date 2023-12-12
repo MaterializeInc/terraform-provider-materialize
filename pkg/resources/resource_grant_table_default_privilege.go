@@ -40,7 +40,7 @@ func grantTableDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDat
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func grantTableDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	key := b.GrantKey(utils.Region, "TABLE", gId, tId, dId, sId, privilege)
+	key := b.GrantKey(string(region), "TABLE", gId, tId, dId, sId, privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -100,7 +100,7 @@ func grantTableDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceDat
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

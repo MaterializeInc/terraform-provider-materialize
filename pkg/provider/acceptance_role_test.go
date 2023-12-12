@@ -107,7 +107,7 @@ resource "materialize_role" "test" {
 func testAccCheckRoleExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -122,7 +122,7 @@ func testAccCheckRoleExists(name string) resource.TestCheckFunc {
 
 func testAccCheckAllRolesDestroyed(s *terraform.State) error {
 	meta := testAccProvider.Meta()
-	db, err := utils.GetDBClientFromMeta(meta, nil)
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
 	if err != nil {
 		return fmt.Errorf("error getting DB client: %s", err)
 	}

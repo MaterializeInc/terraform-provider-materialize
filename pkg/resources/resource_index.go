@@ -93,7 +93,7 @@ func Index() *schema.Resource {
 func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -105,7 +105,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.IndexName.String); err != nil {
 		return diag.FromErr(err)
@@ -154,7 +154,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -203,7 +203,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return indexRead(ctx, d, meta)
 }
@@ -212,7 +212,7 @@ func indexUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	indexName := d.Get("name").(string)
 	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -233,7 +233,7 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
 	name := d.Get("name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -58,7 +58,7 @@ func Cluster() *schema.Resource {
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -85,6 +85,6 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion("clusters"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "clusters"))
 	return diags
 }

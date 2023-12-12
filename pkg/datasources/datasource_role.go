@@ -42,7 +42,7 @@ func Role() *schema.Resource {
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -65,6 +65,6 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion("roles"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "roles"))
 	return diags
 }

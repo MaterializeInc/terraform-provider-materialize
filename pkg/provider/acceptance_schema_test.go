@@ -129,7 +129,7 @@ func testAccSchemaResource(roleName, schemaName, schema2Name, schemaOwner, comme
 func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -144,7 +144,7 @@ func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
 
 func testAccCheckAllSchemasDestroyed(s *terraform.State) error {
 	meta := testAccProvider.Meta()
-	db, err := utils.GetDBClientFromMeta(meta, nil)
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
 	if err != nil {
 		return fmt.Errorf("error getting DB client: %s", err)
 	}

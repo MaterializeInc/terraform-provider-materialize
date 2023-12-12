@@ -68,7 +68,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -94,6 +94,6 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	SetId("indexes", databaseName, schemaName, d)
+	SetId(string(region), "indexes", databaseName, schemaName, d)
 	return diags
 }

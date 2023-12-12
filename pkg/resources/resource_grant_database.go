@@ -48,7 +48,7 @@ func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		Name:       databaseName,
 	}
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,7 +71,7 @@ func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, i, roleId, privilege)
+	key := b.GrantKey(string(region), i, roleId, privilege)
 	d.SetId(key)
 
 	return grantRead(ctx, d, meta)
@@ -82,7 +82,7 @@ func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	privilege := d.Get("privilege").(string)
 	databaseName := d.Get("database_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

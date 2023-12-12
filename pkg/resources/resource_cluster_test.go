@@ -59,7 +59,7 @@ func TestResourceClusterCreate(t *testing.T) {
 
 // Confirm id is updated with region for 0.4.0
 func TestResourceClusterReadIdMigration(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -71,7 +71,7 @@ func TestResourceClusterReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)

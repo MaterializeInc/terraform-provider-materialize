@@ -84,7 +84,7 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,7 +114,7 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	SetId("sources", databaseName, schemaName, d)
+	SetId(string(region), "sources", databaseName, schemaName, d)
 
 	return diags
 }

@@ -27,7 +27,7 @@ func CurrentDatabase() *schema.Resource {
 func currentDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -36,7 +36,7 @@ func currentDatabaseRead(ctx context.Context, d *schema.ResourceData, meta inter
 	conn.QueryRow("SHOW DATABASE;").Scan(&name)
 
 	d.Set("name", name)
-	d.SetId(utils.TransformIdWithRegion("current_database"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "current_database"))
 
 	return diags
 }

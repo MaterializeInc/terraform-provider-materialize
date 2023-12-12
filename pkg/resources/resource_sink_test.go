@@ -20,7 +20,7 @@ func TestResourceSinkReadIdMigration(t *testing.T) {
 	// Set current state
 	d.SetId("u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_sinks.id = 'u1'`
 		testhelpers.MockSinkScan(mock, pp)

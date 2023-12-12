@@ -12,7 +12,7 @@ import (
 )
 
 func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -51,7 +51,7 @@ func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
 
 // Confirm id is updated with region for 0.4.0
 func TestResourceGrantRolePrivilegeReadIdMigration(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -64,7 +64,7 @@ func TestResourceGrantRolePrivilegeReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("ROLE MEMBER|u1|u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		testhelpers.MockRoleGrantScan(mock)
 

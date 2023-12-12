@@ -25,7 +25,7 @@ type MockAppPassword struct {
 
 func WithMockDb(t *testing.T, f func(*sqlx.DB, sqlmock.Sqlmock)) {
 	// Set the region for testing
-	utils.Region = "aws/us-east-1"
+	utils.DefaultRegion = "aws/us-east-1"
 
 	t.Helper()
 	r := require.New(t)

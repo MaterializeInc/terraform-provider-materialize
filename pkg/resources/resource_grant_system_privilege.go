@@ -60,7 +60,7 @@ func parseSystemPrivilegeKey(id string) (SystemPrivilegeKey, error) {
 func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,7 +97,7 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 		d.SetId("")
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 	return nil
 }
 
@@ -105,7 +105,7 @@ func grantSystemPrivilegeCreate(ctx context.Context, d *schema.ResourceData, met
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -121,7 +121,7 @@ func grantSystemPrivilegeCreate(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, rId, privilege)
+	key := b.GrantKey(string(region), rId, privilege)
 	d.SetId(key)
 
 	return grantSystemPrivilegeRead(ctx, d, meta)
@@ -131,7 +131,7 @@ func grantSystemPrivilegeDelete(ctx context.Context, d *schema.ResourceData, met
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

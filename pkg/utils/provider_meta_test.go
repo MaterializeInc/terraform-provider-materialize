@@ -49,11 +49,37 @@ func TestGetDBClientFromMeta(t *testing.T) {
 	require.NoError(t, err)
 
 	// Call the GetDBClientFromMeta function
-	dbClient, err := GetDBClientFromMeta(providerMeta, resourceData)
+	dbClient, _, err := GetDBClientFromMeta(providerMeta, resourceData)
 	require.NoError(t, err)
 	assert.NotNil(t, dbClient)
 
 	// Check that the mock expectations are met
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err)
+}
+
+func TestTransformIdWithRegion(t *testing.T) {
+	testCases := []map[string]interface{}{
+		{
+			"input":    "aws/us-east-1:GRANT DEFAULT|SCHEMA|u1|u1|||USAGE",
+			"expected": "aws/us-east-1:GRANT DEFAULT|SCHEMA|u1|u1|||USAGE",
+		},
+		{
+			"input":    "GRANT DEFAULT|SCHEMA|u1|u1|||USAGE",
+			"expected": "aws/us-east-1:GRANT DEFAULT|SCHEMA|u1|u1|||USAGE",
+		},
+		{
+			"input":    "aws/us-east-1:u1",
+			"expected": "aws/us-east-1:u1",
+		},
+		{
+			"input":    "u1",
+			"expected": "aws/us-east-1:u1",
+		},
+	}
+	for tc, _ := range testCases {
+		c := testCases[tc]
+		o := TransformIdWithRegion("aws/us-east-1", c["input"].(string))
+		assert.Equal(t, o, c["expected"].(string))
+	}
 }

@@ -177,7 +177,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	clusterName := d.Get("cluster_name").(string)
 	bodyFormat := d.Get("body_format").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -277,7 +277,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return sourceRead(ctx, d, meta)
 }

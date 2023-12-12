@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,7 +72,7 @@ func TestParseDefaultPrivilegeIdErrorEmpty(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 // All resources share the same read function
 func TestResourceGrantDefaultPrivilegeReadIdMigration(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -87,7 +86,7 @@ func TestResourceGrantDefaultPrivilegeReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("GRANT DEFAULT|CLUSTER|u1|u1|||USAGE")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		qp := `
 			WHERE mz_default_privileges.grantee = 'u1'

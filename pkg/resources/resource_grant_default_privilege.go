@@ -50,7 +50,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 		return nil
 	}
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -74,6 +74,6 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 		d.SetId("")
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 	return nil
 }

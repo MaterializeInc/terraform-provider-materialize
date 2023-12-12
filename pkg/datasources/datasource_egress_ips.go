@@ -33,7 +33,7 @@ func EgressIps() *schema.Resource {
 func EgressIpsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -72,7 +72,7 @@ func EgressIpsRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion("egress_ips"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "egress_ips"))
 
 	return diags
 }

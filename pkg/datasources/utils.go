@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func SetId(resource, databaseName, schemaName string, d *schema.ResourceData) {
+func SetId(region, resource, databaseName, schemaName string, d *schema.ResourceData) {
 	var id string
 	if databaseName != "" && schemaName != "" {
 		id = fmt.Sprintf("%s|%s|%s", databaseName, schemaName, resource)
@@ -17,5 +17,5 @@ func SetId(resource, databaseName, schemaName string, d *schema.ResourceData) {
 		id = resource
 	}
 
-	d.SetId(utils.TransformIdWithRegion(id))
+	d.SetId(utils.TransformIdWithRegion(region, id))
 }

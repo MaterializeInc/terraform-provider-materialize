@@ -48,7 +48,7 @@ func grantClusterCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		Name:       clusterName,
 	}
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,7 +71,7 @@ func grantClusterCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, i, roleId, privilege)
+	key := b.GrantKey(string(region), i, roleId, privilege)
 	d.SetId(key)
 
 	return grantRead(ctx, d, meta)
@@ -82,7 +82,7 @@ func grantClusterDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	privilege := d.Get("privilege").(string)
 	clusterName := d.Get("cluster_name").(string)
 
-	metaDb, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

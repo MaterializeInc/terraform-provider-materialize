@@ -86,7 +86,7 @@ resource "materialize_role_grant" "test" {
 func testAccCheckGrantRoleExists(grantName, roleName, granteeName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
@@ -117,7 +117,7 @@ func testAccCheckGrantRoleExists(grantName, roleName, granteeName string) resour
 func testAccCheckGrantRoleRevoked(roleName, granteeName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
-		db, err := utils.GetDBClientFromMeta(meta, nil)
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
 		if err != nil {
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
