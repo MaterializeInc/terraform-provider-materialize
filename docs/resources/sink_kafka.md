@@ -127,6 +127,8 @@ Required:
 
 Optional:
 
+- `avro_doc_column` (Block List) **Private Preview** Add column level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_column))
+- `avro_doc_type` (Block List, Max: 1) **Private Preview** Add top level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_type))
 - `avro_key_fullname` (String) The full name of the Avro key schema.
 - `avro_value_fullname` (String) The full name of the Avro value schema.
 
@@ -141,6 +143,60 @@ Optional:
 
 - `database_name` (String) The schema_registry_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The schema_registry_connection schema name. Defaults to `public`.
+
+
+<a id="nestedblock--format--avro--avro_doc_column"></a>
+### Nested Schema for `format.avro.avro_doc_column`
+
+Required:
+
+- `column` (String) Name of the column in the Avro schema to apply to.
+- `doc` (String) Documentation string.
+- `object` (Block List, Min: 1, Max: 1) The object to apply the Avro documentation. (see [below for nested schema](#nestedblock--format--avro--avro_doc_column--object))
+
+Optional:
+
+- `key` (Boolean) Applies to the key schema.
+- `value` (Boolean) Applies to the value schema.
+
+<a id="nestedblock--format--avro--avro_doc_column--object"></a>
+### Nested Schema for `format.avro.avro_doc_column.object`
+
+Required:
+
+- `name` (String) The object name.
+
+Optional:
+
+- `database_name` (String) The object database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The object schema name. Defaults to `public`.
+
+
+
+<a id="nestedblock--format--avro--avro_doc_type"></a>
+### Nested Schema for `format.avro.avro_doc_type`
+
+Required:
+
+- `doc` (String) Documentation string.
+- `object` (Block List, Min: 1, Max: 1) The object to apply the Avro documentation. (see [below for nested schema](#nestedblock--format--avro--avro_doc_type--object))
+
+Optional:
+
+- `key` (Boolean) Applies to the key schema.
+- `value` (Boolean) Applies to the value schema.
+
+<a id="nestedblock--format--avro--avro_doc_type--object"></a>
+### Nested Schema for `format.avro.avro_doc_type.object`
+
+Required:
+
+- `name` (String) The object name.
+
+Optional:
+
+- `database_name` (String) The object database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The object schema name. Defaults to `public`.
 
 ## Import
 
