@@ -82,6 +82,7 @@ var viewQuery = NewBaseQuery(`
 		SELECT id, comment
 		FROM mz_internal.mz_comments
 		WHERE object_type = 'view'
+		AND object_sub_id IS NULL
 	) comments
 		ON mz_views.id = comments.id`)
 

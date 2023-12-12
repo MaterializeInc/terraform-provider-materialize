@@ -26,7 +26,7 @@ func TestTransformIdWithRegion(t *testing.T) {
 			"expected": "aws/us-east-1:u1",
 		},
 	}
-	for tc, _ := range testCases {
+	for tc := range testCases {
 		c := testCases[tc]
 		o := TransformIdWithRegion(c["input"].(string))
 		assert.Equal(t, o, c["expected"].(string))

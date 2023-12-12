@@ -114,6 +114,7 @@ var materializedViewQuery = NewBaseQuery(`
 		SELECT id, comment
 		FROM mz_internal.mz_comments
 		WHERE object_type = 'materialized-view'
+		AND object_sub_id IS NULL
 	) comments
 		ON mz_materialized_views.id = comments.id`)
 
