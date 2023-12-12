@@ -6,7 +6,7 @@
 * Allow Avro comments (`avro_doc_type` and `avro_doc_column`) for resource `materialize_sink_kafka` [#373](https://github.com/MaterializeInc/terraform-provider-materialize/pull/373)
 
 ### Misc
-* Include additional acceptance tests for datasources [#412](https://github.com/MaterializeInc/terraform-provider-materialize/issues/412)
+* Include additional acceptance tests for datasources [#410](https://github.com/MaterializeInc/terraform-provider-materialize/issues/410)
 
 ## 0.4.0 - 2023-12-12
 
