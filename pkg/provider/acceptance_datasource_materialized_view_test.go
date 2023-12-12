@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -27,10 +28,11 @@ func TestAccDatasourceMaterializedView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_materialized_view.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_2", "materialized_views.#", "2"),
-
 					resource.TestCheckNoResourceAttr("data.materialize_materialized_view.test_all", "database_name"),
 					resource.TestCheckNoResourceAttr("data.materialize_materialized_view.test_all", "schema_name"),
-					// Cannot ensure the number of all objects
+					// Cannot ensure the exact number of objects with parallel tests
+					// Ensuring minimum
+					resource.TestMatchResourceAttr("data.materialize_materialized_view.test_all", "materialized_views.#", regexp.MustCompile("([5-9]|\\d{2,})")),
 				),
 			},
 		},
@@ -53,7 +55,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	}
 
 	resource "materialize_materialized_view" "a" {
-		name          = "a"
+		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
 		cluster_name  = "default"
 	  
@@ -64,7 +66,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	}
 
 	resource "materialize_materialized_view" "b" {
-		name          = "b"
+		name          = "%[1]s_b"
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
 		cluster_name  = "default"
@@ -76,7 +78,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	}
 
 	resource "materialize_materialized_view" "c" {
-		name          = "c"
+		name          = "%[1]s_c"
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
 		cluster_name  = "default"
@@ -88,7 +90,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	}
 
 	resource "materialize_materialized_view" "d" {
-		name          = "d"
+		name          = "%[1]s_d"
 		database_name = materialize_database.test_2.name
 		cluster_name  = "default"
 	  
@@ -99,7 +101,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	}
 
 	resource "materialize_materialized_view" "e" {
-		name          = "e"
+		name          = "%[1]s_e"
 		database_name = materialize_database.test_2.name
 		cluster_name  = "default"
 	  
