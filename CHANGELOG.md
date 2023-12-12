@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.4.0 - 2023-12-12
+
+### Features
+* Improved ID structuring in Terraform state file with region-prefixed IDs, enhancing state management to allow supporting new features like managing cloud resources ([#400](https://github.com/MaterializeInc/terraform-provider-materialize/issues/400), [#401](https://github.com/MaterializeInc/terraform-provider-materialize/issues/401), [#402](https://github.com/MaterializeInc/terraform-provider-materialize/issues/402), and [#406](https://github.com/MaterializeInc/terraform-provider-materialize/issues/406))
+
 ## 0.3.4 - 2023-12-06
 
 ### Features
