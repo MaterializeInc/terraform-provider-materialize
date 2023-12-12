@@ -57,9 +57,12 @@ func testAccDatasourceTable(nameSpace string) string {
 	resource "materialize_table" "a" {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
+		comment       = "some comment"
+
 		column {
-			name = "column_1"
-			type = "text"
+			name    = "column_1"
+			type    = "text"
+			comment = "some comment"
 		}
 	}
 
@@ -77,9 +80,12 @@ func testAccDatasourceTable(nameSpace string) string {
 		name          = "%[1]s_c"
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
+		comment       = "some comment"
+
 		column {
-			name = "column_1"
-			type = "text"
+			name    = "column_1"
+			type    = "text"
+			comment = "some comment"
 		}
 	}
 

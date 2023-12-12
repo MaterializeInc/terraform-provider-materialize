@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -16,6 +17,28 @@ func TestAccDatasourceMaterializedView_basic(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
+			// Cannot add column level comments via the provider
+			{
+				Config: testAccDatasourceMaterializedView(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccAddColumnComment(
+						materialize.MaterializeObject{
+							ObjectType:   "MATERIALIZED VIEW",
+							Name:         nameSpace + "_c",
+							DatabaseName: nameSpace,
+							SchemaName:   nameSpace,
+						}, "id_3", "comment",
+					),
+					testAccAddColumnComment(
+						materialize.MaterializeObject{
+							ObjectType:   "MATERIALIZED VIEW",
+							Name:         nameSpace + "_c",
+							DatabaseName: nameSpace,
+							SchemaName:   nameSpace,
+						}, "id_5", "comment",
+					),
+				),
+			},
 			{
 				Config: testAccDatasourceMaterializedView(nameSpace),
 				Check: resource.ComposeTestCheckFunc(
@@ -58,6 +81,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
 		cluster_name  = "default"
+		comment       = "some comment"
 	  
 		statement = <<SQL
 	  SELECT
@@ -82,6 +106,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
 		cluster_name  = "default"
+		comment       = "some comment"
 	  
 		statement = <<SQL
 	  SELECT

@@ -40,6 +40,18 @@ func testAccPreCheck(t *testing.T) {
 
 }
 
+func testAccAddColumnComment(object materialize.MaterializeObject, column, comment string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		db := testAccProvider.Meta().(*sqlx.DB)
+		_, err := db.Exec(fmt.Sprintf(`COMMENT ON COLUMN %[1]s.%[2]s IS %[3]s;`,
+			object.QualifiedName(),
+			column,
+			materialize.QuoteString(comment),
+		))
+		return err
+	}
+}
+
 func testAccCheckObjectDisappears(object materialize.MaterializeObject) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		db := testAccProvider.Meta().(*sqlx.DB)

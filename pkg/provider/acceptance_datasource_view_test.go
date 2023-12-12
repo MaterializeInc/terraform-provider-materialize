@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -16,6 +17,20 @@ func TestAccDatasourceView_basic(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
+			// Cannot add column level comments via the provider
+			{
+				Config: testAccDatasourceView(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccAddColumnComment(
+						materialize.MaterializeObject{
+							ObjectType:   "VIEW",
+							Name:         nameSpace + "_c",
+							DatabaseName: nameSpace,
+							SchemaName:   nameSpace,
+						}, "id", "comment",
+					),
+				),
+			},
 			{
 				Config: testAccDatasourceView(nameSpace),
 				Check: resource.ComposeTestCheckFunc(
