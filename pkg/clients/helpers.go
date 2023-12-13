@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+type AppPassword struct {
+	ClientID    string    `json:"clientId"`
+	Secret      string    `json:"secret"`
+	Description string    `json:"description"`
+	Owner       string    `json:"owner"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Region string
+
 // Role represents the Frontegg role structure.
 type Role struct {
 	ID            string    `json:"id"`
@@ -22,14 +32,6 @@ type Role struct {
 	Level         int       `json:"level"`
 }
 
-type AppPassword struct {
-	ClientID    string    `json:"clientId"`
-	Secret      string    `json:"secret"`
-	Description string    `json:"description"`
-	Owner       string    `json:"owner"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
 // Helper function to construct app password from clientId and secret.
 func ConstructAppPassword(clientID, secret string) string {
 	// Remove dashes and concatenate with "mzp_" prefix.
@@ -37,3 +39,9 @@ func ConstructAppPassword(clientID, secret string) string {
 	secretClean := strings.ReplaceAll(secret, "-", "")
 	return fmt.Sprintf("mzp_%s%s", clientIDClean, secretClean)
 }
+
+const (
+	AwsUsEast1 Region = "aws/us-east-1"
+	AwsUsWest2 Region = "aws/us-west-2"
+	AwsEuWest1 Region = "aws/eu-west-1"
+)

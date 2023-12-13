@@ -44,6 +44,9 @@ func testAccAddColumnComment(object materialize.MaterializeObject, column, comme
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
 		db, _, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		_, err = db.Exec(fmt.Sprintf(`COMMENT ON COLUMN %[1]s.%[2]s IS %[3]s;`,
 			object.QualifiedName(),
 			column,
