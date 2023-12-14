@@ -1,7 +1,10 @@
 package testhelpers
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -143,4 +146,81 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 	defer server.Close()
 
 	f(server.URL)
+}
+
+// MockCloudService is a mock implementation of the http.RoundTripper interface for cloud-related requests
+type MockCloudService struct{}
+
+func (m *MockCloudService) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Check the requested URL and return a response accordingly
+	if strings.HasSuffix(req.URL.Path, "/api/cloud-regions") {
+		// Mock response data
+		data := clients.CloudProviderResponse{
+			Data: []clients.CloudProvider{
+				{ID: "aws/us-east-1", Name: "us-east-1", Url: "http://mockendpoint", CloudProvider: "aws"},
+				{ID: "aws/eu-west-1", Name: "eu-west-1", Url: "http://mockendpoint", CloudProvider: "aws"},
+			},
+		}
+
+		// Convert response data to JSON
+		respData, _ := json.Marshal(data)
+
+		// Create a new HTTP response with the JSON data
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(respData)),
+			Header:     make(http.Header),
+		}, nil
+	} else if strings.HasSuffix(req.URL.Path, "/api/region") {
+		// Return mock response for GetRegionDetails
+		details := clients.CloudRegion{
+			RegionInfo: &clients.RegionInfo{
+				SqlAddress:  "sql.materialize.com",
+				HttpAddress: "http.materialize.com",
+				Resolvable:  true,
+				EnabledAt:   "2021-01-01T00:00:00Z",
+			},
+		}
+		respData, _ := json.Marshal(details)
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(respData)),
+			Header:     make(http.Header),
+		}, nil
+	}
+	return nil, fmt.Errorf("no mock available for the requested endpoint")
+}
+
+// WithMockCloudServer sets up a mock HTTP server for cloud-related requests and calls the provided function with the server URL.
+func WithMockCloudServer(t *testing.T, f func(url string)) {
+	t.Helper()
+
+	// Create a mock HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// Use the MockCloudService for handling requests
+		m := &MockCloudService{}
+		resp, err := m.RoundTrip(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Copy the response to the server's response writer
+		copyHeaders(w.Header(), resp.Header)
+		w.WriteHeader(resp.StatusCode)
+		_, _ = io.Copy(w, resp.Body)
+	}))
+
+	defer server.Close()
+
+	f(server.URL)
+}
+
+// Helper function to copy headers from the response to the writer
+func copyHeaders(dst, src http.Header) {
+	for key, values := range src {
+		for _, value := range values {
+			dst.Add(key, value)
+		}
+	}
 }

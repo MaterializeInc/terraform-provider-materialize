@@ -20,8 +20,8 @@ func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, erro
 		// Mock response data
 		data := CloudProviderResponse{
 			Data: []CloudProvider{
-				{ID: "aws/us-east-1", Name: "us-east-1", Url: "http://materialize.com", CloudProvider: "aws"},
-				{ID: "aws/eu-west-1", Name: "eu-west-1", Url: "http://materialize.com", CloudProvider: "aws"},
+				{ID: "aws/us-east-1", Name: "us-east-1", Url: "http://mockendpoint", CloudProvider: "aws"},
+				{ID: "aws/eu-west-1", Name: "eu-west-1", Url: "http://mockendpoint", CloudProvider: "aws"},
 			},
 		}
 

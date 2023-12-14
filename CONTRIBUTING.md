@@ -40,13 +40,14 @@ make test
 To run the acceptance tests which will simulate running Terraform commands you will need to set the necessary envrionment variables and start the docker compose:
 
 ```bash
-export MZ_HOST=localhost
-export MZ_USER=mz_system
-export MZ_SSLMODE=disable
-export MZ_PORT=6877
-
 # Start all containers
 docker-compose up -d --build
+```
+
+Add the following to your `hosts` file so that the provider can connect to the mock services:
+
+```
+127.0.0.1 materialized frontegg cloud
 ```
 
 You can then run the acceptance tests:
@@ -125,6 +126,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Description: "The size of the cluster.",
 		Optional:    true,
 	},
+	"region": RegionSchema(),
 }
 ```
 
@@ -147,8 +149,12 @@ If the resource can be updated we would also have to change the update context `
 
 ```go
 if d.HasChange("size") {
+		metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		_, newSize := d.GetChange("size")
-		b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewClusterBuilder(metaDb, o)
 		if err := b.Resize(newSize.(string)); err != nil {
 				return diag.FromErr(err)
 		}
@@ -182,6 +188,10 @@ Schema: map[string]*schema.Schema{
 			},
 		},
 	},
+	"region": {
+		Type:     schema.TypeString,
+		Computed: true,
+	},
 },
 ```
 
@@ -201,7 +211,7 @@ for _, p := range dataSource {
 
 ## Cutting a release
 
-To cut a new release of the provider, create a new tag and push that tag. This will trigger a Github Action to generate the artifacts necessary for the Terraform Registry.
+To cut a new release of the provider, create a new tag and push that tag. This will trigger a GitHub Action to generate the artifacts necessary for the Terraform Registry.
 
 ```bash
 git tag -a vX.Y.Z -m vX.Y.Z
