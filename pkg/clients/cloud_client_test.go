@@ -9,10 +9,13 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-// MockFronteggService is a mock implementation of the http.RoundTripper interface
-type MockFronteggService struct{}
+type MockFronteggService struct {
+	MockResponseStatus int
+}
 
 func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Check the requested URL and return a response accordingly
@@ -28,9 +31,9 @@ func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, erro
 		// Convert response data to JSON
 		respData, _ := json.Marshal(data)
 
-		// Create a new HTTP response with the JSON data
+		// Create a new HTTP response with the JSON data and the specified status code
 		return &http.Response{
-			StatusCode: http.StatusOK,
+			StatusCode: m.MockResponseStatus,
 			Body:       io.NopCloser(bytes.NewReader(respData)),
 			Header:     make(http.Header),
 		}, nil
@@ -46,7 +49,7 @@ func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, erro
 		}
 		respData, _ := json.Marshal(details)
 		return &http.Response{
-			StatusCode: http.StatusOK,
+			StatusCode: m.MockResponseStatus,
 			Body:       io.NopCloser(bytes.NewReader(respData)),
 			Header:     make(http.Header),
 		}, nil
@@ -55,7 +58,9 @@ func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, erro
 }
 
 func TestCloudAPIClient_ListCloudProviders(t *testing.T) {
-	mockService := &MockFronteggService{}
+	mockService := &MockFronteggService{
+		MockResponseStatus: http.StatusOK,
+	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
 		FronteggClient: &FronteggClient{HTTPClient: mockClient},
@@ -76,7 +81,9 @@ func TestCloudAPIClient_ListCloudProviders(t *testing.T) {
 }
 
 func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
-	mockService := &MockFronteggService{}
+	mockService := &MockFronteggService{
+		MockResponseStatus: http.StatusOK,
+	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
 		FronteggClient: &FronteggClient{HTTPClient: mockClient},
@@ -103,7 +110,9 @@ func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
 }
 
 func TestCloudAPIClient_GetHost(t *testing.T) {
-	mockService := &MockFronteggService{}
+	mockService := &MockFronteggService{
+		MockResponseStatus: http.StatusOK,
+	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
 		FronteggClient: &FronteggClient{HTTPClient: mockClient},
@@ -122,4 +131,89 @@ func TestCloudAPIClient_GetHost(t *testing.T) {
 	if sqlAddress != wantSqlAddress {
 		t.Errorf("GetHost() got SqlAddress = %v, want %v", sqlAddress, wantSqlAddress)
 	}
+}
+
+func TestCloudAPIClient_ListCloudProviders_ErrorResponse(t *testing.T) {
+	mockService := &MockFronteggService{
+		// Mock the HTTP response to return an error status code:
+		MockResponseStatus: http.StatusInternalServerError,
+	}
+	mockClient := &http.Client{Transport: mockService}
+	apiClient := &CloudAPIClient{
+		FronteggClient: &FronteggClient{HTTPClient: mockClient},
+		Endpoint:       "http://mockendpoint.com",
+	}
+
+	// Call the method to test
+	_, err := apiClient.ListCloudProviders(context.Background())
+
+	// Verify that an error is returned when the server responds with an error status code
+	require.Error(t, err)
+}
+
+func TestCloudAPIClient_GetRegionDetails_ErrorResponse(t *testing.T) {
+	mockService := &MockFronteggService{
+		// Mock the HTTP response to return an error status code
+		MockResponseStatus: http.StatusInternalServerError,
+	}
+	mockClient := &http.Client{Transport: mockService}
+	apiClient := &CloudAPIClient{
+		FronteggClient: &FronteggClient{HTTPClient: mockClient},
+		Endpoint:       "http://mockendpoint.com",
+	}
+	provider := CloudProvider{
+		ID:   "aws/us-east-1",
+		Name: "us-east-1",
+		Url:  "http://mockendpoint.com/api/region",
+	}
+
+	// Call the method to test
+	_, err := apiClient.GetRegionDetails(context.Background(), provider)
+
+	// Verify that an error is returned when the server responds with an error status code
+	require.Error(t, err)
+}
+
+func TestCloudAPIClient_GetHost_RegionNotFound(t *testing.T) {
+	mockService := &MockFronteggService{
+		MockResponseStatus: http.StatusOK,
+	}
+	mockClient := &http.Client{Transport: mockService}
+	apiClient := &CloudAPIClient{
+		FronteggClient: &FronteggClient{HTTPClient: mockClient},
+		Endpoint:       "http://mockendpoint.com",
+	}
+	regionID := "non-existent-region"
+
+	// Call the method to test
+	_, err := apiClient.GetHost(context.Background(), regionID)
+
+	// Verify that an error is returned when the region is not found
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "provider for region 'non-existent-region' not found")
+}
+
+func TestNewCloudAPIClient(t *testing.T) {
+	// Create a FronteggClient instance for testing
+	fronteggClient := &FronteggClient{}
+
+	// Call the NewCloudAPIClient function with a custom API endpoint
+	customEndpoint := "http://custom-endpoint.com/api"
+	cloudAPIClient := NewCloudAPIClient(fronteggClient, customEndpoint)
+
+	// Assert that the returned CloudAPIClient has the expected properties
+	require.NotNil(t, cloudAPIClient)
+	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
+	require.NotNil(t, cloudAPIClient.HTTPClient)
+	require.Equal(t, customEndpoint, cloudAPIClient.Endpoint)
+
+	// Call the NewCloudAPIClient function with a different custom API endpoint
+	anotherCustomEndpoint := "http://another-custom-endpoint.com/api"
+	cloudAPIClient = NewCloudAPIClient(fronteggClient, anotherCustomEndpoint)
+
+	// Assert that the returned CloudAPIClient has the updated custom endpoint
+	require.NotNil(t, cloudAPIClient)
+	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
+	require.NotNil(t, cloudAPIClient.HTTPClient)
+	require.Equal(t, anotherCustomEndpoint, cloudAPIClient.Endpoint)
 }
