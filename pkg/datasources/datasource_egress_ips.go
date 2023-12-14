@@ -22,10 +22,7 @@ func EgressIps() *schema.Resource {
 				Description: "The egress IPs in the account",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"region": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
+			"region": RegionSchema(),
 		},
 	}
 }

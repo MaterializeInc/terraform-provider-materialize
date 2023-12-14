@@ -70,10 +70,7 @@ func Sink() *schema.Resource {
 					},
 				},
 			},
-			"region": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
+			"region": RegionSchema(),
 		},
 	}
 }

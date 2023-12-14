@@ -21,6 +21,11 @@ func User() *schema.Resource {
 		ReadContext:   userRead,
 		// UpdateContext: userUpdate,
 		DeleteContext: userDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"email": {
 				Type:        schema.TypeString,

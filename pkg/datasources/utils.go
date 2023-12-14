@@ -19,3 +19,11 @@ func SetId(region, resource, databaseName, schemaName string, d *schema.Resource
 
 	d.SetId(utils.TransformIdWithRegion(region, id))
 }
+
+func RegionSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The region in which the resource is located.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	}
+}
