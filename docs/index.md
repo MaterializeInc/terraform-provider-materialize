@@ -15,7 +15,7 @@ Configure the provider by adding the following block to your Terraform project:
 # Configuration-based authentication
 provider "materialize" {
   password       = var.materialize_password # optionally use MZ_PASSWORD env var
-  default_region = "aws/us-east-1" # optionally use MZ_REGION env var
+  default_region = "aws/us-east-1"          # optionally use MZ_REGION env var
 }
 ```
 

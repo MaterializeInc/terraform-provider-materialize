@@ -37,7 +37,7 @@ data "materialize_connection" "materialize_schema" {
 
 - `connections` (List of Object) The connections in the account (see [below for nested schema](#nestedatt--connections))
 - `id` (String) The ID of this resource.
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--connections"></a>
 ### Nested Schema for `connections`

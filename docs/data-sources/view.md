@@ -36,7 +36,7 @@ data "materialize_view" "materialize_schema" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 - `views` (List of Object) The views in the account (see [below for nested schema](#nestedatt--views))
 
 <a id="nestedatt--views"></a>

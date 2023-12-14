@@ -37,7 +37,7 @@ data "materialize_index" "materialize_schema" {
 
 - `id` (String) The ID of this resource.
 - `indexes` (List of Object) The indexes in the account (see [below for nested schema](#nestedatt--indexes))
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--indexes"></a>
 ### Nested Schema for `indexes`

@@ -22,7 +22,7 @@ data "materialize_role" "all" {}
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 - `roles` (List of Object) The roles in the account (see [below for nested schema](#nestedatt--roles))
 
 <a id="nestedatt--roles"></a>

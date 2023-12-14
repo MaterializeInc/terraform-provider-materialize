@@ -36,7 +36,7 @@ data "materialize_secret" "materialize_schema" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 - `secrets` (List of Object) The secrets in the account (see [below for nested schema](#nestedatt--secrets))
 
 <a id="nestedatt--secrets"></a>

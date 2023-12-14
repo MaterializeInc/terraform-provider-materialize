@@ -23,7 +23,7 @@ data "materialize_cluster_replica" "all" {}
 
 - `cluster_replicas` (List of Object) The cluster replicas in the account (see [below for nested schema](#nestedatt--cluster_replicas))
 - `id` (String) The ID of this resource.
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--cluster_replicas"></a>
 ### Nested Schema for `cluster_replicas`

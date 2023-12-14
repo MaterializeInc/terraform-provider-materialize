@@ -23,7 +23,7 @@ data "materialize_database" "all" {}
 
 - `databases` (List of Object) The databases in the account (see [below for nested schema](#nestedatt--databases))
 - `id` (String) The ID of this resource.
-- `region` (String)
+- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--databases"></a>
 ### Nested Schema for `databases`
