@@ -30,6 +30,7 @@ type SinkKafkaBuilder struct {
 	from            IdentifierSchemaStruct
 	kafkaConnection IdentifierSchemaStruct
 	topic           string
+	compressionType string
 	key             []string
 	format          SinkFormatSpecStruct
 	envelope        KafkaSinkEnvelopeStruct
@@ -66,6 +67,11 @@ func (b *SinkKafkaBuilder) KafkaConnection(k IdentifierSchemaStruct) *SinkKafkaB
 
 func (b *SinkKafkaBuilder) Topic(t string) *SinkKafkaBuilder {
 	b.topic = t
+	return b
+}
+
+func (b *SinkKafkaBuilder) CompressionType(c string) *SinkKafkaBuilder {
+	b.compressionType = c
 	return b
 }
 
@@ -110,7 +116,11 @@ func (b *SinkKafkaBuilder) Create() error {
 	}
 
 	if b.topic != "" {
-		q.WriteString(fmt.Sprintf(` (TOPIC %s)`, QuoteString(b.topic)))
+		q.WriteString(fmt.Sprintf(` (TOPIC %s`, QuoteString(b.topic)))
+		if b.compressionType != "" {
+			q.WriteString(fmt.Sprintf(`, COMPRESSION TYPE = %s`, b.compressionType))
+		}
+		q.WriteString(")")
 	}
 
 	if len(b.key) > 0 {

@@ -66,3 +66,11 @@ var securityProtocols = []string{
 	"SSL",
 	"SASL_SSL",
 }
+
+var compressionTypes = []string{
+	"none",
+	"gzip",
+	"snappy",
+	"lz4",
+	"ztsd",
+}

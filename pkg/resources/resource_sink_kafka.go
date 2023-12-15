@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -27,6 +28,13 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
+	},
+	"compression_type": {
+		Description:  "The type of compression to apply to messages before they are sent to Kafka.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(compressionTypes, true),
 	},
 	"key": {
 		Description: "An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.",
@@ -123,6 +131,10 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	if v, ok := d.GetOk("topic"); ok {
 		b.Topic(v.(string))
+	}
+
+	if v, ok := d.GetOk("compression_type"); ok {
+		b.CompressionType(v.(string))
 	}
 
 	if v, ok := d.GetOk("key"); ok {

@@ -27,6 +27,7 @@ var inSinkKafka = map[string]interface{}{
 	},
 	"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 	"topic":            "topic",
+	"compression_type": "gzip",
 	"key":              []interface{}{"key_1", "key_2"},
 	"key_not_enforced": true,
 	"format": []interface{}{
@@ -99,7 +100,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 			`CREATE SINK "database"."schema"."sink"
 			IN CLUSTER "cluster" FROM "database"."public"."item"
 			INTO KAFKA CONNECTION "materialize"."public"."kafka_conn"
-			\(TOPIC 'topic'\) KEY \(key_1, key_2\)
+			\(TOPIC 'topic', COMPRESSION TYPE = gzip\) KEY \(key_1, key_2\)
 			NOT ENFORCED FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn"
 			\(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname',
 			DOC ON TYPE "database"."public"."item" = 'top-level comment',
