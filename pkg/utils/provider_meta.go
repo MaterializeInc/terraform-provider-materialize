@@ -42,7 +42,7 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 		return nil, "", fmt.Errorf("failed to get provider meta: %v", providerMeta)
 	}
 
-	// Determine the region to use
+	// Determine the region to use, if one is not specified, use the default region
 	var region clients.Region
 	if d != nil && d.Get("region") != "" {
 		region = clients.Region(d.Get("region").(string))

@@ -58,7 +58,7 @@ func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint string) 
 func (c *CloudAPIClient) ListCloudProviders(ctx context.Context) ([]CloudProvider, error) {
 	providersEndpoint := fmt.Sprintf("%s/api/cloud-regions", c.Endpoint)
 
-	// You can reuse the FronteggClient's HTTPClient which already includes the Authorization token.
+	// Reuse the FronteggClient's HTTPClient which already includes the Authorization token.
 	resp, err := c.FronteggClient.HTTPClient.Get(providersEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error listing cloud providers: %v", err)

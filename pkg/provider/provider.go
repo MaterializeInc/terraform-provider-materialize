@@ -135,7 +135,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	defaultRegion := clients.Region(d.Get("default_region").(string))
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
-	// TODO: Rework the logic to set the region from the default region or the resource specific region.
 	err := utils.SetDefaultRegion(string(defaultRegion))
 	if err != nil {
 		return nil, diag.FromErr(err)
@@ -157,7 +156,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		return nil, diag.Errorf("Unable to list cloud providers: %s", err)
 	}
 
-	// Map to store DB clients for all regions.
+	// Store the DB clients for all regions.
 	dbClients := make(map[clients.Region]*clients.DBClient)
 
 	for _, provider := range providers {
@@ -166,7 +165,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		log.Printf("[DEBUG] Region details for provider %s: %v\n", provider.ID, regionDetails)
 
 		if err != nil {
-			// Handle the error, possibly continue to the next provider
+			log.Printf("[ERROR] Error getting region details for provider %s: %v\n", provider.ID, err)
 			continue
 		}
 
@@ -180,21 +179,19 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		// Get the database connection details for the region
 		host, port, err := clients.SplitHostPort(regionDetails.RegionInfo.SqlAddress)
 		if err != nil {
-			// Handle the error, possibly continue to the next provider
+			log.Printf("[ERROR] Error splitting host and port for region %s: %v\n", provider.ID, err)
 			continue
 		}
 
-		// Assuming email is used as the username and is the same for all regions
 		user := fronteggClient.Email
 
 		// Instantiate a new DB client for the region
 		dbClient, diags := clients.NewDBClient(host, user, password, port, database, application_name, version, sslmode)
 		if diags.HasError() {
-			// Handle the error, possibly continue to the next provider
+			log.Printf("[ERROR] Error initializing DB client for region %s: %v\n", provider.ID, diags)
 			continue
 		}
 
-		// Store the DB client in the map, keyed by the region
 		dbClients[clients.Region(provider.ID)] = dbClient
 	}
 
@@ -203,7 +200,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		return nil, diag.Errorf("No database regions were initialized. Please check your configuration.")
 	}
 
-	// Debug log the dbClients map
 	log.Printf("[DEBUG] Initialized DB clients for regions: %v\n", dbClients)
 
 	// Construct and return the provider meta with all clients initialized.
