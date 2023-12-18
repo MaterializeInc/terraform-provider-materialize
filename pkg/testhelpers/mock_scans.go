@@ -112,6 +112,78 @@ func MockConnectionScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+func MockConnectionAwsScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_connections.id,
+		mz_connections.name AS connection_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_aws_connections.endpoint,
+		mz_aws_connections.region,
+		mz_aws_connections.access_key_id,
+		mz_aws_connections.access_key_id_secret_id,
+		mz_aws_connections.secret_access_key_secret_id,
+		mz_aws_connections.session_token,
+		mz_aws_connections.session_token_secret_id,
+		mz_aws_connections.assume_role_arn,
+		mz_aws_connections.assume_role_session_name,
+		comments.comment AS comment,
+		mz_aws_connections.principal,
+		mz_roles.name AS owner_name
+	FROM mz_connections
+	JOIN mz_schemas
+		ON mz_connections.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_aws_connections
+		ON mz_connections.id = mz_aws_connections.id
+	JOIN mz_roles
+		ON mz_connections.owner_id = mz_roles.id
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'connection'
+	\) comments
+		ON mz_connections.id = comments.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{
+		"id",
+		"connection_name",
+		"schema_name",
+		"database_name",
+		"endpoint",
+		"region",
+		"access_key_id",
+		"access_key_id_secret_id",
+		"secret_access_key_secret_id",
+		"session_token",
+		"session_token_secret_id",
+		"assume_role_arn",
+		"assume_role_session_name",
+		"comment",
+		"owner_name",
+	}).AddRow(
+		"u1",
+		"connection",
+		"schema",
+		"database",
+		"localhost",
+		"us-east-1",
+		"foo",
+		"u1",
+		"u1",
+		"bar",
+		"u1",
+		"arn:aws:iam::123456789012:user/JohnDoe",
+		"s3-access-example",
+		"comment",
+		"owner_name",
+	)
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
 func MockConnectionAwsPrivatelinkScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT

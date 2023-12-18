@@ -58,13 +58,6 @@ func ConnectionAwsPrivatelink() *schema.Resource {
 	}
 }
 
-type ConnectionAwsPrivatelinkParams struct {
-	ConnectionName sql.NullString `db:"connection_name"`
-	SchemaName     sql.NullString `db:"schema_name"`
-	DatabaseName   sql.NullString `db:"database_name"`
-	Principal      sql.NullString `db:"principal"`
-}
-
 func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
