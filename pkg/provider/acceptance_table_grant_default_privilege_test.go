@@ -36,6 +36,8 @@ func TestAccGrantTableDefaultPrivilege_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target_grantee", "privilege", privilege),
 					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target_grantee", "target_role_name", "PUBLIC"),
 				),
+				// Deal with non deterministic grants
+				Destroy: false,
 			},
 		},
 	})
