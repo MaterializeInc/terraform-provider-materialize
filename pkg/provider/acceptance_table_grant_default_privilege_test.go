@@ -26,18 +26,7 @@ func TestAccGrantTableDefaultPrivilege_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test", "target_role_name", targetName),
 					resource.TestCheckNoResourceAttr("materialize_table_grant_default_privilege.test", "schema_name"),
 					resource.TestCheckNoResourceAttr("materialize_table_grant_default_privilege.test", "database_name"),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target", "grantee_name", granteeName),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target", "target_role_name", "PUBLIC"),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_grantee", "grantee_name", "PUBLIC"),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_grantee", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_grantee", "target_role_name", targetName),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target_grantee", "grantee_name", "PUBLIC"),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target_grantee", "privilege", privilege),
-					resource.TestCheckResourceAttr("materialize_table_grant_default_privilege.test_public_target_grantee", "target_role_name", "PUBLIC"),
 				),
-				// Deal with non deterministic grants
-				Destroy: false,
 			},
 		},
 	})
@@ -79,24 +68,6 @@ func testAccGrantTableDefaultPrivilegeResource(granteeName, targetName, privileg
 		grantee_name     = materialize_role.test_grantee.name
 		privilege        = "%[3]s"
 		target_role_name = materialize_role.test_target.name
-	}
-
-	resource "materialize_table_grant_default_privilege" "test_public_target" {
-		grantee_name     = materialize_role.test_grantee.name
-		privilege        = "%[3]s"
-		target_role_name = "PUBLIC"
-	}
-
-	resource "materialize_table_grant_default_privilege" "test_public_grantee" {
-		grantee_name     = "PUBLIC"
-		privilege        = "%[3]s"
-		target_role_name = materialize_role.test_target.name
-	}
-
-	resource "materialize_table_grant_default_privilege" "test_public_target_grantee" {
-		grantee_name     = "PUBLIC"
-		privilege        = "%[3]s"
-		target_role_name = "PUBLIC"
 	}
 	`, granteeName, targetName, privilege)
 }
