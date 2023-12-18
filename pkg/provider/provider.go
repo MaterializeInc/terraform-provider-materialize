@@ -61,6 +61,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_cluster_grant":                        resources.GrantCluster(),
 			"materialize_cluster_grant_default_privilege":      resources.GrantClusterDefaultPrivilege(),
 			"materialize_cluster_replica":                      resources.ClusterReplica(),
+			"materialize_connection_aws":                       resources.ConnectionAws(),
 			"materialize_connection_aws_privatelink":           resources.ConnectionAwsPrivatelink(),
 			"materialize_connection_confluent_schema_registry": resources.ConnectionConfluentSchemaRegistry(),
 			"materialize_connection_kafka":                     resources.ConnectionKafka(),
