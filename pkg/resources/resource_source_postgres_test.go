@@ -75,7 +75,7 @@ var inSourcePostgresSchema = map[string]interface{}{
 	},
 	"publication":  "mz_source",
 	"text_columns": []interface{}{"table.unsupported_type_1"},
-	"schema":       []interface{}{"schema1", "schema2"},
+	"schemas":      []interface{}{"schema1", "schema2"},
 }
 
 func TestResourceSourcePostgresCreateSchema(t *testing.T) {

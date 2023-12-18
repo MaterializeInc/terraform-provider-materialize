@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -12,7 +13,67 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var sourcePostgresSchema = map[string]*schema.Schema{
+func sourcePostgresSchemaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name":                ObjectNameSchema("source", true, false),
+			"schema_name":         SchemaNameSchema("source", false),
+			"database_name":       DatabaseNameSchema("source", false),
+			"qualified_sql_name":  QualifiedNameSchema("source"),
+			"comment":             CommentSchema(false),
+			"cluster_name":        ObjectClusterNameSchema("source"),
+			"size":                ObjectSizeSchema("source"),
+			"postgres_connection": IdentifierSchema("postgres_connection", "The PostgreSQL connection to use in the source.", true),
+			"publication": {
+				Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+			},
+			"text_columns": {
+				Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+			},
+			"table": {
+				Description: "Creates subsources for specific tables. If neither table or schema is specified, will default to ALL TABLES",
+				Type:        schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Description: "The name of the table.",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+						"alias": {
+							Description: "The alias of the table.",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+					},
+				},
+				Optional:      true,
+				MinItems:      1,
+				ConflictsWith: []string{"schema"},
+			},
+			"schema": {
+				Description:   "Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES",
+				Type:          schema.TypeList,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				ForceNew:      true,
+				MinItems:      1,
+				ConflictsWith: []string{"table"},
+			},
+			"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
+			"subsource":       SubsourceSchema(),
+			"ownership_role":  OwnershipRoleSchema(),
+		},
+	}
+}
+
+var sourcePostgresSchemaV1 = map[string]*schema.Schema{
 	"name":                ObjectNameSchema("source", true, false),
 	"schema_name":         SchemaNameSchema("source", false),
 	"database_name":       DatabaseNameSchema("source", false),
@@ -52,9 +113,9 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		},
 		Optional:      true,
 		MinItems:      1,
-		ConflictsWith: []string{"schema"},
+		ConflictsWith: []string{"schemas"},
 	},
-	"schema": {
+	"schemas": {
 		Description:   "Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES",
 		Type:          schema.TypeList,
 		Elem:          &schema.Schema{Type: schema.TypeString},
@@ -66,6 +127,14 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
 	"subsource":       SubsourceSchema(),
 	"ownership_role":  OwnershipRoleSchema(),
+}
+
+func postgresSourceStateUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	if rawState == nil {
+		return nil, fmt.Errorf("SourcePostgres resource state upgrade failed, state is nil")
+	}
+	rawState["schemas"] = rawState["schema"]
+	return rawState, nil
 }
 
 func SourcePostgres() *schema.Resource {
@@ -81,7 +150,15 @@ func SourcePostgres() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sourcePostgresSchema,
+		Schema:        sourcePostgresSchemaV1,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 0,
+				Type:    sourcePostgresSchemaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: postgresSourceStateUpgradeV0,
+			},
+		},
 	}
 }
 
@@ -115,7 +192,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		b.Table(tables)
 	}
 
-	if v, ok := d.GetOk("schema"); ok {
+	if v, ok := d.GetOk("schemas"); ok {
 		schemas := materialize.GetSliceValueString(v.([]interface{}))
 		b.Schema(schemas)
 	}

@@ -75,8 +75,8 @@ func TestAccSourcePostgresSchema_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "cluster_name", sourceName+"_cluster"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.#", "1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.0", "PUBLIC"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schemas.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schemas.0", "PUBLIC"),
 				),
 			},
 			{
@@ -353,7 +353,7 @@ func testAccSourcePostgresResourceSchema(sourceName string) string {
 			database_name = materialize_connection_postgres.test.database_name
 		}
 		publication = "mz_source"
-		schema      = ["PUBLIC"]
+		schemas     = ["PUBLIC"]
 	}
 	`, sourceName)
 }
