@@ -3,6 +3,7 @@ package provider
 import (
 	"database/sql"
 	"fmt"
+	"os/exec"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -13,7 +14,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// Initialize a topic used by Kafka Testacc against the docker compose
+func addTestTopic() error {
+	cmd := exec.Command("docker", "exec", "redpanda", "rpk", "topic", "create", "terraform")
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func TestAccSourceKafka_basic(t *testing.T) {
+	addTestTopic()
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -33,7 +45,7 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "size", "3xsmall"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "topic1"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "key_format.0.text", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "value_format.0.text", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.none", "true"),
@@ -42,7 +54,7 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", connName),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "start_offset.#", "3"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "start_offset.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_timestamp_alias", "timestamp_alias"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset_alias", "offset_alias"),
@@ -66,6 +78,7 @@ func TestAccSourceKafka_basic(t *testing.T) {
 }
 
 func TestAccSourceKafkaAvro_basic(t *testing.T) {
+	addTestTopic()
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -81,7 +94,7 @@ func TestAccSourceKafkaAvro_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "cluster_name", sourceName+"_cluster"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "topic1"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.none", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", sourceName+"_conn"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
@@ -101,6 +114,7 @@ func TestAccSourceKafkaAvro_basic(t *testing.T) {
 }
 
 func TestAccSourceKafka_update(t *testing.T) {
+	addTestTopic()
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	sourceName := fmt.Sprintf("old_%s", slug)
 	newSourceName := fmt.Sprintf("new_%s", slug)
@@ -139,6 +153,7 @@ func TestAccSourceKafka_update(t *testing.T) {
 }
 
 func TestAccSourceKafka_disappears(t *testing.T) {
+	addTestTopic()
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -186,7 +201,7 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 		}
 
 		size  = "3xsmall"
-		topic = "topic1"
+		topic = "terraform"
 		key_format {
 			text = true
 		}
@@ -197,7 +212,7 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 			none = true
 		}
 
-		start_offset = [0,10,100]
+		start_offset = [0]
 		include_timestamp_alias = "timestamp_alias"
 		include_offset = true
 		include_offset_alias = "offset_alias"
@@ -209,7 +224,7 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 	resource "materialize_source_kafka" "test_role" {
 		name = "%[4]s"
 		size  = "3xsmall"
-		topic = "topic1"
+		topic = "terraform"
 
 		kafka_connection {
 			name = materialize_connection_kafka.test.name
@@ -260,7 +275,7 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	resource "materialize_sink_kafka" "test" {
 		name             = "%[1]s_sink"
 		size             = "3xsmall"
-		topic            = "topic1"
+		topic            = "terraform"
 		key              = ["counter"]
 		key_not_enforced = true
 		from {
@@ -290,7 +305,7 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	resource "materialize_source_kafka" "test" {
 		name = "%[1]s_source"
 		cluster_name = materialize_cluster.test.name
-		topic = "topic1"
+		topic = "terraform"
 		kafka_connection {
 			name          = materialize_connection_kafka.test.name
 			schema_name   = materialize_connection_kafka.test.schema_name
