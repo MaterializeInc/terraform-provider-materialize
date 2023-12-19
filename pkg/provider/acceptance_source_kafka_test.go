@@ -54,7 +54,7 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", connName),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "start_offset.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "start_offsets.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_timestamp_alias", "timestamp_alias"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset_alias", "offset_alias"),
@@ -212,7 +212,7 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 			none = true
 		}
 
-		start_offset = [0]
+		start_offsets = [0]
 		include_timestamp_alias = "timestamp_alias"
 		include_offset = true
 		include_offset_alias = "offset_alias"

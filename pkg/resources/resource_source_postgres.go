@@ -73,7 +73,7 @@ func sourcePostgresSchemaV0() *schema.Resource {
 	}
 }
 
-var sourcePostgresSchemaV1 = map[string]*schema.Schema{
+var sourcePostgresSchema = map[string]*schema.Schema{
 	"name":                ObjectNameSchema("source", true, false),
 	"schema_name":         SchemaNameSchema("source", false),
 	"database_name":       DatabaseNameSchema("source", false),
@@ -129,7 +129,7 @@ var sourcePostgresSchemaV1 = map[string]*schema.Schema{
 	"ownership_role":  OwnershipRoleSchema(),
 }
 
-func postgresSourceStateUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+func sourcePostgresStateUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	if rawState == nil {
 		return nil, fmt.Errorf("SourcePostgres resource state upgrade failed, state is nil")
 	}
@@ -150,13 +150,13 @@ func SourcePostgres() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema:        sourcePostgresSchemaV1,
+		Schema:        sourcePostgresSchema,
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Version: 0,
 				Type:    sourcePostgresSchemaV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: postgresSourceStateUpgradeV0,
+				Upgrade: sourcePostgresStateUpgradeV0,
 			},
 		},
 	}
