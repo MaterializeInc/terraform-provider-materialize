@@ -110,7 +110,7 @@ func testAccIndexResource(viewName, indexName string) string {
 
 	resource "materialize_index" "test" {
 		name = "%[2]s"
-		cluster_name = "default"
+		cluster_name = "quickstart"
 
 		obj_name {
 			name = materialize_view.test.name
@@ -138,7 +138,7 @@ func testAccIndexWithComment(viewName, indexName, comment string) string {
 
 	resource "materialize_index" "test" {
 		name = "%[2]s"
-		cluster_name = "default"
+		cluster_name = "quickstart"
 		comment = "%[3]s"
 
 		obj_name {

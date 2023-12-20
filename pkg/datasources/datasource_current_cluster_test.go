@@ -20,7 +20,7 @@ func TestCurrentClusterDatasource(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ir := mock.NewRows([]string{"cluster"}).AddRow("default")
+		ir := mock.NewRows([]string{"cluster"}).AddRow("quickstart")
 		mock.ExpectQuery(`SHOW CLUSTER;`).WillReturnRows(ir)
 
 		if err := currentClusterRead(context.TODO(), d, db); err != nil {

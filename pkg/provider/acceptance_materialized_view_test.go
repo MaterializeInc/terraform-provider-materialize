@@ -122,14 +122,14 @@ func testAccMaterializedViewResource(roleName, materializeViewName, materializeV
 	resource "materialize_materialized_view" "test" {
 		name = "%[2]s"
 		statement = "SELECT 1 AS id"
-		cluster_name = "default"
+		cluster_name = "quickstart"
 		not_null_assertion = ["id"]
 	}
 
 	resource "materialize_materialized_view" "test_role" {
 		name = "%[3]s"
 		statement = "SELECT 1 AS id"
-		cluster_name = "default"
+		cluster_name = "quickstart"
 		ownership_role = "%[4]s"
 		comment = "%[5]s"
 

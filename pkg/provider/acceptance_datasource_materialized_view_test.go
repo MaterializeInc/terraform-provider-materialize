@@ -80,7 +80,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	resource "materialize_materialized_view" "a" {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
-		cluster_name  = "default"
+		cluster_name  = "quickstart"
 		comment       = "some comment"
 	  
 		statement = <<SQL
@@ -93,7 +93,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 		name          = "%[1]s_b"
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
-		cluster_name  = "default"
+		cluster_name  = "quickstart"
 	  
 		statement = <<SQL
 	  SELECT
@@ -105,7 +105,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 		name          = "%[1]s_c"
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
-		cluster_name  = "default"
+		cluster_name  = "quickstart"
 		comment       = "some comment"
 	  
 		statement = <<SQL
@@ -117,7 +117,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	resource "materialize_materialized_view" "d" {
 		name          = "%[1]s_d"
 		database_name = materialize_database.test_2.name
-		cluster_name  = "default"
+		cluster_name  = "quickstart"
 	  
 		statement = <<SQL
 	  SELECT
@@ -128,7 +128,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	resource "materialize_materialized_view" "e" {
 		name          = "%[1]s_e"
 		database_name = materialize_database.test_2.name
-		cluster_name  = "default"
+		cluster_name  = "quickstart"
 	  
 		statement = <<SQL
 	  SELECT
