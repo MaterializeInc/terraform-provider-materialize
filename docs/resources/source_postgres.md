@@ -50,6 +50,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `name` (String) The identifier for the source.
 - `postgres_connection` (Block List, Min: 1, Max: 1) The PostgreSQL connection to use in the source. (see [below for nested schema](#nestedblock--postgres_connection))
 - `publication` (String) The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).
+- `table` (Block List, Min: 1) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
 
 ### Optional
 
@@ -84,6 +85,18 @@ Optional:
 - `schema_name` (String) The postgres_connection schema name. Defaults to `public`.
 
 
+<a id="nestedblock--table"></a>
+### Nested Schema for `table`
+
+Required:
+
+- `name` (String) The name of the table.
+
+Optional:
+
+- `alias` (String) The alias of the table.
+
+
 <a id="nestedblock--expose_progress"></a>
 ### Nested Schema for `expose_progress`
 
@@ -95,18 +108,6 @@ Optional:
 
 - `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The expose_progress schema name. Defaults to `public`.
-
-
-<a id="nestedblock--table"></a>
-### Nested Schema for `table`
-
-Required:
-
-- `name` (String) The name of the table.
-
-Optional:
-
-- `alias` (String) The alias of the table.
 
 
 <a id="nestedatt--subsource"></a>
