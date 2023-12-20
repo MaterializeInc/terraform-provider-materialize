@@ -52,36 +52,6 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 	})
 }
 
-func TestAccSourcePostgresSchema_basic(t *testing.T) {
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourcePostgresResourceSchema(sourceName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "cluster_name", sourceName+"_cluster"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.#", "1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.0", "PUBLIC"),
-				),
-			},
-			{
-				ResourceName:      "materialize_source_postgres.test",
-				ImportState:       true,
-				ImportStateVerify: false,
-			},
-		},
-	})
-}
-
 func TestAccSourcePostgres_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	sourceName := fmt.Sprintf("old_%s", slug)

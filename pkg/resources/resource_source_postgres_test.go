@@ -29,7 +29,6 @@ var inSourcePostgresTable = map[string]interface{}{
 		map[string]interface{}{"name": "name1", "alias": "alias"},
 		map[string]interface{}{"name": "name2"},
 	},
-	"schema": []interface{}{"schema1", "schema2"},
 }
 
 func TestResourceSourcePostgresCreateTable(t *testing.T) {
