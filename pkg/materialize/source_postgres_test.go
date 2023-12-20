@@ -14,49 +14,6 @@ var tableInput = []TableStruct{
 	{Name: "table_2", Alias: "table_alias"},
 }
 
-func TestSourcePostgresAllTablesCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source"
-			IN CLUSTER "cluster"
-			FROM POSTGRES CONNECTION "database"."schema"."pg_connection"
-			\(PUBLICATION 'mz_source'\)
-			FOR ALL TABLES;`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		b := NewSourcePostgresBuilder(db, sourcePostgres)
-		b.ClusterName("cluster")
-		b.PostgresConnection(IdentifierSchemaStruct{Name: "pg_connection", SchemaName: "schema", DatabaseName: "database"})
-		b.Publication("mz_source")
-
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func TestSourcePostgresSchemasCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source"
-			IN CLUSTER "cluster"
-			FROM POSTGRES CONNECTION "database"."schema"."pg_connection"
-			\(PUBLICATION 'mz_source'\)
-			FOR SCHEMAS \(schema_1, schema_2\);`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		b := NewSourcePostgresBuilder(db, sourcePostgres)
-		b.ClusterName("cluster")
-		b.Schema([]string{"schema_1", "schema_2"})
-		b.PostgresConnection(IdentifierSchemaStruct{Name: "pg_connection", SchemaName: "schema", DatabaseName: "database"})
-		b.Publication("mz_source")
-
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
 func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

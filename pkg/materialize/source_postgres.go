@@ -15,7 +15,6 @@ type SourcePostgresBuilder struct {
 	publication        string
 	textColumns        []string
 	table              []TableStruct
-	schema             []string
 	exposeProgress     IdentifierSchemaStruct
 }
 
@@ -56,11 +55,6 @@ func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Schema(t []string) *SourcePostgresBuilder {
-	b.schema = t
-	return b
-}
-
 func (b *SourcePostgresBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourcePostgresBuilder {
 	b.exposeProgress = e
 	return b
@@ -86,24 +80,17 @@ func (b *SourcePostgresBuilder) Create() error {
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
-	if len(b.table) > 0 {
-		q.WriteString(` FOR TABLES (`)
-		for i, t := range b.table {
-			if t.Alias == "" {
-				t.Alias = t.Name
-			}
-			q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
-			if i < len(b.table)-1 {
-				q.WriteString(`, `)
-			}
+	q.WriteString(` FOR TABLES (`)
+	for i, t := range b.table {
+		if t.Alias == "" {
+			t.Alias = t.Name
 		}
-		q.WriteString(`)`)
-	} else if len(b.schema) > 0 {
-		s := strings.Join(b.schema, ", ")
-		q.WriteString(fmt.Sprintf(` FOR SCHEMAS (%s)`, s))
-	} else {
-		q.WriteString(` FOR ALL TABLES`)
+		q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
+		if i < len(b.table)-1 {
+			q.WriteString(`, `)
+		}
 	}
+	q.WriteString(`)`)
 
 	if b.exposeProgress.Name != "" {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
@@ -134,7 +121,6 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
 	}
 
-	q.WriteString(";")
 	return b.ddl.exec(q.String())
 }
 
