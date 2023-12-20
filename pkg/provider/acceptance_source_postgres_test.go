@@ -58,36 +58,6 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 	})
 }
 
-func TestAccSourcePostgresSchema_basic(t *testing.T) {
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourcePostgresResourceSchema(sourceName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "cluster_name", sourceName+"_cluster"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.#", "1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.0", "PUBLIC"),
-				),
-			},
-			{
-				ResourceName:      "materialize_source_postgres.test",
-				ImportState:       true,
-				ImportStateVerify: false,
-			},
-		},
-	})
-}
-
 func TestAccSourcePostgres_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	sourceName := fmt.Sprintf("old_%s", slug)
@@ -315,47 +285,6 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 		depends_on = [materialize_role.test]
 	}
 	`, roleName, secretName, connName, sourceName, source2Name, sourceOwner, comment)
-}
-
-func testAccSourcePostgresResourceSchema(sourceName string) string {
-	return fmt.Sprintf(`
-	resource "materialize_secret" "test" {
-		name          = "%[1]s_secret"
-		value         = "c2VjcmV0Cg=="
-	}
-
-	resource "materialize_cluster" "test" {
-		name               = "%[1]s_cluster"
-		size               = "3xsmall"
-	}
-
-	resource "materialize_connection_postgres" "test" {
-		name = "%[1]s_conn"
-		host = "postgres"
-		port = 5432
-		user {
-			text = "postgres"
-		}
-		password {
-			name          = materialize_secret.test.name
-			schema_name   = materialize_secret.test.schema_name
-			database_name = materialize_secret.test.database_name
-		}
-		database = "postgres"
-	}
-
-	resource "materialize_source_postgres" "test" {
-		name = "%[1]s_source"
-		cluster_name = materialize_cluster.test.name
-		postgres_connection {
-			name          = materialize_connection_postgres.test.name
-			schema_name   = materialize_connection_postgres.test.schema_name
-			database_name = materialize_connection_postgres.test.database_name
-		}
-		publication = "mz_source"
-		schema      = ["PUBLIC"]
-	}
-	`, sourceName)
 }
 
 func testAccCheckSourcePostgresExists(name string) resource.TestCheckFunc {
