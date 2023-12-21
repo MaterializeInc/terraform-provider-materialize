@@ -36,7 +36,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	},
 	"table": {
 		Description: "Creates subsources for specific tables in the Postgres connection.",
-		Type:        schema.TypeList,
+		Type:        schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {
@@ -128,18 +128,18 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
+	// TODO: We need to use a query that retrieves name and alias
 	// Tables
-	tMaps := []map[string]interface{}{}
-	for _, dep := range deps {
-		tMap := map[string]interface{}{}
-		// TODO: We do not save alias separate from name
-		tMap["name"] = dep.ObjectName.String
-		tMap["alias"] = dep.ObjectName.String
-		tMaps = append(tMaps, tMap)
-	}
-	if err := d.Set("table", tMaps); err != nil {
-		return diag.FromErr(err)
-	}
+	// tMaps := []interface{}{}
+	// for _, dep := range deps {
+	// 	tMap := map[string]interface{}{}
+	// 	tMap["name"] = dep.ObjectName.String
+	// 	tMap["alias"] = dep.ObjectName.String
+	// 	tMaps = append(tMaps, tMap)
+	// }
+	// if err := d.Set("table", tMaps); err != nil {
+	// 	return diag.FromErr(err)
+	// }
 
 	// Subsources
 	sMaps := []interface{}{}
@@ -183,8 +183,9 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("table"); ok {
-		tables := materialize.GetTableStruct(v.([]interface{}))
-		b.Table(tables)
+		tables := v.(*schema.Set).List()
+		t := materialize.GetTableStruct(tables)
+		b.Table(t)
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
@@ -269,9 +270,8 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if d.HasChange("table") {
 		ot, nt := d.GetChange("table")
-		addTables := materialize.DiffTableStructs(nt.([]interface{}), ot.([]interface{}))
-		dropTables := materialize.DiffTableStructs(ot.([]interface{}), nt.([]interface{}))
-
+		addTables := materialize.DiffTableStructs(nt.(*schema.Set).List(), ot.(*schema.Set).List())
+		dropTables := materialize.DiffTableStructs(ot.(*schema.Set).List(), nt.(*schema.Set).List())
 		if len(addTables) > 0 {
 			var colDiff []string
 			if d.HasChange("text_columns") {

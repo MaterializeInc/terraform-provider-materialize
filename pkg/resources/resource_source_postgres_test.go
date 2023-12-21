@@ -28,7 +28,6 @@ var inSourcePostgresTable = map[string]interface{}{
 	"text_columns": []interface{}{"table.unsupported_type_1"},
 	"table": []interface{}{
 		map[string]interface{}{"name": "name1", "alias": "alias"},
-		map[string]interface{}{"name": "name2"},
 	},
 }
 
@@ -45,7 +44,7 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 			FROM POSTGRES CONNECTION "materialize"."public"."pg_connection" 
 			\(PUBLICATION 'mz_source', 
 			TEXT COLUMNS \(table.unsupported_type_1\)\) 
-			FOR TABLES \(name1 AS alias, name2 AS name2\) 
+			FOR TABLES \(name1 AS alias\) 
 			WITH \(SIZE = 'small'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -94,7 +93,7 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" SET \(SIZE = 'small'\)`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "name1" AS "alias", "name2"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "name1" AS "alias"`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
