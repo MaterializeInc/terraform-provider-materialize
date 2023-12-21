@@ -50,7 +50,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `name` (String) The identifier for the source.
 - `postgres_connection` (Block List, Min: 1, Max: 1) The PostgreSQL connection to use in the source. (see [below for nested schema](#nestedblock--postgres_connection))
 - `publication` (String) The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).
-- `table` (Block List, Min: 1) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
+- `table` (Block Set, Min: 1) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
 
 ### Optional
 
