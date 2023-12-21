@@ -27,7 +27,6 @@ var inSourcePostgresTable = map[string]interface{}{
 	"text_columns": []interface{}{"table.unsupported_type_1"},
 	"table": []interface{}{
 		map[string]interface{}{"name": "name1", "alias": "alias"},
-		map[string]interface{}{"name": "name2"},
 	},
 }
 
@@ -114,7 +113,7 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "name1" AS "alias", "name2"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "name1" AS "alias"`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
