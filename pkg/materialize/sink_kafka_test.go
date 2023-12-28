@@ -18,7 +18,7 @@ func TestSinkKafkaCreate(t *testing.T) {
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
 			INTO KAFKA CONNECTION "database"."schema"."kafka_conn"
-			\(TOPIC 'testdrive-snk1-seed'\)
+			\(TOPIC 'testdrive-snk1-seed', COMPRESSION TYPE = gzip\)
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."csr_conn"
 			ENVELOPE DEBEZIUM;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -28,6 +28,7 @@ func TestSinkKafkaCreate(t *testing.T) {
 		b.From(IdentifierSchemaStruct{Name: "src", SchemaName: "schema", DatabaseName: "database"})
 		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"})
 		b.Topic("testdrive-snk1-seed")
+		b.CompressionType("gzip")
 		b.Format(
 			SinkFormatSpecStruct{
 				Avro: &SinkAvroFormatSpec{

@@ -212,6 +212,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		}
 		size  = "3xsmall"
 		topic = "sink_topic"
+		compression_type = "none"
 		format {
 			json = true
 		}
@@ -276,6 +277,7 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 		name             = "%[1]s_sink"
 		cluster_name     = materialize_cluster.test.name
 		topic            = "topic1"
+		compression_type = "none"
 		key              = ["counter"]
 		key_not_enforced = true
 		from {
