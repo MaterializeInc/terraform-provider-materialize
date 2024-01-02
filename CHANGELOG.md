@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.4.2 - 2024-01-03
+## 0.4.2 - 2024-01-02
 
 ### Features
 * Add `COMPRESSION TYPE`` option to `materialize_sink_kafka` resource [#414](https://github.com/MaterializeInc/terraform-provider-materialize/pull/414)
