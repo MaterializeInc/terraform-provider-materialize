@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.4.2 - 2024-01-02
+
+### Features
+* Add `COMPRESSION TYPE`` option to `materialize_sink_kafka` resource [#414](https://github.com/MaterializeInc/terraform-provider-materialize/pull/414)
+
+### BugFixes
+* Fix Kafka offset acceptance tests [#418](https://github.com/MaterializeInc/terraform-provider-materialize/pull/418)
+
+### Misc
+* Include additional tests for subsource [#413](https://github.com/MaterializeInc/terraform-provider-materialize/pull/413)
+* Dependabot updates [#416](https://github.com/MaterializeInc/terraform-provider-materialize/pull/416), [#415](https://github.com/MaterializeInc/terraform-provider-materialize/pull/415)
+
 ## 0.4.1 - 2023-12-12
 
 ### Features
