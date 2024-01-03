@@ -37,12 +37,9 @@ type ProviderMeta struct {
 var DefaultRegion string
 
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
-	providerMeta, ok := meta.(*ProviderMeta)
-	if !ok || providerMeta == nil {
-		return nil, fmt.Errorf("type assertion failed: provider meta is not of type *ProviderMeta or is nil")
-	}
+	providerMeta := meta.(*ProviderMeta)
 
-	if providerMeta.Frontegg.NeedsTokenRefresh() {
+	if err := providerMeta.Frontegg.NeedsTokenRefresh(); err != nil {
 		err := providerMeta.Frontegg.RefreshToken()
 		if err != nil {
 			return nil, fmt.Errorf("failed to refresh token: %v", err)

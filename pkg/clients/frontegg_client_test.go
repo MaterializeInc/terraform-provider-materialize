@@ -89,7 +89,7 @@ func TestFronteggClient_TokenRefresh(t *testing.T) {
 	require.NotEmpty(t, fronteggClient.Token, "Token should be set correctly in the Frontegg client")
 
 	// Verify that the client does not detect the need for token refresh immediately
-	require.False(t, fronteggClient.NeedsTokenRefresh(), "Token should not require immediate refresh")
+	require.NoError(t, fronteggClient.NeedsTokenRefresh(), "Token should not be considered expired")
 }
 
 func generateValidJWTToken() string {
@@ -117,7 +117,7 @@ func TestFronteggClient_NeedsTokenRefresh(t *testing.T) {
 	}
 
 	// Verify that the client correctly detects the need for token refresh
-	require.True(t, fronteggClient.NeedsTokenRefresh(), "Token should be considered expired and require refresh")
+	require.Error(t, fronteggClient.NeedsTokenRefresh(), "Token should be considered expired and require refresh")
 }
 
 func TestParseAppPassword(t *testing.T) {

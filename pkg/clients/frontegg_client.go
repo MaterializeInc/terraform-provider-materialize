@@ -213,8 +213,11 @@ func formatDashlessUuid(dashlessUuid string) string {
 	return strings.Join(parts, "-")
 }
 
-func (c *FronteggClient) NeedsTokenRefresh() bool {
-	return time.Now().After(c.TokenExpiry)
+func (c *FronteggClient) NeedsTokenRefresh() error {
+	if time.Now().After(c.TokenExpiry) {
+		return fmt.Errorf("token expired and needs refresh")
+	}
+	return nil
 }
 
 func (c *FronteggClient) RefreshToken() error {
