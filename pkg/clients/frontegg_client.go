@@ -168,6 +168,7 @@ func (c *FronteggClient) GetPassword() string {
 
 // cloneRequest creates a deep copy of an HTTP request to enable safe modifications
 // while preserving concurrency safety, immutability, and reusability.
+// https://stackoverflow.com/questions/62017146/http-request-clone-is-not-deep-clone
 func cloneRequest(r *http.Request) *http.Request {
 	// Deep copy the request
 	r2 := new(http.Request)
