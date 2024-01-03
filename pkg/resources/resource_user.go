@@ -88,14 +88,13 @@ type FronteggRole struct {
 
 // userCreate is the Terraform resource create function for a Frontegg user.
 func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("expected meta to be a struct containing DB and Frontegg, got %T", meta)
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	client := providerMeta.Frontegg
 
+	client := providerMeta.Frontegg
 	email := d.Get("email").(string)
-	// provider := "local"
 	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
 
 	for _, roleName := range roleNames {
@@ -161,12 +160,12 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("expected meta to be a struct containing DB and Frontegg, got %T", meta)
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	client := providerMeta.Frontegg
 
+	client := providerMeta.Frontegg
 	userID := d.Id()
 
 	// Construct the API request
@@ -212,12 +211,12 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 
 // userDelete is the Terraform resource delete function for a Frontegg user.
 func userDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("expected meta to be a struct containing DB and Frontegg, got %T", meta)
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	client := providerMeta.Frontegg
 
+	client := providerMeta.Frontegg
 	userID := d.Id()
 
 	// Send the request to the Frontegg API to delete the user.

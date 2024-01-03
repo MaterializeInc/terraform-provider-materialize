@@ -53,9 +53,9 @@ func Region() *schema.Resource {
 }
 
 func RegionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("error casting meta to *utils.ProviderMeta")
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	client := providerMeta.CloudAPI
 

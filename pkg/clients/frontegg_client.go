@@ -59,7 +59,6 @@ type tokenTransport struct {
 
 // RoundTrip method to execute the request with the token
 func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Deep copy the request to ensure it's safe to modify
 	req2 := cloneRequest(req)
 	req2.Header.Set("Authorization", "Bearer "+t.Token)
 	return t.Transport.RoundTrip(req2)
@@ -143,37 +142,41 @@ func getToken(ctx context.Context, password string, endpoint string) (string, st
 }
 
 // Get the token from the FronteggClient
-func (c *FronteggClient) GetToken() (string, error) {
-	return c.Token, nil
+func (c *FronteggClient) GetToken() string {
+	return c.Token
 }
 
 // Get the email from the FronteggClient
-func (c *FronteggClient) GetEmail() (string, error) {
-	return c.Email, nil
+func (c *FronteggClient) GetEmail() string {
+	return c.Email
 }
 
 // Get the endpoint from the FronteggClient
-func (c *FronteggClient) GetEndpoint() (string, error) {
-	return c.Endpoint, nil
+func (c *FronteggClient) GetEndpoint() string {
+	return c.Endpoint
 }
 
 // Get the token expiry from the FronteggClient
-func (c *FronteggClient) GetTokenExpiry() (time.Time, error) {
-	return c.TokenExpiry, nil
+func (c *FronteggClient) GetTokenExpiry() time.Time {
+	return c.TokenExpiry
 }
 
 // Get the password from the FronteggClient
-func (c *FronteggClient) GetPassword() (string, error) {
-	return c.Password, nil
+func (c *FronteggClient) GetPassword() string {
+	return c.Password
 }
 
+// cloneRequest creates a deep copy of an HTTP request to enable safe modifications
+// while preserving concurrency safety, immutability, and reusability.
 func cloneRequest(r *http.Request) *http.Request {
 	// Deep copy the request
 	r2 := new(http.Request)
 	*r2 = *r
+
 	// Deep copy the URL
 	r2.URL = new(url.URL)
 	*r2.URL = *r.URL
+
 	// Deep copy the Header
 	r2.Header = make(http.Header, len(r.Header))
 	for k, s := range r.Header {

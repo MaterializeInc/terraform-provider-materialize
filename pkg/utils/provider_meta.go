@@ -9,37 +9,53 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// ProviderMeta holds essential configuration and client information
+// required across various parts of the provider. It acts as a central
+// repository of shared data, particularly for database connections, API clients,
+// and regional settings.
 type ProviderMeta struct {
-	DB             map[clients.Region]*clients.DBClient
-	Frontegg       *clients.FronteggClient
-	CloudAPI       *clients.CloudAPIClient
-	DefaultRegion  clients.Region
+	// DB is a map that associates each supported region with its corresponding
+	// database client. This allows for region-specific database operations.
+	DB map[clients.Region]*clients.DBClient
+
+	// Frontegg represents the client used to interact with the Frontegg API,
+	// which may involve authentication, token management, etc.
+	Frontegg *clients.FronteggClient
+
+	// CloudAPI is the client used for interactions with the cloud API
+	CloudAPI *clients.CloudAPIClient
+
+	// DefaultRegion specifies the default region to be used when no specific
+	// region is provided in the resources and data sources.
+	DefaultRegion clients.Region
+
+	// RegionsEnabled is a map indicating which regions are currently enabled
+	// for use. This can be used to quickly check the availability in different regions.
 	RegionsEnabled map[clients.Region]bool
 }
 
 var DefaultRegion string
 
-func GetProviderMeta(meta interface{}) (*ProviderMeta, bool) {
+func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
 	providerMeta, ok := meta.(*ProviderMeta)
 	if !ok || providerMeta == nil {
-		fmt.Println("Type assertion failed: provider meta is not of type *ProviderMeta or is nil")
-		return nil, false
+		return nil, fmt.Errorf("type assertion failed: provider meta is not of type *ProviderMeta or is nil")
 	}
+
 	if providerMeta.Frontegg.NeedsTokenRefresh() {
 		err := providerMeta.Frontegg.RefreshToken()
 		if err != nil {
-			fmt.Printf("Failed to refresh token: %v\n", err)
-			return nil, false
+			return nil, fmt.Errorf("failed to refresh token: %v", err)
 		}
 	}
 
-	return providerMeta, true
+	return providerMeta, nil
 }
 
 func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, clients.Region, error) {
-	providerMeta, ok := GetProviderMeta(meta)
-	if !ok {
-		return nil, "", fmt.Errorf("failed to get provider meta: %v", providerMeta)
+	providerMeta, err := GetProviderMeta(meta)
+	if err != nil {
+		return nil, "", err
 	}
 
 	// Determine the region to use, if one is not specified, use the default region

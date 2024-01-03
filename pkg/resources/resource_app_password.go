@@ -71,9 +71,9 @@ const (
 )
 
 func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("expected meta to be a struct containing DB and Frontegg, got %T", meta)
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	// Create the app password using the helper function.
@@ -109,9 +109,9 @@ func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 // appPasswordRead reads the app password resource from the API.
 func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("error casting provider meta")
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	client := providerMeta.Frontegg
@@ -142,15 +142,15 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func appPasswordDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, ok := utils.GetProviderMeta(meta)
-	if !ok {
-		return diag.Errorf("error casting provider meta")
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	client := providerMeta.Frontegg
 	resourceID := d.Id()
 
-	err := deleteAppPassword(ctx, client, resourceID)
+	err = deleteAppPassword(ctx, client, resourceID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
