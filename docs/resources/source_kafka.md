@@ -74,7 +74,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `ownership_role` (String) The owernship role of the object.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
 - `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
-- `start_offset` (List of Number) Read partitions from the specified offset.
+- `start_offsets` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
 

@@ -91,7 +91,7 @@ resource "materialize_source_postgres" "example_source_postgres_schema" {
   name        = "source_postgres_schema"
   size        = "3xsmall"
   publication = "mz_source"
-  schema      = ["PUBLIC"]
+  schemas     = ["PUBLIC"]
 
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name

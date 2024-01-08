@@ -48,7 +48,7 @@ var inSourceKafka = map[string]interface{}{
 		},
 	},
 	"envelope":        []interface{}{map[string]interface{}{"upsert": true}},
-	"start_offset":    []interface{}{1, 2, 3},
+	"start_offsets":   []interface{}{1, 2, 3},
 	"start_timestamp": -1000,
 }
 
