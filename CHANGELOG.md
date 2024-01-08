@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.4.3 - 2024-01-08
+
+### Breaking Changes
+* Rename "default" cluster to "quickstart" as part of a change on the Materialize side [#423](https://github.com/MaterializeInc/terraform-provider-materialize/pull/423)
+
+### Misc
+* Dependabot updates [#427](https://github.com/MaterializeInc/terraform-provider-materialize/pull/427)
+* Change the user of the scheduled tests [#428](https://github.com/MaterializeInc/terraform-provider-materialize/pull/428)
+
 ## 0.4.2 - 2024-01-02
 
 ### Features
