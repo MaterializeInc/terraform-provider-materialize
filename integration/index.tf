@@ -17,7 +17,7 @@ resource "materialize_index" "loadgen_index" {
 
 resource "materialize_index" "materialized_view_index" {
   name         = "simple"
-  cluster_name = "default"
+  cluster_name = "quickstart"
 
   obj_name {
     name          = materialize_materialized_view.simple_materialized_view.name

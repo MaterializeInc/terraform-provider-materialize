@@ -23,7 +23,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("materialized view"),
 	"comment":            CommentSchema(false),
 	"cluster_name": {
-		Description: "The cluster to maintain the materialized view. If not specified, defaults to the default cluster.",
+		Description: "The cluster to maintain the materialized view. If not specified, defaults to the quickstart cluster.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		Computed:    true,

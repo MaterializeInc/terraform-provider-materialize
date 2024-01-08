@@ -48,4 +48,4 @@ resource "materialize_cluster" "managed_cluster" {
 
 data "materialize_cluster" "all" {}
 
-data "materialize_current_cluster" "default" {}
+data "materialize_current_cluster" "quickstart" {}

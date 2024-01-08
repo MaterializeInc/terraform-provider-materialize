@@ -3,7 +3,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
   schema_name   = materialize_schema.schema.name
   database_name = materialize_database.database.name
   comment       = "materialize view comment"
-  cluster_name  = "default"
+  cluster_name  = "quickstart"
 
   statement = <<SQL
 SELECT
@@ -15,7 +15,7 @@ resource "materialize_materialized_view" "materialized_view_assertions" {
   name               = "materialized_view_assertions"
   schema_name        = materialize_schema.schema.name
   database_name      = materialize_database.database.name
-  cluster_name       = "default"
+  cluster_name       = "quickstart"
   not_null_assertion = ["id"]
 
   statement = <<SQL
