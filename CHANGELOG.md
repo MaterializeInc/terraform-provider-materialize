@@ -2,6 +2,48 @@
 
 ## Unreleased
 
+### Features
+* Introduced a unified interface for managing both global and regional resources.
+* Implemented single authentication using an app password for all operations.
+* Added dynamic client allocation for managing different resource types.
+* Enhanced provider configuration with parameters for default settings and optional endpoint overrides.
+* New resources:
+  * App passwords: `materialize_app_password`.
+  * User management `materialize_user`.
+* Added data sources for fetching region details (`materialize_region`).
+* Implemented support for establishing SQL connections across multiple regions.
+* Introduced a new `region` parameter in all resource and data source configurations. This allows users to specify the region for resource creation and data retrieval.
+
+### Breaking Changes
+* **Provider Configuration Changes**:
+  * Deprecated the `host`, `port`, and `user` parameters in the provider configuration. These details are now derived from the app password.
+  * Retained only the `password` definition in the provider configuration. This password is used to fetch all necessary connection information.
+* **New `region` Configuration**:
+  * Introduced a new `default_region` parameter in the provider configuration. This allows users to specify the default region for resource creation.
+  * The `default_region` parameter can be overridden in specific resource configurations if a particular resource needs to be created in a non-default region.
+
+  ```hcl
+  provider "materialize" {
+    password       = var.materialize_app_password
+    default_region = "aws/us-east-1"
+  }
+
+  resource "materialize_cluster" "cluster" {
+    name   = "cluster"
+    region = "aws/us-west-2"
+  }
+  ```
+
+### Misc
+* Mock Services for Testing:
+  * Added a new mocks directory, which includes mock services for the Cloud API and the FrontEgg API.
+  * These mocks are intended for local testing and CI, facilitating development and testing without the need for a live backend.
+
+### Migration Guide
+* Before upgrading to `v0.5.0`, users should ensure that they have upgraded to `v0.4.x` which introduced the Terraform state migration necessary for `v0.5.0`. After upgrading to `v0.4.x`, users should run `terraform plan` to ensure that the state migration has completed successfully.
+* Users upgrading to `v0.5.0` should update their provider configurations to remove the `host`, `port`, and `user` parameters and ensure that the `password` parameter is set with the app password.
+* For managing resources across multiple regions, users should specify the `default_region` parameter in their provider configuration or override it in specific resource blocks as needed using the `region` parameter.
+
 ## 0.4.3 - 2024-01-08
 
 ### Breaking Changes
