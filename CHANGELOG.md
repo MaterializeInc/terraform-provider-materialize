@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 - 2024-01-10
+
 ### Features
 * Introduced a unified interface for managing both global and regional resources.
 * Implemented single authentication using an app password for all operations.
