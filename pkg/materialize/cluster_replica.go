@@ -74,7 +74,7 @@ func (b *ClusterReplicaBuilder) Create() error {
 	}
 
 	if b.disk {
-		i := fmt.Sprintf(` DISK`)
+		i := " DISK"
 		p = append(p, i)
 	}
 

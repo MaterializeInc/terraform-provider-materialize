@@ -34,6 +34,10 @@ resource "materialize_type_grant" "type_grant_usage" {
 - `schema_name` (String) The schema that the type being to.
 - `type_name` (String) The type that is being granted on.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

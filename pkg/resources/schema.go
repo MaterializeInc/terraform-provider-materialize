@@ -512,3 +512,12 @@ func CommentSchema(forceNew bool) *schema.Schema {
 		ForceNew:    forceNew,
 	}
 }
+
+func RegionSchema() *schema.Schema {
+	return &schema.Schema{
+		Description: "The region to use for the resource connection. If not set, the default region is used.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	}
+}

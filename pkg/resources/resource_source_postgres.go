@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var sourcePostgresSchema = map[string]*schema.Schema{
@@ -66,6 +65,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
 	"subsource":       SubsourceSchema(),
 	"ownership_role":  OwnershipRoleSchema(),
+	"region":          RegionSchema(),
 }
 
 func SourcePostgres() *schema.Resource {
@@ -90,8 +90,12 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSourcePostgresBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewSourcePostgresBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
@@ -137,7 +141,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -148,7 +152,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -158,11 +162,11 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	// set id
-	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
+	i, err := materialize.SourceId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return sourceRead(ctx, d, meta)
 }
@@ -172,13 +176,17 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSource(meta.(*sqlx.DB), o)
+	b := materialize.NewSource(metaDb, o)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 		o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewSource(meta.(*sqlx.DB), o)
+		b := materialize.NewSource(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
@@ -193,7 +201,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
@@ -225,7 +233,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)

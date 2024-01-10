@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +28,7 @@ func TestResourceConnectionUpdate(t *testing.T) {
 	d.Set("name", "old_conn")
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
@@ -46,7 +45,7 @@ func TestResourceConnectionUpdate(t *testing.T) {
 // All connections (other than AWS Privatelink and SSH Tunnel)
 // share the same read function
 func TestResourceConnectionReadIdMigration(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
 	r.NotNil(d)
@@ -54,7 +53,7 @@ func TestResourceConnectionReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		p := `WHERE mz_connections.id = 'u1'`
 		testhelpers.MockConnectionScan(mock, p)
@@ -76,7 +75,7 @@ func TestResourceConnectionDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CONNECTION "database"."schema"."conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := connectionDelete(context.TODO(), d, db); err != nil {

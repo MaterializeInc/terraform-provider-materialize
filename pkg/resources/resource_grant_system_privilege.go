@@ -11,7 +11,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/exp/slices"
 )
 
@@ -24,6 +23,7 @@ var grantSystemPrivilegeSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validPrivileges("SYSTEM"),
 	},
+	"region": RegionSchema(),
 }
 
 func GrantSystemPrivilege() *schema.Resource {
@@ -60,6 +60,11 @@ func parseSystemPrivilegeKey(id string) (SystemPrivilegeKey, error) {
 func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	key, err := parseSystemPrivilegeKey(i)
 	if err != nil {
 		log.Printf("[WARN] malformed privilege (%s), removing from state file", d.Id())
@@ -67,7 +72,7 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 		return nil
 	}
 
-	p, err := materialize.ScanSystemPrivileges(meta.(*sqlx.DB))
+	p, err := materialize.ScanSystemPrivileges(metaDb)
 	if err == sql.ErrNoRows {
 		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
@@ -82,13 +87,17 @@ func grantSystemPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta 
 		privileges = append(privileges, pr.Privileges)
 	}
 	privilegeMap, err := materialize.MapGrantPrivileges(privileges)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	if !slices.Contains(privilegeMap[key.roleId], key.privilege) {
 		log.Printf("[DEBUG] %s object does not contain privilege %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 	return nil
 }
 
@@ -96,18 +105,23 @@ func grantSystemPrivilegeCreate(ctx context.Context, d *schema.ResourceData, met
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewSystemPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewSystemPrivilegeBuilder(metaDb, roleName, privilege)
 
 	if err := b.Grant(); err != nil {
 		return diag.FromErr(err)
 	}
 
-	rId, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
+	rId, err := materialize.RoleId(metaDb, roleName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, rId, privilege)
+	key := b.GrantKey(string(region), rId, privilege)
 	d.SetId(key)
 
 	return grantSystemPrivilegeRead(ctx, d, meta)
@@ -117,7 +131,12 @@ func grantSystemPrivilegeDelete(ctx context.Context, d *schema.ResourceData, met
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewSystemPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewSystemPrivilegeBuilder(metaDb, roleName, privilege)
 
 	if err := b.Revoke(); err != nil {
 		return diag.FromErr(err)

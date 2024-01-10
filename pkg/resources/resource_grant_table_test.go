@@ -8,12 +8,11 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResourceGrantTableCreate(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -26,7 +25,7 @@ func TestResourceGrantTableCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantTable().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT USAGE ON TABLE "database"."schema"."table" TO "joe";`,
@@ -67,7 +66,7 @@ func TestResourceGrantTableDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantTable().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE USAGE ON TABLE "database"."schema"."table" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantTableDelete(context.TODO(), d, db); err != nil {

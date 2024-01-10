@@ -67,6 +67,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
 - `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness.
 - `ownership_role` (String) The owernship role of the object.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the sink schema. Defaults to `public`.
 - `size` (String) The size of the sink. If not specified, the `cluster_name` option must be specified.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.

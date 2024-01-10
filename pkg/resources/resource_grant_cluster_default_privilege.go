@@ -8,13 +8,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var grantClusterDefaultPrivilegeSchema = map[string]*schema.Schema{
 	"grantee_name":     GranteeNameSchema(),
 	"target_role_name": TargetRoleNameSchema(),
 	"privilege":        PrivilegeSchema("CLUSTER"),
+	"region":           RegionSchema(),
 }
 
 func GrantClusterDefaultPrivilege() *schema.Resource {
@@ -38,7 +38,12 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteeName, targetName, privilege)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewDefaultPrivilegeBuilder(metaDb, "CLUSTER", granteeName, targetName, privilege)
 
 	// create resource
 	if err := b.Grant(); err != nil {
@@ -46,17 +51,17 @@ func grantClusterDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	// Query ids
-	gId, err := materialize.RoleId(meta.(*sqlx.DB), granteeName)
+	gId, err := materialize.RoleId(metaDb, granteeName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	tId, err := materialize.RoleId(meta.(*sqlx.DB), targetName)
+	tId, err := materialize.RoleId(metaDb, targetName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, "CLUSTER", gId, tId, "", "", privilege)
+	key := b.GrantKey(string(region), "CLUSTER", gId, tId, "", "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -67,7 +72,12 @@ func grantClusterDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceD
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
 
-	b := materialize.NewDefaultPrivilegeBuilder(meta.(*sqlx.DB), "CLUSTER", granteenName, targetName, privilege)
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewDefaultPrivilegeBuilder(metaDb, "CLUSTER", granteenName, targetName, privilege)
 
 	if err := b.Revoke(); err != nil {
 		return diag.FromErr(err)

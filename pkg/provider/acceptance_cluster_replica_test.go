@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccClusterReplica_basic(t *testing.T) {
@@ -133,18 +132,26 @@ func testAccClusterReplicaWithComment(clusterName, clusterReplica, comment strin
 
 func testAccCheckClusterReplicaExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		r, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("cluster replica not found: %s", name)
 		}
-		_, err := materialize.ScanClusterReplica(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanClusterReplica(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
 
 func testAccCheckAllClusterReplicaDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
+	meta := testAccProvider.Meta()
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
+	if err != nil {
+		return fmt.Errorf("error getting DB client: %s", err)
+	}
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "materialize_cluster_replica" {

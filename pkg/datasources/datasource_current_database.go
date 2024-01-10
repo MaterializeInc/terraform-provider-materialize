@@ -6,7 +6,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func CurrentDatabase() *schema.Resource {
@@ -17,6 +16,7 @@ func CurrentDatabase() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"region": RegionSchema(),
 		},
 	}
 }
@@ -24,12 +24,16 @@ func CurrentDatabase() *schema.Resource {
 func currentDatabaseRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	conn := meta.(*sqlx.DB)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	conn := metaDb
 	var name string
 	conn.QueryRow("SHOW DATABASE;").Scan(&name)
 
 	d.Set("name", name)
-	d.SetId(utils.TransformIdWithRegion("current_database"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "current_database"))
 
 	return diags
 }

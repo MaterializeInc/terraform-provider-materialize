@@ -23,6 +23,7 @@ data "materialize_cluster" "all" {}
 
 - `clusters` (List of Object) The clusters in the account (see [below for nested schema](#nestedatt--clusters))
 - `id` (String) The ID of this resource.
+- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--clusters"></a>
 ### Nested Schema for `clusters`

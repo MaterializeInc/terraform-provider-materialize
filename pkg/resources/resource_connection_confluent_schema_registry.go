@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
@@ -32,6 +31,7 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false),
 	"validate":                  ValidateConnectionSchema(),
 	"ownership_role":            OwnershipRoleSchema(),
+	"region":                    RegionSchema(),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {
@@ -56,8 +56,12 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewConnectionConfluentSchemaRegistryBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewConnectionConfluentSchemaRegistryBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("url"); ok {
 		b.ConfluentSchemaRegistryUrl(v.(string))
@@ -109,7 +113,7 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -120,7 +124,7 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -130,11 +134,11 @@ func connectionConfluentSchemaRegistryCreate(ctx context.Context, d *schema.Reso
 	}
 
 	// set id
-	i, err := materialize.ConnectionId(meta.(*sqlx.DB), o)
+	i, err := materialize.ConnectionId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return connectionRead(ctx, d, meta)
 }

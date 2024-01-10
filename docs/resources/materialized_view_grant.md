@@ -34,6 +34,10 @@ resource "materialize_materialized_view_grant" "materialized_view_grant_select" 
 - `role_name` (String) The name of the role to grant privilege to.
 - `schema_name` (String) The schema that the materialized view being to.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

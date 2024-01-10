@@ -36,6 +36,7 @@ data "materialize_sink" "materialize_schema" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `region` (String) The region in which the resource is located.
 - `sinks` (List of Object) The sinks in the account (see [below for nested schema](#nestedatt--sinks))
 
 <a id="nestedatt--sinks"></a>

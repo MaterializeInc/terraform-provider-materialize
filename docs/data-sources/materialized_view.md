@@ -37,6 +37,7 @@ data "materialize_materialized_view" "materialize_schema" {
 
 - `id` (String) The ID of this resource.
 - `materialized_views` (List of Object) The materialized views in the account (see [below for nested schema](#nestedatt--materialized_views))
+- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--materialized_views"></a>
 ### Nested Schema for `materialized_views`

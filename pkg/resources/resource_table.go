@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var tableSchema = map[string]*schema.Schema{
@@ -65,6 +64,7 @@ var tableSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func Table() *schema.Resource {
@@ -87,7 +87,11 @@ func Table() *schema.Resource {
 func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanTable(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanTable(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -95,7 +99,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.TableName.String); err != nil {
 		return diag.FromErr(err)
@@ -123,7 +127,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// Table columns
-	tableColumns, err := materialize.ListTableColumns(meta.(*sqlx.DB), utils.ExtractId(i))
+	tableColumns, err := materialize.ListTableColumns(metaDb, utils.ExtractId(i))
 	if err != nil {
 		log.Print("[DEBUG] cannot query list tables")
 		return diag.FromErr(err)
@@ -151,8 +155,12 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewTableBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewTableBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("column"); ok {
 		columns := materialize.GetTableColumnStruct(v.([]interface{}))
@@ -166,7 +174,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -177,7 +185,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -189,7 +197,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	// column comment
 	if v, ok := d.GetOk("column"); ok {
 		columns := materialize.GetTableColumnStruct(v.([]interface{}))
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		for _, c := range columns {
 			if c.Comment != "" {
@@ -203,13 +211,13 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 
 	// set id
-	i, err := materialize.TableId(meta.(*sqlx.DB), o)
+	i, err := materialize.TableId(metaDb, o)
 	if err != nil {
 		log.Printf("[DEBUG] cannot query table: %s", o.QualifiedName())
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return tableRead(ctx, d, meta)
 }
@@ -219,12 +227,16 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 		o := materialize.MaterializeObject{ObjectType: "TABLE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewTableBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewTableBuilder(metaDb, o)
 
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
@@ -233,7 +245,7 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
-		b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := b.Alter(newRole.(string)); err != nil {
 			return diag.FromErr(err)
@@ -242,7 +254,7 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -261,7 +273,7 @@ func tableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			// Check specifically if the column comment has changed.
 			if newCol["comment"] != oldCol["comment"] {
 				// Apply the comment change
-				comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+				comment := materialize.NewCommentBuilder(metaDb, o)
 				colName := newCol["name"].(string)
 				colComment := newCol["comment"].(string)
 				if err := comment.Column(colName, colComment); err != nil {
@@ -279,8 +291,12 @@ func tableDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Dia
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewTableBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewTableBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

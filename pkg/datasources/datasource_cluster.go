@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func Cluster() *schema.Resource {
@@ -48,6 +47,7 @@ func Cluster() *schema.Resource {
 					},
 				},
 			},
+			"region": RegionSchema(),
 		},
 	}
 }
@@ -55,7 +55,11 @@ func Cluster() *schema.Resource {
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	dataSource, err := materialize.ListClusters(meta.(*sqlx.DB))
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dataSource, err := materialize.ListClusters(metaDb)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -78,6 +82,6 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion("clusters"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "clusters"))
 	return diags
 }

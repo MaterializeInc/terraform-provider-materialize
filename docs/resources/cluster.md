@@ -33,6 +33,7 @@ resource "materialize_cluster" "example_cluster" {
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
 - `size` (String) The size of the managed cluster.
 

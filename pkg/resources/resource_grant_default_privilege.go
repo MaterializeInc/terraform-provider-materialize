@@ -11,7 +11,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/exp/slices"
 )
 
@@ -51,7 +50,12 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 		return nil
 	}
 
-	privileges, err := materialize.ScanDefaultPrivilege(meta.(*sqlx.DB), key.objectType, key.granteeId, key.targetRoleId, key.databaseId, key.schemaId)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	privileges, err := materialize.ScanDefaultPrivilege(metaDb, key.objectType, key.granteeId, key.targetRoleId, key.databaseId, key.schemaId)
 	if err == sql.ErrNoRows {
 		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
@@ -70,6 +74,6 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 		d.SetId("")
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 	return nil
 }

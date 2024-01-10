@@ -8,12 +8,11 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -23,7 +22,7 @@ func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantRole().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT "role" TO "member";`,
@@ -52,7 +51,7 @@ func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
 
 // Confirm id is updated with region for 0.4.0
 func TestResourceGrantRolePrivilegeReadIdMigration(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -65,7 +64,7 @@ func TestResourceGrantRolePrivilegeReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("ROLE MEMBER|u1|u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		testhelpers.MockRoleGrantScan(mock)
 
@@ -89,7 +88,7 @@ func TestResourceGrantRolePrivilegeDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantRole().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE "role" FROM "member";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantRoleDelete(context.TODO(), d, db); err != nil {

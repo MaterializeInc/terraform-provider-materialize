@@ -52,6 +52,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 - `database_name` (String) The identifier for the materialized view database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `not_null_assertion` (List of String) **Private Preview** A list of columns for which to create non-null assertions.
 - `ownership_role` (String) The owernship role of the object.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the materialized view schema. Defaults to `public`.
 
 ### Read-Only

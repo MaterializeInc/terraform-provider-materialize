@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +24,7 @@ func TestResourceTypeCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Type().Schema, inType)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`CREATE TYPE "database"."schema"."type" AS LIST \(ELEMENT TYPE = int4\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -51,7 +51,7 @@ func TestResourceTypeReadIdMigration(t *testing.T) {
 	// Set id before migration
 	d.SetId("u1")
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_types.id = 'u1'`
 		testhelpers.MockTypeScan(mock, pp)
@@ -72,7 +72,7 @@ func TestResourceTypeDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, Type().Schema, inType)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP TYPE "database"."schema"."type";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := typeDelete(context.TODO(), d, db); err != nil {

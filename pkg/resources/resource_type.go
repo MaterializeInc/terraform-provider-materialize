@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var typeSchema = map[string]*schema.Schema{
@@ -88,6 +87,7 @@ var typeSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func Type() *schema.Resource {
@@ -110,7 +110,11 @@ func Type() *schema.Resource {
 func typeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanType(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanType(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -118,7 +122,7 @@ func typeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.TypeName.String); err != nil {
 		return diag.FromErr(err)
@@ -157,8 +161,12 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewTypeBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewTypeBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("row_properties"); ok {
 		p := materialize.GetRowProperties(v)
@@ -182,7 +190,7 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -193,7 +201,7 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -203,11 +211,11 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	// set id
-	i, err := materialize.TypeId(meta.(*sqlx.DB), o)
+	i, err := materialize.TypeId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return typeRead(ctx, d, meta)
 }
@@ -217,8 +225,12 @@ func typeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewOwnershipBuilder(metaDb, o)
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
@@ -230,7 +242,7 @@ func typeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
@@ -245,8 +257,12 @@ func typeDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diag
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewTypeBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewTypeBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)

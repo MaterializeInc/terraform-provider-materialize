@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +19,7 @@ func TestEgressIpsDatasource(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, EgressIps().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		ir := mock.NewRows([]string{"egress_ip"}).
 			AddRow("egress_ip")
 		mock.ExpectQuery(`SELECT egress_ip FROM materialize.mz_catalog.mz_egress_ips;`).WillReturnRows(ir)

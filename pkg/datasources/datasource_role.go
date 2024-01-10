@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func Role() *schema.Resource {
@@ -32,6 +31,7 @@ func Role() *schema.Resource {
 					},
 				},
 			},
+			"region": RegionSchema(),
 		},
 	}
 }
@@ -39,7 +39,11 @@ func Role() *schema.Resource {
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	dataSource, err := materialize.ListRoles(meta.(*sqlx.DB))
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dataSource, err := materialize.ListRoles(metaDb)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -58,6 +62,6 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion("roles"))
+	d.SetId(utils.TransformIdWithRegion(string(region), "roles"))
 	return diags
 }

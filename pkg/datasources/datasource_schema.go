@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func Schema() *schema.Resource {
@@ -42,6 +41,7 @@ func Schema() *schema.Resource {
 					},
 				},
 			},
+			"region": RegionSchema(),
 		},
 	}
 }
@@ -51,7 +51,11 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	var diags diag.Diagnostics
 
-	dataSource, err := materialize.ListSchemas(meta.(*sqlx.DB), databaseName)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dataSource, err := materialize.ListSchemas(metaDb, databaseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -73,9 +77,9 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if databaseName != "" {
 		id := fmt.Sprintf("%s|schemas", databaseName)
-		d.SetId(utils.TransformIdWithRegion(id))
+		d.SetId(utils.TransformIdWithRegion(string(region), id))
 	} else {
-		d.SetId(utils.TransformIdWithRegion("schemas"))
+		d.SetId(utils.TransformIdWithRegion(string(region), "schemas"))
 	}
 
 	return diags

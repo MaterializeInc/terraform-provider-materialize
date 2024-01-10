@@ -8,7 +8,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 var grantSourceSchema = map[string]*schema.Schema{
@@ -32,6 +31,7 @@ var grantSourceSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"region": RegionSchema(),
 }
 
 func GrantSource() *schema.Resource {
@@ -64,7 +64,12 @@ func grantSourceCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		DatabaseName: databaseName,
 	}
 
-	b := materialize.NewPrivilegeBuilder(meta.(*sqlx.DB), roleName, privilege, obj)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.NewPrivilegeBuilder(metaDb, roleName, privilege, obj)
 
 	// grant resource
 	if err := b.Grant(); err != nil {
@@ -72,17 +77,17 @@ func grantSourceCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	// set grant id
-	roleId, err := materialize.RoleId(meta.(*sqlx.DB), roleName)
+	roleId, err := materialize.RoleId(metaDb, roleName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	i, err := materialize.ObjectId(meta.(*sqlx.DB), obj)
+	i, err := materialize.ObjectId(metaDb, obj)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(utils.Region, i, roleId, privilege)
+	key := b.GrantKey(string(region), i, roleId, privilege)
 	d.SetId(key)
 
 	return grantRead(ctx, d, meta)
@@ -95,8 +100,13 @@ func grantSourceDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	b := materialize.NewPrivilegeBuilder(
-		meta.(*sqlx.DB),
+		metaDb,
 		roleName,
 		privilege,
 		materialize.MaterializeObject{

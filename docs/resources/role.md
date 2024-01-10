@@ -28,6 +28,7 @@ resource "materialize_role" "example_role" {
 ### Optional
 
 - `comment` (String) **Private Preview** Comment on an object in the database.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 
 ### Read-Only
 

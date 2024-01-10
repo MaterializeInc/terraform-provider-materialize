@@ -8,12 +8,11 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResourceGrantSecretDefaultPrivilegeCreate(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -24,7 +23,7 @@ func TestResourceGrantSecretDefaultPrivilegeCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSecretDefaultPrivilege().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" GRANT USAGE ON SECRETS TO "project_managers";`,
@@ -66,7 +65,7 @@ func TestResourceGrantSecretDefaultPrivilegeDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantSecretDefaultPrivilege().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER DEFAULT PRIVILEGES FOR ROLE "developers" REVOKE USAGE ON SECRETS FROM "project_managers";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantSecretDefaultPrivilegeDelete(context.TODO(), d, db); err != nil {

@@ -34,6 +34,7 @@ resource "materialize_schema_grant_default_privilege" "example" {
 ### Optional
 
 - `database_name` (String) The default privilege will apply only to objects created in this database, if specified.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 
 ### Read-Only
 

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func Table() *schema.Resource {
@@ -50,6 +50,7 @@ func Table() *schema.Resource {
 					},
 				},
 			},
+			"region": RegionSchema(),
 		},
 	}
 }
@@ -60,7 +61,11 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	var diags diag.Diagnostics
 
-	dataSource, err := materialize.ListTables(meta.(*sqlx.DB), schemaName, databaseName)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dataSource, err := materialize.ListTables(metaDb, schemaName, databaseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -81,7 +86,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	SetId("tables", databaseName, schemaName, d)
+	SetId(string(region), "tables", databaseName, schemaName, d)
 
 	return diags
 }

@@ -3,8 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/url"
+	"log"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -12,36 +13,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 )
 
 func Provider(version string) *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"host": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Materialize host. Can also come from the `MZ_HOST` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
-			},
-			"user": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Materialize user. Can also come from the `MZ_USER` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_USER", nil),
-			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 				Description: "Materialize host. Can also come from the `MZ_PASSWORD` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_PASSWORD", nil),
-			},
-			"port": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The Materialize port number to connect to at the server host. Can also come from the `MZ_PORT` environment variable. Defaults to 6875.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6875),
 			},
 			"database": {
 				Type:        schema.TypeString,
@@ -55,8 +37,28 @@ func Provider(version string) *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", "require"),
 				Description: "For testing purposes, the SSL mode to use.",
 			},
+			"endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MZ_ENDPOINT", "https://admin.cloud.materialize.com"),
+				Description: "The endpoint for the Materialize API.",
+			},
+			"cloud_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MZ_CLOUD_ENDPOINT", "https://api.cloud.materialize.com"),
+				Description: "The endpoint for the Materialize Cloud API.",
+			},
+			"default_region": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The default region if not specified in the resource",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_DEFAULT_REGION", "aws/us-east-1"),
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			"materialize_app_password":                         resources.AppPassword(),
+			"materialize_user":                                 resources.User(),
 			"materialize_cluster":                              resources.Cluster(),
 			"materialize_cluster_grant":                        resources.GrantCluster(),
 			"materialize_cluster_grant_default_privilege":      resources.GrantClusterDefaultPrivilege(),
@@ -108,6 +110,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_egress_ips":        datasources.EgressIps(),
 			"materialize_index":             datasources.Index(),
 			"materialize_materialized_view": datasources.MaterializedView(),
+			"materialize_region":            datasources.Region(),
 			"materialize_role":              datasources.Role(),
 			"materialize_schema":            datasources.Schema(),
 			"materialize_secret":            datasources.Secret(),
@@ -124,41 +127,89 @@ func Provider(version string) *schema.Provider {
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
-	host := d.Get("host").(string)
-	user := d.Get("user").(string)
 	password := d.Get("password").(string)
-	port := d.Get("port").(int)
 	database := d.Get("database").(string)
 	sslmode := d.Get("sslmode").(string)
+	endpoint := d.Get("endpoint").(string)
+	cloudEndpoint := d.Get("cloud_endpoint").(string)
+	defaultRegion := clients.Region(d.Get("default_region").(string))
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
-	// Set the host in the utils package so that the region can be extracted from it
-	err := utils.SetRegionFromHostname(host)
+	err := utils.SetDefaultRegion(string(defaultRegion))
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
 
-	url := &url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(user, password),
-		Host:   fmt.Sprintf("%s:%d", host, port),
-		Path:   database,
-		RawQuery: url.Values{
-			"application_name": {application_name},
-			"sslmode":          {sslmode},
-		}.Encode(),
-	}
-
-	var diags diag.Diagnostics
-	db, err := sqlx.Open("pgx", url.String())
+	// Initialize the Frontegg client.
+	fronteggClient, err := clients.NewFronteggClient(ctx, password, endpoint)
 	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Unable to create Materialize client",
-			Detail:   "Unable to authenticate user for authenticated Materialize client",
-		})
-		return nil, diags
+		return nil, diag.Errorf("Unable to create Frontegg client: %s", err)
 	}
 
-	return db, diags
+	// Initialize the Cloud API client using the Frontegg client and endpoint
+	cloudAPIClient := clients.NewCloudAPIClient(fronteggClient, cloudEndpoint)
+	regionsEnabled := make(map[clients.Region]bool)
+
+	// Get the list of cloud providers
+	providers, err := cloudAPIClient.ListCloudProviders(ctx)
+	if err != nil {
+		return nil, diag.Errorf("Unable to list cloud providers: %s", err)
+	}
+
+	// Store the DB clients for all regions.
+	dbClients := make(map[clients.Region]*clients.DBClient)
+
+	for _, provider := range providers {
+		regionDetails, err := cloudAPIClient.GetRegionDetails(ctx, provider)
+
+		log.Printf("[DEBUG] Region details for provider %s: %v\n", provider.ID, regionDetails)
+
+		if err != nil {
+			log.Printf("[ERROR] Error getting region details for provider %s: %v\n", provider.ID, err)
+			continue
+		}
+
+		// Check if regionDetails or RegionInfo is nil before proceeding
+		if regionDetails == nil || regionDetails.RegionInfo == nil {
+			continue
+		}
+
+		regionsEnabled[clients.Region(provider.ID)] = regionDetails.RegionInfo != nil && regionDetails.RegionInfo.Resolvable
+
+		// Get the database connection details for the region
+		host, port, err := clients.SplitHostPort(regionDetails.RegionInfo.SqlAddress)
+		if err != nil {
+			log.Printf("[ERROR] Error splitting host and port for region %s: %v\n", provider.ID, err)
+			continue
+		}
+
+		user := fronteggClient.Email
+
+		// Instantiate a new DB client for the region
+		dbClient, diags := clients.NewDBClient(host, user, password, port, database, application_name, version, sslmode)
+		if diags.HasError() {
+			log.Printf("[ERROR] Error initializing DB client for region %s: %v\n", provider.ID, diags)
+			continue
+		}
+
+		dbClients[clients.Region(provider.ID)] = dbClient
+	}
+
+	// Check if at least one region has been initialized successfully
+	if len(dbClients) == 0 {
+		return nil, diag.Errorf("No database regions were initialized. Please check your configuration.")
+	}
+
+	log.Printf("[DEBUG] Initialized DB clients for regions: %v\n", dbClients)
+
+	// Construct and return the provider meta with all clients initialized.
+	providerMeta := &utils.ProviderMeta{
+		DB:             dbClients,
+		Frontegg:       fronteggClient,
+		CloudAPI:       cloudAPIClient,
+		DefaultRegion:  clients.Region(defaultRegion),
+		RegionsEnabled: regionsEnabled,
+	}
+
+	return providerMeta, nil
 }

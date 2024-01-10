@@ -27,3 +27,4 @@ output "database_name" {
 
 - `id` (String) The ID of this resource.
 - `name` (String)
+- `region` (String) The region in which the resource is located.

@@ -8,12 +8,11 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResourceGrantDatabaseCreate(t *testing.T) {
-	utils.SetRegionFromHostname("localhost")
+	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -24,7 +23,7 @@ func TestResourceGrantDatabaseCreate(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT CREATE ON DATABASE "materialize" TO "joe";`,
@@ -63,7 +62,7 @@ func TestResourceGrantDatabaseCreateEmail(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
 			`GRANT CREATE ON DATABASE "materialize" TO "joe@materialize.com";`,
@@ -82,7 +81,7 @@ func TestResourceGrantDatabaseDelete(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, in)
 	r.NotNil(d)
 
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := grantDatabaseDelete(context.TODO(), d, db); err != nil {

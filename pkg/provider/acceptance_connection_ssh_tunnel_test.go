@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/jmoiron/sqlx"
 )
 
 func TestAccConnSshTunnel_basic(t *testing.T) {
@@ -136,18 +135,26 @@ resource "materialize_connection_ssh_tunnel" "test_role" {
 
 func testAccCheckConnSshTunnelExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		db := testAccProvider.Meta().(*sqlx.DB)
+		meta := testAccProvider.Meta()
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
 		r, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("connection ssh tunnel not found: %s", name)
 		}
-		_, err := materialize.ScanConnectionSshTunnel(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanConnectionSshTunnel(db, utils.ExtractId(r.Primary.ID))
 		return err
 	}
 }
 
 func testAccCheckAllConnSshTunnelDestroyed(s *terraform.State) error {
-	db := testAccProvider.Meta().(*sqlx.DB)
+	meta := testAccProvider.Meta()
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
+	if err != nil {
+		return fmt.Errorf("error getting DB client: %s", err)
+	}
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "materialize_connection_ssh_tunnel" {

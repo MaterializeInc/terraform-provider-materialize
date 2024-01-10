@@ -30,6 +30,10 @@ resource "materialize_database_grant" "database_grant_usage" {
 - `privilege` (String) The privilege to grant to the object.
 - `role_name` (String) The name of the role to grant privilege to.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

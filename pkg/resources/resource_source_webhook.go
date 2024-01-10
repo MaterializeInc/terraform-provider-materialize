@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/jmoiron/sqlx"
 )
 
 var sourceWebhookSchema = map[string]*schema.Schema{
@@ -150,6 +149,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 	},
 	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func SourceWebhook() *schema.Resource {
@@ -177,8 +177,12 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	clusterName := d.Get("cluster_name").(string)
 	bodyFormat := d.Get("body_format").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSourceWebhookBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewSourceWebhookBuilder(metaDb, o)
 
 	b.ClusterName(clusterName).
 		BodyFormat(bodyFormat).
@@ -248,7 +252,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -259,7 +263,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -269,11 +273,11 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	// Set id
-	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
+	i, err := materialize.SourceId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return sourceRead(ctx, d, meta)
 }

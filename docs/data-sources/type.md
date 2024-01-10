@@ -23,6 +23,7 @@ description: |-
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `region` (String) The region in which the resource is located.
 - `types` (List of Object) The types in the account (see [below for nested schema](#nestedatt--types))
 
 <a id="nestedatt--types"></a>

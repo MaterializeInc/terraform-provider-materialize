@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/jmoiron/sqlx"
 )
 
 var tick_interval = &schema.Schema{
@@ -113,6 +112,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
 	"subsource":       SubsourceSchema(),
 	"ownership_role":  OwnershipRoleSchema(),
+	"region":          RegionSchema(),
 }
 
 func SourceLoadgen() *schema.Resource {
@@ -137,8 +137,12 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSourceLoadgenBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewSourceLoadgenBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
@@ -184,7 +188,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	// ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(meta.(*sqlx.DB), o)
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
@@ -195,7 +199,7 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	// object comment
 	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(meta.(*sqlx.DB), o)
+		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
@@ -205,11 +209,11 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	}
 
 	// set id
-	i, err := materialize.SourceId(meta.(*sqlx.DB), o)
+	i, err := materialize.SourceId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return sourceRead(ctx, d, meta)
 }

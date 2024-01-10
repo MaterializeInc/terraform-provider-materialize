@@ -28,6 +28,10 @@ resource "materialize_grant_system_privilege" "role_createdb" {
 - `privilege` (String) The system privilege to grant.
 - `role_name` (String) The name of the role to grant privilege to.
 
+### Optional
+
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

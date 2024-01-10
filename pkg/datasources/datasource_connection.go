@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/jmoiron/sqlx"
 )
 
 func Connection() *schema.Resource {
@@ -54,6 +54,7 @@ func Connection() *schema.Resource {
 					},
 				},
 			},
+			"region": RegionSchema(),
 		},
 	}
 }
@@ -64,7 +65,11 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	var diags diag.Diagnostics
 
-	dataSource, err := materialize.ListConnections(meta.(*sqlx.DB), schemaName, databaseName)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dataSource, err := materialize.ListConnections(metaDb, schemaName, databaseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -86,6 +91,6 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	SetId("connections", databaseName, schemaName, d)
+	SetId(string(region), "connections", databaseName, schemaName, d)
 	return diags
 }
