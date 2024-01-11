@@ -36,12 +36,12 @@ resource "materialize_index" "loadgen_index" {
 
 ### Required
 
+- `cluster_name` (String) The cluster to maintain this index.
 - `col_expr` (Block List, Min: 1) The expressions to use as the key for the index. (see [below for nested schema](#nestedblock--col_expr))
 - `obj_name` (Block List, Min: 1, Max: 1) The name of the source, view, or materialized view on which you want to create an index. (see [below for nested schema](#nestedblock--obj_name))
 
 ### Optional
 
-- `cluster_name` (String) The cluster to maintain this index. If not specified, defaults to the active cluster.
 - `comment` (String) **Private Preview** Comment on an object in the database.
 - `default` (Boolean) Creates a default index using all inferred columns are used.
 - `method` (String) The name of the index method to use.

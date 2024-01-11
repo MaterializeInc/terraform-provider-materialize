@@ -42,12 +42,12 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 
 ### Required
 
+- `cluster_name` (String) The cluster to maintain the materialized view.
 - `name` (String) The identifier for the materialized view.
 - `statement` (String) The SQL statement for the materialized view.
 
 ### Optional
 
-- `cluster_name` (String) The cluster to maintain the materialized view. If not specified, defaults to the quickstart cluster.
 - `comment` (String) **Private Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the materialized view database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `not_null_assertion` (List of String) **Private Preview** A list of columns for which to create non-null assertions.
