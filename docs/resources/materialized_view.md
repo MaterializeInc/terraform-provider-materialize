@@ -57,6 +57,7 @@ resource "materialize_materialized_view" "simple_materialized_view" {
 
 ### Read-Only
 
+- `create_sql` (String) The SQL statement used to create the materialized view.
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the materialized view.
 

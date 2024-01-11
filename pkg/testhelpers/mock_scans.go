@@ -295,6 +295,7 @@ func MockMaterializeViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_clusters.name AS cluster_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
+		mz_materialized_views.create_sql,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
 	JOIN mz_schemas
@@ -620,6 +621,7 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_databases.name AS database_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
+		mz_views.create_sql,
 		mz_views.privileges
 	FROM mz_views
 	JOIN mz_schemas

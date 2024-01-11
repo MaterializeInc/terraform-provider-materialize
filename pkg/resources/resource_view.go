@@ -24,6 +24,11 @@ var viewSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"create_sql": {
+		Description: "The SQL statement used to create the view.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -84,6 +89,10 @@ func viewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	}
 
 	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("create_sql", s.CreateSQL.String); err != nil {
 		return diag.FromErr(err)
 	}
 
