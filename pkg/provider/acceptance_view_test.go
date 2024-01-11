@@ -32,6 +32,7 @@ func TestAccView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, viewName)),
 					resource.TestCheckResourceAttr("materialize_view.test", "statement", "SELECT 1 AS id"),
 					resource.TestCheckResourceAttr("materialize_view.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_view.test", "create_sql", fmt.Sprintf(`CREATE VIEW "materialize"."public"."%s" AS SELECT 1 AS "id"`, viewName)),
 					testAccCheckViewExists("materialize_view.test_role"),
 					resource.TestCheckResourceAttr("materialize_view.test_role", "name", view2Name),
 					resource.TestCheckResourceAttr("materialize_view.test_role", "ownership_role", roleName),

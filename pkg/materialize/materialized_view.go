@@ -89,6 +89,7 @@ type MaterializedViewParams struct {
 	Comment              sql.NullString `db:"comment"`
 	OwnerName            sql.NullString `db:"owner_name"`
 	Privileges           pq.StringArray `db:"privileges"`
+	CreateSQL            sql.NullString `db:"create_sql"`
 }
 
 var materializedViewQuery = NewBaseQuery(`
@@ -100,6 +101,7 @@ var materializedViewQuery = NewBaseQuery(`
 		mz_clusters.name AS cluster_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
+		mz_materialized_views.create_sql,
 		mz_materialized_views.privileges
 	FROM mz_materialized_views
 	JOIN mz_schemas

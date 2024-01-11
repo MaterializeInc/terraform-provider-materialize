@@ -40,6 +40,11 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"create_sql": {
+		Description: "The SQL statement used to create the materialized view.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -104,6 +109,10 @@ func materializedViewRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("create_sql", s.CreateSQL.String); err != nil {
 		return diag.FromErr(err)
 	}
 

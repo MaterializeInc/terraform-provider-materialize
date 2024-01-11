@@ -60,6 +60,7 @@ type ViewParams struct {
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
 	Privileges   pq.StringArray `db:"privileges"`
+	CreateSQL    sql.NullString `db:"create_sql"`
 }
 
 var viewQuery = NewBaseQuery(`
@@ -70,6 +71,7 @@ var viewQuery = NewBaseQuery(`
 		mz_databases.name AS database_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
+		mz_views.create_sql,
 		mz_views.privileges
 	FROM mz_views
 	JOIN mz_schemas
