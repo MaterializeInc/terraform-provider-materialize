@@ -42,9 +42,9 @@ var indexSchema = map[string]*schema.Schema{
 	"comment":            CommentSchema(false),
 	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
 	"cluster_name": {
-		Description: "The cluster to maintain this index. If not specified, defaults to the active cluster.",
+		Description: "The cluster to maintain this index.",
 		Type:        schema.TypeString,
-		Optional:    true,
+		Required:    true,
 		ForceNew:    true,
 	},
 	"method": {
