@@ -42,6 +42,10 @@ func testAccDatasourceSink(nameSpace string) string {
 		database_name = materialize_database.test.name
 	}
 
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+	}
+
 	resource "materialize_connection_kafka" "test" {
 		name = "%[1]s_conn"
 		kafka_broker {
@@ -78,7 +82,7 @@ func testAccDatasourceSink(nameSpace string) string {
 		from {
 			name = materialize_table.test.name
 		}
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		topic = "sink_topic"
 		format {
 			json = true

@@ -176,6 +176,11 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		name = "%[1]s"
 	}
 
+	resource "materialize_cluster" "test" {
+		name = "%[1]s_cluster"
+		size = "3xsmall"
+	}
+
 	resource "materialize_connection_kafka" "test" {
 		name = "%[2]s"
 		kafka_broker {
@@ -209,7 +214,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		from {
 			name = materialize_table.test.name
 		}
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		topic = "sink_topic"
 		compression_type = "none"
 		format {
@@ -228,7 +233,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		from {
 			name = materialize_table.test.name
 		}
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		topic = "sink_topic"
 		format {
 			json = true
@@ -254,7 +259,7 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
-		size                = "3xsmall"
+		cluster_name        = materialize_cluster.test.name
 		load_generator_type = "COUNTER"
 	}
 

@@ -87,7 +87,6 @@ func GetTPCHOptionsStruct(v interface{}) TPCHOptions {
 type SourceLoadgenBuilder struct {
 	Source
 	clusterName       string
-	size              string
 	loadGeneratorType string
 	counterOptions    CounterOptions
 	auctionOptions    AuctionOptions
@@ -105,11 +104,6 @@ func NewSourceLoadgenBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceLoadge
 
 func (b *SourceLoadgenBuilder) ClusterName(c string) *SourceLoadgenBuilder {
 	b.clusterName = c
-	return b
-}
-
-func (b *SourceLoadgenBuilder) Size(s string) *SourceLoadgenBuilder {
-	b.size = s
 	return b
 }
 
@@ -185,11 +179,6 @@ func (b *SourceLoadgenBuilder) Create() error {
 
 	if b.exposeProgress.Name != "" {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
-	}
-
-	// Size
-	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
 	}
 
 	q.WriteString(`;`)

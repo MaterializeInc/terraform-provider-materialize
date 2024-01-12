@@ -89,13 +89,18 @@ resource "materialize_schema" "test" {
 	database_name = materialize_database.test.name
 }
 
+resource "materialize_cluster" "test" {
+	name = "source_grant_test"
+	size = "3xsmall"
+}
+
 resource "materialize_source_load_generator" "test" {
 	name                = "%s"
 	schema_name         = materialize_schema.test.name
 	database_name       = materialize_database.test.name
-	size                = "3xsmall"
+	cluster_name        = materialize_cluster.test.name
 	load_generator_type = "COUNTER"
-  
+
 	counter_options {
 	  tick_interval = "500ms"
 	}

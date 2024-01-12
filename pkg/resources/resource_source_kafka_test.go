@@ -17,7 +17,6 @@ var inSourceKafka = map[string]interface{}{
 	"schema_name":             "schema",
 	"database_name":           "database",
 	"cluster_name":            "cluster",
-	"size":                    "small",
 	"item_name":               "item",
 	"kafka_connection":        []interface{}{map[string]interface{}{"name": "kafka_conn"}},
 	"topic":                   "topic",
@@ -68,8 +67,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 			PARTITION AS partition,
 			OFFSET AS offset,
 			TIMESTAMP AS timestamp
-			ENVELOPE UPSERT
-			WITH \(SIZE = 'small'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

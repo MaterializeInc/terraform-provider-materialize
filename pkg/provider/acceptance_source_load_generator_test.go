@@ -68,7 +68,6 @@ func TestAccSourceLoadGeneratorAuction_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "auction"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."auction"."%s"`, sourceName)),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "AUCTION"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "auction_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "auction_options.0.scale_factor", "0.1"),
@@ -101,7 +100,6 @@ func TestAccSourceLoadGeneratorMarketing_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "marketing"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."marketing"."%s"`, sourceName)),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "MARKETING"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "marketing_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "marketing_options.0.scale_factor", "0.1"),
@@ -134,7 +132,6 @@ func TestAccSourceLoadGeneratorTPCH_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "tpch"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."tpch"."%s"`, sourceName)),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "TPCH"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.scale_factor", "0.1"),
@@ -168,7 +165,6 @@ func TestAccSourceLoadGenerator_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "comment", "Comment"),
 				),
@@ -182,7 +178,6 @@ func TestAccSourceLoadGenerator_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "size", "2xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "comment", "New Comment"),
 				),
@@ -238,7 +233,7 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 	resource "materialize_source_load_generator" "test_role" {
 		name = "%[3]s"
 		schema_name = "public"
-		size = "%[4]s"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "COUNTER"
 		counter_options {
 			tick_interval = "1000ms"
@@ -259,10 +254,15 @@ func testAccSourceLoadGeneratorAuctionResource(sourceName string) string {
 		name = "auction"
 	}
 
+	resource "materialize_cluster" "test" {
+		name               = "auction_cluster"
+		size               = "3xsmall"
+	}
+
 	resource "materialize_source_load_generator" "test" {
 		name = "%[1]s"
 		schema_name = materialize_schema.test.name
-		size = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "AUCTION"
 		auction_options {
 			tick_interval = "1000ms"
@@ -278,10 +278,15 @@ func testAccSourceLoadGeneratorMarketingResource(sourceName string) string {
 		name = "marketing"
 	}
 
+	resource "materialize_cluster" "test" {
+		name               = "marketing_cluster"
+		size               = "3xsmall"
+	}
+
 	resource "materialize_source_load_generator" "test" {
 		name = "%[1]s"
 		schema_name = materialize_schema.test.name
-		size = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "MARKETING"
 		marketing_options {
 			tick_interval = "1000ms"
@@ -297,10 +302,15 @@ func testAccSourceLoadGeneratorTPCHResource(sourceName string) string {
 		name = "tpch"
 	}
 
+	resource "materialize_cluster" "test" {
+		name               = "tpch_cluster"
+		size               = "3xsmall"
+	}
+
 	resource "materialize_source_load_generator" "test" {
 		name = "%[1]s"
 		schema_name = materialize_schema.test.name
-		size = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "TPCH"
 		tpch_options {
 			tick_interval = "1000ms"

@@ -426,7 +426,6 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_sinks.type AS sink_type,
-		mz_sinks.size,
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,
@@ -451,8 +450,8 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_sinks.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name"}).
-		AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster", "joe")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "envelope_type", "connection_name", "cluster_name", "owner_name"}).
+		AddRow("u1", "sink", "schema", "database", "kafka", "JSON", "conn", "cluster", "joe")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
@@ -464,7 +463,6 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_sources.type AS source_type,
-		mz_sources.size,
 		mz_sources.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,
@@ -490,8 +488,8 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_sources.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", defaultPrivilege)
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
+		AddRow("u1", "source", "schema", "database", "kafka", "BYTES", "conn", "cluster", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

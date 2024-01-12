@@ -28,7 +28,6 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", nameSpace+"_database"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", nameSpace+"_schema"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"%[1]s_database"."%[1]s_schema"."%[1]s_source"`, nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
@@ -193,6 +192,11 @@ func testAccSourcePostgresBasicResource(nameSpace string) string {
 		value = "c2VjcmV0Cg=="
 	}
 
+	resource "materialize_cluster" "test" {
+		name = "%[1]s_cluster"
+		size = "3xsmall"
+	}
+
 	resource "materialize_connection_postgres" "test" {
 		name = "%[1]s_conn"
 		host = "postgres"
@@ -219,7 +223,7 @@ func testAccSourcePostgresBasicResource(nameSpace string) string {
 			database_name = materialize_connection_postgres.test.database_name
 		}
 
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
 			name  = "table1"
@@ -260,13 +264,18 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 		database = "postgres"
 	}
 
+	resource "materialize_cluster" "test" {
+		name = "%[3]s"
+		size = "3xsmall"
+	}
+
 	resource "materialize_source_postgres" "test" {
 		name = "%[4]s"
 		postgres_connection {
 			name = materialize_connection_postgres.test.name
 		}
 
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
 			name  = "table1"
@@ -285,7 +294,7 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 			name = materialize_connection_postgres.test.name
 		}
 
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
 			name  = "table1"
@@ -314,6 +323,11 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 		value         = "c2VjcmV0Cg=="
 	}
 
+	resource "materialize_cluster" "test" {
+		name = "%[3]s"
+		size = "3xsmall"
+	}
+
 	resource "materialize_connection_postgres" "test" {
 		name = "%[3]s"
 		host = "postgres"
@@ -335,7 +349,7 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 			name = materialize_connection_postgres.test.name
 		}
 
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
 			name  = "table1"
@@ -354,7 +368,7 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 			name = materialize_connection_postgres.test.name
 		}
 
-		size  = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
 			name  = "table1"
@@ -375,13 +389,13 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 func testAccSourcePostgresResourceSchema(sourceName string) string {
 	return fmt.Sprintf(`
 	resource "materialize_secret" "test" {
-		name          = "%[1]s_secret"
-		value         = "c2VjcmV0Cg=="
+		name  = "%[1]s_secret"
+		value = "c2VjcmV0Cg=="
 	}
 
 	resource "materialize_cluster" "test" {
-		name               = "%[1]s_cluster"
-		size               = "3xsmall"
+		name = "%[1]s_cluster"
+		size = "3xsmall"
 	}
 
 	resource "materialize_connection_postgres" "test" {

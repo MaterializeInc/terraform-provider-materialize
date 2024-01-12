@@ -18,7 +18,6 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("source"),
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("source"),
-	"size":               ObjectSizeSchema("source"),
 	"kafka_connection":   IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
@@ -174,10 +173,6 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
-	}
-
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("kafka_connection"); ok {

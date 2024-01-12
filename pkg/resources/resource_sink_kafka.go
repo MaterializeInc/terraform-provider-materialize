@@ -19,7 +19,6 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("sink"),
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("sink"),
-	"size":               ObjectSizeSchema("sink"),
 	"from":               IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
 	"kafka_connection":   IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true),
 	"topic": {
@@ -117,10 +116,6 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
-	}
-
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("from"); ok {

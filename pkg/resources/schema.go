@@ -386,13 +386,10 @@ func SubsourceSchema() *schema.Schema {
 
 func ObjectClusterNameSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
-		Description:   fmt.Sprintf("The cluster to maintain this %s. If not specified, the `size` option must be specified.", objectType),
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		AtLeastOneOf:  []string{"cluster_name", "size"},
-		ConflictsWith: []string{"size"},
-		ForceNew:      true,
+		Description: fmt.Sprintf("The cluster to maintain this %s.", objectType),
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
 	}
 }
 

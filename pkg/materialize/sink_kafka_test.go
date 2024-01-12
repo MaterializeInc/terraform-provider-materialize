@@ -92,7 +92,7 @@ func TestSinkKafkaSizeSnapshotCreate(t *testing.T) {
 			INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'testdrive-snk1-seed'\)
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."csr_conn"
 			ENVELOPE DEBEZIUM
-			WITH \(SIZE = '2xsmall', SNAPSHOT = true\);`,
+			WITH \(SNAPSHOT = true\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
@@ -111,7 +111,6 @@ func TestSinkKafkaSizeSnapshotCreate(t *testing.T) {
 				},
 			},
 		)
-		b.Size("2xsmall")
 		b.Snapshot(true)
 		b.Envelope(KafkaSinkEnvelopeStruct{Debezium: true})
 
@@ -210,12 +209,11 @@ func TestSinkKafkaAvroDocsTypeCreate(t *testing.T) {
 			\(TOPIC 'testdrive-snk1-seed'\)
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."public"."csr_connection"
 			\(KEY DOC ON TYPE "database"."schema"."table" = 'top-level comment'\)
-			ENVELOPE UPSERT WITH \(SIZE = 'xsmall'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSinkKafkaBuilder(db, o)
-		b.Size("xsmall")
 		b.From(from)
 		b.KafkaConnection(IdentifierSchemaStruct{
 			Name:         "kafka_connection",
@@ -256,12 +254,11 @@ func TestSinkKafkaAvroDocsColumnCreate(t *testing.T) {
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."public"."csr_connection"
 			\(KEY DOC ON COLUMN "database"."schema"."table"."c1" = 'comment on column only in key schema',
 			VALUE DOC ON COLUMN "database"."schema"."table"."c2" = 'comment on column only in value schema'\)
-			ENVELOPE UPSERT WITH \(SIZE = 'xsmall'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSinkKafkaBuilder(db, o)
-		b.Size("xsmall")
 		b.From(from)
 		b.KafkaConnection(IdentifierSchemaStruct{
 			Name:         "kafka_connection",
@@ -312,12 +309,11 @@ func TestSinkKafkaAvroDocsCreate(t *testing.T) {
 			\(VALUE DOC ON TYPE "database"."schema"."table" = 'top-level comment',
 			KEY DOC ON COLUMN "database"."schema"."table"."c1" = 'comment on column only in key schema',
 			VALUE DOC ON COLUMN "database"."schema"."table"."c2" = 'comment on column only in value schema'\)
-			ENVELOPE UPSERT WITH \(SIZE = 'xsmall'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSinkKafkaBuilder(db, o)
-		b.Size("xsmall")
 		b.From(from)
 		b.KafkaConnection(IdentifierSchemaStruct{
 			Name:         "kafka_connection",

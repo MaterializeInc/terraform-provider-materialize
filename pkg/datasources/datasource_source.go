@@ -51,10 +51,6 @@ func Source() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"size": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
 						"envelope_type": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -99,7 +95,6 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		sourceMap["schema_name"] = p.SchemaName.String
 		sourceMap["database_name"] = p.DatabaseName.String
 		sourceMap["type"] = p.SourceType.String
-		sourceMap["size"] = p.Size.String
 		sourceMap["envelope_type"] = p.EnvelopeType.String
 		sourceMap["connection_name"] = p.ConnectionName.String
 		sourceMap["cluster_name"] = p.ClusterName.String

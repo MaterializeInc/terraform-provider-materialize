@@ -26,7 +26,6 @@ func GetSinkKafkaEnelopeStruct(v interface{}) KafkaSinkEnvelopeStruct {
 type SinkKafkaBuilder struct {
 	Sink
 	clusterName     string
-	size            string
 	from            IdentifierSchemaStruct
 	kafkaConnection IdentifierSchemaStruct
 	topic           string
@@ -47,11 +46,6 @@ func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder
 
 func (b *SinkKafkaBuilder) ClusterName(c string) *SinkKafkaBuilder {
 	b.clusterName = c
-	return b
-}
-
-func (b *SinkKafkaBuilder) Size(s string) *SinkKafkaBuilder {
-	b.size = s
 	return b
 }
 
@@ -190,9 +184,6 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	// With Options
 	withOptions := []string{}
-	if b.size != "" {
-		withOptions = append(withOptions, fmt.Sprintf(`SIZE = %s`, QuoteString(b.size)))
-	}
 	if b.snapshot {
 		withOptions = append(withOptions, "SNAPSHOT = true")
 	}

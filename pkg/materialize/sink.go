@@ -31,10 +31,6 @@ func (b *Sink) Rename(newName string) error {
 	return b.ddl.rename(old, new)
 }
 
-func (b *Sink) Resize(newSize string) error {
-	return b.ddl.resize(b.QualifiedName(), newSize)
-}
-
 func (b *Sink) Drop() error {
 	qn := b.QualifiedName()
 	return b.ddl.drop(qn)
@@ -46,7 +42,6 @@ type SinkParams struct {
 	SchemaName     sql.NullString `db:"schema_name"`
 	DatabaseName   sql.NullString `db:"database_name"`
 	SinkType       sql.NullString `db:"sink_type"`
-	Size           sql.NullString `db:"size"`
 	EnvelopeType   sql.NullString `db:"envelope_type"`
 	ConnectionName sql.NullString `db:"connection_name"`
 	ClusterName    sql.NullString `db:"cluster_name"`
@@ -61,7 +56,6 @@ var sinkQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_sinks.type AS sink_type,
-		mz_sinks.size,
 		mz_sinks.envelope_type,
 		mz_connections.name as connection_name,
 		mz_clusters.name as cluster_name,

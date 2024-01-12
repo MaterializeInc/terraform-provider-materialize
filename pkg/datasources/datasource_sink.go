@@ -51,10 +51,6 @@ func Sink() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"size": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
 						"envelope_type": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -99,7 +95,6 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		sinkMap["schema_name"] = p.SchemaName.String
 		sinkMap["database_name"] = p.DatabaseName.String
 		sinkMap["type"] = p.SinkType.String
-		sinkMap["size"] = p.Size.String
 		sinkMap["envelope_type"] = p.EnvelopeType.String
 		sinkMap["connection_name"] = p.ConnectionName.String
 		sinkMap["cluster_name"] = p.ClusterName.String

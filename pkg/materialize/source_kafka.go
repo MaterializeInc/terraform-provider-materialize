@@ -31,7 +31,6 @@ func GetSourceKafkaEnelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
 type SourceKafkaBuilder struct {
 	Source
 	clusterName      string
-	size             string
 	kafkaConnection  IdentifierSchemaStruct
 	topic            string
 	includeKey       bool
@@ -62,11 +61,6 @@ func NewSourceKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceKafkaBui
 
 func (b *SourceKafkaBuilder) ClusterName(c string) *SourceKafkaBuilder {
 	b.clusterName = c
-	return b
-}
-
-func (b *SourceKafkaBuilder) Size(s string) *SourceKafkaBuilder {
-	b.size = s
 	return b
 }
 
@@ -417,10 +411,6 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.exposeProgress.Name != "" {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
-	}
-
-	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
 	}
 
 	q.WriteString(`;`)

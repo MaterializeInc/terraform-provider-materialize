@@ -42,12 +42,10 @@ func TestResourceSinkUpdate(t *testing.T) {
 	// Set current state
 	d.SetId("u1")
 	d.Set("name", "old_sink")
-	d.Set("size", "medium")
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SINK "database"."schema"."" RENAME TO "sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" SET \(SIZE = 'small'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_sinks.id = 'u1'`

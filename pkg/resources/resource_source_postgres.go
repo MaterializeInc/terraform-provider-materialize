@@ -18,7 +18,6 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 	"qualified_sql_name":  QualifiedNameSchema("source"),
 	"comment":             CommentSchema(false),
 	"cluster_name":        ObjectClusterNameSchema("source"),
-	"size":                ObjectSizeSchema("source"),
 	"postgres_connection": IdentifierSchema("postgres_connection", "The PostgreSQL connection to use in the source.", true),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
@@ -99,10 +98,6 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
-	}
-
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("postgres_connection"); ok {
@@ -188,13 +183,6 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSource(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-		if err := b.Resize(newSize.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

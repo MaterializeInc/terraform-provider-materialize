@@ -35,7 +35,6 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("source"),
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("source"),
-	"size":               ObjectSizeSchema("source"),
 	"load_generator_type": {
 		Description:  fmt.Sprintf("The load generator types: %s.", loadGeneratorTypes),
 		Type:         schema.TypeString,
@@ -146,10 +145,6 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	if v, ok := d.GetOk("cluster_name"); ok {
 		b.ClusterName(v.(string))
-	}
-
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {

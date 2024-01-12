@@ -40,10 +40,6 @@ func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("size", s.Size.String); err != nil {
-		return diag.FromErr(err)
-	}
-
 	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
 	}
@@ -74,20 +70,12 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{ObjectType: "SINK", Name: sinkName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSink(metaDb, o)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 		o := materialize.MaterializeObject{ObjectType: "SINK", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSink(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-		if err := b.Resize(newSize.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

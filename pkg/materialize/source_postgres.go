@@ -10,7 +10,6 @@ import (
 type SourcePostgresBuilder struct {
 	Source
 	clusterName        string
-	size               string
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
@@ -28,11 +27,6 @@ func NewSourcePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *SourcePostg
 
 func (b *SourcePostgresBuilder) ClusterName(c string) *SourcePostgresBuilder {
 	b.clusterName = c
-	return b
-}
-
-func (b *SourcePostgresBuilder) Size(s string) *SourcePostgresBuilder {
-	b.size = s
 	return b
 }
 
@@ -107,10 +101,6 @@ func (b *SourcePostgresBuilder) Create() error {
 
 	if b.exposeProgress.Name != "" {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
-	}
-
-	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
 	}
 
 	q.WriteString(`;`)

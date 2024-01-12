@@ -89,10 +89,6 @@ func (b *Source) Rename(newConnectionName string) error {
 	return b.ddl.rename(old, new)
 }
 
-func (b *Source) Resize(newSize string) error {
-	return b.ddl.resize(b.QualifiedName(), newSize)
-}
-
 func (b *Source) Drop() error {
 	qn := b.QualifiedName()
 	return b.ddl.drop(qn)
@@ -104,7 +100,6 @@ type SourceParams struct {
 	SchemaName     sql.NullString `db:"schema_name"`
 	DatabaseName   sql.NullString `db:"database_name"`
 	SourceType     sql.NullString `db:"source_type"`
-	Size           sql.NullString `db:"size"`
 	EnvelopeType   sql.NullString `db:"envelope_type"`
 	ConnectionName sql.NullString `db:"connection_name"`
 	ClusterName    sql.NullString `db:"cluster_name"`
@@ -120,7 +115,6 @@ var sourceQuery = NewBaseQuery(`
 			mz_schemas.name AS schema_name,
 			mz_databases.name AS database_name,
 			mz_sources.type AS source_type,
-			mz_sources.size,
 			mz_sources.envelope_type,
 			mz_connections.name as connection_name,
 			mz_clusters.name as cluster_name,
