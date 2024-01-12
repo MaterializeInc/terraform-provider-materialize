@@ -33,7 +33,7 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 ### Optional
 
 - `availability_zone` (String) The specific availability zone of the replica.
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `disk` (Boolean) **Private Preview**. Whether or not the replica is a _disk-backed replica_.
 - `id` (String) The ID of this resource.
 - `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.

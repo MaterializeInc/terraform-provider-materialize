@@ -28,7 +28,7 @@ resource "materialize_schema" "example_schema" {
 
 ### Optional
 
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the schema database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.

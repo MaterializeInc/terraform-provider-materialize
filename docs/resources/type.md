@@ -44,7 +44,7 @@ resource "materialize_type" "map_type" {
 
 ### Optional
 
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the type database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `list_properties` (Block List, Max: 1) List properties. (see [below for nested schema](#nestedblock--list_properties))
 - `map_properties` (Block List, Max: 1) Map properties. (see [below for nested schema](#nestedblock--map_properties))
