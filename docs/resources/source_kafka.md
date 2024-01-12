@@ -48,14 +48,19 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 ### Required
 
+- `cluster_name` (String) The cluster to maintain this source.
 - `kafka_connection` (Block List, Min: 1, Max: 1) The Kafka connection to use in the source. (see [below for nested schema](#nestedblock--kafka_connection))
 - `name` (String) The identifier for the source.
 - `topic` (String) The Kafka topic you want to subscribe to.
 
 ### Optional
 
+<<<<<<< HEAD
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
 - `comment` (String) **Public Preview** Comment on an object in the database.
+=======
+- `comment` (String) **Private Preview** Comment on an object in the database.
+>>>>>>> e32d9a5 (Terraform Docs)
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
@@ -74,7 +79,6 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))

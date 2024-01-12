@@ -37,14 +37,19 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 ### Required
 
+- `cluster_name` (String) The cluster to maintain this source.
 - `load_generator_type` (String) The load generator types: [AUCTION MARKETING COUNTER TPCH].
 - `name` (String) The identifier for the source.
 
 ### Optional
 
 - `auction_options` (Block List, Max: 1) Auction Options. (see [below for nested schema](#nestedblock--auction_options))
+<<<<<<< HEAD
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
 - `comment` (String) **Public Preview** Comment on an object in the database.
+=======
+- `comment` (String) **Private Preview** Comment on an object in the database.
+>>>>>>> e32d9a5 (Terraform Docs)
 - `counter_options` (Block List, Max: 1) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
@@ -52,7 +57,6 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `tpch_options` (Block List, Max: 1) TPCH Options. (see [below for nested schema](#nestedblock--tpch_options))
 
 ### Read-Only
