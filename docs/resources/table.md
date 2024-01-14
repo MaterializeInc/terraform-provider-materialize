@@ -45,7 +45,7 @@ resource "materialize_table" "simple_table" {
 
 ### Optional
 
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the table database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
@@ -66,7 +66,7 @@ Required:
 
 Optional:
 
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `default` (String) A default value to use for the column in an INSERT statement if an explicit value is not provided. If not specified, `NULL` is assumed..
 - `nullable` (Boolean) Do not allow the column to contain `NULL` values. Columns without this constraint can contain `NULL` values.
 

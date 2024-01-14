@@ -55,7 +55,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `ownership_role` (String) The owernship role of the object.

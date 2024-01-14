@@ -27,7 +27,7 @@ resource "materialize_database" "example_database" {
 
 ### Optional
 
-- `comment` (String) **Private Preview** Comment on an object in the database.
+- `comment` (String) **Public Preview** Comment on an object in the database.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 
