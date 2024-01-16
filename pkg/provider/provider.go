@@ -80,6 +80,8 @@ func Provider(version string) *schema.Provider {
 			"materialize_role":                                 resources.Role(),
 			"materialize_role_grant":                           resources.GrantRole(),
 			"materialize_schema":                               resources.Schema(),
+			"materialize_sso_configuration":                    resources.SSOConfiguration(),
+			"materialize_sso_domain":                           resources.SSODomain(),
 			"materialize_schema_grant":                         resources.GrantSchema(),
 			"materialize_schema_grant_default_privilege":       resources.GrantSchemaDefaultPrivilege(),
 			"materialize_secret":                               resources.Secret(),
