@@ -120,6 +120,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_secret":            datasources.Secret(),
 			"materialize_sink":              datasources.Sink(),
 			"materialize_source":            datasources.Source(),
+			"materialize_sso_configuration": datasources.SSOConfig(),
 			"materialize_table":             datasources.Table(),
 			"materialize_type":              datasources.Type(),
 			"materialize_view":              datasources.View(),

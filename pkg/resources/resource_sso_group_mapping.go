@@ -64,7 +64,7 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
 
 	// Fetch role IDs based on role names.
-	roleMap, err := listRoles(ctx, client)
+	roleMap, err := utils.ListRoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
@@ -186,7 +186,7 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
 
 	// Fetch role IDs based on role names
-	roleMap, err := listRoles(ctx, client)
+	roleMap, err := utils.ListRoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}

@@ -53,7 +53,7 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
 
 	// Fetch role IDs based on role names
-	roleMap, err := listRoles(ctx, client)
+	roleMap, err := utils.ListRoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
@@ -145,7 +145,7 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	// Map role IDs back to names
-	roleMap, err := listRoles(ctx, client)
+	roleMap, err := utils.ListRoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
