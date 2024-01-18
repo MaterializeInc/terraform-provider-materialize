@@ -135,7 +135,7 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 	ssoConfigID := d.Get("sso_config_id").(string)
 	groupID := d.Id()
 
-	endpoint := fmt.Sprintf("%s/team/resources/sso/v1/configurations/%s/groups", client.Endpoint, ssoConfigID)
+	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups", client.Endpoint, ssoConfigID)
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)

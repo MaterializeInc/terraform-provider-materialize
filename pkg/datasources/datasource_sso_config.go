@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -112,7 +113,6 @@ var dataSourceSSOConfigSchema = map[string]*schema.Schema{
 						},
 					},
 				},
-				// Add other fields as necessary
 			},
 		},
 	},
@@ -132,18 +132,23 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	client := providerMeta.Frontegg
 
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations", client.Endpoint), nil)
+	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations", client.Endpoint)
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	req.Header.Add("Authorization", "Bearer "+client.Token)
 
+	log.Printf("[DEBUG] Sending request to %s", endpoint)
+
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	defer resp.Body.Close()
+
+	log.Printf("[DEBUG] Received status code: %d", resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
 		responseData, err := io.ReadAll(resp.Body)
@@ -157,6 +162,12 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 	if err := json.NewDecoder(resp.Body).Decode(&ssoConfigurations); err != nil {
 		return diag.FromErr(err)
 	}
+
+	for _, ssoConfig := range ssoConfigurations {
+		log.Printf("[DEBUG] Decoded SSO Config: %#v", ssoConfig)
+	}
+
+	log.Printf("[DEBUG] Received response: %v", ssoConfigurations)
 
 	var configurations []map[string]interface{}
 	for _, ssoConfig := range ssoConfigurations {
@@ -224,8 +235,11 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		configuration["groups"] = groups
 
+		log.Printf("[DEBUG] Processed configuration: %v", configuration)
 		configurations = append(configurations, configuration)
 	}
+
+	log.Printf("[DEBUG] Final configurations: %+v", configurations)
 
 	if err := d.Set("sso_configurations", configurations); err != nil {
 		return diag.FromErr(err)
