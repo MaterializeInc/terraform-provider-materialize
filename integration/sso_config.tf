@@ -1,16 +1,16 @@
 
 resource "materialize_sso_configuration" "example_sso_config" {
-  enabled           = true
+  enabled            = true
   sso_endpoint       = "https://sso.example.com"
   public_certificate = "DUMMY_CERTIFICATE"
   sign_request       = true
-  type              = "saml"
-  oidc_client_id      = "client-id"
+  type               = "saml"
+  oidc_client_id     = "client-id"
   oidc_secret        = "client-secret"
 }
 
 resource "materialize_sso_domain" "example_sso_domain" {
-  domain = "bobbyiliev.com"
+  domain        = "example.com"
   sso_config_id = materialize_sso_configuration.example_sso_config.id
 }
 
