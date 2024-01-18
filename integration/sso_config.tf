@@ -32,7 +32,3 @@ resource "materialize_sso_default_roles" "example_sso_default_roles" {
 }
 
 data "materialize_sso_configuration" "all" {}
-
-output "sso_configurations" {
-  value = data.materialize_sso_configuration.all.sso_configurations
-}
