@@ -163,12 +163,6 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	for _, ssoConfig := range ssoConfigurations {
-		log.Printf("[DEBUG] Decoded SSO Config: %#v", ssoConfig)
-	}
-
-	log.Printf("[DEBUG] Received response: %v", ssoConfigurations)
-
 	var configurations []map[string]interface{}
 	for _, ssoConfig := range ssoConfigurations {
 		configuration := make(map[string]interface{})
@@ -234,12 +228,8 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 			groups = append(groups, groupData)
 		}
 		configuration["groups"] = groups
-
-		log.Printf("[DEBUG] Processed configuration: %v", configuration)
 		configurations = append(configurations, configuration)
 	}
-
-	log.Printf("[DEBUG] Final configurations: %+v", configurations)
 
 	if err := d.Set("sso_configurations", configurations); err != nil {
 		return diag.FromErr(err)

@@ -237,7 +237,7 @@ func ssoConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	// Use PATCH method for the update
-	req, err := http.NewRequestWithContext(ctx, "PATCH", fmt.Sprintf("%s/team/resources/sso/v1/configurations/%s", client.Endpoint, d.Id()), bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, "PATCH", fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s", client.Endpoint, d.Id()), bytes.NewBuffer(requestBody))
 	if err != nil {
 		return diag.FromErr(err)
 	}
