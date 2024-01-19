@@ -157,8 +157,7 @@ func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			IN CLUSTER "cluster" FROM KAFKA CONNECTION "materialize"."public"."kafka_conn" \(TOPIC 'topic', START TIMESTAMP -1000, START OFFSET \(1,2,3\)\)
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" VALUE STRATEGY avro_key_fullname
-			ENVELOPE UPSERT
-			WITH \(SIZE = 'small'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
