@@ -48,19 +48,14 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 ### Required
 
-- `cluster_name` (String) The cluster to maintain this source.
 - `name` (String) The identifier for the source.
 - `postgres_connection` (Block List, Min: 1, Max: 1) The PostgreSQL connection to use in the source. (see [below for nested schema](#nestedblock--postgres_connection))
 - `publication` (String) The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).
 
 ### Optional
 
-<<<<<<< HEAD
-- `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
+- `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
-=======
-- `comment` (String) **Private Preview** Comment on an object in the database.
->>>>>>> e32d9a5 (Terraform Docs)
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `ownership_role` (String) The owernship role of the object.
@@ -74,6 +69,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `size` (String) The size of the cluster maintaining this source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--postgres_connection"></a>

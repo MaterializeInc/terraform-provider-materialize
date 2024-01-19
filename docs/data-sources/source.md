@@ -51,4 +51,5 @@ Read-Only:
 - `id` (String)
 - `name` (String)
 - `schema_name` (String)
+- `size` (String)
 - `type` (String)

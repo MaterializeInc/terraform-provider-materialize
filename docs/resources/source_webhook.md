@@ -74,6 +74,7 @@ resource "materialize_source_webhook" "example_webhook" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `size` (String) The size of the cluster maintaining this source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--check_options"></a>

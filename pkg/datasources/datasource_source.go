@@ -51,11 +51,11 @@ func Source() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"envelope_type": {
+						"size": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"size": {
+						"envelope_type": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
