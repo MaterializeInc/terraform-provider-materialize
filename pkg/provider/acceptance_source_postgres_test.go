@@ -28,6 +28,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", nameSpace+"_database"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", nameSpace+"_schema"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"%[1]s_database"."%[1]s_schema"."%[1]s_source"`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),

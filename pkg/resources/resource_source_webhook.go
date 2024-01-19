@@ -23,6 +23,11 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"size": {
+		Description: "The size of the cluster maintaining this source.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"body_format": {
 		Description: "The body format of the webhook.",
 		Type:        schema.TypeString,

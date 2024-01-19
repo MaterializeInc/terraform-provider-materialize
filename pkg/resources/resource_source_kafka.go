@@ -18,6 +18,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("source"),
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("source"),
+	"size":               ObjectSizeSchema("source"),
 	"kafka_connection":   IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",

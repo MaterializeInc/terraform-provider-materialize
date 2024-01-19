@@ -388,20 +388,17 @@ func ObjectClusterNameSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
 		Description: fmt.Sprintf("The cluster to maintain this %s.", objectType),
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
+		Computed:    true,
 		ForceNew:    true,
 	}
 }
 
 func ObjectSizeSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
-		Description:   fmt.Sprintf("The size of the %s. If not specified, the `cluster_name` option must be specified.", objectType),
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		AtLeastOneOf:  []string{"cluster_name", "size"},
-		ConflictsWith: []string{"cluster_name"},
-		ValidateFunc:  validation.StringInSlice(sourceSizes, true),
+		Description: fmt.Sprintf("The size of the cluster maintaining this %s.", objectType),
+		Type:        schema.TypeString,
+		Computed:    true,
 	}
 }
 

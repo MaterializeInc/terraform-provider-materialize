@@ -10,6 +10,7 @@ import (
 type SourcePostgresBuilder struct {
 	Source
 	clusterName        string
+	size               string
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
@@ -27,6 +28,11 @@ func NewSourcePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *SourcePostg
 
 func (b *SourcePostgresBuilder) ClusterName(c string) *SourcePostgresBuilder {
 	b.clusterName = c
+	return b
+}
+
+func (b *SourcePostgresBuilder) Size(s string) *SourcePostgresBuilder {
+	b.size = s
 	return b
 }
 

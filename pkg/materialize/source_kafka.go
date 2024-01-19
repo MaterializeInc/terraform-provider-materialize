@@ -31,6 +31,7 @@ func GetSourceKafkaEnelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
 type SourceKafkaBuilder struct {
 	Source
 	clusterName      string
+	size             string
 	kafkaConnection  IdentifierSchemaStruct
 	topic            string
 	includeKey       bool
@@ -61,6 +62,11 @@ func NewSourceKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceKafkaBui
 
 func (b *SourceKafkaBuilder) ClusterName(c string) *SourceKafkaBuilder {
 	b.clusterName = c
+	return b
+}
+
+func (b *SourceKafkaBuilder) Size(s string) *SourceKafkaBuilder {
+	b.size = s
 	return b
 }
 

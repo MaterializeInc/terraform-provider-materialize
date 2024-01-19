@@ -34,6 +34,7 @@ type CheckOptionsStruct struct {
 type SourceWebhookBuilder struct {
 	Source
 	clusterName     string
+	size            string
 	bodyFormat      string
 	includeHeader   []HeaderStruct
 	includeHeaders  IncludeHeadersStruct
@@ -75,6 +76,11 @@ func (b *SourceWebhookBuilder) CheckOptions(o []CheckOptionsStruct) *SourceWebho
 
 func (b *SourceWebhookBuilder) CheckExpression(e string) *SourceWebhookBuilder {
 	b.checkExpression = e
+	return b
+}
+
+func (b *SourceWebhookBuilder) Size(s string) *SourceWebhookBuilder {
+	b.size = s
 	return b
 }
 
