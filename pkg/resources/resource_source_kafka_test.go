@@ -117,8 +117,7 @@ func TestResourceSourceKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 			PARTITION,
 			OFFSET,
 			TIMESTAMP
-			ENVELOPE UPSERT
-			WITH \(SIZE = 'small'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

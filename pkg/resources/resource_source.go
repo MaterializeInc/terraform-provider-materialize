@@ -40,6 +40,10 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("size", s.Size.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
 	}
