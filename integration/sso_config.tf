@@ -1,5 +1,5 @@
 
-resource "materialize_sso_configuration" "example_sso_config" {
+resource "materialize_sso_config" "example_sso_config" {
   enabled            = true
   sso_endpoint       = "https://sso.example.com"
   public_certificate = "DUMMY_CERTIFICATE"
@@ -11,24 +11,24 @@ resource "materialize_sso_configuration" "example_sso_config" {
 
 resource "materialize_sso_domain" "example_sso_domain" {
   domain        = "example.com"
-  sso_config_id = materialize_sso_configuration.example_sso_config.id
+  sso_config_id = materialize_sso_config.example_sso_config.id
 }
 
 resource "materialize_sso_group_mapping" "example_sso_group_mapping" {
   group         = "admins"
-  sso_config_id = materialize_sso_configuration.example_sso_config.id
+  sso_config_id = materialize_sso_config.example_sso_config.id
   roles         = ["Admin"]
 }
 
 resource "materialize_sso_group_mapping" "example_sso_group_mapping_2" {
   group         = "members"
-  sso_config_id = materialize_sso_configuration.example_sso_config.id
+  sso_config_id = materialize_sso_config.example_sso_config.id
   roles         = ["Member"]
 }
 
 resource "materialize_sso_default_roles" "example_sso_default_roles" {
-  sso_config_id = materialize_sso_configuration.example_sso_config.id
+  sso_config_id = materialize_sso_config.example_sso_config.id
   roles         = ["Admin", "Member"]
 }
 
-data "materialize_sso_configuration" "all" {}
+data "materialize_sso_config" "all" {}

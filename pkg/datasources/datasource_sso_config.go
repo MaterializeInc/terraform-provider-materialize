@@ -15,7 +15,7 @@ import (
 )
 
 var dataSourceSSOConfigSchema = map[string]*schema.Schema{
-	"sso_configurations": {
+	"sso_configs": {
 		Type:     schema.TypeList,
 		Computed: true,
 		Elem: &schema.Resource{
@@ -231,14 +231,14 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 		configurations = append(configurations, configuration)
 	}
 
-	if err := d.Set("sso_configurations", configurations); err != nil {
+	if err := d.Set("sso_configs", configurations); err != nil {
 		return diag.FromErr(err)
 	}
 
 	if len(configurations) > 0 {
 		d.SetId(configurations[0]["id"].(string))
 	} else {
-		d.SetId("no_sso_configurations")
+		d.SetId("no_sso_configs")
 	}
 
 	return nil

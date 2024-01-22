@@ -1,4 +1,4 @@
-resource "materialize_sso_configuration" "example_sso_config" {
+resource "materialize_sso_config" "example_sso_config" {
   enabled            = true
   sso_endpoint       = "https://sso.example2.com"
   public_certificate = "PUBLIC_CERTIFICATE"

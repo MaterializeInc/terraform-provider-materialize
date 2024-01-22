@@ -38,7 +38,7 @@ func TestDataSourceSSOConfigRead_Success(t *testing.T) {
 		r.Equal("mock-config-1", d.Id())
 
 		// Validate the SSO configurations
-		ssoConfigs := d.Get("sso_configurations").([]interface{})
+		ssoConfigs := d.Get("sso_configs").([]interface{})
 		r.NotEmpty(ssoConfigs)
 
 		for _, ssoConfig := range ssoConfigs {
