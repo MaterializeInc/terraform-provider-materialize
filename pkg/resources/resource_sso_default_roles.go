@@ -20,10 +20,10 @@ var SSODefaultRolesSchema = map[string]*schema.Schema{
 		Description: "The ID of the associated SSO configuration.",
 	},
 	"roles": {
-		Type:        schema.TypeList,
+		Type:        schema.TypeSet,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Required:    true,
-		Description: "List of default role names for the SSO configuration.",
+		Description: "Set of default role names for the SSO configuration.",
 	},
 }
 
@@ -50,7 +50,7 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Get("sso_config_id").(string)
-	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
+	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
 	// Fetch role IDs based on role names
 	roleMap, err := utils.ListRoles(ctx, client)
@@ -160,7 +160,9 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 	}
 
-	d.Set("roles", roleNames)
+	if err := d.Set("roles", schema.NewSet(schema.HashString, convertToStringInterface(roleNames))); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }
@@ -212,4 +214,12 @@ func ssoDefaultRolesDelete(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.SetId("")
 	return nil
+}
+
+func convertToStringInterface(stringSlice []string) []interface{} {
+	var interfaceSlice []interface{}
+	for _, str := range stringSlice {
+		interfaceSlice = append(interfaceSlice, str)
+	}
+	return interfaceSlice
 }

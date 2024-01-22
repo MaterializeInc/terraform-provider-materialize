@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"net/http"
+	"sort"
 	"testing"
 	"time"
 
@@ -27,11 +28,14 @@ func TestSSODefaultRolesCreateOrUpdate(t *testing.T) {
 			Frontegg: client,
 		}
 
-		// Set the initial state with "sso_config_id" and "roles" as a list of strings
+		// Create a new ResourceData object
 		d := schema.TestResourceDataRaw(t, SSODefaultRolesSchema, map[string]interface{}{
 			"sso_config_id": "config-id",
-			"roles":         []interface{}{"Member", "Admin"}, // Set as a list of strings
 		})
+
+		// Set the roles using the Set method
+		err := d.Set("roles", schema.NewSet(schema.HashString, []interface{}{"Member", "Admin"}))
+		r.NoError(err)
 		d.SetId("mock-config-id")
 
 		diags := ssoDefaultRolesCreateOrUpdate(context.TODO(), d, providerMeta)
@@ -41,10 +45,16 @@ func TestSSODefaultRolesCreateOrUpdate(t *testing.T) {
 		r.Equal("config-id", d.Get("sso_config_id"))
 
 		// Assert that "roles" attribute has been updated correctly
-		updatedRolesSlice := d.Get("roles").([]interface{})
-		r.Len(updatedRolesSlice, 2)
-		r.Equal("Admin", updatedRolesSlice[0].(string))
-		r.Equal("Member", updatedRolesSlice[1].(string))
+		updatedRolesSet := d.Get("roles").(*schema.Set)
+		r.Len(updatedRolesSet.List(), 2)
+
+		// Convert set to a slice for easier assertions
+		updatedRolesSlice := convertToStringSlice(updatedRolesSet.List())
+		// Sort the slice as the order is not guaranteed in sets
+		sort.Strings(updatedRolesSlice)
+
+		r.Equal("Admin", updatedRolesSlice[0])
+		r.Equal("Member", updatedRolesSlice[1])
 	})
 }
 
@@ -65,8 +75,8 @@ func TestSSODefaultRolesRead(t *testing.T) {
 		// Set the initial state with "sso_config_id" and "roles" as a list of strings
 		d := schema.TestResourceDataRaw(t, SSODefaultRolesSchema, map[string]interface{}{
 			"sso_config_id": "mock-config-id",
-			"roles":         []interface{}{"Member", "Admin"}, // Set as a list of strings
 		})
+		d.Set("roles", schema.NewSet(schema.HashString, []interface{}{"Member", "Admin"}))
 		d.SetId("mock-config-id")
 
 		diags := ssoDefaultRolesRead(context.TODO(), d, providerMeta)
@@ -76,10 +86,16 @@ func TestSSODefaultRolesRead(t *testing.T) {
 		r.Equal("mock-config-id", d.Id())
 
 		// Assert that "roles" attribute has been updated correctly
-		updatedRolesSlice := d.Get("roles").([]interface{})
-		r.Len(updatedRolesSlice, 2)
-		r.Equal("Admin", updatedRolesSlice[0].(string))
-		r.Equal("Member", updatedRolesSlice[1].(string))
+		updatedRolesSet := d.Get("roles").(*schema.Set)
+		r.Len(updatedRolesSet.List(), 2)
+
+		// Convert set to a slice for easier assertions
+		updatedRolesSlice := convertToStringSlice(updatedRolesSet.List())
+		// Sort the slice as the order is not guaranteed in sets
+		sort.Strings(updatedRolesSlice)
+
+		r.Equal("Admin", updatedRolesSlice[0])
+		r.Equal("Member", updatedRolesSlice[1])
 	})
 }
 
@@ -100,8 +116,8 @@ func TestSSODefaultRolesDelete(t *testing.T) {
 		// Set the initial state with "sso_config_id" and "roles" as a list of strings
 		d := schema.TestResourceDataRaw(t, SSODefaultRolesSchema, map[string]interface{}{
 			"sso_config_id": "config-id",
-			"roles":         []interface{}{"Member", "Admin"}, // Set as a list of strings
 		})
+		d.Set("roles", schema.NewSet(schema.HashString, []interface{}{"Member", "Admin"}))
 		d.SetId("mock-config-id")
 
 		diags := ssoDefaultRolesDelete(context.TODO(), d, providerMeta)

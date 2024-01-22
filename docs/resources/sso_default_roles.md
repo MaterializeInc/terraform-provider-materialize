@@ -29,7 +29,7 @@ resource "materialize_sso_default_roles" "example_sso_default_roles_2" {
 
 ### Required
 
-- `roles` (List of String) List of default role names for the SSO configuration.
+- `roles` (Set of String) Set of default role names for the SSO configuration.
 - `sso_config_id` (String) The ID of the associated SSO configuration.
 
 ### Read-Only

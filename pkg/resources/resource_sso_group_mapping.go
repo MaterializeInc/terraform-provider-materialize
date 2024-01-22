@@ -74,7 +74,6 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 		if roleID, ok := roleMap[roleName]; ok {
 			roleIDs = append(roleIDs, roleID)
 		} else {
-			// TODO: Fail the process if the role is not found
 			return diag.Errorf("role not found: %s", roleName)
 		}
 	}
