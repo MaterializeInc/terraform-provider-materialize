@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 0.6.0 - 2024-01-23
+
+### Breaking Changes
+* Drop `SIZE` support for sources and sinks [#438](https://github.com/MaterializeInc/terraform-provider-materialize/pull/438)
+
+### Features
+* Make `cluster_name` parameter required for `materialized_view` and `index` resources [#435](https://github.com/MaterializeInc/terraform-provider-materialize/pull/435)
+* Include `create_sql` for `view` and `materialized_view` [#436](https://github.com/MaterializeInc/terraform-provider-materialize/pull/436)
+* New resources: [#442](https://github.com/MaterializeInc/terraform-provider-materialize/pull/442)
+  * `materialize_sso_config`: Manages [SSO configuration](https://materialize.com/docs/manage/access-control/sso/) details
+  * `materialize_sso_default_roles`: Manages SSO default roles
+  * `materialize_sso_domain`: Manages SSO domains
+  * `materialize_sso_group_mappings`: Manages SSO group mappings
+* New data sources:
+  * `materialize_scim_configs`: Fetches SCIM configuration details
+  * `materialize_scim_groups`: Fetches SCIM group details
+  * `materialize_sso_config`: Fetches SSO configuration details
+
+### Misc
+* Add Tests for `INCLUDE KEY AS` for kafka sources [#439](https://github.com/MaterializeInc/terraform-provider-materialize/pull/439)
+* Mark comments as public preview [#440](https://github.com/MaterializeInc/terraform-provider-materialize/pull/440)
+* Dependabot updates: [#441](https://github.com/MaterializeInc/terraform-provider-materialize/pull/441), [#443](https://github.com/MaterializeInc/terraform-provider-materialize/pull/443)
+
 ## 0.5.0 - 2024-01-10
 
 ### Features
