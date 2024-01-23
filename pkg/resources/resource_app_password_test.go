@@ -63,7 +63,7 @@ func TestAppPasswordResourceRead(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Add assertions to check the state after read
+		// Assertions to check the state after read
 		r.Equal("mock-client-id", d.Id())
 		r.Equal("test-app-password", d.Get("name"))
 	})

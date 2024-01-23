@@ -43,7 +43,7 @@ func TestSSOConfigResourceCreate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Add assertions to check the state after create
+		// Assertions to check the state after create
 		r.True(d.Get("enabled").(bool))
 		r.Equal("https://example.com/sso", d.Get("sso_endpoint"))
 		r.Equal("public_cert", d.Get("public_certificate"))

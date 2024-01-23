@@ -34,15 +34,14 @@ func TestSSORoleGroupMappingCreate(t *testing.T) {
 		d := schema.TestResourceDataRaw(t, SSORoleGroupMappingSchema, map[string]interface{}{
 			"sso_config_id": "expected-sso-config-id",
 			"group":         "expected-group",
-			"roles":         roles.List(), // Convert set to a slice of interface{}
+			"roles":         roles.List(),
 		})
 		d.SetId("mock-group-id")
 
 		diags := ssoGroupMappingCreate(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after creation
-		// You can add assertions based on the expected response or resource state
+		// Aassertions to check the state after creation
 		r.Equal("expected-group", d.Get("group"))
 
 		// Convert the roles back to a slice for assertion
@@ -76,7 +75,7 @@ func TestSSORoleGroupMappingRead(t *testing.T) {
 		diags := ssoGroupMappingRead(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after read
+		// Assertions to check the state after read
 		r.Equal("initial-group", d.Get("group"))
 		r.NotContains(d.Get("roles").([]interface{}), "Admin")
 	})
@@ -112,7 +111,7 @@ func TestSSORoleGroupMappingUpdate(t *testing.T) {
 		diags := ssoGroupMappingUpdate(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after the update
+		// Assertions to check the state after the update
 		r.Equal("initial-group", d.Get("group"))
 
 		// Assert that "roles" attribute has been updated correctly

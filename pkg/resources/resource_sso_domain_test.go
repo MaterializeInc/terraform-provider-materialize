@@ -37,7 +37,7 @@ func TestSSODomainResourceCreate(t *testing.T) {
 		diags := ssoDomainCreate(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after create
+		// Assertions to check the state after create
 		r.Equal(false, d.Get("validated"))
 		r.Equal("mock-sso-config-id", d.Get("sso_config_id"))
 	})
@@ -68,7 +68,7 @@ func TestSSODomainResourceRead(t *testing.T) {
 		diags := ssoDomainRead(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after read
+		// Assertions to check the state after read
 		r.Equal("expected-sso-config-id", d.Get("sso_config_id"))
 		r.Equal("expected-domain", d.Get("domain"))
 		r.Equal(true, d.Get("validated"))
@@ -99,7 +99,7 @@ func TestSSODomainResourceUpdate(t *testing.T) {
 		diags := ssoDomainUpdate(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after update
+		// Assertions to check the state after update
 		r.Equal(false, d.Get("validated"))
 		r.Equal("example.com", d.Get("domain"))
 	})
@@ -125,7 +125,7 @@ func TestSSODomainResourceDelete(t *testing.T) {
 		diags := ssoDomainDelete(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after delete
+		// Assertions to check the state after delete
 		r.Empty(d.Id())
 	})
 }

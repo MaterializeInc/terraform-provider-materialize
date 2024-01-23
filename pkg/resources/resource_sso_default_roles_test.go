@@ -41,7 +41,7 @@ func TestSSODefaultRolesCreateOrUpdate(t *testing.T) {
 		diags := ssoDefaultRolesCreateOrUpdate(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after creation or update
+		// Assertions to check the state after creation or update
 		r.Equal("config-id", d.Get("sso_config_id"))
 
 		// Assert that "roles" attribute has been updated correctly
@@ -82,7 +82,6 @@ func TestSSODefaultRolesRead(t *testing.T) {
 		diags := ssoDefaultRolesRead(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after reading
 		r.Equal("mock-config-id", d.Id())
 
 		// Assert that "roles" attribute has been updated correctly
@@ -123,7 +122,7 @@ func TestSSODefaultRolesDelete(t *testing.T) {
 		diags := ssoDefaultRolesDelete(context.TODO(), d, providerMeta)
 		r.Nil(diags)
 
-		// Add assertions to check the state after deletion
+		// Assertion to check the state after deletion
 		r.Equal("", d.Id())
 	})
 }

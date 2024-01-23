@@ -11,7 +11,6 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	// Import necessary packages
 )
 
 var dataSourceSCIMGroupsSchema = map[string]*schema.Schema{
@@ -107,7 +106,7 @@ var dataSourceSCIMGroupsSchema = map[string]*schema.Schema{
 	},
 }
 
-// Group represents the structure of a group in the response.
+// ScimGroup represents the structure of a group in the response.
 type ScimGroup struct {
 	ID          string     `json:"id"`
 	Name        string     `json:"name"`
@@ -118,7 +117,7 @@ type ScimGroup struct {
 	ManagedBy   string     `json:"managedBy"`
 }
 
-// Role represents the structure of a role within a group.
+// ScimRole represents the structure of a role within a group.
 type ScimRole struct {
 	ID          string `json:"id"`
 	Key         string `json:"key"`
@@ -127,7 +126,7 @@ type ScimRole struct {
 	IsDefault   bool   `json:"is_default"`
 }
 
-// User represents the structure of a user within a group.
+// ScimUser represents the structure of a user within a group.
 type ScimUser struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
