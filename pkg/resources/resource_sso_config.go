@@ -13,6 +13,7 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var SSOConfigSchema = map[string]*schema.Schema{
@@ -37,9 +38,10 @@ var SSOConfigSchema = map[string]*schema.Schema{
 		Description: "Indicates whether the SSO request needs to be digitally signed.",
 	},
 	"type": {
-		Type:        schema.TypeString,
-		Required:    true,
-		Description: "Defines the type of SSO protocol being used (e.g., SAML, OIDC).",
+		Type:         schema.TypeString,
+		Required:     true,
+		Description:  "Defines the type of SSO protocol being used (e.g., saml, oidc).",
+		ValidateFunc: validation.StringInSlice(ssoConfigTypes, true),
 	},
 	"oidc_client_id": {
 		Type:        schema.TypeString,

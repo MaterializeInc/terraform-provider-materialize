@@ -74,3 +74,8 @@ var compressionTypes = []string{
 	"lz4",
 	"ztsd",
 }
+
+var ssoConfigTypes = []string{
+	"saml",
+	"oidc",
+}

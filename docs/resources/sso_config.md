@@ -33,7 +33,7 @@ resource "materialize_sso_config" "example_sso_config" {
 - `public_certificate` (String) The public certificate of the SSO service. This is used to verify the SSO response. The certificate must be in PEM format. The certificate must be accessible from the browser. If the certificate is not accessible from the browser, you can use the public certificate of the Identity Provider (IdP) instead.
 - `sign_request` (Boolean) Indicates whether the SSO request needs to be digitally signed.
 - `sso_endpoint` (String) The URL endpoint for the SSO service. This is the URL that users will be redirected to for authentication. The URL must be accessible from the browser.
-- `type` (String) Defines the type of SSO protocol being used (e.g., SAML, OIDC).
+- `type` (String) Defines the type of SSO protocol being used (e.g., saml, oidc).
 
 ### Optional
 
