@@ -150,6 +150,14 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 			}
 		case strings.HasPrefix(req.URL.Path, "/frontegg/team/resources/sso/v1/configurations/"):
 			handleSSOConfigAndDomainRequests(w, req)
+		case strings.HasPrefix(req.URL.Path, "/frontegg/identity/resources/groups/v1"):
+			switch req.Method {
+			case http.MethodPost:
+				// TODO: Implement logic for creating a group
+				w.WriteHeader(http.StatusCreated)
+			case http.MethodGet:
+				handleListScimGroups(w, req, r)
+			}
 		default:
 			http.Error(w, "Not Found", http.StatusNotFound)
 		}
@@ -542,6 +550,98 @@ func handleDefaultRolesRequests(w http.ResponseWriter, req *http.Request, ssoCon
 
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func handleListScimGroups(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	// Mocked SCIM groups data
+	mockGroups := []struct {
+		ID          string `json:"id"`
+		Name        string `json:"name"`
+		Color       string `json:"color"`
+		Description string `json:"description"`
+		Metadata    string `json:"metadata"`
+		Roles       []struct {
+			ID          string `json:"id"`
+			Key         string `json:"key"`
+			Name        string `json:"name"`
+			Description string `json:"description"`
+			IsDefault   bool   `json:"is_default"`
+		} `json:"roles"`
+		Users []struct {
+			ID    string `json:"id"`
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		} `json:"users"`
+		ManagedBy string `json:"managedBy"`
+	}{
+		{
+			ID:          "group-1",
+			Name:        "Test Group 1",
+			Color:       "red",
+			Description: "Description for Test Group 1",
+			Metadata:    "{}",
+			Roles: []struct {
+				ID          string `json:"id"`
+				Key         string `json:"key"`
+				Name        string `json:"name"`
+				Description string `json:"description"`
+				IsDefault   bool   `json:"is_default"`
+			}{
+				{ID: "role-1", Key: "role-key-1", Name: "Role 1", Description: "Role 1 Description", IsDefault: true},
+			},
+			Users: []struct {
+				ID    string `json:"id"`
+				Name  string `json:"name"`
+				Email string `json:"email"`
+			}{
+				{ID: "user-1", Name: "User 1", Email: "user1@example.com"},
+			},
+			ManagedBy: "frontegg",
+		},
+	}
+
+	// Prepare the response
+	response := struct {
+		Groups []struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			Color       string `json:"color"`
+			Description string `json:"description"`
+			Metadata    string `json:"metadata"`
+			Roles       []struct {
+				ID          string `json:"id"`
+				Key         string `json:"key"`
+				Name        string `json:"name"`
+				Description string `json:"description"`
+				IsDefault   bool   `json:"is_default"`
+			} `json:"roles"`
+			Users []struct {
+				ID    string `json:"id"`
+				Name  string `json:"name"`
+				Email string `json:"email"`
+			} `json:"users"`
+			ManagedBy string `json:"managedBy"`
+		} `json:"groups"`
+		Metadata struct {
+			TotalItems int `json:"totalItems"`
+			TotalPages int `json:"totalPages"`
+		} `json:"_metadata"`
+	}{
+		Groups: mockGroups,
+		Metadata: struct {
+			TotalItems int `json:"totalItems"`
+			TotalPages int `json:"totalPages"`
+		}{
+			TotalItems: len(mockGroups),
+			TotalPages: 1,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to encode response: %s", err), http.StatusInternalServerError)
 	}
 }
 

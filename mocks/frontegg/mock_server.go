@@ -102,6 +102,7 @@ func main() {
 	http.HandleFunc("/identity/resources/roles/v2", handleRolesRequest)
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations", handleSSOConfigRequest)
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations/", handleSSOConfigAndDomainRequest)
+	http.HandleFunc("/frontegg/identity/resources/groups/v1", handleSCIMGroupsRequest)
 
 	fmt.Println("Mock Frontegg server is running at http://localhost:3000")
 	log.Fatal(http.ListenAndServe(":3000", nil))
@@ -442,6 +443,23 @@ func handleGroupMappingRequests(w http.ResponseWriter, r *http.Request, ssoConfi
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func handleSCIMGroupsRequest(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	switch r.Method {
+	case http.MethodGet:
+		listSCIMGroups(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func listSCIMGroups(w http.ResponseWriter, r *http.Request) {
+	// TODO: update this to return the groups that are created by the user
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"groups":[]}`))
 }
 
 func createSSOConfig(w http.ResponseWriter, r *http.Request) {
