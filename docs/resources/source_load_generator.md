@@ -14,9 +14,9 @@ A load generator source produces synthetic data for use in demos and performance
 
 ```terraform
 resource "materialize_source_load_generator" "example_source_load_generator" {
-  name        = "source_load_generator"
-  schema_name = "schema"
-  size        = "3xsmall"
+  name         = "source_load_generator"
+  schema_name  = "schema"
+  cluster_name = "quickstart"
 
   load_generator_type = "COUNTER"
 

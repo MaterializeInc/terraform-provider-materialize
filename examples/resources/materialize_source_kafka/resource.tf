@@ -1,7 +1,7 @@
 resource "materialize_source_kafka" "example_source_kafka" {
-  name        = "source_kafka"
-  schema_name = "schema"
-  size        = "3xsmall"
+  name         = "source_kafka"
+  schema_name  = "schema"
+  cluster_name = "quickstart"
   kafka_connection {
     name          = "kafka_connection"
     database_name = "database"

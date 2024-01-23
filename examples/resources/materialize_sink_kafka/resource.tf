@@ -1,7 +1,7 @@
 resource "materialize_sink_kafka" "example_sink_kafka" {
-  name        = "sink_kafka"
-  schema_name = "schema"
-  size        = "3xsmall"
+  name         = "sink_kafka"
+  schema_name  = "schema"
+  cluster_name = "quickstart"
   from {
     name = "table"
   }
