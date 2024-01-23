@@ -54,7 +54,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 ### Optional
 
-- `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
+- `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
@@ -74,7 +74,6 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
@@ -83,6 +82,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `size` (String) The size of the cluster maintaining this source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--kafka_connection"></a>

@@ -16,13 +16,11 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 			\(TOPIC 'events'\) FORMAT AVRO
 			USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_connection"
 			INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP ENVELOPE UPSERT
-			EXPOSE PROGRESS AS "database"."schema"."progress"
-			WITH \(SIZE = 'xsmall'\);`,
+			EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSourceKafkaBuilder(db, o)
-		b.Size("xsmall")
 		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
 		b.Topic("events")
 		b.Format(SourceFormatSpecStruct{Avro: &AvroFormatSpec{SchemaRegistryConnection: IdentifierSchemaStruct{Name: "csr_connection", DatabaseName: "database", SchemaName: "schema"}}})

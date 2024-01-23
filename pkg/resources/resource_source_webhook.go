@@ -24,7 +24,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"size": {
-		Description: "The size of the source.",
+		Description: "The size of the cluster maintaining this source.",
 		Type:        schema.TypeString,
 		Computed:    true,
 	},

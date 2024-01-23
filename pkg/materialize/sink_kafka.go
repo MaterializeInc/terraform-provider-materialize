@@ -190,9 +190,6 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	// With Options
 	withOptions := []string{}
-	if b.size != "" {
-		withOptions = append(withOptions, fmt.Sprintf(`SIZE = %s`, QuoteString(b.size)))
-	}
 	if b.snapshot {
 		withOptions = append(withOptions, "SNAPSHOT = true")
 	}

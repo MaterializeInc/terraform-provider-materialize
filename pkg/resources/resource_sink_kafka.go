@@ -119,10 +119,6 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		b.ClusterName(v.(string))
 	}
 
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
-	}
-
 	if v, ok := d.GetOk("from"); ok {
 		from := materialize.GetIdentifierSchemaStruct(v)
 		b.From(from)

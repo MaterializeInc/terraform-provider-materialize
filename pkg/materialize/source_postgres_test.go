@@ -64,12 +64,10 @@ func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 			FROM POSTGRES CONNECTION "database"."schema"."pg_connection"
 			\(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1, table.unsupported_type_2\)\)
 			FOR TABLES \(schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1\)
-			EXPOSE PROGRESS AS "database"."schema"."progress"
-			WITH \(SIZE = 'xsmall'\);`,
+			EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourcePostgresBuilder(db, sourcePostgres)
-		b.Size("xsmall")
 		b.PostgresConnection(IdentifierSchemaStruct{Name: "pg_connection", SchemaName: "schema", DatabaseName: "database"})
 		b.Publication("mz_source")
 		b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})

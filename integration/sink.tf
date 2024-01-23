@@ -3,7 +3,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   schema_name      = materialize_schema.schema.name
   database_name    = materialize_database.database.name
   comment          = "sink comment"
-  size             = "3xsmall"
+  cluster_name     = materialize_cluster.cluster_sink.name
   topic            = "topic1"
   key              = ["counter"]
   key_not_enforced = true

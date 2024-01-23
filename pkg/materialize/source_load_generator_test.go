@@ -16,12 +16,10 @@ func TestSourceLoadgenCounterCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR COUNTER
 			\(TICK INTERVAL '1s', MAX CARDINALITY 8\)
-			EXPOSE PROGRESS AS "database"."schema"."progress"
-			WITH \(SIZE = 'xsmall'\);`,
+			EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
-		b.Size("xsmall")
 		b.LoadGeneratorType("COUNTER")
 		b.CounterOptions(CounterOptions{
 			TickInterval:   "1s",
@@ -41,12 +39,10 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR AUCTION
 			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
-			FOR ALL TABLES
-			WITH \(SIZE = 'xsmall'\);`,
+			FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
-		b.Size("xsmall")
 		b.LoadGeneratorType("AUCTION")
 		b.AuctionOptions(AuctionOptions{
 			TickInterval: "1s",
@@ -65,12 +61,10 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR MARKETING
 			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
-			FOR ALL TABLES
-			WITH \(SIZE = 'xsmall'\);`,
+			FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
-		b.Size("xsmall")
 		b.LoadGeneratorType("MARKETING")
 		b.MarketingOptions(MarketingOptions{
 			TickInterval: "1s",
@@ -89,12 +83,10 @@ func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR TPCH
 			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
-			FOR ALL TABLES
-			WITH \(SIZE = 'xsmall'\);`,
+			FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
-		b.Size("xsmall")
 		b.LoadGeneratorType("TPCH")
 		b.TPCHOptions(TPCHOptions{
 			TickInterval: "1s",

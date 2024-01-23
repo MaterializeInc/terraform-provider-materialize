@@ -36,7 +36,7 @@ func TestAccSourceWebhook_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "include_headers.0.not.1", "d"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "comment", "Comment"),
-					resource.TestCheckResourceAttr("materialize_source_webhook.test", "size", ""),
+					resource.TestCheckResourceAttr("materialize_source_webhook.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.0.field.0.body", "true"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.0.alias", "bytes"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.1.field.0.headers", "true"),

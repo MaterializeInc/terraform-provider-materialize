@@ -187,11 +187,6 @@ func (b *SourceLoadgenBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
 	}
 
-	// Size
-	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` WITH (SIZE = %s)`, QuoteString(b.size)))
-	}
-
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }

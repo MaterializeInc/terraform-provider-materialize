@@ -101,10 +101,6 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		b.ClusterName(v.(string))
 	}
 
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
-	}
-
 	if v, ok := d.GetOk("postgres_connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.PostgresConnection(conn)
@@ -188,13 +184,6 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSource(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("size") {
-		_, newSize := d.GetChange("size")
-		if err := b.Resize(newSize.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

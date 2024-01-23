@@ -43,7 +43,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 ### Optional
 
 - `auction_options` (Block List, Max: 1) Auction Options. (see [below for nested schema](#nestedblock--auction_options))
-- `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
+- `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `counter_options` (Block List, Max: 1) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
@@ -52,13 +52,13 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `tpch_options` (Block List, Max: 1) TPCH Options. (see [below for nested schema](#nestedblock--tpch_options))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `size` (String) The size of the cluster maintaining this source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--auction_options"></a>

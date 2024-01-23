@@ -17,7 +17,6 @@ var inSinkKafka = map[string]interface{}{
 	"schema_name":   "schema",
 	"database_name": "database",
 	"cluster_name":  "cluster",
-	"size":          "small",
 	"from": []interface{}{
 		map[string]interface{}{
 			"name":          "item",
@@ -106,7 +105,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
 			DOC ON TYPE "database"."public"."item" = 'top-level comment',
 			KEY DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in key schema',
 			VALUE DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in value schema'\)
-			ENVELOPE UPSERT WITH \(SIZE = 'small'\);`,
+			ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

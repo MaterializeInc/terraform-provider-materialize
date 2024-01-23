@@ -54,7 +54,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 ### Optional
 
-- `cluster_name` (String) The cluster to maintain this source. If not specified, the `size` option must be specified.
+- `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
@@ -62,7 +62,6 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema` (List of String) Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES
 - `schema_name` (String) The identifier for the source schema. Defaults to `public`.
-- `size` (String) The size of the source. If not specified, the `cluster_name` option must be specified.
 - `table` (Block List) Creates subsources for specific tables. If neither table or schema is specified, will default to ALL TABLES (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
 
@@ -70,6 +69,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
+- `size` (String) The size of the cluster maintaining this source.
 - `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--postgres_connection"></a>

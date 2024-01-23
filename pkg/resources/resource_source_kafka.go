@@ -176,10 +176,6 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		b.ClusterName(v.(string))
 	}
 
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
-	}
-
 	if v, ok := d.GetOk("kafka_connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.KafkaConnection(conn)

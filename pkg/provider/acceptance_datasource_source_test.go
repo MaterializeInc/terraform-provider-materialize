@@ -112,7 +112,7 @@ func testAccDatasourceSource(nameSpace string) string {
 			materialize_source_load_generator.e,
 		]
 	}
-	
+
 	data "materialize_source" "test_database_schema" {
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name

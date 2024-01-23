@@ -220,7 +220,7 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 
 	resource "materialize_cluster" "test" {
 		name               = "%[1]s_cluster"
-		size               = "3xsmall"
+		size               = "%[4]s"
 	}
 
 	resource "materialize_source_load_generator" "test" {
@@ -238,7 +238,7 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 	resource "materialize_source_load_generator" "test_role" {
 		name = "%[3]s"
 		schema_name = "public"
-		size = "%[4]s"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "COUNTER"
 		counter_options {
 			tick_interval = "1000ms"
@@ -259,10 +259,15 @@ func testAccSourceLoadGeneratorAuctionResource(sourceName string) string {
 		name = "auction"
 	}
 
+	resource "materialize_cluster" "test" {
+		name               = "auction_cluster"
+		size               = "3xsmall"
+	}
+
 	resource "materialize_source_load_generator" "test" {
 		name = "%[1]s"
 		schema_name = materialize_schema.test.name
-		size = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "AUCTION"
 		auction_options {
 			tick_interval = "1000ms"
@@ -278,10 +283,15 @@ func testAccSourceLoadGeneratorMarketingResource(sourceName string) string {
 		name = "marketing"
 	}
 
+	resource "materialize_cluster" "test" {
+		name               = "marketing_cluster"
+		size               = "3xsmall"
+	}
+
 	resource "materialize_source_load_generator" "test" {
 		name = "%[1]s"
 		schema_name = materialize_schema.test.name
-		size = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "MARKETING"
 		marketing_options {
 			tick_interval = "1000ms"
@@ -297,10 +307,15 @@ func testAccSourceLoadGeneratorTPCHResource(sourceName string) string {
 		name = "tpch"
 	}
 
+	resource "materialize_cluster" "test" {
+		name               = "tpch_cluster"
+		size               = "3xsmall"
+	}
+
 	resource "materialize_source_load_generator" "test" {
 		name = "%[1]s"
 		schema_name = materialize_schema.test.name
-		size = "3xsmall"
+		cluster_name = materialize_cluster.test.name
 		load_generator_type = "TPCH"
 		tpch_options {
 			tick_interval = "1000ms"

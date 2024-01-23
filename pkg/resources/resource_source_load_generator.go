@@ -148,10 +148,6 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 		b.ClusterName(v.(string))
 	}
 
-	if v, ok := d.GetOk("size"); ok {
-		b.Size(v.(string))
-	}
-
 	if v, ok := d.GetOk("expose_progress"); ok {
 		e := materialize.GetIdentifierSchemaStruct(v)
 		b.ExposeProgress(e)

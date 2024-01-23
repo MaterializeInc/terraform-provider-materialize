@@ -58,7 +58,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 
 ### Optional
 
-- `cluster_name` (String) The cluster to maintain this sink. If not specified, the `size` option must be specified.
+- `cluster_name` (String) The cluster to maintain this sink.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `compression_type` (String) The type of compression to apply to messages before they are sent to Kafka.
 - `database_name` (String) The identifier for the sink database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
@@ -69,13 +69,13 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the sink schema. Defaults to `public`.
-- `size` (String) The size of the sink. If not specified, the `cluster_name` option must be specified.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the sink.
+- `size` (String) The size of the cluster maintaining this sink.
 
 <a id="nestedblock--from"></a>
 ### Nested Schema for `from`

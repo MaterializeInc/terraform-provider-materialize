@@ -17,7 +17,6 @@ var inSourceLoadgen = map[string]interface{}{
 	"schema_name":         "schema",
 	"database_name":       "database",
 	"cluster_name":        "cluster",
-	"size":                "small",
 	"expose_progress":     []interface{}{map[string]interface{}{"name": "progress"}},
 	"load_generator_type": "TPCH",
 	"tpch_options": []interface{}{map[string]interface{}{
@@ -39,8 +38,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 			FROM LOAD GENERATOR TPCH
 			\(TICK INTERVAL '1s', SCALE FACTOR 0.50\)
 			FOR ALL TABLES
-			EXPOSE PROGRESS AS "materialize"."public"."progress"
-			WITH \(SIZE = 'small'\);`,
+			EXPOSE PROGRESS AS "materialize"."public"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

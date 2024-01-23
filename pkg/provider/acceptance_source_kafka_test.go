@@ -43,7 +43,6 @@ func TestAccSourceKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "key_format.0.text", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "value_format.0.text", "true"),
@@ -201,7 +200,7 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 			name = materialize_connection_kafka.test.name
 		}
 
-		size  = "3xsmall"
+		cluster_name = "quickstart"
 		topic = "terraform"
 		key_format {
 			text = true
@@ -224,7 +223,7 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 
 	resource "materialize_source_kafka" "test_role" {
 		name = "%[4]s"
-		size  = "3xsmall"
+		cluster_name = "quickstart"
 		topic = "terraform"
 
 		kafka_connection {
@@ -258,7 +257,7 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	}
 
 	resource "materialize_connection_confluent_schema_registry" "test" {
-		name = "%[1]s_conn_schema"	  
+		name = "%[1]s_conn_schema"
 		url  = "http://redpanda:8081"
 	}
 
@@ -269,14 +268,14 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
-		size                = "3xsmall"
+		cluster_name        = materialize_cluster.test.name
 		load_generator_type = "COUNTER"
 	}
 
 	resource "materialize_sink_kafka" "test" {
 		name             = "%[1]s_sink"
-		size             = "3xsmall"
 		topic            = "terraform"
+		cluster_name	 = materialize_cluster.test.name
 		key              = ["counter"]
 		key_not_enforced = true
 		from {

@@ -3,7 +3,7 @@ resource "materialize_source_load_generator" "load_generator" {
   schema_name         = materialize_schema.schema.name
   database_name       = materialize_database.database.name
   comment             = "source load generator comment"
-  size                = "3xsmall"
+  cluster_name        = materialize_cluster.cluster_source.name
   load_generator_type = "COUNTER"
 
   counter_options {
@@ -65,7 +65,7 @@ resource "materialize_source_load_generator" "load_generator_tpch" {
 resource "materialize_source_postgres" "example_source_postgres" {
   name         = "source_postgres"
   comment      = "source postgres comment"
-  size         = "3xsmall"
+  cluster_name = materialize_cluster.cluster_source.name
   text_columns = ["table1.id"]
 
   postgres_connection {
@@ -88,10 +88,10 @@ resource "materialize_source_postgres" "example_source_postgres" {
 }
 
 resource "materialize_source_postgres" "example_source_postgres_schema" {
-  name        = "source_postgres_schema"
-  size        = "3xsmall"
-  publication = "mz_source"
-  schema      = ["PUBLIC"]
+  name         = "source_postgres_schema"
+  cluster_name = materialize_cluster.cluster_source.name
+  publication  = "mz_source"
+  schema       = ["PUBLIC"]
 
   postgres_connection {
     name          = materialize_connection_postgres.postgres_connection.name
@@ -102,10 +102,10 @@ resource "materialize_source_postgres" "example_source_postgres_schema" {
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
-  name    = "source_kafka_text"
-  comment = "source kafka comment"
-  size    = "3xsmall"
-  topic   = "topic1"
+  name         = "source_kafka_text"
+  comment      = "source kafka comment"
+  cluster_name = materialize_cluster.cluster_source.name
+  topic        = "topic1"
 
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
@@ -124,9 +124,9 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
-  name  = "source_kafka_bytes"
-  size  = "2xsmall"
-  topic = "topic1"
+  name         = "source_kafka_bytes"
+  cluster_name = materialize_cluster.cluster_source.name
+  topic        = "topic1"
 
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
@@ -139,9 +139,9 @@ resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
-  name  = "source_kafka_avro"
-  size  = "3xsmall"
-  topic = "topic1"
+  name         = "source_kafka_avro"
+  cluster_name = materialize_cluster.cluster_source.name
+  topic        = "topic1"
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
