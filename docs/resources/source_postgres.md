@@ -14,10 +14,10 @@ A Postgres source describes a PostgreSQL instance you want Materialize to read d
 
 ```terraform
 resource "materialize_source_postgres" "example_source_postgres" {
-  name        = "source_postgres"
-  schema_name = "schema"
-  size        = "3xsmall"
-  publication = "mz_source"
+  name         = "source_postgres"
+  schema_name  = "schema"
+  cluster_name = "quickstart"
+  publication  = "mz_source"
 
   postgres_connection {
     name = "pg_connection"
