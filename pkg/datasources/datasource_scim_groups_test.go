@@ -40,7 +40,7 @@ func TestDataSourceSCIMGroupsRead_Success(t *testing.T) {
 		// Validate the SCIM groups
 		scimGroups := d.Get("groups").([]interface{})
 		r.NotEmpty(scimGroups)
-		r.Len(scimGroups, 1) // Assuming you have 1 mock group in your test
+		r.Len(scimGroups, 1)
 
 		groupMap := scimGroups[0].(map[string]interface{})
 
@@ -54,7 +54,7 @@ func TestDataSourceSCIMGroupsRead_Success(t *testing.T) {
 		// Validate roles within the first group
 		roles := groupMap["roles"].([]interface{})
 		r.NotEmpty(roles)
-		r.Len(roles, 1) // Assuming you have 1 mock role in your test
+		r.Len(roles, 1)
 
 		roleMap := roles[0].(map[string]interface{})
 		r.Equal("role-1", roleMap["id"].(string))

@@ -158,6 +158,14 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 			case http.MethodGet:
 				handleListScimGroups(w, req, r)
 			}
+		case strings.HasPrefix(req.URL.Path, "/frontegg/directory/resources/v1/configurations/scim2"):
+			switch req.Method {
+			case http.MethodGet:
+				handleSCIM2Configurations(w, r)
+			default:
+				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			}
+
 		default:
 			http.Error(w, "Not Found", http.StatusNotFound)
 		}
@@ -640,6 +648,41 @@ func handleListScimGroups(w http.ResponseWriter, req *http.Request, r *require.A
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to encode response: %s", err), http.StatusInternalServerError)
+	}
+}
+
+func handleSCIM2Configurations(w http.ResponseWriter, r *require.Assertions) {
+	// Mocked SCIM 2.0 configurations data
+	mockSCIM2Configurations := []struct {
+		ID                   string `json:"id"`
+		Source               string `json:"source"`
+		TenantID             string `json:"tenantId"`
+		ConnectionName       string `json:"connectionName"`
+		SyncToUserManagement bool   `json:"syncToUserManagement"`
+		CreatedAt            string `json:"createdAt"`
+	}{
+		{
+			ID:                   "65a55dc187ee9cddee3aa8aa",
+			Source:               "okta",
+			TenantID:             "15b545d4-9d14-4725-8476-295073a3fb04",
+			ConnectionName:       "SCIM",
+			SyncToUserManagement: true,
+			CreatedAt:            "2024-01-15T16:30:57.000Z",
+		},
+		{
+			ID:                   "65afa26a0d806f407e78dfa0",
+			Source:               "okta",
+			TenantID:             "15b545d4-9d14-4725-8476-295073a3fb04",
+			ConnectionName:       "test2",
+			SyncToUserManagement: true,
+			CreatedAt:            "2024-01-23T11:26:34.000Z",
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(mockSCIM2Configurations)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to encode response: %s", err), http.StatusInternalServerError)
 	}

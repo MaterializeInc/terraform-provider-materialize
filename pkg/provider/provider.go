@@ -121,6 +121,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_sink":              datasources.Sink(),
 			"materialize_source":            datasources.Source(),
 			"materialize_scim_groups":       datasources.SCIMGroups(),
+			"materialize_scim_configs":      datasources.SCIMConfigs(),
 			"materialize_sso_config":        datasources.SSOConfig(),
 			"materialize_table":             datasources.Table(),
 			"materialize_type":              datasources.Type(),
