@@ -121,6 +121,8 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   expose_progress {
     name = "expose_kafka"
   }
+
+  depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
@@ -136,12 +138,15 @@ resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
   format {
     bytes = true
   }
+
+  depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   name         = "source_kafka_avro"
   cluster_name = materialize_cluster.cluster_source.name
   topic        = "topic1"
+
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
@@ -159,6 +164,7 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   envelope {
     none = true
   }
+
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
