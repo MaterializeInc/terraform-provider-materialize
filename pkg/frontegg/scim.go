@@ -7,19 +7,20 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 )
 
 // SCIM 2.0 Configurations API response
 type SCIM2Configuration struct {
-	ID                   string `json:"id"`
-	Source               string `json:"source"`
-	TenantID             string `json:"tenantId"`
-	ConnectionName       string `json:"connectionName"`
-	SyncToUserManagement bool   `json:"syncToUserManagement"`
-	CreatedAt            string `json:"createdAt"`
-	Token                string `json:"token"`
+	ID                   string    `json:"id"`
+	Source               string    `json:"source"`
+	TenantID             string    `json:"tenantId"`
+	ConnectionName       string    `json:"connectionName"`
+	SyncToUserManagement bool      `json:"syncToUserManagement"`
+	CreatedAt            time.Time `json:"createdAt"`
+	Token                string    `json:"token"`
 }
 
 type SCIM2ConfigurationsResponse []SCIM2Configuration
@@ -34,7 +35,7 @@ func FlattenSCIM2Configurations(configurations SCIM2ConfigurationsResponse) []in
 			"tenant_id":               config.TenantID,
 			"connection_name":         config.ConnectionName,
 			"sync_to_user_management": config.SyncToUserManagement,
-			"created_at":              config.CreatedAt,
+			"created_at":              config.CreatedAt.Format(time.RFC3339),
 		}
 		flattenedConfigurations = append(flattenedConfigurations, flattenedConfig)
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -67,45 +68,6 @@ func SCIM2Configuration() *schema.Resource {
 
 		Description: "The SCIM 2.0 configurations resource allows you to create, read, and delete the SCIM 2.0 configurations.",
 	}
-}
-
-func resourceSCIM2ConfigurationsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerMeta, err := utils.GetProviderMeta(meta)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	client := providerMeta.Frontegg
-
-	configurations, err := frontegg.FetchSCIM2Configurations(ctx, client)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Scan the configurations to find the one with the matching ID
-	for _, config := range configurations {
-		if config.ID == d.Id() {
-			if err := d.Set("source", config.Source); err != nil {
-				return diag.FromErr(err)
-			}
-			if err := d.Set("connection_name", config.ConnectionName); err != nil {
-				return diag.FromErr(err)
-			}
-			if err := d.Set("tenant_id", config.TenantID); err != nil {
-				return diag.FromErr(err)
-			}
-			if err := d.Set("sync_to_user_management", config.SyncToUserManagement); err != nil {
-				return diag.FromErr(err)
-			}
-			if err := d.Set("created_at", config.CreatedAt); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-	}
-
-	// Set the ID of the resource
-	d.SetId(d.Id())
-
-	return nil
 }
 
 func resourceSCIM2ConfigurationsCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -195,6 +157,56 @@ func resourceSCIM2ConfigurationsDelete(ctx context.Context, d *schema.ResourceDa
 	if resp.StatusCode != http.StatusNoContent {
 		return diag.Errorf("error deleting SCIM 2.0 configuration: status %d", resp.StatusCode)
 	}
+
+	d.SetId("")
+	return nil
+}
+
+func resourceSCIM2ConfigurationsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	client := providerMeta.Frontegg
+
+	configurations, err := frontegg.FetchSCIM2Configurations(ctx, client)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Find the configuration with the matching ID
+	var config frontegg.SCIM2Configuration
+	for _, configuration := range configurations {
+		if configuration.ID == d.Id() {
+			config = configuration
+			break
+		}
+	}
+
+	if config.ID == "" {
+		d.SetId("")
+		log.Printf("[WARN] SCIM 2.0 configuration with ID %s not found", d.Id())
+		return nil
+	}
+
+	if err := d.Set("source", config.Source); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("connection_name", config.ConnectionName); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("tenant_id", config.TenantID); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("sync_to_user_management", config.SyncToUserManagement); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("created_at", config.CreatedAt.String()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Log the response
+	log.Printf("[DEBUG] SCIM 2.0 configuration: %+v", config)
 
 	return nil
 }

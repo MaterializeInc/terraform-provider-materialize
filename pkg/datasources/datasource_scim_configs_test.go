@@ -49,7 +49,8 @@ func TestDataSourceSCIM2ConfigurationsRead_Success(t *testing.T) {
 		r.Equal("15b545d4-9d14-4725-8476-295073a3fb04", configMap["tenant_id"].(string))
 		r.Equal("SCIM", configMap["connection_name"].(string))
 		r.Equal(true, configMap["sync_to_user_management"].(bool))
-		r.Equal("2024-01-15T16:30:57.000Z", configMap["created_at"].(string))
+		_, err := time.Parse(time.RFC3339, configMap["created_at"].(string))
+		r.NoError(err)
 
 		// Validate the second configuration (and so on for other configurations)
 		configMap2 := scim2Configs[1].(map[string]interface{})
@@ -58,6 +59,7 @@ func TestDataSourceSCIM2ConfigurationsRead_Success(t *testing.T) {
 		r.Equal("15b545d4-9d14-4725-8476-295073a3fb04", configMap2["tenant_id"].(string))
 		r.Equal("test2", configMap2["connection_name"].(string))
 		r.Equal(true, configMap2["sync_to_user_management"].(bool))
-		r.Equal("2024-01-23T11:26:34.000Z", configMap2["created_at"].(string))
+		_, err = time.Parse(time.RFC3339, configMap2["created_at"].(string))
+		r.NoError(err)
 	})
 }

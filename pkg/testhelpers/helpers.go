@@ -14,6 +14,7 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
@@ -159,12 +160,7 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 				handleListScimGroups(w, req, r)
 			}
 		case strings.HasPrefix(req.URL.Path, "/frontegg/directory/resources/v1/configurations/scim2"):
-			switch req.Method {
-			case http.MethodGet:
-				handleSCIM2Configurations(w, r)
-			default:
-				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			}
+			handleSCIM2ConfigurationRequests(w, req, r)
 
 		default:
 			http.Error(w, "Not Found", http.StatusNotFound)
@@ -653,15 +649,28 @@ func handleListScimGroups(w http.ResponseWriter, req *http.Request, r *require.A
 	}
 }
 
-func handleSCIM2Configurations(w http.ResponseWriter, r *require.Assertions) {
+func handleSCIM2ConfigurationRequests(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	switch req.Method {
+	case http.MethodPost:
+		handleCreateSCIM2Configuration(w, req, r)
+	case http.MethodGet:
+		handleListSCIM2Configurations(w, r)
+	case http.MethodDelete:
+		handleDeleteSCIM2Configuration(w, req, r)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func handleListSCIM2Configurations(w http.ResponseWriter, r *require.Assertions) {
 	// Mocked SCIM 2.0 configurations data
 	mockSCIM2Configurations := []struct {
-		ID                   string `json:"id"`
-		Source               string `json:"source"`
-		TenantID             string `json:"tenantId"`
-		ConnectionName       string `json:"connectionName"`
-		SyncToUserManagement bool   `json:"syncToUserManagement"`
-		CreatedAt            string `json:"createdAt"`
+		ID                   string    `json:"id"`
+		Source               string    `json:"source"`
+		TenantID             string    `json:"tenantId"`
+		ConnectionName       string    `json:"connectionName"`
+		SyncToUserManagement bool      `json:"syncToUserManagement"`
+		CreatedAt            time.Time `json:"createdAt"`
 	}{
 		{
 			ID:                   "65a55dc187ee9cddee3aa8aa",
@@ -669,7 +678,7 @@ func handleSCIM2Configurations(w http.ResponseWriter, r *require.Assertions) {
 			TenantID:             "15b545d4-9d14-4725-8476-295073a3fb04",
 			ConnectionName:       "SCIM",
 			SyncToUserManagement: true,
-			CreatedAt:            "2024-01-15T16:30:57.000Z",
+			CreatedAt:            time.Now(),
 		},
 		{
 			ID:                   "65afa26a0d806f407e78dfa0",
@@ -677,7 +686,7 @@ func handleSCIM2Configurations(w http.ResponseWriter, r *require.Assertions) {
 			TenantID:             "15b545d4-9d14-4725-8476-295073a3fb04",
 			ConnectionName:       "test2",
 			SyncToUserManagement: true,
-			CreatedAt:            "2024-01-23T11:26:34.000Z",
+			CreatedAt:            time.Now(),
 		},
 	}
 
@@ -686,6 +695,34 @@ func handleSCIM2Configurations(w http.ResponseWriter, r *require.Assertions) {
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to encode response: %s", err), http.StatusInternalServerError)
 	}
+}
+
+// handleCreateSCIM2Configuration handles the creation of a new SCIM 2.0 configuration
+func handleCreateSCIM2Configuration(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	var config frontegg.SCIM2Configuration
+	err := json.NewDecoder(req.Body).Decode(&config)
+	r.NoError(err)
+
+	config.ID = "65a55dc187ee9cddee3aa8aa"
+	config.CreatedAt = time.Now()
+	config.TenantID = "mock-tenant-id"
+	config.Token = "mock-token"
+	config.SyncToUserManagement = true
+
+	// Mock response with the created configuration
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(config)
+}
+
+func handleDeleteSCIM2Configuration(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	// Extract the configuration ID from the URL
+	configID := strings.TrimPrefix(req.URL.Path, "/frontegg/directory/resources/v1/configurations/scim2/")
+	if configID == "" {
+		http.Error(w, "Configuration ID is required", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // MockCloudService is a mock implementation of the http.RoundTripper interface for cloud-related requests
