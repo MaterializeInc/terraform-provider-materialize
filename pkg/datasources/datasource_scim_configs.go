@@ -2,12 +2,8 @@ package datasources
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"strings"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -54,21 +50,12 @@ var dataSourceSCIM2ConfigurationsSchema = map[string]*schema.Schema{
 	},
 }
 
-type SCIM2Configuration struct {
-	ID                   string `json:"id"`
-	Source               string `json:"source"`
-	TenantID             string `json:"tenantId"`
-	ConnectionName       string `json:"connectionName"`
-	SyncToUserManagement bool   `json:"syncToUserManagement"`
-	CreatedAt            string `json:"createdAt"`
-}
-
-type SCIM2ConfigurationsResponse []SCIM2Configuration
-
 func SCIMConfigs() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceSCIM2ConfigurationsRead,
 		Schema:      dataSourceSCIM2ConfigurationsSchema,
+
+		Description: "The SCIM 2.0 configurations data source allows you to fetch the SCIM 2.0 configurations.",
 	}
 }
 
@@ -79,57 +66,15 @@ func dataSourceSCIM2ConfigurationsRead(ctx context.Context, d *schema.ResourceDa
 	}
 	client := providerMeta.Frontegg
 
-	endpoint := fmt.Sprintf("%s/frontegg/directory/resources/v1/configurations/scim2", client.Endpoint)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	configurations, err := frontegg.FetchSCIM2Configurations(ctx, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var sb strings.Builder
-		_, err = io.Copy(&sb, resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error reading SCIM 2.0 configurations: status %d, response: %s", resp.StatusCode, sb.String())
-	}
-
-	var configurations SCIM2ConfigurationsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&configurations); err != nil {
+	if err := d.Set("configurations", frontegg.FlattenSCIM2Configurations(configurations)); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("configurations", flattenSCIM2Configurations(configurations)); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Set the ID of the data source
 	d.SetId("scim2_configs")
-
 	return nil
-}
-
-// Helper function to flatten the SCIM 2.0 configurations data
-func flattenSCIM2Configurations(configurations SCIM2ConfigurationsResponse) []interface{} {
-	var flattenedConfigurations []interface{}
-	for _, config := range configurations {
-		flattenedConfig := map[string]interface{}{
-			"id":                      config.ID,
-			"source":                  config.Source,
-			"tenant_id":               config.TenantID,
-			"connection_name":         config.ConnectionName,
-			"sync_to_user_management": config.SyncToUserManagement,
-			"created_at":              config.CreatedAt,
-		}
-		flattenedConfigurations = append(flattenedConfigurations, flattenedConfig)
-	}
-	return flattenedConfigurations
 }
