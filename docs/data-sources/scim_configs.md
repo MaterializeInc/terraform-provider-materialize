@@ -3,12 +3,12 @@
 page_title: "materialize_scim_configs Data Source - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The SCIM 2.0 configurations data source allows you to fetch the SCIM 2.0 configurations.
 ---
 
 # materialize_scim_configs (Data Source)
 
-
+The SCIM 2.0 configurations data source allows you to fetch the SCIM 2.0 configurations.
 
 
 
