@@ -13,7 +13,7 @@ import (
 )
 
 var schemaSchema = map[string]*schema.Schema{
-	"name":               ObjectNameSchema("schema", true, true),
+	"name":               ObjectNameSchema("schema", true, false),
 	"database_name":      DatabaseNameSchema("schema", false),
 	"qualified_sql_name": QualifiedNameSchema("schema"),
 	"comment":            CommentSchema(false),
@@ -149,6 +149,15 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		b := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: oldName.(string), DatabaseName: databaseName}
+		b := materialize.NewSchemaBuilder(metaDb, o)
+		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
