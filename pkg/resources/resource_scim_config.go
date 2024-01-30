@@ -64,7 +64,12 @@ func SCIM2Configuration() *schema.Resource {
 		CreateContext: resourceSCIM2ConfigurationsCreate,
 		ReadContext:   resourceSCIM2ConfigurationsRead,
 		DeleteContext: resourceSCIM2ConfigurationsDelete,
-		Schema:        resourceSCIM2ConfigurationsSchema,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
+		Schema: resourceSCIM2ConfigurationsSchema,
 
 		Description: "The SCIM 2.0 configurations resource allows you to create, read, and delete the SCIM 2.0 configurations.",
 	}
