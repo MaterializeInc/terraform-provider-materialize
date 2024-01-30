@@ -290,7 +290,7 @@ func createAppPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a new app passwords
+	// Generate a new app password
 	newAppPassword := AppPassword{
 		ClientID:    generateClientID(),
 		Secret:      generateSecret(),
@@ -462,6 +462,7 @@ func handleGroupMappingRequests(w http.ResponseWriter, r *http.Request, ssoConfi
 }
 
 func handleSCIMGroupsRequest(w http.ResponseWriter, r *http.Request) {
+	// TODO: add support for creating groups and updating groups
 	switch r.Method {
 	case http.MethodGet:
 		listSCIMGroups(w, r)
