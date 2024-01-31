@@ -25,15 +25,15 @@ resource "materialize_scim_config" "example_scim_config" {
 
 ### Required
 
-- `connection_name` (String) The name of the SCIM 2.0 connection.
-- `source` (String) The source of the SCIM 2.0 configuration.
+- `connection_name` (String) The name of the SCIM 2.0 connection. It must be unique.
+- `source` (String) The source of the SCIM 2.0 configuration. Supported values are `okta`, `azure-ad`, and `other`.
 
 ### Read-Only
 
 - `created_at` (String) The creation timestamp of the SCIM 2.0 configuration.
 - `id` (String) The ID of this resource.
 - `provisioning_url` (String, Sensitive) The provisioning URL of the SCIM 2.0 configuration.
-- `sync_to_user_management` (Boolean) Indicates if the configuration is synced to user management.
+- `sync_to_user_management` (Boolean) Indicates whether automatic synchronization of data with the IdP is enabled, ensuring that changes in details or status in the IdP are updated accordingly.
 - `tenant_id` (String)
 - `token` (String, Sensitive) The token of the SCIM 2.0 configuration.
 

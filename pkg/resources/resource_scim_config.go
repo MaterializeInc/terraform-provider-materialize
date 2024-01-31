@@ -21,14 +21,14 @@ var resourceSCIM2ConfigurationsSchema = map[string]*schema.Schema{
 	"source": {
 		Type:         schema.TypeString,
 		Required:     true,
-		Description:  "The source of the SCIM 2.0 configuration.",
+		Description:  "The source of the SCIM 2.0 configuration. Supported values are `okta`, `azure-ad`, and `other`.",
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(Scim2ConfigSources, true),
 	},
 	"connection_name": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: "The name of the SCIM 2.0 connection.",
+		Description: "The name of the SCIM 2.0 connection. It must be unique.",
 		ForceNew:    true,
 	},
 	"tenant_id": {
@@ -38,7 +38,7 @@ var resourceSCIM2ConfigurationsSchema = map[string]*schema.Schema{
 	"sync_to_user_management": {
 		Type:        schema.TypeBool,
 		Computed:    true,
-		Description: "Indicates if the configuration is synced to user management.",
+		Description: "Indicates whether automatic synchronization of data with the IdP is enabled, ensuring that changes in details or status in the IdP are updated accordingly.",
 	},
 	"token": {
 		Type:        schema.TypeString,
