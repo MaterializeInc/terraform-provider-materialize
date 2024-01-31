@@ -79,3 +79,9 @@ var ssoConfigTypes = []string{
 	"saml",
 	"oidc",
 }
+
+var Scim2ConfigSources = []string{
+	"okta",
+	"azure-ad",
+	"other",
+}

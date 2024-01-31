@@ -87,11 +87,25 @@ type SSOConfig struct {
 	RoleIds                   []string       `json:"roleIds"`
 }
 
+// SCIM 2.0 Configurations API response
+type SCIM2Configuration struct {
+	ID                   string    `json:"id"`
+	Source               string    `json:"source"`
+	TenantID             string    `json:"tenantId"`
+	ConnectionName       string    `json:"connectionName"`
+	SyncToUserManagement bool      `json:"syncToUserManagement"`
+	CreatedAt            time.Time `json:"createdAt"`
+	Token                string    `json:"token"`
+}
+
+type SCIM2ConfigurationsResponse []SCIM2Configuration
+
 var (
-	appPasswords = make(map[string]AppPassword)
-	users        = make(map[string]User)
-	ssoConfigs   = make(map[string]SSOConfig)
-	mutex        = &sync.Mutex{}
+	appPasswords       = make(map[string]AppPassword)
+	users              = make(map[string]User)
+	ssoConfigs         = make(map[string]SSOConfig)
+	scimConfigurations = make(map[string]SCIM2Configuration)
+	mutex              = &sync.Mutex{}
 )
 
 func main() {
@@ -104,6 +118,7 @@ func main() {
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations/", handleSSOConfigAndDomainRequest)
 	http.HandleFunc("/frontegg/identity/resources/groups/v1", handleSCIMGroupsRequest)
 	http.HandleFunc("/frontegg/directory/resources/v1/configurations/scim2", handleSCIM2ConfigurationsRequest)
+	http.HandleFunc("/frontegg/directory/resources/v1/configurations/scim2/", handleSCIMConfigurationByID)
 
 	fmt.Println("Mock Frontegg server is running at http://localhost:3000")
 	log.Fatal(http.ListenAndServe(":3000", nil))
@@ -447,7 +462,7 @@ func handleGroupMappingRequests(w http.ResponseWriter, r *http.Request, ssoConfi
 }
 
 func handleSCIMGroupsRequest(w http.ResponseWriter, r *http.Request) {
-	logRequest(r)
+	// TODO: add support for creating groups and updating groups
 	switch r.Method {
 	case http.MethodGet:
 		listSCIMGroups(w, r)
@@ -457,10 +472,11 @@ func handleSCIMGroupsRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSCIM2ConfigurationsRequest(w http.ResponseWriter, r *http.Request) {
-	logRequest(r)
 	switch r.Method {
 	case http.MethodGet:
-		listSCIM2Configurations(w, r)
+		listSCIMConfigurations(w)
+	case http.MethodPost:
+		createSCIMConfiguration(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -473,11 +489,74 @@ func listSCIMGroups(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"groups":[]}`))
 }
 
-func listSCIM2Configurations(w http.ResponseWriter, r *http.Request) {
-	// TODO: update this to return the configurations that are created by the user
+func handleSCIMConfigurationByID(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodDelete:
+		deleteSCIMConfiguration(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func listSCIMConfigurations(w http.ResponseWriter) {
+	mutex.Lock()
+	configs := make([]SCIM2Configuration, 0, len(scimConfigurations))
+	for _, config := range scimConfigurations {
+		configs = append(configs, config)
+	}
+	for i, config := range configs {
+		if config.CreatedAt.IsZero() {
+			configs[i].CreatedAt = time.Now()
+		}
+	}
+	mutex.Unlock()
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`[]`))
+	json.NewEncoder(w).Encode(configs)
+}
+
+func createSCIMConfiguration(w http.ResponseWriter, r *http.Request) {
+	var newConfig SCIM2Configuration
+	if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	newConfig.ID = generateMockUUID()
+	newConfig.Token = generateMockUUID()
+	newConfig.TenantID = "mockTenantID"
+	newConfig.CreatedAt = time.Now()
+
+	// Log the configuration
+	fmt.Printf("Received SCIM 2.0 configuration: %+v\n", newConfig)
+
+	mutex.Lock()
+	scimConfigurations[newConfig.ID] = newConfig
+	mutex.Unlock()
+
+	// log response
+	responseBytes, _ := json.Marshal(newConfig)
+	fmt.Printf("Response body: %s\n", string(responseBytes))
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newConfig)
+}
+
+func deleteSCIMConfiguration(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Path[len("/frontegg/directory/resources/v1/configurations/scim2/"):]
+
+	mutex.Lock()
+	if _, exists := scimConfigurations[id]; !exists {
+		mutex.Unlock()
+		http.Error(w, "Configuration not found", http.StatusNotFound)
+		return
+	}
+
+	delete(scimConfigurations, id)
+	mutex.Unlock()
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func createSSOConfig(w http.ResponseWriter, r *http.Request) {
