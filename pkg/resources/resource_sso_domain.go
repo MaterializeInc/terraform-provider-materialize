@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -24,7 +25,7 @@ var SSODomainSchema = map[string]*schema.Schema{
 	"domain": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: "The domain name for the SSO domain configuration.",
+		Description: "The domain name for the SSO domain configuration. This domain will be used to validate the SSO configuration and needs to be unique across all SSO configurations.",
 	},
 	"validated": {
 		Type:        schema.TypeBool,
@@ -48,7 +49,13 @@ func SSODomain() *schema.Resource {
 		UpdateContext: ssoDomainUpdate,
 		DeleteContext: ssoDomainDelete,
 
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
 		Schema: SSODomainSchema,
+
+		Description: "The SSO domain resource allows you to set the domain for an SSO configuration. This domain will be used to validate the SSO configuration.",
 	}
 }
 
@@ -105,8 +112,28 @@ func ssoDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	// Extract sso_config_id and domain from the Terraform resource data
-	ssoConfigID := d.Get("sso_config_id").(string)
-	domainName := d.Get("domain").(string)
+	var ssoConfigID, domainName string
+
+	// Check if the ID contains a delimiter indicating it's a combined ID from an import
+	if strings.Contains(d.Id(), ":") {
+		parts := strings.Split(d.Id(), ":")
+		if len(parts) != 2 {
+			return diag.Errorf("Invalid ID format. Expected 'ssoConfigID:domainName'")
+		}
+		ssoConfigID, domainName = parts[0], parts[1]
+		// Set the sso_config_id attribute
+		if err := d.Set("sso_config_id", ssoConfigID); err != nil {
+			return diag.FromErr(err)
+		}
+		// Set the domain attribute
+		if err := d.Set("domain", domainName); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		// Regular operation, extract sso_config_id and domain from the Terraform resource data
+		ssoConfigID = d.Get("sso_config_id").(string)
+		domainName = d.Get("domain").(string)
+	}
 
 	// Iterate over the configurations to find the specific domain
 	for _, config := range configs {
@@ -114,7 +141,7 @@ func ssoDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 			for _, domain := range config.Domains {
 				if domain.Domain == domainName {
 					// Set the Terraform resource data from the domain
-					d.Set("id", domain.ID)
+					d.SetId(domain.ID)
 					d.Set("validated", domain.Validated)
 					return nil
 				}

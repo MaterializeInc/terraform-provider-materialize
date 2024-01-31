@@ -3,12 +3,12 @@
 page_title: "materialize_sso_default_roles Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The SSO default roles resource allows you to set the default roles for an SSO configuration. These roles will be assigned to users who sign in with SSO.
 ---
 
 # materialize_sso_default_roles (Resource)
 
-
+The SSO default roles resource allows you to set the default roles for an SSO configuration. These roles will be assigned to users who sign in with SSO.
 
 ## Example Usage
 
@@ -29,7 +29,7 @@ resource "materialize_sso_default_roles" "example_sso_default_roles_2" {
 
 ### Required
 
-- `roles` (Set of String) Set of default role names for the SSO configuration.
+- `roles` (Set of String) Set of default role names for the SSO configuration. These roles will be assigned by default to users who sign up via SSO.
 - `sso_config_id` (String) The ID of the associated SSO configuration.
 
 ### Read-Only
@@ -41,6 +41,6 @@ resource "materialize_sso_default_roles" "example_sso_default_roles_2" {
 Import is supported using the following syntax:
 
 ```shell
-# Default roles can be imported using the role id:
+# Default roles can be imported using the role id, which can be found using the `materialize_sso_config` data source:
 terraform import materialize_sso_default_roles.example_role <role_id>
 ```

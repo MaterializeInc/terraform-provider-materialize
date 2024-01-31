@@ -143,6 +143,8 @@ func SCIMGroups() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceSCIMGroupsRead,
 		Schema:      dataSourceSCIMGroupsSchema,
+
+		Description: "The SCIM groups data source allows you to fetch the available groups.",
 	}
 }
 
