@@ -50,7 +50,7 @@ func SSORoleGroupMapping() *schema.Resource {
 		DeleteContext: ssoGroupMappingDelete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: ssoRoleGroupMappingImport,
 		},
 
 		Schema: SSORoleGroupMappingSchema,
@@ -140,23 +140,8 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	var ssoConfigID, groupID string
 
-	// Check if the ID contains a delimiter indicating it's a combined ID from an import
-	if strings.Contains(d.Id(), ":") {
-		parts := strings.Split(d.Id(), ":")
-		if len(parts) != 2 {
-			return diag.Errorf("Invalid ID format. Expected 'ssoConfigID:groupID'")
-		}
-		ssoConfigID, groupID = parts[0], parts[1]
-		// Set the sso_config_id attribute
-		if err := d.Set("sso_config_id", ssoConfigID); err != nil {
-			return diag.FromErr(err)
-		}
-		d.SetId(groupID)
-	} else {
-		// Regular operation, extract sso_config_id from the Terraform resource data
-		ssoConfigID = d.Get("sso_config_id").(string)
-		groupID = d.Id()
-	}
+	ssoConfigID = d.Get("sso_config_id").(string)
+	groupID = d.Id()
 
 	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups", client.Endpoint, ssoConfigID)
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
@@ -320,4 +305,39 @@ func ssoGroupMappingDelete(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.SetId("")
 	return nil
+}
+
+// Custom import function for SSORoleGroupMapping
+func ssoRoleGroupMappingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	compositeID := d.Id()
+	parts := strings.Split(compositeID, ":")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid format of ID (%s), expected ssoConfigID:groupID", compositeID)
+	}
+
+	d.Set("sso_config_id", parts[0])
+	d.SetId(parts[1])
+
+	diags := ssoGroupMappingRead(ctx, d, meta)
+	if diags.HasError() {
+		var err error
+		for _, d := range diags {
+			if d.Severity == diag.Error {
+				if err == nil {
+					err = fmt.Errorf(d.Summary)
+				} else {
+					err = fmt.Errorf("%v; %s", err, d.Summary)
+				}
+			}
+		}
+		return nil, err
+	}
+
+	// If the group ID is not set, return an error
+	if d.Id() == "" {
+		return nil, fmt.Errorf("group not found")
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

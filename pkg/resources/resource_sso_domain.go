@@ -50,7 +50,7 @@ func SSODomain() *schema.Resource {
 		DeleteContext: ssoDomainDelete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: ssoDomainImport,
 		},
 
 		Schema: SSODomainSchema,
@@ -112,28 +112,8 @@ func ssoDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	// Extract sso_config_id and domain from the Terraform resource data
-	var ssoConfigID, domainName string
-
-	// Check if the ID contains a delimiter indicating it's a combined ID from an import
-	if strings.Contains(d.Id(), ":") {
-		parts := strings.Split(d.Id(), ":")
-		if len(parts) != 2 {
-			return diag.Errorf("Invalid ID format. Expected 'ssoConfigID:domainName'")
-		}
-		ssoConfigID, domainName = parts[0], parts[1]
-		// Set the sso_config_id attribute
-		if err := d.Set("sso_config_id", ssoConfigID); err != nil {
-			return diag.FromErr(err)
-		}
-		// Set the domain attribute
-		if err := d.Set("domain", domainName); err != nil {
-			return diag.FromErr(err)
-		}
-	} else {
-		// Regular operation, extract sso_config_id and domain from the Terraform resource data
-		ssoConfigID = d.Get("sso_config_id").(string)
-		domainName = d.Get("domain").(string)
-	}
+	ssoConfigID := d.Get("sso_config_id").(string)
+	domainName := d.Get("domain").(string)
 
 	// Iterate over the configurations to find the specific domain
 	for _, config := range configs {
@@ -278,4 +258,38 @@ func deleteDomain(ctx context.Context, client *clients.FronteggClient, configID 
 	}
 
 	return nil
+}
+
+func ssoDomainImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	compositeID := d.Id()
+	parts := strings.Split(compositeID, ":")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid format of ID (%s), expected ssoConfigID:domainName", compositeID)
+	}
+
+	d.Set("sso_config_id", parts[0])
+	d.Set("domain", parts[1])
+
+	diags := ssoDomainRead(ctx, d, meta)
+	if diags.HasError() {
+		var err error
+		for _, d := range diags {
+			if d.Severity == diag.Error {
+				if err == nil {
+					err = fmt.Errorf(d.Summary)
+				} else {
+					err = fmt.Errorf("%v; %s", err, d.Summary)
+				}
+			}
+		}
+		return nil, err
+	}
+
+	// If the domain ID is not set, return an error
+	if d.Id() == "" {
+		return nil, fmt.Errorf("domain not found")
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
