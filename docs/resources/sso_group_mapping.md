@@ -3,12 +3,12 @@
 page_title: "materialize_sso_group_mapping Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The SSO group role mapping resource allows you to set the roles for an SSO group. This allows you to automatically assign additional roles according to your identity provider groups
 ---
 
 # materialize_sso_group_mapping (Resource)
 
-
+The SSO group role mapping resource allows you to set the roles for an SSO group. This allows you to automatically assign additional roles according to your identity provider groups
 
 ## Example Usage
 
@@ -26,7 +26,7 @@ resource "materialize_sso_group_mapping" "example_sso_group_mapping" {
 ### Required
 
 - `group` (String) The name of the SSO group.
-- `roles` (List of String) List of role names associated with the group.
+- `roles` (Set of String) List of role names associated with the group.
 - `sso_config_id` (String) The ID of the associated SSO configuration.
 
 ### Read-Only
@@ -38,6 +38,6 @@ resource "materialize_sso_group_mapping" "example_sso_group_mapping" {
 Import is supported using the following syntax:
 
 ```shell
-# SSO group mapping ID can be found in the URL when viewing the SSO group mapping in the UI
-terraform import materialize_sso_group_mapping.example <sso_group_mapping_id>
+# The SSO Configuration ID and the Group Mapping ID can be found using the `materialize_sso_config` data source
+terraform import materialize_sso_group_mapping.example <sso_config_id>:<sso_group_mapping_id>
 ```

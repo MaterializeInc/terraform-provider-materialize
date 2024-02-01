@@ -67,16 +67,19 @@ var dataSourceSSOConfigSchema = map[string]*schema.Schema{
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"id": {
-								Type:     schema.TypeString,
-								Computed: true,
+								Type:        schema.TypeString,
+								Computed:    true,
+								Description: "The ID of the SSO domain configuration.",
 							},
 							"domain": {
-								Type:     schema.TypeString,
-								Computed: true,
+								Type:        schema.TypeString,
+								Computed:    true,
+								Description: "The domain name for the SSO domain configuration. This domain will be used to validate the SSO configuration and needs to be unique across all SSO configurations.",
 							},
 							"validated": {
-								Type:     schema.TypeBool,
-								Computed: true,
+								Type:        schema.TypeBool,
+								Computed:    true,
+								Description: "Indicates whether the domain has been validated.",
 							},
 						},
 					},
@@ -84,7 +87,7 @@ var dataSourceSSOConfigSchema = map[string]*schema.Schema{
 				"role_ids": {
 					Type:        schema.TypeList,
 					Computed:    true,
-					Description: "List of role IDs associated with the SSO configuration.",
+					Description: "List of the default role IDs associated with the SSO configuration. These roles will be assigned by default to users who sign up via SSO.",
 					Elem:        &schema.Schema{Type: schema.TypeString},
 				},
 				"groups": {
@@ -94,21 +97,24 @@ var dataSourceSSOConfigSchema = map[string]*schema.Schema{
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"group": {
-								Type:     schema.TypeString,
-								Computed: true,
+								Type:        schema.TypeString,
+								Computed:    true,
+								Description: "The name of the SSO group.",
 							},
 							"enabled": {
-								Type:     schema.TypeBool,
-								Computed: true,
+								Type:        schema.TypeBool,
+								Computed:    true,
+								Description: "Indicates whether the group is enabled.",
 							},
 							"id": {
 								Type:     schema.TypeString,
 								Computed: true,
 							},
 							"role_ids": {
-								Type:     schema.TypeList,
-								Computed: true,
-								Elem:     &schema.Schema{Type: schema.TypeString},
+								Type:        schema.TypeList,
+								Computed:    true,
+								Elem:        &schema.Schema{Type: schema.TypeString},
+								Description: "List of role IDs associated with the group.",
 							},
 						},
 					},

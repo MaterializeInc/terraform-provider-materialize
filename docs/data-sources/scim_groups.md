@@ -3,12 +3,12 @@
 page_title: "materialize_scim_groups Data Source - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The SCIM groups data source allows you to fetch the available groups.
 ---
 
 # materialize_scim_groups (Data Source)
 
-
+The SCIM groups data source allows you to fetch the available groups.
 
 ## Example Usage
 

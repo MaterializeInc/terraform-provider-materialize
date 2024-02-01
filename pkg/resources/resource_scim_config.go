@@ -23,7 +23,7 @@ var resourceSCIM2ConfigurationsSchema = map[string]*schema.Schema{
 		Required:     true,
 		Description:  "The source of the SCIM 2.0 configuration. Supported values are `okta`, `azure-ad`, and `other`.",
 		ForceNew:     true,
-		ValidateFunc: validation.StringInSlice(Scim2ConfigSources, true),
+		ValidateFunc: validation.StringInSlice(scim2ConfigSources, true),
 	},
 	"connection_name": {
 		Type:        schema.TypeString,

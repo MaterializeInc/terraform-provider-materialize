@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -24,7 +25,7 @@ var SSODomainSchema = map[string]*schema.Schema{
 	"domain": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: "The domain name for the SSO domain configuration.",
+		Description: "The domain name for the SSO domain configuration. This domain will be used to validate the SSO configuration and needs to be unique across all SSO configurations.",
 	},
 	"validated": {
 		Type:        schema.TypeBool,
@@ -48,7 +49,13 @@ func SSODomain() *schema.Resource {
 		UpdateContext: ssoDomainUpdate,
 		DeleteContext: ssoDomainDelete,
 
+		Importer: &schema.ResourceImporter{
+			StateContext: ssoDomainImport,
+		},
+
 		Schema: SSODomainSchema,
+
+		Description: "The SSO domain resource allows you to set the domain for an SSO configuration. This domain will be used to validate the SSO configuration.",
 	}
 }
 
@@ -114,7 +121,7 @@ func ssoDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 			for _, domain := range config.Domains {
 				if domain.Domain == domainName {
 					// Set the Terraform resource data from the domain
-					d.Set("id", domain.ID)
+					d.SetId(domain.ID)
 					d.Set("validated", domain.Validated)
 					return nil
 				}
@@ -251,4 +258,38 @@ func deleteDomain(ctx context.Context, client *clients.FronteggClient, configID 
 	}
 
 	return nil
+}
+
+func ssoDomainImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	compositeID := d.Id()
+	parts := strings.Split(compositeID, ":")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid format of ID (%s), expected ssoConfigID:domainName", compositeID)
+	}
+
+	d.Set("sso_config_id", parts[0])
+	d.Set("domain", parts[1])
+
+	diags := ssoDomainRead(ctx, d, meta)
+	if diags.HasError() {
+		var err error
+		for _, d := range diags {
+			if d.Severity == diag.Error {
+				if err == nil {
+					err = fmt.Errorf(d.Summary)
+				} else {
+					err = fmt.Errorf("%v; %s", err, d.Summary)
+				}
+			}
+		}
+		return nil, err
+	}
+
+	// If the domain ID is not set, return an error
+	if d.Id() == "" {
+		return nil, fmt.Errorf("domain not found")
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

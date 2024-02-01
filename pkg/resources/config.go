@@ -80,7 +80,7 @@ var ssoConfigTypes = []string{
 	"oidc",
 }
 
-var Scim2ConfigSources = []string{
+var scim2ConfigSources = []string{
 	"okta",
 	"azure-ad",
 	"other",

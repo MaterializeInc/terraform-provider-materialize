@@ -3,12 +3,12 @@
 page_title: "materialize_sso_config Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The SSO configuration resource allows you to create, read, update, and delete SSO configurations.
 ---
 
 # materialize_sso_config (Resource)
 
-
+The SSO configuration resource allows you to create, read, update, and delete SSO configurations.
 
 ## Example Usage
 
@@ -49,6 +49,6 @@ resource "materialize_sso_config" "example_sso_config" {
 Import is supported using the following syntax:
 
 ```shell
-# SSO Configuration ID can be found in the URL when viewing the SSO Configuration in the UI
+# The SSO Configuration ID can be found using the `materialize_sso_config` data source
 terraform import materialize_sso_config.example <sso_config_id>
 ```

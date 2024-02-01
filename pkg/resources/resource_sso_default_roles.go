@@ -23,7 +23,7 @@ var SSODefaultRolesSchema = map[string]*schema.Schema{
 		Type:        schema.TypeSet,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Required:    true,
-		Description: "Set of default role names for the SSO configuration.",
+		Description: "Set of default role names for the SSO configuration. These roles will be assigned by default to users who sign up via SSO.",
 	},
 }
 
@@ -38,7 +38,13 @@ func SSODefaultRoles() *schema.Resource {
 		UpdateContext: ssoDefaultRolesCreateOrUpdate,
 		DeleteContext: ssoDefaultRolesDelete,
 
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
 		Schema: SSODefaultRolesSchema,
+
+		Description: "The SSO default roles resource allows you to set the default roles for an SSO configuration. These roles will be assigned to users who sign in with SSO.",
 	}
 }
 
@@ -114,6 +120,10 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Id()
+
+	if err := d.Set("sso_config_id", ssoConfigID); err != nil {
+		return diag.FromErr(err)
+	}
 
 	// Construct the GET request
 	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/roles", client.Endpoint, ssoConfigID)

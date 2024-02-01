@@ -3,12 +3,12 @@
 page_title: "materialize_sso_domain Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The SSO domain resource allows you to set the domain for an SSO configuration. This domain will be used to validate the SSO configuration.
 ---
 
 # materialize_sso_domain (Resource)
 
-
+The SSO domain resource allows you to set the domain for an SSO configuration. This domain will be used to validate the SSO configuration.
 
 ## Example Usage
 
@@ -24,7 +24,7 @@ resource "materialize_sso_domain" "example_sso_domain" {
 
 ### Required
 
-- `domain` (String) The domain name for the SSO domain configuration.
+- `domain` (String) The domain name for the SSO domain configuration. This domain will be used to validate the SSO configuration and needs to be unique across all SSO configurations.
 - `sso_config_id` (String) The ID of the associated SSO configuration.
 
 ### Read-Only
@@ -37,6 +37,6 @@ resource "materialize_sso_domain" "example_sso_domain" {
 Import is supported using the following syntax:
 
 ```shell
-# SSO Domain ID can be found in the URL when viewing the SSO Domain in the UI
-terraform import materialize_sso_domain.example <sso_domain_id>
+# The SSO Configuration ID can be found using the `materialize_sso_config` data source
+terraform import materialize_sso_domain.example <sso_config_id>:<domain.com>
 ```

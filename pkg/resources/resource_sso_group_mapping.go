@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -25,7 +26,7 @@ var SSORoleGroupMappingSchema = map[string]*schema.Schema{
 		Description: "The name of the SSO group.",
 	},
 	"roles": {
-		Type:        schema.TypeList,
+		Type:        schema.TypeSet,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Required:    true,
 		Description: "List of role names associated with the group.",
@@ -48,7 +49,13 @@ func SSORoleGroupMapping() *schema.Resource {
 		UpdateContext: ssoGroupMappingUpdate,
 		DeleteContext: ssoGroupMappingDelete,
 
+		Importer: &schema.ResourceImporter{
+			StateContext: ssoRoleGroupMappingImport,
+		},
+
 		Schema: SSORoleGroupMappingSchema,
+
+		Description: "The SSO group role mapping resource allows you to set the roles for an SSO group. This allows you to automatically assign additional roles according to your identity provider groups",
 	}
 }
 
@@ -61,7 +68,7 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	ssoConfigID := d.Get("sso_config_id").(string)
 	group := d.Get("group").(string)
-	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
+	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
 	// Fetch role IDs based on role names.
 	roleMap, err := utils.ListRoles(ctx, client)
@@ -131,8 +138,10 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
-	ssoConfigID := d.Get("sso_config_id").(string)
-	groupID := d.Id()
+	var ssoConfigID, groupID string
+
+	ssoConfigID = d.Get("sso_config_id").(string)
+	groupID = d.Id()
 
 	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups", client.Endpoint, ssoConfigID)
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
@@ -160,11 +169,33 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
+	// Fetch role mappings from the API.
+	roleMap, err := utils.ListRoles(ctx, client)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
+	}
+
 	for _, group := range groups {
 		if group.ID == groupID {
 			d.Set("group", group.Group)
 			d.Set("role_ids", group.RoleIds)
 			d.Set("enabled", group.Enabled)
+
+			// Convert role IDs to role names
+			var roleNames []string
+			for _, roleID := range group.RoleIds {
+				for name, id := range roleMap {
+					if id == roleID {
+						roleNames = append(roleNames, name)
+						break
+					}
+				}
+			}
+
+			if err := d.Set("roles", schema.NewSet(schema.HashString, convertToStringInterface(roleNames))); err != nil {
+				return diag.FromErr(err)
+			}
+
 			return nil
 		}
 	}
@@ -182,7 +213,7 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	ssoConfigID := d.Get("sso_config_id").(string)
 	group := d.Get("group").(string)
-	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
+	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
 	// Fetch role IDs based on role names
 	roleMap, err := utils.ListRoles(ctx, client)
@@ -274,4 +305,39 @@ func ssoGroupMappingDelete(ctx context.Context, d *schema.ResourceData, meta int
 
 	d.SetId("")
 	return nil
+}
+
+// Custom import function for SSORoleGroupMapping
+func ssoRoleGroupMappingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	compositeID := d.Id()
+	parts := strings.Split(compositeID, ":")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid format of ID (%s), expected ssoConfigID:groupID", compositeID)
+	}
+
+	d.Set("sso_config_id", parts[0])
+	d.SetId(parts[1])
+
+	diags := ssoGroupMappingRead(ctx, d, meta)
+	if diags.HasError() {
+		var err error
+		for _, d := range diags {
+			if d.Severity == diag.Error {
+				if err == nil {
+					err = fmt.Errorf(d.Summary)
+				} else {
+					err = fmt.Errorf("%v; %s", err, d.Summary)
+				}
+			}
+		}
+		return nil, err
+	}
+
+	// If the group ID is not set, return an error
+	if d.Id() == "" {
+		return nil, fmt.Errorf("group not found")
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

@@ -25,7 +25,7 @@ var SSOConfigSchema = map[string]*schema.Schema{
 	"sso_endpoint": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: " The URL endpoint for the SSO service. This is the URL that users will be redirected to for authentication. The URL must be accessible from the browser.",
+		Description: "The URL endpoint for the SSO service. This is the URL that users will be redirected to for authentication. The URL must be accessible from the browser.",
 	},
 	"public_certificate": {
 		Type:        schema.TypeString,
@@ -82,6 +82,8 @@ func SSOConfiguration() *schema.Resource {
 		},
 
 		Schema: SSOConfigSchema,
+
+		Description: "The SSO configuration resource allows you to create, read, update, and delete SSO configurations.",
 	}
 }
 
