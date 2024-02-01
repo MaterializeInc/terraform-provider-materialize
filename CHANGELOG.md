@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.6.1 - 2024-02-01
+
+### Features
+* New resource: `materialize_scim_config` [#449](https://github.com/MaterializeInc/terraform-provider-materialize/pull/449)
+
+### BugFixes
+* Allow imports for SSO resources [#453](https://github.com/MaterializeInc/terraform-provider-materialize/pull/453)
+* Fix failing weekly tests [#448](https://github.com/MaterializeInc/terraform-provider-materialize/pull/448)
+
+### Misc
+* Dependabot updates: [#447](https://github.com/MaterializeInc/terraform-provider-materialize/pull/447)
+* Documentation updates: [#446](https://github.com/MaterializeInc/terraform-provider-materialize/pull/446), [#453](https://github.com/MaterializeInc/terraform-provider-materialize/pull/453)
+
 ## 0.6.0 - 2024-01-23
 
 ### Breaking Changes
