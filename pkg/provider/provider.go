@@ -54,7 +54,7 @@ func Provider(version string) *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MZ_BASE_ENDPOINT", "https://cloud.materialize.com"),
-				Description: "The base endpoint for the Materialize.",
+				Description: "The base endpoint for Materialize.",
 			},
 			"default_region": {
 				Type:        schema.TypeString,
