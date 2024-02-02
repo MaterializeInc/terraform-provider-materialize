@@ -43,14 +43,16 @@ type CloudAPIClient struct {
 	HTTPClient     *http.Client
 	FronteggClient *FronteggClient
 	Endpoint       string
+	BaseEndpoint   string
 }
 
 // NewCloudAPIClient creates a new Cloud API client
-func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint string) *CloudAPIClient {
+func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint, baseEndpoint string) *CloudAPIClient {
 	return &CloudAPIClient{
 		HTTPClient:     &http.Client{},
 		FronteggClient: fronteggClient,
 		Endpoint:       cloudAPIEndpoint,
+		BaseEndpoint:   baseEndpoint,
 	}
 }
 

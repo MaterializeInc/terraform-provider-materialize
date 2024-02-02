@@ -199,7 +199,8 @@ func TestNewCloudAPIClient(t *testing.T) {
 
 	// Call the NewCloudAPIClient function with a custom API endpoint
 	customEndpoint := "http://custom-endpoint.com/api"
-	cloudAPIClient := NewCloudAPIClient(fronteggClient, customEndpoint)
+	baseEndpoint := "http://cloud.frontegg.com"
+	cloudAPIClient := NewCloudAPIClient(fronteggClient, customEndpoint, baseEndpoint)
 
 	// Assert that the returned CloudAPIClient has the expected properties
 	require.NotNil(t, cloudAPIClient)
@@ -209,7 +210,7 @@ func TestNewCloudAPIClient(t *testing.T) {
 
 	// Call the NewCloudAPIClient function with a different custom API endpoint
 	anotherCustomEndpoint := "http://another-custom-endpoint.com/api"
-	cloudAPIClient = NewCloudAPIClient(fronteggClient, anotherCustomEndpoint)
+	cloudAPIClient = NewCloudAPIClient(fronteggClient, anotherCustomEndpoint, baseEndpoint)
 
 	// Assert that the returned CloudAPIClient has the updated custom endpoint
 	require.NotNil(t, cloudAPIClient)

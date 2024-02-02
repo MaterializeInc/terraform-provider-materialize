@@ -93,6 +93,7 @@ func ssoConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 	client := providerMeta.Frontegg
+	baseEndpoint := providerMeta.CloudAPI.BaseEndpoint
 
 	// Create the SSO configuration first
 	ssoConfig := SSOConfig{
@@ -104,7 +105,7 @@ func ssoConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		OidcClientId:      d.Get("oidc_client_id").(string),
 		OidcSecret:        d.Get("oidc_secret").(string),
 		AcsUrl:            fmt.Sprintf("%s/auth/saml/callback", client.Endpoint),
-		SpEntityId:        fmt.Sprintf("%s/auth/saml/metadata", client.Endpoint),
+		SpEntityId:        fmt.Sprintf("%s/auth/saml/metadata", baseEndpoint),
 	}
 
 	requestBody, err := json.Marshal(ssoConfig)
