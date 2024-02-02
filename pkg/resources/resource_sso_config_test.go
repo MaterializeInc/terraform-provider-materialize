@@ -97,8 +97,14 @@ func TestSSOConfigResourceUpdate(t *testing.T) {
 			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
+		mockCloudClient := &clients.CloudAPIClient{
+			FronteggClient: client,
+			Endpoint:       serverURL,
+		}
+
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
+			CloudAPI: mockCloudClient,
 		}
 
 		d := schema.TestResourceDataRaw(t, SSOConfigSchema, nil)
