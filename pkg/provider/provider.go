@@ -37,6 +37,7 @@ func Provider(version string) *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", "require"),
 				Description: "For testing purposes, the SSL mode to use.",
 			},
+			// TODO: Switch to Admin Endpoint
 			"endpoint": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -48,6 +49,12 @@ func Provider(version string) *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("MZ_CLOUD_ENDPOINT", "https://api.cloud.materialize.com"),
 				Description: "The endpoint for the Materialize Cloud API.",
+			},
+			"base_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("MZ_BASE_ENDPOINT", "https://cloud.materialize.com"),
+				Description: "The base endpoint for Materialize.",
 			},
 			"default_region": {
 				Type:        schema.TypeString,
@@ -141,6 +148,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	endpoint := d.Get("endpoint").(string)
 	cloudEndpoint := d.Get("cloud_endpoint").(string)
 	defaultRegion := clients.Region(d.Get("default_region").(string))
+	baseEndpoint := d.Get("base_endpoint").(string)
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
 	err := utils.SetDefaultRegion(string(defaultRegion))
@@ -155,7 +163,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 	}
 
 	// Initialize the Cloud API client using the Frontegg client and endpoint
-	cloudAPIClient := clients.NewCloudAPIClient(fronteggClient, cloudEndpoint)
+	cloudAPIClient := clients.NewCloudAPIClient(fronteggClient, cloudEndpoint, baseEndpoint)
 	regionsEnabled := make(map[clients.Region]bool)
 
 	// Get the list of cloud providers
