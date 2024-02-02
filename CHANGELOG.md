@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.1 - 2024-02-02
+
+### BugFixes
+* Fix the SSO configuration SP Entity ID definition [#456](https://github.com/MaterializeInc/terraform-provider-materialize/pull/456)
+
 ## 0.6.1 - 2024-02-01
 
 ### Features
