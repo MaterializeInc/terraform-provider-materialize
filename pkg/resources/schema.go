@@ -491,10 +491,11 @@ func PrivilegeSchema(objectType string) *schema.Schema {
 
 func DiskSchema(forceNew bool) *schema.Schema {
 	return &schema.Schema{
-		Description: "**Private Preview**. Whether or not the replica is a _disk-backed replica_.",
+		Description: "**Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    forceNew,
+		Deprecated:  "Disk replicas are deprecated and will be removed in a future release. The `disk` attribute will be enabled by default for 'cc' clusters",
 	}
 }
 
