@@ -135,6 +135,7 @@ You can then update the read context `clusterRead`:
 ```go
 if err := d.Set("size", s.Size.String); err != nil {
 		return diag.FromErr(err)
+}
 ```
 
 And the create context `clusterCreate`:

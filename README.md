@@ -8,7 +8,7 @@ This repository contains a Terraform provider for managing resources in a [Mater
 
 * Materialize >= 0.27
 * [Terraform](https://www.terraform.io/downloads.html) >= 1.0.3
-* (Development) [Go](https://golang.org/doc/install) >= 1.16
+* (Development) [Go](https://golang.org/doc/install) >= 1.20
 
 ## Installation
 
@@ -28,10 +28,8 @@ Configure the provider by adding the following block to your Terraform project:
 
 ```hcl
 provider "materialize" {
-  host     = "materialized_hostname"
-  user     = "materialize_user"
   password = "materialize_password"
-  port     = 6875
+  region   = "aws/us-east-1"
   database = "materialize"
 }
 ```
