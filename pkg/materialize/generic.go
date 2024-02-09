@@ -28,6 +28,7 @@ const (
 	Table            EntityType = "TABLE"
 	BaseType         EntityType = "TYPE"
 	View             EntityType = "VIEW"
+	System           EntityType = "SYSTEM"
 )
 
 type Builder struct {
