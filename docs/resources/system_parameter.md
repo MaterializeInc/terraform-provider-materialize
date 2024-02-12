@@ -30,7 +30,7 @@ resource "materialize_system_parameter" "example_system_parameter" {
 
 ### Optional
 
-- `region` (String) The region where the system parameter is applied.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 
 ### Read-Only
 
