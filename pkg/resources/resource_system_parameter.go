@@ -22,12 +22,7 @@ var systemParameterSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "The value to set for the system parameter.",
 	},
-	"region": {
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-		Description: "The region where the system parameter is applied.",
-	},
+	"region": RegionSchema(),
 }
 
 func SystemParameter() *schema.Resource {
