@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -118,8 +119,13 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			b.ReplicationFactor(&r)
 		}
 
-		if v, ok := d.GetOk("disk"); ok {
-			b.Disk(v.(bool))
+		// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
+		if strings.HasSuffix(size.(string), "cc") || strings.HasSuffix(size.(string), "C") {
+			d.Set("disk", true)
+		} else {
+			if v, ok := d.GetOk("disk"); ok {
+				b.Disk(v.(bool))
+			}
 		}
 
 		// TODO: Disable until supported on create
@@ -206,9 +212,17 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		}
 
 		if d.HasChange("disk") {
-			_, newDisk := d.GetChange("disk")
-			if err := b.SetDisk(newDisk.(bool)); err != nil {
-				return diag.FromErr(err)
+			// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
+			size := d.Get("size").(string)
+			if strings.HasSuffix(size, "cc") || strings.HasSuffix(size, "C") {
+				// Warn user that disk is always enabled for this cluster size
+				log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
+				d.Set("disk", true)
+			} else {
+				_, newDisk := d.GetChange("disk")
+				if err := b.SetDisk(newDisk.(bool)); err != nil {
+					return diag.FromErr(err)
+				}
 			}
 		}
 

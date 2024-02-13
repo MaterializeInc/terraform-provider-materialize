@@ -55,6 +55,39 @@ func TestAccCluster_basic(t *testing.T) {
 	})
 }
 
+func TestAccClusterCCSize_basic(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "50cc", "1", "1s", "true", "2", "true", "Comment"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", clusterName+"_managed"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "50cc"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "1s"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "idle_arrangement_merge_effort", "2"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "true"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "Comment"),
+				),
+			},
+			{
+				ResourceName:            "materialize_cluster.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+			},
+		},
+	})
+}
+
 func TestAccClusterManagedNoReplication_basic(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{

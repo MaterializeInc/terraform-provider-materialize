@@ -496,6 +496,7 @@ func DiskSchema(forceNew bool) *schema.Schema {
 		Optional:    true,
 		ForceNew:    forceNew,
 		Deprecated:  "Disk replicas are deprecated and will be removed in a future release. The `disk` attribute will be enabled by default for 'cc' clusters",
+		Computed:    true,
 	}
 }
 
