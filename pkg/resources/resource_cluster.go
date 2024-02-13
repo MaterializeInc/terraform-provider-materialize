@@ -121,6 +121,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
 		if strings.HasSuffix(size.(string), "cc") || strings.HasSuffix(size.(string), "C") {
+			log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
 			d.Set("disk", true)
 		} else {
 			if v, ok := d.GetOk("disk"); ok {
@@ -215,7 +216,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
 			size := d.Get("size").(string)
 			if strings.HasSuffix(size, "cc") || strings.HasSuffix(size, "C") {
-				// Warn user that disk is always enabled for this cluster size
 				log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
 				d.Set("disk", true)
 			} else {
