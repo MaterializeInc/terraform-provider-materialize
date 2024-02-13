@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -74,7 +74,7 @@ func testAccCheckAppPasswordExists(resourceName string) resource.TestCheckFunc {
 			return fmt.Errorf("Not found: %s", resourceName)
 		}
 
-		appPassword, err := resources.ListAppPasswords(context.Background(), client)
+		appPassword, err := frontegg.ListAppPasswords(context.Background(), client)
 		if err != nil {
 			return fmt.Errorf("Error fetching app password with resource ID [%s]: %s", rs.Primary.ID, err)
 		}
@@ -97,7 +97,7 @@ func testAccCheckAppPasswordDestroy(s *terraform.State) error {
 		providerMeta, _ := utils.GetProviderMeta(meta)
 		client := providerMeta.Frontegg
 
-		appPassword, err := resources.ListAppPasswords(context.Background(), client)
+		appPassword, err := frontegg.ListAppPasswords(context.Background(), client)
 		if err == nil {
 			return fmt.Errorf("App password with ID [%s] still exists", rs.Primary.ID)
 		}
