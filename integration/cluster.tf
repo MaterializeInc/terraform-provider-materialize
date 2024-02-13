@@ -14,7 +14,7 @@ resource "materialize_cluster" "cluster_sink" {
 
 resource "materialize_cluster" "no_replication" {
   name               = "no_replication"
-  size               = "50cc"
+  size               = "25cc"
   replication_factor = 0
 }
 
@@ -39,7 +39,7 @@ resource "materialize_cluster_grant_default_privilege" "example" {
 resource "materialize_cluster" "managed_cluster" {
   name                          = "managed_cluster"
   replication_factor            = 2
-  size                          = "50cc"
+  size                          = "25cc"
   introspection_interval        = "1s"
   introspection_debugging       = true
   idle_arrangement_merge_effort = 2

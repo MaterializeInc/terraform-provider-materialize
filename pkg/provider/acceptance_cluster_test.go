@@ -65,11 +65,11 @@ func TestAccClusterCCSize_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "50cc", "1", "1s", "true", "2", "true", "Comment"),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "25cc", "1", "1s", "true", "2", "true", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", clusterName+"_managed"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "ownership_role", "mz_system"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "50cc"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "size", "25cc"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
