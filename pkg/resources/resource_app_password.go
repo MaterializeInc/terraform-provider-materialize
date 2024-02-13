@@ -117,7 +117,7 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 	client := providerMeta.Frontegg
 	resourceID := d.Id()
 
-	passwords, err := listAppPasswords(ctx, client)
+	passwords, err := ListAppPasswords(ctx, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -240,8 +240,8 @@ func findAppPasswordById(passwords []appPasswordResponse, id string) *appPasswor
 	return nil
 }
 
-// listAppPasswords fetches a list of app passwords from the API.
-func listAppPasswords(ctx context.Context, client *clients.FronteggClient) ([]appPasswordResponse, error) {
+// ListAppPasswords fetches a list of app passwords from the API.
+func ListAppPasswords(ctx context.Context, client *clients.FronteggClient) ([]appPasswordResponse, error) {
 	var passwords []appPasswordResponse
 
 	// Construct the request URL
