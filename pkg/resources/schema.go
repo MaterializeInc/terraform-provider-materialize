@@ -28,7 +28,7 @@ func SchemaNameSchema(resource string, required bool) *schema.Schema {
 		Description: fmt.Sprintf("The identifier for the %s schema. Defaults to `public`.", resource),
 		Required:    required,
 		Optional:    !required,
-		ForceNew:    false,
+		ForceNew:    true,
 		Default:     defaultSchema,
 	}
 }
