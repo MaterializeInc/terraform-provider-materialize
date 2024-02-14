@@ -21,6 +21,21 @@ var replicaSizes = []string{
 	"4xlarge",
 	"5xlarge",
 	"6xlarge",
+	"25cc",
+	"50cc",
+	"100cc",
+	"200cc",
+	"300cc",
+	"400cc",
+	"600cc",
+	"800cc",
+	"1200cc",
+	"1600cc",
+	"3200cc",
+	"6400cc",
+	"128C",
+	"256C",
+	"512C",
 }
 
 var saslMechanisms = []string{
