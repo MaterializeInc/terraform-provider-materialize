@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.6.4 - 2024-02-14
+
+### Features
+* New resource: `materialize_system_parameter` [#464](https://github.com/MaterializeInc/terraform-provider-materialize/pull/464)
+* New data source: `materialize_system_parameter` [#464](https://github.com/MaterializeInc/terraform-provider-materialize/pull/464)
+* Add the new `cc` cluster sizes [#467](https://github.com/MaterializeInc/terraform-provider-materialize/pull/467)
+
+### Misc
+* Mark the disk option as deprecated [#460](https://github.com/MaterializeInc/terraform-provider-materialize/pull/460)
+* Dependabot updates: [#459](https://github.com/MaterializeInc/terraform-provider-materialize/pull/459)
+
 ## 0.6.3 - 2024-02-02
 
 ### BugFixes
