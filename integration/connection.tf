@@ -122,8 +122,7 @@ resource "materialize_connection_kafka" "kafka_top_level_privatelink" {
   }
 
   security_protocol = "SASL_SSL"
-
- sasl_mechanisms = "SCRAM-SHA-256"
+  sasl_mechanisms   = "SCRAM-SHA-256"
 
   sasl_username {
     text = "sasl_username"

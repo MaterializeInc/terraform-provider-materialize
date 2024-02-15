@@ -76,13 +76,14 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 ### Required
 
-- `kafka_broker` (Block List, Min: 1) The Kafka brokers configuration. (see [below for nested schema](#nestedblock--kafka_broker))
 - `name` (String) The identifier for the connection.
 
 ### Optional
 
+- `aws_privatelink` (Block List, Max: 1) AWS PrivateLink configuration. This is an alternative to `kafka_broker`. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `kafka_broker` (Block List) The Kafka brokers configuration. (see [below for nested schema](#nestedblock--kafka_broker))
 - `ownership_role` (String) The owernship role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
@@ -101,6 +102,31 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the connection.
+
+<a id="nestedblock--aws_privatelink"></a>
+### Nested Schema for `aws_privatelink`
+
+Required:
+
+- `privatelink_connection_port` (Number) The port of the AWS PrivateLink connection.
+
+Optional:
+
+- `privatelink_connection` (Block List, Max: 1) The AWS PrivateLink connection name in Materialize. (see [below for nested schema](#nestedblock--aws_privatelink--privatelink_connection))
+
+<a id="nestedblock--aws_privatelink--privatelink_connection"></a>
+### Nested Schema for `aws_privatelink.privatelink_connection`
+
+Required:
+
+- `name` (String) The privatelink_connection name.
+
+Optional:
+
+- `database_name` (String) The privatelink_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The privatelink_connection schema name. Defaults to `public`.
+
+
 
 <a id="nestedblock--kafka_broker"></a>
 ### Nested Schema for `kafka_broker`
