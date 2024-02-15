@@ -20,11 +20,13 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"comment":            CommentSchema(false),
 	"kafka_broker": {
-		Description: "The Kafka brokers configuration.",
-		Type:        schema.TypeList,
-		Required:    true,
-		MinItems:    1,
-		ForceNew:    true,
+		Description:   "The Kafka brokers configuration.",
+		Type:          schema.TypeList,
+		ConflictsWith: []string{"aws_privatelink"},
+		AtLeastOneOf:  []string{"kafka_broker", "aws_privatelink"},
+		Optional:      true,
+		MinItems:      1,
+		ForceNew:      true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"broker": {
@@ -44,6 +46,27 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 				},
 				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", false),
 				"ssh_tunnel":             IdentifierSchema("ssh_tunnel", "The name of an SSH tunnel connection to route network traffic through by default.", false),
+			},
+		},
+	},
+	"aws_privatelink": {
+		Description:   "AWS PrivateLink configuration. This is an alternative to `kafka_broker`.",
+		Type:          schema.TypeList,
+		Optional:      true,
+		ConflictsWith: []string{"kafka_broker"},
+		AtLeastOneOf:  []string{"kafka_broker", "aws_privatelink"},
+		MinItems:      1,
+		MaxItems:      1,
+		ForceNew:      true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", false),
+				"privatelink_connection_port": {
+					Description: "The port of the AWS PrivateLink connection.",
+					Type:        schema.TypeInt,
+					Required:    true,
+					ForceNew:    true,
+				},
 			},
 		},
 	},
@@ -117,6 +140,11 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if v, ok := d.GetOk("kafka_broker"); ok {
 		brokers := materialize.GetKafkaBrokersStruct(v)
 		b.KafkaBrokers(brokers)
+	}
+
+	if v, ok := d.GetOk("aws_privatelink"); ok {
+		privatelink := materialize.GetAwsPrivateLinkConnectionStruct(v)
+		b.KafkaAwsPrivateLink(privatelink)
 	}
 
 	if v, ok := d.GetOk("security_protocol"); ok {
