@@ -24,6 +24,10 @@ var inKafka = map[string]interface{}{
 		"privatelink_connection": []interface{}{map[string]interface{}{"name": "cert"}},
 		"ssh_tunnel":             []interface{}{map[string]interface{}{"name": "ssh"}},
 	}},
+	"aws_privatelink": []interface{}{map[string]interface{}{
+		"privatelink_connection":      []interface{}{map[string]interface{}{"name": "cert"}},
+		"privatelink_connection_port": 9001,
+	}},
 	"security_protocol":         "SASL_PLAINTEXT",
 	"progress_topic":            "topic",
 	"ssl_certificate_authority": []interface{}{map[string]interface{}{"text": "key"}},
@@ -50,7 +54,8 @@ func TestResourceConnectionKafkaCreate(t *testing.T) {
 				\('b-1.hostname-1:9096'
 				USING SSH TUNNEL "materialize"."public"."ssh"
 				USING AWS PRIVATELINK "materialize"."public"."cert" 
-				\(PORT 9001, AVAILABILITY ZONE 'use1-az1'\)\),
+				\(PORT 9001, AVAILABILITY ZONE 'use1-az1'\)\)
+			AWS PRIVATELINK "materialize"."public"."cert" \(PORT 9001\),
 			SSH TUNNEL "materialize"."public"."tunnel",
 			SECURITY PROTOCOL = 'SASL_PLAINTEXT', PROGRESS TOPIC 'topic',
 			SSL CERTIFICATE AUTHORITY = 'key',

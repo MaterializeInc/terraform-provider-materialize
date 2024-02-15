@@ -114,6 +114,46 @@ func TestAccConnKafkaMultipleSsh_basic(t *testing.T) {
 	})
 }
 
+func TestAccConnKafkaAwsPrivatelink_basic(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaAwsPrivatelinkResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.privatelink_top_level"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.privatelink_top_level", "name", connectionName+"_top_level_privatelink"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.privatelink_top_level", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.privatelink_top_level", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.privatelink_top_level", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName+"_top_level_privatelink")),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.privatelink_top_level", "aws_privatelink.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.0.broker", "b-1.hostname-1:9096"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.0.target_group_port", "9001"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.0.privatelink_connection.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.0.privatelink_connection.0.name", "privatelink_conn"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.0.privatelink_connection.0.database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink", "kafka_broker.0.privatelink_connection.0.schema_name", "public"),
+				),
+			},
+			{
+				ResourceName:      "materialize_connection_kafka.privatelink_top_level",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+			{
+				ResourceName:      "materialize_connection_kafka.kafka_privatelink",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
 func TestAccConnKafka_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connectionName := fmt.Sprintf("old_%s", slug)
@@ -256,6 +296,39 @@ func testAccConnKafkaSshResource(connectionName string) string {
 			name = materialize_connection_ssh_tunnel.ssh_connection_2.name
 		}
 		security_protocol = "PLAINTEXT"
+		validate = false
+	}
+	`, connectionName)
+}
+
+// Top level privatelink
+func testAccConnKafkaAwsPrivatelinkResource(connectionName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "privatelink_top_level" {
+		name = "%[1]s_top_level_privatelink"
+		aws_privatelink {
+			privatelink_connection {
+				name          = "privatelink_conn"
+			  	database_name = "materialize"
+			  	schema_name   = "public"
+			}
+			privatelink_connection_port = 9092
+		}
+		validate = false
+	}
+
+	resource "materialize_connection_kafka" "kafka_privatelink" {
+		name = "%[1]s"
+		kafka_broker {
+			broker            = "b-1.hostname-1:9096"
+			target_group_port = "9001"
+			availability_zone = "use1-az2"
+			privatelink_connection {
+			  	name          = "privatelink_conn"
+			  	database_name = "materialize"
+			  	schema_name   = "public"
+			}
+		}
 		validate = false
 	}
 	`, connectionName)
