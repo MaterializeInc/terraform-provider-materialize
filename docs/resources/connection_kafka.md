@@ -80,7 +80,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 ### Optional
 
-- `aws_privatelink` (Block List, Max: 1) AWS PrivateLink configuration. This is an alternative to `kafka_broker`. (see [below for nested schema](#nestedblock--aws_privatelink))
+- `aws_privatelink` (Block List, Max: 1) AWS PrivateLink configuration. Conflicts with `kafka_broker`. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `kafka_broker` (Block List) The Kafka brokers configuration. (see [below for nested schema](#nestedblock--kafka_broker))
@@ -108,11 +108,8 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 Required:
 
+- `privatelink_connection` (Block List, Min: 1, Max: 1) The AWS PrivateLink connection name in Materialize. (see [below for nested schema](#nestedblock--aws_privatelink--privatelink_connection))
 - `privatelink_connection_port` (Number) The port of the AWS PrivateLink connection.
-
-Optional:
-
-- `privatelink_connection` (Block List, Max: 1) The AWS PrivateLink connection name in Materialize. (see [below for nested schema](#nestedblock--aws_privatelink--privatelink_connection))
 
 <a id="nestedblock--aws_privatelink--privatelink_connection"></a>
 ### Nested Schema for `aws_privatelink.privatelink_connection`

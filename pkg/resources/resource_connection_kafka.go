@@ -50,7 +50,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		},
 	},
 	"aws_privatelink": {
-		Description:   "AWS PrivateLink configuration. This is an alternative to `kafka_broker`.",
+		Description:   "AWS PrivateLink configuration. Conflicts with `kafka_broker`.",
 		Type:          schema.TypeList,
 		Optional:      true,
 		ConflictsWith: []string{"kafka_broker"},
@@ -60,7 +60,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		ForceNew:      true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", false),
+				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", true),
 				"privatelink_connection_port": {
 					Description: "The port of the AWS PrivateLink connection.",
 					Type:        schema.TypeInt,
