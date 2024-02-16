@@ -48,24 +48,19 @@ func GetAwsPrivateLinkConnectionStruct(v interface{}) awsPrivateLinkConnection {
 		return awsPrivateLinkConnection{}
 	}
 
-	plMap, ok := v.([]interface{})[0].(map[string]interface{})
+	b, ok := v.([]interface{})[0].(map[string]interface{})
 	if !ok {
 		return awsPrivateLinkConnection{}
 	}
 
 	privatelinkConnection := IdentifierSchemaStruct{}
-	if plMap["privatelink_connection"] != nil && len(plMap["privatelink_connection"].([]interface{})) > 0 {
-		privatelinkConnection = GetIdentifierSchemaStruct(plMap["privatelink_connection"].([]interface{}))
-	}
-
-	privatelinkPort, ok := plMap["privatelink_connection_port"].(int)
-	if !ok {
-		return awsPrivateLinkConnection{}
+	if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
+		privatelinkConnection = GetIdentifierSchemaStruct(b["privatelink_connection"].([]interface{}))
 	}
 
 	return awsPrivateLinkConnection{
+		PrivateLinkPort:       b["privatelink_connection_port"].(int),
 		PrivateLinkConnection: privatelinkConnection,
-		PrivateLinkPort:       privatelinkPort,
 	}
 }
 
