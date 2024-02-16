@@ -20,7 +20,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"comment":            CommentSchema(false),
 	"kafka_broker": {
-		Description:   "The Kafka brokers configuration.",
+		Description:   "The Kafka broker's configuration.",
 		Type:          schema.TypeList,
 		ConflictsWith: []string{"aws_privatelink"},
 		AtLeastOneOf:  []string{"kafka_broker", "aws_privatelink"},
