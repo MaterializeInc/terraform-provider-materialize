@@ -83,7 +83,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `aws_privatelink` (Block List, Max: 1) AWS PrivateLink configuration. Conflicts with `kafka_broker`. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `kafka_broker` (Block List) The Kafka brokers configuration. (see [below for nested schema](#nestedblock--kafka_broker))
+- `kafka_broker` (Block List) The Kafka broker's configuration. (see [below for nested schema](#nestedblock--kafka_broker))
 - `ownership_role` (String) The owernship role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
