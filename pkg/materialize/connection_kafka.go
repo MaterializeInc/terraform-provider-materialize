@@ -38,19 +38,46 @@ func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
 	return brokers
 }
 
+type awsPrivateLinkConnection struct {
+	PrivateLinkConnection IdentifierSchemaStruct
+	PrivateLinkPort       int
+}
+
+func GetAwsPrivateLinkConnectionStruct(v interface{}) awsPrivateLinkConnection {
+	if v == nil || len(v.([]interface{})) == 0 {
+		return awsPrivateLinkConnection{}
+	}
+
+	b, ok := v.([]interface{})[0].(map[string]interface{})
+	if !ok {
+		return awsPrivateLinkConnection{}
+	}
+
+	privatelinkConnection := IdentifierSchemaStruct{}
+	if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
+		privatelinkConnection = GetIdentifierSchemaStruct(b["privatelink_connection"].([]interface{}))
+	}
+
+	return awsPrivateLinkConnection{
+		PrivateLinkPort:       b["privatelink_connection_port"].(int),
+		PrivateLinkConnection: privatelinkConnection,
+	}
+}
+
 type ConnectionKafkaBuilder struct {
 	Connection
-	kafkaBrokers          []KafkaBroker
-	kafkaSecurityProtocol string
-	kafkaProgressTopic    string
-	kafkaSSLCa            ValueSecretStruct
-	kafkaSSLCert          ValueSecretStruct
-	kafkaSSLKey           IdentifierSchemaStruct
-	kafkaSASLMechanisms   string
-	kafkaSASLUsername     ValueSecretStruct
-	kafkaSASLPassword     IdentifierSchemaStruct
-	kafkaSSHTunnel        IdentifierSchemaStruct
-	validate              bool
+	kafkaBrokers             []KafkaBroker
+	kafkaSecurityProtocol    string
+	kafkaProgressTopic       string
+	kafkaSSLCa               ValueSecretStruct
+	kafkaSSLCert             ValueSecretStruct
+	kafkaSSLKey              IdentifierSchemaStruct
+	kafkaSASLMechanisms      string
+	kafkaSASLUsername        ValueSecretStruct
+	kafkaSASLPassword        IdentifierSchemaStruct
+	kafkaSSHTunnel           IdentifierSchemaStruct
+	validate                 bool
+	awsPrivateLinkConnection awsPrivateLinkConnection
 }
 
 func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionKafkaBuilder {
@@ -62,6 +89,11 @@ func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *Connection
 
 func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionKafkaBuilder {
 	b.kafkaBrokers = kafkaBrokers
+	return b
+}
+
+func (b *ConnectionKafkaBuilder) KafkaAwsPrivateLink(privatelink awsPrivateLinkConnection) *ConnectionKafkaBuilder {
+	b.awsPrivateLinkConnection = privatelink
 	return b
 }
 
@@ -117,7 +149,7 @@ func (b *ConnectionKafkaBuilder) Validate(validate bool) *ConnectionKafkaBuilder
 
 func (b *ConnectionKafkaBuilder) Create() error {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA`, b.QualifiedName()))
+	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.QualifiedName()))
 
 	var brokers = []string{}
 	for _, broker := range b.kafkaBrokers {
@@ -160,7 +192,17 @@ func (b *ConnectionKafkaBuilder) Create() error {
 		}
 		brokers = append(brokers, fb.String())
 	}
-	q.WriteString(fmt.Sprintf(` (BROKERS (%s)`, strings.Join(brokers[:], ", ")))
+	if len(brokers) > 0 {
+		q.WriteString(fmt.Sprintf(`BROKERS (%s)`, strings.Join(brokers[:], ", ")))
+	}
+
+	// AwsPrivateLinkConnection
+	if b.awsPrivateLinkConnection.PrivateLinkConnection.Name != "" {
+		q.WriteString(fmt.Sprintf(` AWS PRIVATELINK %s`, b.awsPrivateLinkConnection.PrivateLinkConnection.QualifiedName()))
+		if b.awsPrivateLinkConnection.PrivateLinkPort != 0 {
+			q.WriteString(fmt.Sprintf(` (PORT %d)`, b.awsPrivateLinkConnection.PrivateLinkPort))
+		}
+	}
 
 	if b.kafkaSSHTunnel.Name != "" {
 		q.WriteString(fmt.Sprintf(`, SSH TUNNEL %s`,

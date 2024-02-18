@@ -32,7 +32,7 @@ func TestAccMaterializedView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, viewName)),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "statement", "SELECT 1 AS id"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test", "ownership_role", "mz_system"),
-					resource.TestCheckResourceAttr("materialize_materialized_view.test", "create_sql", fmt.Sprintf(`CREATE MATERIALIZED VIEW "materialize"."public"."%s" IN CLUSTER [u1] WITH (ASSERT NOT NULL = "id", REFRESH = ON COMMIT) AS SELECT 1 AS "id"`, viewName)),
+					resource.TestCheckResourceAttr("materialize_materialized_view.test", "create_sql", fmt.Sprintf(`CREATE MATERIALIZED VIEW "materialize"."public"."%s" IN CLUSTER [u1] WITH (ASSERT NOT NULL = "id", REFRESH = ON COMMIT) AS SELECT 1 AS "id" AS OF 0`, viewName)),
 					testAccCheckMaterializedViewExists("materialize_materialized_view.test_role"),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "name", view2Name),
 					resource.TestCheckResourceAttr("materialize_materialized_view.test_role", "ownership_role", roleName),

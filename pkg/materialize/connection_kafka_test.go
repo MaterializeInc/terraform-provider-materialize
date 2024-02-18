@@ -225,3 +225,29 @@ func TestConnectionKafkaAwsPrivatelinkCreate(t *testing.T) {
 	})
 
 }
+
+func TestConnectionKafkaAwsPrivateLinkCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \( AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9000\), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`
+
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+		b := NewConnectionKafkaBuilder(db, connKafka)
+		awsPrivateLink := awsPrivateLinkConnection{
+			PrivateLinkConnection: IdentifierSchemaStruct{SchemaName: "schema", Name: "privatelink_conn", DatabaseName: "database"},
+			PrivateLinkPort:       9000,
+		}
+		b.KafkaAwsPrivateLink(awsPrivateLink)
+		b.KafkaSASLMechanisms("PLAIN")
+		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
+		b.KafkaSASLPassword(IdentifierSchemaStruct{SchemaName: "schema", Name: "password", DatabaseName: "database"})
+		b.Validate(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatalf("Failed to create Kafka connection with AWS PrivateLink: %v", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("Not all expectations were met: %v", err)
+		}
+	})
+}
