@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.6.5 - 2024-02-19
+
+### Features
+* Add support for top level PrivateLink connections to Kafka [#471](https://github.com/MaterializeInc/terraform-provider-materialize/pull/471)
+
 ## 0.6.4 - 2024-02-14
 
 ### Features
