@@ -32,6 +32,12 @@ func (b *SchemaBuilder) Create() error {
 	return b.ddl.exec(q)
 }
 
+func (b *SchemaBuilder) Rename(newName string) error {
+	old := b.QualifiedName()
+	new := QualifiedName(newName)
+	return b.ddl.rename(old, new)
+}
+
 func (b *SchemaBuilder) Drop() error {
 	qn := b.QualifiedName()
 	return b.ddl.drop(qn)
