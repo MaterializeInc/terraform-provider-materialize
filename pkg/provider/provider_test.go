@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -37,7 +38,15 @@ var testAccProviderFactories = map[string]func() (*schema.Provider, error){
 }
 
 func testAccPreCheck(t *testing.T) {
-
+	if os.Getenv("MZ_ENDPOINT") == "" {
+		t.Fatal("MZ_ENDPOINT must be set for acceptance tests")
+	}
+	if os.Getenv("MZ_PASSWORD") == "" {
+		t.Fatal("MZ_PASSWORD must be set for acceptance tests")
+	}
+	if os.Getenv("MZ_CLOUD_ENDPOINT") == "" {
+		t.Fatal("MZ_CLOUD_ENDPOINT must be set for acceptance tests")
+	}
 }
 
 func testAccAddColumnComment(object materialize.MaterializeObject, column, comment string) resource.TestCheckFunc {

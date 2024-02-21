@@ -243,3 +243,23 @@ func (c *FronteggClient) RefreshToken() error {
 
 	return nil
 }
+
+// Helper function to handle API errors
+func HandleApiError(resp *http.Response) error {
+	responseBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+	return fmt.Errorf("API error: %s - %s", resp.Status, string(responseBody))
+}
+
+// Helper function to perform HTTP requests
+func FronteggRequest(ctx context.Context, client *FronteggClient, method, url string, body []byte) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	return client.HTTPClient.Do(req)
+}
