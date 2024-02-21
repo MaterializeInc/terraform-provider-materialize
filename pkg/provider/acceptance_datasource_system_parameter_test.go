@@ -19,6 +19,12 @@ func TestAccDatasourceSystemParameters_basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.all", "parameters.0.name"),
 					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.all", "parameters.0.setting"),
 					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.all", "parameters.0.description"),
+					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.max_tables", "parameters.#"),
+					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.max_tables", "parameters.0.name"),
+					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.max_tables", "parameters.0.setting"),
+					resource.TestCheckResourceAttrSet("data.materialize_system_parameter.max_tables", "parameters.0.description"),
+					resource.TestCheckResourceAttr("data.materialize_system_parameter.max_tables", "parameters.0.name", "max_tables"),
+					resource.TestCheckResourceAttr("data.materialize_system_parameter.max_tables", "parameters.0.description", "max_tables"),
 				),
 			},
 		},
@@ -27,6 +33,11 @@ func TestAccDatasourceSystemParameters_basic(t *testing.T) {
 
 func testAccDatasourceSystemParameters() string {
 	return `
-data "materialize_system_parameter" "all" {}
+		data "materialize_system_parameter" "all" {}
+
+		data "materialize_system_parameter" "max_tables" {
+			name = "max_tables"
+		}
+
 `
 }

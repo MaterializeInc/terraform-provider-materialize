@@ -34,7 +34,7 @@ func TestSystemParametersDatasource(t *testing.T) {
 
 		// Verify the results
 		parameters, _ := d.Get("parameters").([]interface{})
-		r.Len(parameters, 1) // Expecting a single parameter result
+		r.Len(parameters, 1)
 
 		// Perform more detailed checks on the result if necessary
 		result := parameters[0].(map[string]interface{})

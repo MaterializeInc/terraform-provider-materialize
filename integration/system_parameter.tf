@@ -9,3 +9,7 @@ resource "materialize_system_parameter" "max_roles" {
 }
 
 data "materialize_system_parameter" "all" {}
+
+data "materialize_system_parameter" "max_tables" {
+  name = "max_tables"
+}

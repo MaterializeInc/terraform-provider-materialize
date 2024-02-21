@@ -2,7 +2,9 @@ package datasources
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,6 +14,11 @@ func SystemParameter() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: systemParameterRead,
 		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The name of the specific system parameter to fetch.",
+			},
 			"parameters": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -49,32 +56,55 @@ func systemParameterRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	conn := metaDb
 
-	rows, err := conn.Query("SHOW ALL;")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer rows.Close()
-
+	paramName, nameExists := d.GetOk("name")
+	var query string
 	var parameters []map[string]interface{}
 
-	for rows.Next() {
-		var name, setting, description string
-		if err := rows.Scan(&name, &setting, &description); err != nil {
+	if nameExists {
+		query = fmt.Sprintf("SHOW %s;", materialize.QuoteIdentifier(paramName.(string)))
+
+		row := conn.QueryRow(query)
+		var setting string
+		if err := row.Scan(&setting); err != nil {
 			return diag.FromErr(err)
 		}
 
+		// Since we're querying a specific parameter, construct the parameter slice manually
 		param := make(map[string]interface{})
-		param["name"] = name
+		param["name"] = paramName
 		param["setting"] = setting
-		param["description"] = description
+		param["description"] = paramName
 
 		parameters = append(parameters, param)
+	} else {
+		query = "SHOW ALL;"
+
+		rows, err := conn.Query(query)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var name, setting, description string
+			if err := rows.Scan(&name, &setting, &description); err != nil {
+				return diag.FromErr(err)
+			}
+
+			param := make(map[string]interface{})
+			param["name"] = name
+			param["setting"] = setting
+			param["description"] = description
+
+			parameters = append(parameters, param)
+		}
+
+		if err := rows.Err(); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	if err := rows.Err(); err != nil {
-		return diag.FromErr(err)
-	}
-
+	// Set the parameters and region regardless of query type
 	if err := d.Set("parameters", parameters); err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,7 +113,11 @@ func systemParameterRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(string(region), "system_parameter"))
+	idSuffix := "all"
+	if nameExists {
+		idSuffix = paramName.(string)
+	}
+	d.SetId(utils.TransformIdWithRegion(string(region), "system_parameter_"+idSuffix))
 
 	return diags
 }
