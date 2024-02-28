@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	UsersApiPath = "/identity/resources/users/v2"
+	UsersApiPathV1 = "/identity/resources/users/v1"
+	UsersApiPathV2 = "/identity/resources/users/v2"
 )
 
 // UserRequest represents the request payload for creating or updating a user.
@@ -22,12 +23,12 @@ type UserRequest struct {
 
 // UserResponse represents the structure of a user response from Frontegg APIs.
 type UserResponse struct {
-	ID           string   `json:"id"`
-	Email        string   `json:"email"`
-	AuthProvider string   `json:"authProvider"`
-	Roles        []string `json:"roles"`
-	Verified     bool     `json:"verified"`
-	Metadata     string   `json:"metadata"`
+	ID                string `json:"id"`
+	Email             string `json:"email"`
+	ProfilePictureURL string `json:"profilePictureUrl"`
+	Verified          bool   `json:"verified"`
+	Metadata          string `json:"metadata"`
+	Provider          string `json:"provider"`
 }
 
 // CreateUser creates a new user in Frontegg.
@@ -39,7 +40,7 @@ func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest
 		return userResponse, err
 	}
 
-	url := fmt.Sprintf("%s%s", client.Endpoint, UsersApiPath)
+	url := fmt.Sprintf("%s%s", client.Endpoint, UsersApiPathV2)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return userResponse, fmt.Errorf("creating request failed: %w", err)
@@ -53,7 +54,7 @@ func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
 		return userResponse, clients.HandleApiError(resp)
 	}
 
@@ -68,7 +69,7 @@ func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest
 func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string) (UserResponse, error) {
 	var userResponse UserResponse
 
-	url := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPath, userID)
+	url := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -95,7 +96,7 @@ func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string
 
 // DeleteUser deletes a user from Frontegg.
 func DeleteUser(ctx context.Context, client *clients.FronteggClient, userID string) error {
-	url := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPath, userID)
+	url := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
 	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
 	if err != nil {
 		return fmt.Errorf("creating request failed: %w", err)

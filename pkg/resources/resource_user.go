@@ -1,12 +1,11 @@
 package resources
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
+	"strings"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -54,22 +53,6 @@ func User() *schema.Resource {
 	}
 }
 
-// CreateUserRequest is used to serialize the request body for creating a new user.
-type CreateUserRequest struct {
-	Email   string   `json:"email"`
-	RoleIDs []string `json:"roleIds"`
-}
-
-// CreatedUser represents the expected structure of a user creation response.
-type CreatedUser struct {
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	ProfilePictureURL string `json:"profilePictureUrl"`
-	Verified          bool   `json:"verified"`
-	Metadata          string `json:"metadata"`
-	Provider          string `json:"provider"`
-}
-
 // userCreate is the Terraform resource create function for a Frontegg user.
 func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	providerMeta, err := utils.GetProviderMeta(meta)
@@ -103,43 +86,22 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		}
 	}
 
-	createUserRequest := CreateUserRequest{
+	userRequest := frontegg.UserRequest{
 		Email:   email,
 		RoleIDs: roleIDs,
 	}
 
-	requestBody, err := json.Marshal(createUserRequest)
+	userResponse, err := frontegg.CreateUser(ctx, client, userRequest)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error marshaling create user request: %s", err))
+		return diag.Errorf("Failed to create user: %s", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/identity/resources/users/v2", client.Endpoint), bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating request: %s", err))
-	}
+	// Set the Terraform resource ID and other properties from the response
+	d.SetId(userResponse.ID)
+	d.Set("auth_provider", userResponse.Provider)
+	d.Set("verified", userResponse.Verified)
+	d.Set("metadata", userResponse.Metadata)
 
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error sending request: %s", err))
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return diag.FromErr(fmt.Errorf("error creating user: status %d", resp.StatusCode))
-	}
-
-	var createdUser CreatedUser
-	if err := json.NewDecoder(resp.Body).Decode(&createdUser); err != nil {
-		return diag.FromErr(fmt.Errorf("error decoding response: %s", err))
-	}
-
-	d.Set("verified", createdUser.Verified)
-	d.Set("metadata", createdUser.Metadata)
-	d.Set("auth_provider", createdUser.Provider)
-	d.SetId(createdUser.ID)
 	return nil
 }
 
@@ -152,41 +114,19 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	client := providerMeta.Frontegg
 	userID := d.Id()
 
-	// Construct the API request
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/identity/resources/users/v1/%s", client.Endpoint, userID), nil)
+	userResponse, err := frontegg.ReadUser(ctx, client, userID)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating request: %s", err))
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Send the request to the Frontegg API
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error reading user: %s", err))
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusOK {
-		// If the user is not found, remove it from the Terraform state
-		if resp.StatusCode == http.StatusNotFound {
+		if strings.Contains(err.Error(), "not found") {
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("API error: %s", resp.Status)
+		return diag.FromErr(err)
 	}
 
-	// Parse the response body
-	var user CreatedUser
-	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		return diag.FromErr(fmt.Errorf("error decoding user response: %s", err))
-	}
-
-	// Update the Terraform state with the fetched user data
-	d.Set("email", user.Email)
-	d.Set("verified", user.Verified)
-	d.Set("metadata", user.Metadata)
-	d.Set("auth_provider", user.Provider)
+	d.Set("email", userResponse.Email)
+	d.Set("auth_provider", userResponse.Provider)
+	d.Set("verified", userResponse.Verified)
+	d.Set("metadata", userResponse.Metadata)
 
 	return nil
 }
@@ -203,23 +143,9 @@ func userDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	client := providerMeta.Frontegg
 	userID := d.Id()
 
-	// Send the request to the Frontegg API to delete the user.
-	req, err := http.NewRequestWithContext(ctx, "DELETE", fmt.Sprintf("%s/identity/resources/users/v1/%s", client.Endpoint, userID), nil)
+	err = frontegg.DeleteUser(ctx, client, userID)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating request to delete user: %s", err))
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Perform the request
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error sending request to delete user: %s", err))
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusOK {
-		return diag.FromErr(fmt.Errorf("error deleting user: status %d", resp.StatusCode))
+		return diag.FromErr(err)
 	}
 
 	// Remove the user from the Terraform state

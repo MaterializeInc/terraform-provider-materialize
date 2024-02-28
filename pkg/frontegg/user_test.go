@@ -24,10 +24,9 @@ func setupUserMockServer() *httptest.Server {
 			userResponse := UserResponse{
 				ID:       "test-user-id",
 				Email:    userRequest.Email,
-				Roles:    userRequest.RoleIDs,
 				Verified: true,
 			}
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusCreated)
 			json.NewEncoder(w).Encode(userResponse)
 			return
 		}
@@ -35,14 +34,13 @@ func setupUserMockServer() *httptest.Server {
 	})
 
 	// Endpoint for fetching a user
-	handler.HandleFunc("/identity/resources/users/v2/", func(w http.ResponseWriter, r *http.Request) {
+	handler.HandleFunc("/identity/resources/users/v1/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
-			userID := strings.TrimPrefix(r.URL.Path, "/identity/resources/users/v2/")
+			userID := strings.TrimPrefix(r.URL.Path, "/identity/resources/users/v1/")
 			if userID == "test-user-id" {
 				userResponse := UserResponse{
 					ID:       userID,
 					Email:    "test@example.com",
-					Roles:    []string{"role1", "role2"},
 					Verified: true,
 				}
 				w.WriteHeader(http.StatusOK)
