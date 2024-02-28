@@ -28,9 +28,9 @@ Configure the provider by adding the following block to your Terraform project:
 
 ```hcl
 provider "materialize" {
-  password = "materialize_password"
-  region   = "aws/us-east-1"
-  database = "materialize"
+  password       = "materialize_password"
+  default_region = "aws/us-east-1"
+  database       = "materialize"
 }
 ```
 
