@@ -1,73 +1,130 @@
 package provider
 
-// func TestAccUser_basic(t *testing.T) {
-// 	resourceName := "materialize_user.test"
-// 	email := "test@example.com"
-// 	role := "Member" // Assuming this is a valid role in your system
+import (
+	"context"
+	"fmt"
+	"testing"
+	"time"
 
-// 	resource.ParallelTest(t, resource.TestCase{
-// 		PreCheck:          func() { testAccPreCheck(t) },
-// 		ProviderFactories: testAccProviderFactories,
-// 		CheckDestroy:      testAccCheckUserDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccUserConfigBasic(email, role),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr(resourceName, "email", email),
-// 					resource.TestCheckResourceAttr(resourceName, "roles.0", role),
-// 					resource.TestCheckResourceAttrSet(resourceName, "auth_provider"),
-// 					resource.TestCheckResourceAttrSet(resourceName, "verified"),
-// 					resource.TestCheckResourceAttrSet(resourceName, "metadata"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+)
 
-// func testAccUserConfigBasic(email, role string) string {
-// 	return fmt.Sprintf(`
-//         resource "materialize_user" "test" {
-//             email = "%s"
-//             roles = ["%s"]
-//         }
-//     `, email, role)
-// }
+func TestAccUser_basic(t *testing.T) {
+	email := fmt.Sprintf("test+%d@example.com", time.Now().UnixNano())
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccUserConfig(email, "Member"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckUserExists("materialize_user.example_user", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "false"),
+				),
+			},
+		},
+	})
+}
 
-// func testAccCheckUserExists(resourceName string) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		meta := testAccProvider.Meta()
-// 		providerMeta, _ := utils.GetProviderMeta(meta)
-// 		client := providerMeta.Frontegg
-// 		rs, ok := s.RootModule().Resources[resourceName]
-// 		if !ok {
-// 			return fmt.Errorf("Not found: %s", resourceName)
-// 		}
+func TestAccUser_disappears(t *testing.T) {
+	email := fmt.Sprintf("test+%d@example.com", time.Now().UnixNano())
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccUserConfig(email, "Member"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckUserExists("materialize_user.example_user", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
+					testAccCheckUserDestroy,
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
 
-// 		userID := rs.Primary.ID
-// 		_, err := frontegg.ReadUser(context.Background(), client, userID)
-// 		if err != nil {
-// 			return fmt.Errorf("Error fetching user with ID [%s]: %s", userID, err)
-// 		}
+func TestAccUser_updateRole(t *testing.T) {
+	email := fmt.Sprintf("test+%d@example.com", time.Now().UnixNano())
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccUserConfig(email, "Member"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckUserExists("materialize_user.example_user", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "false"),
+				),
+			},
+			{
+				Config: testAccUserConfig(email, "Admin"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckUserExists("materialize_user.example_user", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Admin"),
+				),
+			},
+		},
+	})
+}
 
-// 		return nil
-// 	}
-// }
+func testAccUserConfig(email, role string) string {
+	return fmt.Sprintf(`
+resource "materialize_user" "example_user" {
+  email = "%s"
+  roles = ["%s"]
+}
+`, email, role)
+}
 
-// func testAccCheckUserDestroy(s *terraform.State) error {
-// 	for _, rs := range s.RootModule().Resources {
-// 		if rs.Type != "materialize_user" {
-// 			continue
-// 		}
+func testAccCheckUserExists(resourceName, email string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		meta := testAccProvider.Meta()
+		providerMeta, _ := utils.GetProviderMeta(meta)
+		client := providerMeta.Frontegg
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
 
-// 		meta := testAccProvider.Meta()
-// 		providerMeta, _ := utils.GetProviderMeta(meta)
-// 		client := providerMeta.Frontegg
+		userID := rs.Primary.ID
+		_, err := frontegg.ReadUser(context.Background(), client, userID)
+		if err != nil {
+			return fmt.Errorf("Error fetching user with ID [%s]: %s", userID, err)
+		}
 
-// 		_, err := frontegg.ReadUser(context.Background(), client, rs.Primary.ID)
-// 		if err == nil {
-// 			return fmt.Errorf("User %s still exists", rs.Primary.ID)
-// 		}
-// 	}
+		return nil
+	}
+}
 
-// 	return nil
-// }
+func testAccCheckUserDestroy(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "materialize_user" {
+			continue
+		}
+
+		meta := testAccProvider.Meta()
+		providerMeta, _ := utils.GetProviderMeta(meta)
+		client := providerMeta.Frontegg
+
+		_, err := frontegg.ReadUser(context.Background(), client, rs.Primary.ID)
+		if err == nil {
+			return fmt.Errorf("User with ID [%s] still exists", rs.Primary.ID)
+		}
+	}
+
+	return nil
+}
