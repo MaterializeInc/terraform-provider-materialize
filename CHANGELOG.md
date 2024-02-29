@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.6.6 - 2024-02-29
+
+### Features
+* Allow single system parameter data sources [#474](https://github.com/MaterializeInc/terraform-provider-materialize/pull/474)
+* Allow schema rename [#450](https://github.com/MaterializeInc/terraform-provider-materialize/pull/450)
+
+### Misc
+* Acceptance tests for user resource [#477](https://github.com/MaterializeInc/terraform-provider-materialize/pull/477)
+* Dependabot updates: [#476](https://github.com/MaterializeInc/terraform-provider-materialize/pull/476)
+
 ## 0.6.5 - 2024-02-19
 
 ### Features
