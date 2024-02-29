@@ -10,7 +10,7 @@
 
 ### Misc
 * Acceptance tests for user resource [#477](https://github.com/MaterializeInc/terraform-provider-materialize/pull/477)
-* Dependabot updates: [#476](https://github.com/MaterializeInc/terraform-provider-materialize/pull/476)
+* Dependency updates: [#476](https://github.com/MaterializeInc/terraform-provider-materialize/pull/476)
 
 ## 0.6.5 - 2024-02-19
 
