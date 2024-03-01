@@ -376,9 +376,9 @@ resource "materialize_connection_mysql" "mysql_connection_with_secret" {
 }
 
 resource "materialize_connection_mysql" "mysql_ssh_tunnel_connection" {
-  name     = "mysql_ssh_tunnel_connection"
-  host     = "mysql"
-  port     = 3306
+  name = "mysql_ssh_tunnel_connection"
+  host = "mysql"
+  port = 3306
   user {
     text = "mysqluser"
   }
@@ -394,9 +394,9 @@ resource "materialize_connection_mysql" "mysql_ssh_tunnel_connection" {
 }
 
 resource "materialize_connection_mysql" "mysql_ssl_connection" {
-  name     = "mysql_ssl_connection"
-  host     = "mysql"
-  port     = 3306
+  name = "mysql_ssl_connection"
+  host = "mysql"
+  port = 3306
   user {
     text = "mysqluser"
   }
