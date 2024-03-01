@@ -42,9 +42,9 @@ resource "materialize_connection_mysql" "example_mysql_connection" {
 
 # Create a MySQL Connection with SSH tunnel & plain text user
 resource "materialize_connection_mysql" "example_mysql_connection" {
-  name     = "example_mysql_connection"
-  host     = "instance.foo000.us-west-1.rds.amazonaws.com"
-  port     = 3306
+  name = "example_mysql_connection"
+  host = "instance.foo000.us-west-1.rds.amazonaws.com"
+  port = 3306
 
   user {
     text = "my_user"
