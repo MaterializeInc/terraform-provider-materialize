@@ -79,6 +79,7 @@ resource "materialize_connection_mysql" "example_mysql_connection" {
 
 ### Optional
 
+- `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the MySQL database. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
@@ -118,6 +119,19 @@ Optional:
 - `database_name` (String) The user database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The user schema name. Defaults to `public`.
 
+
+
+<a id="nestedblock--aws_privatelink"></a>
+### Nested Schema for `aws_privatelink`
+
+Required:
+
+- `name` (String) The aws_privatelink name.
+
+Optional:
+
+- `database_name` (String) The aws_privatelink database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The aws_privatelink schema name. Defaults to `public`.
 
 
 <a id="nestedblock--password"></a>

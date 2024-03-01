@@ -42,9 +42,10 @@ var connectionMySQLSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"validate":       ValidateConnectionSchema(),
-	"ownership_role": OwnershipRoleSchema(),
-	"region":         RegionSchema(),
+	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the MySQL database.", false),
+	"validate":        ValidateConnectionSchema(),
+	"ownership_role":  OwnershipRoleSchema(),
+	"region":          RegionSchema(),
 }
 
 func ConnectionMySQL() *schema.Resource {
@@ -116,6 +117,11 @@ func connectionMySQLCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.MySQLSSHTunnel(conn)
+	}
+
+	if v, ok := d.GetOk("aws_privatelink"); ok {
+		conn := materialize.GetIdentifierSchemaStruct(v)
+		b.MySQLAWSPrivateLink(conn)
 	}
 
 	if v, ok := d.GetOk("validate"); ok {

@@ -9,17 +9,18 @@ import (
 
 type ConnectionMySQLBuilder struct {
 	Connection
-	connectionType string
-	mysqlHost      string
-	mysqlPort      int
-	mysqlUser      ValueSecretStruct
-	mysqlPassword  IdentifierSchemaStruct
-	mysqlSSHTunnel IdentifierSchemaStruct
-	mysqlSSLMode   string
-	mysqlSSLCa     ValueSecretStruct
-	mysqlSSLCert   ValueSecretStruct
-	mysqlSSLKey    IdentifierSchemaStruct
-	validate       bool
+	connectionType      string
+	mysqlHost           string
+	mysqlPort           int
+	mysqlUser           ValueSecretStruct
+	mysqlPassword       IdentifierSchemaStruct
+	mysqlSSHTunnel      IdentifierSchemaStruct
+	mysqlSSLMode        string
+	mysqlSSLCa          ValueSecretStruct
+	mysqlSSLCert        ValueSecretStruct
+	mysqlSSLKey         IdentifierSchemaStruct
+	mysqlAWSPrivateLink IdentifierSchemaStruct
+	validate            bool
 }
 
 func NewConnectionMySQLBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionMySQLBuilder {
@@ -79,6 +80,11 @@ func (b *ConnectionMySQLBuilder) MySQLSSLKey(mysqlSSLKey IdentifierSchemaStruct)
 	return b
 }
 
+func (b *ConnectionMySQLBuilder) MySQLAWSPrivateLink(mysqlAWSPrivateLink IdentifierSchemaStruct) *ConnectionMySQLBuilder {
+	b.mysqlAWSPrivateLink = mysqlAWSPrivateLink
+	return b
+}
+
 func (b *ConnectionMySQLBuilder) Validate(validate bool) *ConnectionMySQLBuilder {
 	b.validate = validate
 	return b
@@ -116,6 +122,9 @@ func (b *ConnectionMySQLBuilder) Create() error {
 	}
 	if b.mysqlSSLKey.Name != "" {
 		q.WriteString(fmt.Sprintf(`, SSL KEY SECRET %s`, b.mysqlSSLKey.QualifiedName()))
+	}
+	if b.mysqlAWSPrivateLink.Name != "" {
+		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.mysqlAWSPrivateLink.QualifiedName()))
 	}
 
 	q.WriteString(`)`)

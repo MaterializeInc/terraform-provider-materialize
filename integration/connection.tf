@@ -356,6 +356,29 @@ resource "materialize_connection_mysql" "mysql_connection" {
   }
 }
 
+resource "materialize_connection_mysql" "mysql_connection_aws_pl" {
+  name    = "mysql_connection_aws_pl"
+  comment = "connection mysql comment with aws privatelink"
+
+  host = "mysql"
+  port = 3306
+  user {
+    text = "mysqluser"
+  }
+  password {
+    name          = materialize_secret.mysql_password.name
+    database_name = materialize_secret.mysql_password.database_name
+    schema_name   = materialize_secret.mysql_password.schema_name
+  }
+
+  aws_privatelink {
+    name          = "privatelink_conn"
+    database_name = "materialize"
+    schema_name   = "public"
+  }
+  validate = false
+}
+
 resource "materialize_connection_mysql" "mysql_connection_with_secret" {
   name = "mysql-connection-with-secret"
   host = "mysql"
