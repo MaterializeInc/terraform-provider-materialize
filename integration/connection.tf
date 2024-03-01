@@ -340,12 +340,100 @@ resource "materialize_connection_postgres" "postgres_ssl_connection" {
   validate = false
 }
 
+resource "materialize_connection_mysql" "mysql_connection" {
+  name    = "mysql_connection"
+  comment = "connection mysql comment"
+
+  host = "mysql"
+  port = 3306
+  user {
+    text = "mysqluser"
+  }
+  password {
+    name          = materialize_secret.mysql_password.name
+    database_name = materialize_secret.mysql_password.database_name
+    schema_name   = materialize_secret.mysql_password.schema_name
+  }
+}
+
+resource "materialize_connection_mysql" "mysql_connection_with_secret" {
+  name = "mysql-connection-with-secret"
+  host = "mysql"
+  port = 3306
+  user {
+    secret {
+      name          = materialize_secret.mysql_user.name
+      database_name = materialize_secret.mysql_user.database_name
+      schema_name   = materialize_secret.mysql_user.schema_name
+    }
+  }
+  password {
+    name          = materialize_secret.mysql_password.name
+    database_name = materialize_secret.mysql_password.database_name
+    schema_name   = materialize_secret.mysql_password.schema_name
+  }
+  validate = false
+}
+
+resource "materialize_connection_mysql" "mysql_ssh_tunnel_connection" {
+  name     = "mysql_ssh_tunnel_connection"
+  host     = "mysql"
+  port     = 3306
+  user {
+    text = "mysqluser"
+  }
+  password {
+    name          = materialize_secret.mysql_password.name
+    database_name = materialize_secret.mysql_password.database_name
+    schema_name   = materialize_secret.mysql_password.schema_name
+  }
+  ssh_tunnel {
+    name = materialize_connection_ssh_tunnel.ssh_connection.name
+  }
+  validate = false
+}
+
+resource "materialize_connection_mysql" "mysql_ssl_connection" {
+  name     = "mysql_ssl_connection"
+  host     = "mysql"
+  port     = 3306
+  user {
+    text = "mysqluser"
+  }
+  password {
+    name          = materialize_secret.mysql_password.name
+    database_name = materialize_secret.mysql_password.database_name
+    schema_name   = materialize_secret.mysql_password.schema_name
+  }
+  ssl_mode = "required"
+  ssl_certificate {
+    text = "client_certificate_content"
+  }
+  ssl_key {
+    name          = materialize_secret.mysql_password.name
+    database_name = materialize_secret.mysql_password.database_name
+    schema_name   = materialize_secret.mysql_password.schema_name
+  }
+  ssl_certificate_authority {
+    text = "ca_certificate_content"
+  }
+  validate = false
+}
+
 resource "materialize_connection_grant" "connection_grant_usage" {
   role_name       = materialize_role.role_1.name
   privilege       = "USAGE"
   connection_name = materialize_connection_postgres.postgres_connection.name
   schema_name     = materialize_connection_postgres.postgres_connection.schema_name
   database_name   = materialize_connection_postgres.postgres_connection.database_name
+}
+
+resource "materialize_connection_grant" "mysql_connection_grant_usage" {
+  role_name       = materialize_role.role_1.name
+  privilege       = "USAGE"
+  connection_name = materialize_connection_mysql.mysql_connection.name
+  schema_name     = materialize_connection_mysql.mysql_connection.schema_name
+  database_name   = materialize_connection_mysql.mysql_connection.database_name
 }
 
 resource "materialize_connection_grant_default_privilege" "example" {

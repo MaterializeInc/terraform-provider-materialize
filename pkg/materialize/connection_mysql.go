@@ -108,6 +108,9 @@ func (b *ConnectionMySQLBuilder) Create() error {
 	if b.mysqlSSLCa.Secret.Name != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.mysqlSSLCa.Secret.QualifiedName()))
 	}
+	if b.mysqlSSLCert.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE  %s`, QuoteString(b.mysqlSSLCert.Text)))
+	}
 	if b.mysqlSSLCert.Secret.Name != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE SECRET %s`, b.mysqlSSLCert.Secret.QualifiedName()))
 	}
