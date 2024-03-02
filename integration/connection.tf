@@ -428,7 +428,7 @@ resource "materialize_connection_mysql" "mysql_ssl_connection" {
     database_name = materialize_secret.mysql_password.database_name
     schema_name   = materialize_secret.mysql_password.schema_name
   }
-  ssl_mode = "required"
+  ssl_mode = "verify-identity"
   ssl_certificate {
     text = "client_certificate_content"
   }

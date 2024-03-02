@@ -3,12 +3,14 @@ package resources
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var connectionMySQLSchema = map[string]*schema.Schema{
@@ -37,10 +39,11 @@ var connectionMySQLSchema = map[string]*schema.Schema{
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the MySQL database.", false),
 	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the MySQL database.", false),
 	"ssl_mode": {
-		Description: "The SSL mode for the MySQL database.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
+		Description:  "The SSL mode for the MySQL database. Allowed values are " + strings.Join(mysqlSSLMode, ", ") + ".",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(mysqlSSLMode, true),
 	},
 	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the MySQL database.", false),
 	"validate":        ValidateConnectionSchema(),

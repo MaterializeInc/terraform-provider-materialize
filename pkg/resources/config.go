@@ -100,3 +100,10 @@ var scim2ConfigSources = []string{
 	"azure-ad",
 	"other",
 }
+
+var mysqlSSLMode = []string{
+	"disabled",
+	"required",
+	"verify-ca",
+	"verify-identity",
+}

@@ -91,7 +91,7 @@ resource "materialize_connection_mysql" "example_mysql_connection" {
 - `ssl_certificate` (Block List, Max: 1) The client certificate for the MySQL database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the MySQL database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the MySQL database. (see [below for nested schema](#nestedblock--ssl_key))
-- `ssl_mode` (String) The SSL mode for the MySQL database.
+- `ssl_mode` (String) The SSL mode for the MySQL database. Allowed values are disabled, required, verify-ca, verify-identity.
 - `validate` (Boolean) **Private Preview** If the connection should wait for validation.
 
 ### Read-Only
