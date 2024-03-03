@@ -76,6 +76,20 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
 
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    volumes:
+      - ./integration/mysql:/docker-entrypoint-initdb.d
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-c2VjcmV0Cg==}
+      MYSQL_USER: ${MYSQL_USER:-mysqluser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-c2VjcmV0Cg==}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-shop}
+
   provider:
     build:
       context: .

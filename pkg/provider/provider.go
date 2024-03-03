@@ -73,6 +73,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_connection_aws_privatelink":           resources.ConnectionAwsPrivatelink(),
 			"materialize_connection_confluent_schema_registry": resources.ConnectionConfluentSchemaRegistry(),
 			"materialize_connection_kafka":                     resources.ConnectionKafka(),
+			"materialize_connection_mysql":                     resources.ConnectionMySQL(),
 			"materialize_connection_postgres":                  resources.ConnectionPostgres(),
 			"materialize_connection_ssh_tunnel":                resources.ConnectionSshTunnel(),
 			"materialize_connection_grant":                     resources.GrantConnection(),

@@ -11,6 +11,20 @@ resource "materialize_secret" "postgres_password" {
   value         = "c2VjcmV0Cg=="
 }
 
+resource "materialize_secret" "mysql_password" {
+  name          = "mysql__pass"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  value         = "c2VjcmV0Cg=="
+}
+
+resource "materialize_secret" "mysql_user" {
+  name          = "mysql_user"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  value         = "repluser"
+}
+
 resource "materialize_secret" "kafka_password" {
   name          = "kafka_pass"
   schema_name   = materialize_schema.schema.name
