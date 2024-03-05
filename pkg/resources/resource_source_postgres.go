@@ -300,7 +300,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	return sourceRead(ctx, d, meta)
+	return sourcePostgresRead(ctx, d, meta)
 }
 
 func diffTextColumns(arr1, arr2 []interface{}) []string {
