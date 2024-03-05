@@ -110,20 +110,6 @@ resource "materialize_source_postgres" "example_source_postgres" {
   }
 }
 
-resource "materialize_source_postgres" "example_source_postgres_schema" {
-  name         = "source_postgres_schema"
-  cluster_name = materialize_cluster.cluster_source.name
-  publication  = "mz_source"
-  schema       = ["PUBLIC"]
-
-  postgres_connection {
-    name          = materialize_connection_postgres.postgres_connection.name
-    schema_name   = materialize_connection_postgres.postgres_connection.schema_name
-    database_name = materialize_connection_postgres.postgres_connection.database_name
-  }
-
-}
-
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name         = "source_kafka_text"
   comment      = "source kafka comment"
