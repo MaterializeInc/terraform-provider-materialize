@@ -24,9 +24,9 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", nameSpace+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "database_name", nameSpace+"_database"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "schema_name", nameSpace+"_schema"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "qualified_sql_name", fmt.Sprintf(`"%[1]s_database"."%[1]s_schema"."%[1]s_source"`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%[1]s_source"`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", "shop.mysql_table1"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.alias", fmt.Sprintf(`%s_mysql_table1`, nameSpace)),
@@ -34,7 +34,8 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", ""),
-					// Include additional checks for MySQL-specific attributes if necessary
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "cluster_name", "quickstart"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "size", "3xsmall"),
 				),
 			},
 			{
@@ -47,29 +48,29 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 }
 
 // TODO: Fix this test
-// func TestAccSourceMySQL_disappears(t *testing.T) {
-// 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-// 	resource.ParallelTest(t, resource.TestCase{
-// 		PreCheck:          func() { testAccPreCheck(t) },
-// 		ProviderFactories: testAccProviderFactories,
-// 		CheckDestroy:      testAccCheckAllSourceMySQLDestroyed,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccSourceMySQLBasicResource(sourceName),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
-// 					testAccCheckObjectDisappears(
-// 						materialize.MaterializeObject{
-// 							ObjectType: "SOURCE",
-// 							Name:       sourceName,
-// 						},
-// 					),
-// 				),
-// 				ExpectNonEmptyPlan: true,
-// 			},
-// 		},
-// 	})
-// }
+func TestAccSourceMySQL_disappears(t *testing.T) {
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllSourceMySQLDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceMySQLBasicResource(sourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
+					testAccCheckObjectDisappears(
+						materialize.MaterializeObject{
+							ObjectType: "SOURCE",
+							Name:       sourceName + "_source",
+						},
+					),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
 
 func TestAccSourceMySQL_update(t *testing.T) {
 	initialName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -122,20 +123,8 @@ func testAccSourceMySQLBasicResource(nameSpace string) string {
 		comment  = "object comment"
 	}
 
-	resource "materialize_database" "test" {
-		name = "%[1]s_database"
-	}
-
-	resource "materialize_schema" "test" {
-		name = "%[1]s_schema"
-		database_name = materialize_database.test.name
-	}
-
 	resource "materialize_source_mysql" "test" {
 		name = "%[1]s_source"
-		schema_name   = materialize_schema.test.name
-		database_name = materialize_database.test.name
-
 		cluster_name = "quickstart"
 
 		mysql_connection {
