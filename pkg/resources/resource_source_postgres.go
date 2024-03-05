@@ -7,7 +7,6 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -138,7 +137,7 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	deps, err := materialize.ListDependencies(meta.(*sqlx.DB), utils.ExtractId(i), "source")
+	deps, err := materialize.ListDependencies(metaDb, utils.ExtractId(i), "source")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -259,7 +258,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourcePostgresRead(ctx, d, meta)
 }
 
 func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
