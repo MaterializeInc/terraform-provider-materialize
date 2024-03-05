@@ -7,6 +7,7 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -80,7 +81,11 @@ func SourcePostgres() *schema.Resource {
 func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanSource(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanSource(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -88,7 +93,7 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.SourceName.String); err != nil {
 		return diag.FromErr(err)

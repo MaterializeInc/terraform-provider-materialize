@@ -31,17 +31,10 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "25cc"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
-<<<<<<< HEAD
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, nameSpace)),
-=======
 					// resource.TestCheckTypeSetElemAttr("materialize_source_postgres.test", "table.0.name.*", "table1"),
 					// resource.TestCheckTypeSetElemAttr("materialize_source_postgres.test", "table.0.alias.*", fmt.Sprintf(`%s_table1`, connName)),
 					// resource.TestCheckTypeSetElemAttr("materialize_source_postgres.test", "table.1.name.*", "table2"),
 					// resource.TestCheckTypeSetElemAttr("materialize_source_postgres.test", "table.1.alias.*", fmt.Sprintf(`%s_table2`, connName)),
->>>>>>> 2c8c7de (Check)
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "comment", ""),

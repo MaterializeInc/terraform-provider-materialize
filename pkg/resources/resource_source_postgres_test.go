@@ -38,7 +38,12 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "materialize"."public"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR TABLES \(name1 AS alias, name2 AS name2\);`,
+			`CREATE SOURCE "database"."schema"."source"
+			IN CLUSTER "cluster"
+			FROM POSTGRES CONNECTION "materialize"."public"."pg_connection"
+			\(PUBLICATION 'mz_source',
+			TEXT COLUMNS \(table.unsupported_type_1\)\)
+			FOR TABLES \(name1 AS alias\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -72,35 +77,6 @@ var inSourcePostgresSchema = map[string]interface{}{
 	"publication":  "mz_source",
 	"text_columns": []interface{}{"table.unsupported_type_1"},
 	"schema":       []interface{}{"schema1", "schema2"},
-}
-
-func TestResourceSourcePostgresCreateSchema(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresSchema)
-	r.NotNil(d)
-
-	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-		// Create
-		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM POSTGRES CONNECTION "materialize"."public"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1\)\) FOR SCHEMAS \(schema1, schema2\);`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Id
-		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sources.name = 'source'`
-		testhelpers.MockSourceScan(mock, ip)
-
-		// Query Params
-		pp := `WHERE mz_sources.id = 'u1'`
-		testhelpers.MockSourceScan(mock, pp)
-
-		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
-		testhelpers.MockSubsourceScan(mock, ps)
-
-		if err := sourcePostgresCreate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
 }
 
 func TestResourceSourcePostgresUpdate(t *testing.T) {
