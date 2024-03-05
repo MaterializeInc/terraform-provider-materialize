@@ -35,7 +35,7 @@ resource "materialize_source_mysql" "test" {
 }
 
 # CREATE SOURCE schema.source_mysql
-#   FROM MYSQL CONNECTION "database"."schema"."pg_connection" (PUBLICATION 'mz_source')
+#   FROM MYSQL CONNECTION "database"."schema"."mysql_connection" (PUBLICATION 'mz_source')
 #   FOR TABLES (schema1.table_1 AS s1_table_1, schema2_table_1 AS s2_table_1);
 ```
 
@@ -51,10 +51,10 @@ resource "materialize_source_mysql" "test" {
 
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
-- `database_name` (String) The identifier for the source database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
-- `schema_name` (String) The identifier for the source schema. Defaults to `public`.
+- `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
 - `table` (Block List) Specifies the tables to be included in the source. If not specified, all tables are included. (see [below for nested schema](#nestedblock--table))
 
 ### Read-Only

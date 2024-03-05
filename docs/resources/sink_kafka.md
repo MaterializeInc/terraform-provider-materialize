@@ -60,14 +60,14 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `cluster_name` (String) The cluster to maintain this sink.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `compression_type` (String) The type of compression to apply to messages before they are sent to Kafka.
-- `database_name` (String) The identifier for the sink database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `database_name` (String) The identifier for the sink database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
 - `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
-- `schema_name` (String) The identifier for the sink schema. Defaults to `public`.
+- `schema_name` (String) The identifier for the sink schema in Materialize. Defaults to `public`.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
 
 ### Read-Only

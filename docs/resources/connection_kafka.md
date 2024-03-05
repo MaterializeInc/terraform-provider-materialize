@@ -82,7 +82,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 - `aws_privatelink` (Block List, Max: 1) AWS PrivateLink configuration. Conflicts with `kafka_broker`. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
-- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `kafka_broker` (Block List) The Kafka broker's configuration. (see [below for nested schema](#nestedblock--kafka_broker))
 - `ownership_role` (String) The owernship role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
@@ -90,7 +90,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
 - `sasl_password` (Block List, Max: 1) The SASL password for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_password))
 - `sasl_username` (Block List, Max: 1) The SASL username for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--sasl_username))
-- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
+- `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 - `security_protocol` (String) The security protocol to use: `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.
 - `ssh_tunnel` (Block List, Max: 1) The default SSH tunnel configuration for the Kafka brokers. (see [below for nested schema](#nestedblock--ssh_tunnel))
 - `ssl_certificate` (Block List, Max: 1) The client certificate for the Kafka broker.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))

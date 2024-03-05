@@ -41,10 +41,10 @@ resource "materialize_connection_aws_privatelink" "example_privatelink_connectio
 ### Optional
 
 - `comment` (String) **Public Preview** Comment on an object in the database.
-- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
-- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
+- `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 
 ### Read-Only
 

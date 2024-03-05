@@ -20,5 +20,5 @@ resource "materialize_source_mysql" "test" {
 }
 
 # CREATE SOURCE schema.source_mysql
-#   FROM MYSQL CONNECTION "database"."schema"."pg_connection" (PUBLICATION 'mz_source')
+#   FROM MYSQL CONNECTION "database"."schema"."mysql_connection" (PUBLICATION 'mz_source')
 #   FOR TABLES (schema1.table_1 AS s1_table_1, schema2_table_1 AS s2_table_1);
