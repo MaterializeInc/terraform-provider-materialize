@@ -80,6 +80,7 @@ services:
     container_name: mysql
     image: mysql:8.0
     volumes:
+      - ./integration/mysql/mysql.cnf:/etc/mysql/conf.d/mysql.cnf
       - ./integration/mysql:/docker-entrypoint-initdb.d
     ports:
       - 3306:3306
