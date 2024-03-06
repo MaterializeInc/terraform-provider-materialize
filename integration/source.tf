@@ -196,7 +196,7 @@ resource "materialize_source_webhook" "example_webhook_source" {
 }
 
 resource "materialize_source_mysql" "test" {
-  name = "source_mysql"
+  name         = "source_mysql"
   cluster_name = materialize_cluster.cluster_source.name
 
   mysql_connection {
@@ -211,7 +211,7 @@ resource "materialize_source_mysql" "test" {
     name  = "shop.mysql_table2"
     alias = "mysql_table2_alias"
   }
-    table {
+  table {
     name  = "shop.mysql_table3"
     alias = "mysql_table3_alias"
   }
