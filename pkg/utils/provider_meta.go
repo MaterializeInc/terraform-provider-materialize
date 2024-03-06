@@ -66,7 +66,7 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 	// Check if the region is enabled using the stored information
 	enabled, exists := providerMeta.RegionsEnabled[region]
 	if !exists {
-		return nil, region, fmt.Errorf("no information available for region: %s", region)
+		return nil, region, fmt.Errorf("region not found: '%s'. Please ensure you have specified the region with the correct prefix, such as 'aws/us-west-2'", region)
 	}
 
 	if !enabled {
