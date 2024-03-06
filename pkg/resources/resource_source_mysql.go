@@ -24,6 +24,8 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		Description: "Specifies the tables to be included in the source. If not specified, all tables are included.",
 		Type:        schema.TypeList,
 		Optional:    true,
+		// TODO: Disable ForceNew when Materialize supports altering subsource
+		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {
@@ -153,7 +155,7 @@ func sourceMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		}
 	}
 
-	// TODO: Handle subsource updates if needed
+	// TODO: Handle subsource updates when supported by Materialize
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
