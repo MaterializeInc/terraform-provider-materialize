@@ -33,7 +33,7 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", "shop.mysql_table2"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ownership_role", "mz_system"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", ""),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "cluster_name", "quickstart"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "size", "3xsmall"),
 				),
@@ -47,7 +47,6 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 	})
 }
 
-// TODO: Fix this test
 func TestAccSourceMySQL_disappears(t *testing.T) {
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -84,6 +83,12 @@ func TestAccSourceMySQL_update(t *testing.T) {
 				Config: testAccSourceMySQLBasicResource(initialName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", initialName+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", "shop.mysql_table1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.alias", fmt.Sprintf(`%s_mysql_table1`, initialName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", "shop.mysql_table2"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, initialName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, initialName)),
 				),
 			},
 			{
@@ -95,6 +100,7 @@ func TestAccSourceMySQL_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.alias", fmt.Sprintf(`%s_mysql_table1`, updatedName)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", "shop.mysql_table2"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, updatedName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, updatedName)),
 				),
 			},
 		},
@@ -126,6 +132,8 @@ func testAccSourceMySQLBasicResource(nameSpace string) string {
 	resource "materialize_source_mysql" "test" {
 		name = "%[1]s_source"
 		cluster_name = "quickstart"
+
+		comment = "%[1]s comment"
 
 		mysql_connection {
 			name = materialize_connection_mysql.test.name
