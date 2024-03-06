@@ -1,15 +1,12 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,21 +52,6 @@ var SSOConfigSchema = map[string]*schema.Schema{
 	},
 }
 
-// SSOConfig represents the structure for SSO configuration.
-type SSOConfig struct {
-	Id                string `json:"id"`
-	Enabled           bool   `json:"enabled"`
-	SsoEndpoint       string `json:"ssoEndpoint"`
-	PublicCertificate string `json:"publicCertificate"`
-	SignRequest       bool   `json:"signRequest"`
-	AcsUrl            string `json:"acsUrl"`
-	SpEntityId        string `json:"spEntityId"`
-	Type              string `json:"type"`
-	OidcClientId      string `json:"oidcClientId"`
-	OidcSecret        string `json:"oidcSecret"`
-	Domains           []Domain
-}
-
 func SSOConfiguration() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: ssoConfigCreate,
@@ -95,8 +77,8 @@ func ssoConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	client := providerMeta.Frontegg
 	baseEndpoint := providerMeta.CloudAPI.BaseEndpoint
 
-	// Create the SSO configuration first
-	ssoConfig := SSOConfig{
+	// Create the SSO configuration using the frontegg package
+	ssoConfig := frontegg.SSOConfig{
 		Enabled:           d.Get("enabled").(bool),
 		SsoEndpoint:       d.Get("sso_endpoint").(string),
 		PublicCertificate: d.Get("public_certificate").(string),
@@ -108,45 +90,13 @@ func ssoConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		SpEntityId:        fmt.Sprintf("%s/auth/saml/metadata", baseEndpoint),
 	}
 
-	requestBody, err := json.Marshal(ssoConfig)
+	newConfig, err := frontegg.CreateSSOConfiguration(ctx, client, ssoConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations", client.Endpoint), bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error creating SSO configuration: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return diag.FromErr(err)
-	}
-
-	ssoConfigID, ok := result["id"].(string)
-	if !ok {
-		return diag.Errorf("error retrieving ID from SSO configuration creation response")
-	}
-
-	log.Printf("[DEBUG] SSO configuration create response ID: %s", ssoConfigID)
-	d.SetId(ssoConfigID)
+	log.Printf("[DEBUG] SSO configuration create response ID: %s", newConfig.Id)
+	d.SetId(newConfig.Id)
 
 	return ssoConfigRead(ctx, d, meta)
 }
@@ -158,35 +108,15 @@ func ssoConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	client := providerMeta.Frontegg
 
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations", client.Endpoint), nil)
+	// Fetch SSO configurations
+	configurations, err := frontegg.FetchSSOConfigurations(ctx, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error reading SSO configurations: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
-	var configs []SSOConfig
-	if err := json.NewDecoder(resp.Body).Decode(&configs); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Find the specific configuration
-	var foundConfig *SSOConfig
-	for _, config := range configs {
+	// Find the matching configuration
+	var foundConfig *frontegg.SSOConfig
+	for _, config := range configurations {
 		if config.Id == d.Id() {
 			foundConfig = &config
 			break
@@ -224,8 +154,9 @@ func ssoConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	client := providerMeta.Frontegg
 	baseEndpoint := providerMeta.CloudAPI.BaseEndpoint
 
-	// Prepare the request body with the updated fields
-	ssoConfig := SSOConfig{
+	// Prepare the updated SSO configuration
+	ssoConfig := frontegg.SSOConfig{
+		Id:                d.Id(),
 		Enabled:           d.Get("enabled").(bool),
 		SsoEndpoint:       d.Get("sso_endpoint").(string),
 		PublicCertificate: d.Get("public_certificate").(string),
@@ -237,34 +168,12 @@ func ssoConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		SpEntityId:        fmt.Sprintf("%s/auth/saml/metadata", baseEndpoint),
 	}
 
-	requestBody, err := json.Marshal(ssoConfig)
+	updatedConfig, err := frontegg.UpdateSSOConfiguration(ctx, client, ssoConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// Use PATCH method for the update
-	req, err := http.NewRequestWithContext(ctx, "PATCH", fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s", client.Endpoint, d.Id()), bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error updating SSO configuration: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
+	log.Printf("[DEBUG] SSO configuration updated, ID: %s", updatedConfig.Id)
 	return ssoConfigRead(ctx, d, meta)
 }
 
@@ -275,27 +184,12 @@ func ssoConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	client := providerMeta.Frontegg
 
-	req, err := http.NewRequestWithContext(ctx, "DELETE", fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s", client.Endpoint, d.Id()), nil)
+	err = frontegg.DeleteSSOConfiguration(ctx, client, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error deleting SSO configuration: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
+	log.Printf("[DEBUG] SSO configuration deleted, ID: %s", d.Id())
 	d.SetId("")
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -32,14 +33,6 @@ var SSODomainSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Description: "Indicates whether the domain has been validated.",
 	},
-}
-
-// Domain represents the structure for SSO domain.
-type Domain struct {
-	ID          string `json:"id"`
-	Domain      string `json:"domain"`
-	Validated   bool   `json:"validated"`
-	SsoConfigId string `json:"sso_config_id"`
 }
 
 func SSODomain() *schema.Resource {
@@ -106,7 +99,7 @@ func ssoDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.Errorf("error reading SSO configurations: status %d, response: %s", resp.StatusCode, string(responseData))
 	}
 
-	var configs []SSOConfig
+	var configs []frontegg.SSOConfig
 	if err := json.NewDecoder(resp.Body).Decode(&configs); err != nil {
 		return diag.FromErr(err)
 	}

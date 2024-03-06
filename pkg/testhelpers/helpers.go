@@ -385,12 +385,16 @@ func handleSSOConfigAndDomainRequests(w http.ResponseWriter, req *http.Request) 
 		if req.Method == http.MethodPatch {
 			// Parse the request body to get the updated SSO configuration data
 			var updatedSSOConfig SSOConfig
+			updatedSSOConfig.Id = ssoConfigID
 			err := json.NewDecoder(req.Body).Decode(&updatedSSOConfig)
 			if err != nil {
 				http.Error(w, "Failed to decode request body", http.StatusBadRequest)
 				return
 			}
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(updatedSSOConfig)
+			return
 		}
 		if req.Method == http.MethodDelete {
 			w.WriteHeader(http.StatusOK)
