@@ -22,7 +22,7 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 	"mysql_connection":   IdentifierSchema("mysql_connection", "The MySQL connection to use in the source.", true),
 	"table": {
 		Description: "Specifies the tables to be included in the source. If not specified, all tables are included.",
-		Type:        schema.TypeList,
+		Type:        schema.TypeSet,
 		Optional:    true,
 		// TODO: Disable ForceNew when Materialize supports altering subsource
 		ForceNew: true,
@@ -86,8 +86,9 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("table"); ok {
-		tables := materialize.GetTableStruct(v.([]interface{}))
-		b.Tables(tables)
+		tables := v.(*schema.Set).List()
+		t := materialize.GetTableStruct(tables)
+		b.Tables(t)
 	}
 
 	if err := b.Create(); err != nil {
