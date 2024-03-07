@@ -12,6 +12,8 @@ type SourceMySQLBuilder struct {
 	clusterName     string
 	size            string
 	mysqlConnection IdentifierSchemaStruct
+	ignoreColumns   []string
+	textColumns     []string
 	tables          []TableStruct
 }
 
@@ -37,6 +39,16 @@ func (b *SourceMySQLBuilder) MySQLConnection(mysqlConn IdentifierSchemaStruct) *
 	return b
 }
 
+func (b *SourceMySQLBuilder) IgnoreColumns(i []string) *SourceMySQLBuilder {
+	b.ignoreColumns = i
+	return b
+}
+
+func (b *SourceMySQLBuilder) TextColumns(t []string) *SourceMySQLBuilder {
+	b.textColumns = t
+	return b
+}
+
 func (b *SourceMySQLBuilder) Tables(tables []TableStruct) *SourceMySQLBuilder {
 	b.tables = tables
 	return b
@@ -52,6 +64,24 @@ func (b *SourceMySQLBuilder) Create() error {
 	}
 
 	q.WriteString(fmt.Sprintf(` FROM MYSQL CONNECTION %s`, b.mysqlConnection.QualifiedName()))
+
+	var options []string
+
+	if len(b.ignoreColumns) > 0 {
+		s := strings.Join(b.ignoreColumns, ", ")
+		options = append(options, fmt.Sprintf(`IGNORE COLUMNS (%s)`, s))
+	}
+
+	if len(b.textColumns) > 0 {
+		s := strings.Join(b.textColumns, ", ")
+		options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
+	}
+
+	if len(options) > 0 {
+		q.WriteString(" (")
+		q.WriteString(strings.Join(options, ", "))
+		q.WriteString(")")
+	}
 
 	if len(b.tables) > 0 {
 		q.WriteString(` FOR TABLES (`)

@@ -11,12 +11,18 @@ FLUSH PRIVILEGES;
 
 CREATE TABLE IF NOT EXISTS mysql_table1
 (
-    id INT AUTO_INCREMENT PRIMARY KEY
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    about TEXT,
+    banned BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS mysql_table2
 (
-    id INT
+    id INT,
+    name VARCHAR(255),
+    about TEXT,
+    banned BOOLEAN
     -- TODO: Disable until https://github.com/MaterializeInc/materialize/issues/24952 is resolved
     -- updated_at TIMESTAMP NOT NULL
 );

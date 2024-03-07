@@ -202,6 +202,9 @@ resource "materialize_source_mysql" "test" {
   mysql_connection {
     name = materialize_connection_mysql.mysql_connection.name
   }
+  # TODO: uncomment when the feature is implemented on the Materialize side
+  # ignore_columns = ["table3.id"]
+  # text_columns   = ["table1.id"]
 
   table {
     name  = "shop.mysql_table1"

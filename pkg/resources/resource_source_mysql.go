@@ -20,6 +20,18 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 	"cluster_name":       ObjectClusterNameSchema("source"),
 	"size":               ObjectSizeSchema("source"),
 	"mysql_connection":   IdentifierSchema("mysql_connection", "The MySQL connection to use in the source.", true),
+	"ignore_columns": {
+		Description: "Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+	},
+	"text_columns": {
+		Description: "Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+	},
 	"table": {
 		Description: "Specifies the tables to be included in the source. If not specified, all tables are included.",
 		Type:        schema.TypeSet,
@@ -89,6 +101,16 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		tables := v.(*schema.Set).List()
 		t := materialize.GetTableStruct(tables)
 		b.Tables(t)
+	}
+
+	if v, ok := d.GetOk("ignore_columns"); ok {
+		columns := materialize.GetSliceValueString(v.([]interface{}))
+		b.IgnoreColumns(columns)
+	}
+
+	if v, ok := d.GetOk("text_columns"); ok {
+		columns := materialize.GetSliceValueString(v.([]interface{}))
+		b.TextColumns(columns)
 	}
 
 	if err := b.Create(); err != nil {
