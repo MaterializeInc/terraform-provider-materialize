@@ -25,7 +25,7 @@ func ObjectNameSchema(resource string, required, forceNew bool) *schema.Schema {
 func SchemaNameSchema(resource string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
-		Description: fmt.Sprintf("The identifier for the %s schema. Defaults to `public`.", resource),
+		Description: fmt.Sprintf("The identifier for the %s schema in Materialize. Defaults to `public`.", resource),
 		Required:    required,
 		Optional:    !required,
 		ForceNew:    true,
@@ -36,7 +36,7 @@ func SchemaNameSchema(resource string, required bool) *schema.Schema {
 func DatabaseNameSchema(resource string, required bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
-		Description: fmt.Sprintf("The identifier for the %s database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.", resource),
+		Description: fmt.Sprintf("The identifier for the %s database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.", resource),
 		Required:    required,
 		Optional:    !required,
 		ForceNew:    true,

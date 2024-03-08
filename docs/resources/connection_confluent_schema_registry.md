@@ -46,11 +46,11 @@ resource "materialize_connection_confluent_schema_registry" "example_confluent_s
 
 - `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
-- `database_name` (String) The identifier for the connection database. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `password` (Block List, Max: 1) The password for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--password))
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
-- `schema_name` (String) The identifier for the connection schema. Defaults to `public`.
+- `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the Confluent Schema Registry. (see [below for nested schema](#nestedblock--ssh_tunnel))
 - `ssl_certificate` (Block List, Max: 1) The client certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate))
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the Confluent Schema Registry.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))

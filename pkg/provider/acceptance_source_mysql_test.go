@@ -1,0 +1,190 @@
+package provider
+
+import (
+	"database/sql"
+	"fmt"
+	"testing"
+
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+)
+
+func TestAccSourceMySQL_basic(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceMySQLBasicResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", nameSpace+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%[1]s_source"`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.#", "2"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", "shop.mysql_table1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.alias", fmt.Sprintf(`%s_mysql_table1`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", "shop.mysql_table2"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ownership_role", "mz_system"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "cluster_name", "quickstart"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "size", "3xsmall"),
+				),
+			},
+			{
+				ResourceName:      "materialize_source_mysql.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func TestAccSourceMySQL_disappears(t *testing.T) {
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllSourceMySQLDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceMySQLBasicResource(sourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
+					testAccCheckObjectDisappears(
+						materialize.MaterializeObject{
+							ObjectType: "SOURCE",
+							Name:       sourceName + "_source",
+						},
+					),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccSourceMySQL_update(t *testing.T) {
+	initialName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	updatedName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceMySQLBasicResource(initialName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", initialName+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", "shop.mysql_table1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.alias", fmt.Sprintf(`%s_mysql_table1`, initialName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", "shop.mysql_table2"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, initialName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, initialName)),
+				),
+			},
+			{
+				Config: testAccSourceMySQLBasicResource(updatedName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", updatedName+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", "shop.mysql_table1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.alias", fmt.Sprintf(`%s_mysql_table1`, updatedName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", "shop.mysql_table2"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.alias", fmt.Sprintf(`%s_mysql_table2`, updatedName)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, updatedName)),
+				),
+			},
+		},
+	})
+}
+
+func testAccSourceMySQLBasicResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "mysql_password" {
+		name          = "%[1]s_secret"
+		value         = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_mysql" "test" {
+		name = "%[1]s_connection"
+		host = "mysql"
+		port = 3306
+		user {
+			text = "repluser"
+		}
+		password {
+			name          = materialize_secret.mysql_password.name
+			schema_name   = materialize_secret.mysql_password.schema_name
+			database_name = materialize_secret.mysql_password.database_name
+		}
+		comment  = "object comment"
+	}
+
+	resource "materialize_source_mysql" "test" {
+		name = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		comment = "%[1]s comment"
+
+		mysql_connection {
+			name = materialize_connection_mysql.test.name
+		}
+
+		table {
+			name  = "shop.mysql_table1"
+			alias = "%[1]s_mysql_table1"
+		}
+		table {
+			name  = "shop.mysql_table2"
+			alias = "%[1]s_mysql_table2"
+		}
+	}
+	`, nameSpace)
+}
+
+func testAccCheckSourceMySQLExists(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		meta := testAccProvider.Meta()
+		db, _, err := utils.GetDBClientFromMeta(meta, nil)
+		if err != nil {
+			return fmt.Errorf("error getting DB client: %s", err)
+		}
+		r, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("source mysql not found: %s", name)
+		}
+		_, err = materialize.ScanSource(db, utils.ExtractId(r.Primary.ID))
+		return err
+	}
+}
+
+func testAccCheckAllSourceMySQLDestroyed(s *terraform.State) error {
+	meta := testAccProvider.Meta()
+	db, _, err := utils.GetDBClientFromMeta(meta, nil)
+	if err != nil {
+		return fmt.Errorf("error getting DB client: %s", err)
+	}
+
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "materialize_source_mysql" {
+			continue
+		}
+
+		_, err := materialize.ScanSource(db, utils.ExtractId(r.Primary.ID))
+		if err == nil {
+			return fmt.Errorf("source %v still exists", utils.ExtractId(r.Primary.ID))
+		} else if err != sql.ErrNoRows {
+			return err
+		}
+	}
+	return nil
+}

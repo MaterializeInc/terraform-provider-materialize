@@ -27,5 +27,4 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 #   FROM schema.table
 #   INTO KAFKA CONNECTION "kafka_connection" (TOPIC 'test_avro_topic')
 #   FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_connection"
-#   ENVELOPE UPSERT
-#   WITH (SIZE = '3xsmall');
+#   ENVELOPE UPSERT;

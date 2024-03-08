@@ -13,5 +13,4 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 # CREATE SOURCE schema.source_load_generator
 #   FROM LOAD GENERATOR COUNTER
-#   (TICK INTERVAL '500ms' SCALE FACTOR 0.01)
-#   WITH (SIZE = '3xsmall');
+#   (TICK INTERVAL '500ms' SCALE FACTOR 0.01);

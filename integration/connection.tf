@@ -347,7 +347,7 @@ resource "materialize_connection_mysql" "mysql_connection" {
   host = "mysql"
   port = 3306
   user {
-    text = "mysqluser"
+    text = "repluser"
   }
   password {
     name          = materialize_secret.mysql_password.name
@@ -363,7 +363,7 @@ resource "materialize_connection_mysql" "mysql_connection_aws_pl" {
   host = "mysql"
   port = 3306
   user {
-    text = "mysqluser"
+    text = "repluser"
   }
   password {
     name          = materialize_secret.mysql_password.name
@@ -403,7 +403,7 @@ resource "materialize_connection_mysql" "mysql_ssh_tunnel_connection" {
   host = "mysql"
   port = 3306
   user {
-    text = "mysqluser"
+    text = "repluser"
   }
   password {
     name          = materialize_secret.mysql_password.name
@@ -421,7 +421,7 @@ resource "materialize_connection_mysql" "mysql_ssl_connection" {
   host = "mysql"
   port = 3306
   user {
-    text = "mysqluser"
+    text = "repluser"
   }
   password {
     name          = materialize_secret.mysql_password.name

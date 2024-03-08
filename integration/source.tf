@@ -195,6 +195,31 @@ resource "materialize_source_webhook" "example_webhook_source" {
   }
 }
 
+resource "materialize_source_mysql" "test" {
+  name         = "source_mysql"
+  cluster_name = materialize_cluster.cluster_source.name
+
+  mysql_connection {
+    name = materialize_connection_mysql.mysql_connection.name
+  }
+  # TODO: uncomment when the feature is implemented on the Materialize side
+  # ignore_columns = ["table3.id"]
+  # text_columns   = ["table1.id"]
+
+  table {
+    name  = "shop.mysql_table1"
+    alias = "mysql_table1_alias"
+  }
+  table {
+    name  = "shop.mysql_table2"
+    alias = "mysql_table2_alias"
+  }
+  table {
+    name  = "shop.mysql_table3"
+    alias = "mysql_table3_alias"
+  }
+}
+
 resource "materialize_source_grant" "source_grant_select" {
   role_name     = materialize_role.role_1.name
   privilege     = "SELECT"
