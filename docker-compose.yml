@@ -75,7 +75,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-c2VjcmV0Cg==}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-  
+
   localstack:
     container_name: localstack
     image: localstack/localstack:1.4.0

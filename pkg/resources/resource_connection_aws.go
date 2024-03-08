@@ -71,7 +71,11 @@ func ConnectionAws() *schema.Resource {
 func connectionAwsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
-	s, err := materialize.ScanConnectionAws(meta.(*sqlx.DB), utils.ExtractId(i))
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanConnectionAws(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -79,7 +83,7 @@ func connectionAwsRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.ConnectionName.String); err != nil {
 		return diag.FromErr(err)
@@ -152,8 +156,12 @@ func connectionAwsCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
 
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewConnectionAwsBuilder(meta.(*sqlx.DB), o)
+	b := materialize.NewConnectionAwsBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("endpoint"); ok {
 		b.Endpoint(v.(string))
@@ -222,7 +230,7 @@ func connectionAwsCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(utils.TransformIdWithRegion(i))
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return connectionAwsRead(ctx, d, meta)
 }
