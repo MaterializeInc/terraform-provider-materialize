@@ -12,14 +12,14 @@ func TestConnectionAwsCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."aws_conn" TO AWS
-			WITH \( ENDPOINT = 'localhost', 
-				REGION = 'us-east-1', 
+			    \( ENDPOINT = 'localhost',
+				REGION = 'us-east-1',
 				ACCESS KEY ID = 'foo',
 				SECRET ACCESS KEY = SECRET "database"."schema"."password",
 				SESSION TOKEN = 'biz',
-				ASSUME ROLE ARN = 'arn:aws:iam::123456789012:user/JohnDoe', 
-				ASSUME ROLE SESSION NAME = 's3-access-example', 
-				VALIDATE = false\);`,
+				ASSUME ROLE ARN = 'arn:aws:iam::123456789012:user/JohnDoe',
+				ASSUME ROLE SESSION NAME = 's3-access-example'\)
+				WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "aws_conn", SchemaName: "schema", DatabaseName: "database"}

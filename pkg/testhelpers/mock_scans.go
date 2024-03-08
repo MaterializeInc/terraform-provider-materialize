@@ -136,7 +136,7 @@ func MockConnectionAwsScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
-	LEFT JOIN mz_aws_connections
+	LEFT JOIN mz_internal.mz_aws_connections AS mz_aws_connections
 		ON mz_connections.id = mz_aws_connections.id
 	JOIN mz_roles
 		ON mz_connections.owner_id = mz_roles.id
