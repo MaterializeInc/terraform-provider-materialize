@@ -24,7 +24,7 @@ var connectionAwsSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"region": {
+	"aws_region": {
 		Description: "The AWS region to connect to.",
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -48,6 +48,7 @@ var connectionAwsSchema = map[string]*schema.Schema{
 	},
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func ConnectionAws() *schema.Resource {
@@ -100,7 +101,7 @@ func connectionAwsRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("region", s.Region.String); err != nil {
+	if err := d.Set("aws_region", s.AwsRegion.String); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -166,8 +167,8 @@ func connectionAwsCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		b.Endpoint(v.(string))
 	}
 
-	if v, ok := d.GetOk("region"); ok {
-		b.Region(v.(string))
+	if v, ok := d.GetOk("aws_region"); ok {
+		b.AwsRegion(v.(string))
 	}
 
 	if v, ok := d.GetOk("access_key_id"); ok {

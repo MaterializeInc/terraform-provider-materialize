@@ -30,6 +30,7 @@ func TestAccConnectionAws_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "endpoint", endpoint),
 					resource.TestCheckResourceAttr(resourceName, "access_key_id.0.text", accessKeyText),
 					resource.TestCheckResourceAttr(resourceName, "validate", "false"),
+					resource.TestCheckResourceAttr(resourceName, "aws_region", "us-east-1"),
 				),
 			},
 		},
@@ -81,6 +82,7 @@ resource "materialize_connection_aws" "aws_conn" {
   access_key_id {
     text = "%[3]s"
   }
+  aws_region = "us-east-1"
   secret_access_key {
     name          = materialize_secret.aws_password.name
     database_name = materialize_secret.aws_password.database_name

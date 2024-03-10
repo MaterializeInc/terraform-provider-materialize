@@ -25,7 +25,7 @@ func TestConnectionAwsCreate(t *testing.T) {
 		o := MaterializeObject{Name: "aws_conn", SchemaName: "schema", DatabaseName: "database"}
 		b := NewConnectionAwsBuilder(db, o)
 		b.Endpoint("localhost")
-		b.Region("us-east-1")
+		b.AwsRegion("us-east-1")
 		b.AccessKeyId(ValueSecretStruct{Text: "foo"})
 		b.SecretAccessKey(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
 		b.SessionToken(ValueSecretStruct{Text: "biz"})

@@ -11,7 +11,7 @@ import (
 type ConnectionAwsBuilder struct {
 	Connection
 	endpoint              string
-	region                string
+	awsRegion             string
 	accessKeyId           ValueSecretStruct
 	secretAccessKey       IdentifierSchemaStruct
 	sessionToken          ValueSecretStruct
@@ -32,8 +32,8 @@ func (b *ConnectionAwsBuilder) Endpoint(s string) *ConnectionAwsBuilder {
 	return b
 }
 
-func (b *ConnectionAwsBuilder) Region(s string) *ConnectionAwsBuilder {
-	b.region = s
+func (b *ConnectionAwsBuilder) AwsRegion(s string) *ConnectionAwsBuilder {
+	b.awsRegion = s
 	return b
 }
 
@@ -76,8 +76,8 @@ func (b *ConnectionAwsBuilder) Create() error {
 		o := fmt.Sprintf(` ENDPOINT = %s`, QuoteString(b.endpoint))
 		w = append(w, o)
 	}
-	if b.region != "" {
-		o := fmt.Sprintf(` REGION = %s`, QuoteString(b.region))
+	if b.awsRegion != "" {
+		o := fmt.Sprintf(` REGION = %s`, QuoteString(b.awsRegion))
 		w = append(w, o)
 	}
 
@@ -127,7 +127,7 @@ type ConnectionAwsParams struct {
 	SchemaName              sql.NullString `db:"schema_name"`
 	DatabaseName            sql.NullString `db:"database_name"`
 	Endpoint                sql.NullString `db:"endpoint"`
-	Region                  sql.NullString `db:"region"`
+	AwsRegion               sql.NullString `db:"aws_region"`
 	AccessKeyId             sql.NullString `db:"access_key_id"`
 	AccessKeyIdSecretId     sql.NullString `db:"access_key_id_secret_id"`
 	SecretAccessKeySecretId sql.NullString `db:"secret_access_key_secret_id"`
@@ -147,7 +147,7 @@ var connectionAwsQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_aws_connections.endpoint,
-		mz_aws_connections.region,
+		mz_aws_connections.region AS aws_region,
 		mz_aws_connections.access_key_id,
 		mz_aws_connections.access_key_id_secret_id,
 		mz_aws_connections.secret_access_key_secret_id,
