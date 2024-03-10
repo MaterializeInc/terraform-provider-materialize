@@ -39,11 +39,12 @@ resource "materialize_connection_aws" "example_connection" {
 - `access_key_id` (Block List, Max: 1) The access key ID to connect with.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--access_key_id))
 - `assume_role_arn` (String) The Amazon Resource Name (ARN) of the IAM role to assume.
 - `assume_role_session_name` (String) The session name to use when assuming the role.
+- `aws_region` (String) The AWS region to connect to.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `endpoint` (String) Override the default AWS endpoint URL.
 - `ownership_role` (String) The owernship role of the object.
-- `region` (String) The AWS region to connect to.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 - `secret_access_key` (Block List, Max: 1) The secret access key corresponding to the specified access key ID. (see [below for nested schema](#nestedblock--secret_access_key))
 - `session_token` (Block List, Max: 1) The session token corresponding to the specified access key ID.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--session_token))
