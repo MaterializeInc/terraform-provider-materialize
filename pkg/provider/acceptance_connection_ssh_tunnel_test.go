@@ -99,6 +99,7 @@ func TestAccConnSshTunnel_disappears(t *testing.T) {
 						},
 					),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

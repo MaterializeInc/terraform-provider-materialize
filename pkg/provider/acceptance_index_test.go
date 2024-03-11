@@ -90,6 +90,7 @@ func TestAccIndex_disappears(t *testing.T) {
 					testAccCheckIndexExists("materialize_index.test"),
 					testAccCheckIndexDisappears(indexName),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

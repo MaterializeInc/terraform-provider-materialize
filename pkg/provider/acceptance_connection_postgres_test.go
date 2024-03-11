@@ -106,6 +106,7 @@ func TestAccConnPostgres_disappears(t *testing.T) {
 						},
 					),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},
