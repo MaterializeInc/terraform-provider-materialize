@@ -48,7 +48,7 @@ type Domain struct {
 	ID          string `json:"id"`
 	Domain      string `json:"domain"`
 	Validated   bool   `json:"validated"`
-	SsoConfigId string `json:"sso_config_id"`
+	SsoConfigId string `json:"ssoConfigId"`
 }
 
 type GroupMapping struct {
