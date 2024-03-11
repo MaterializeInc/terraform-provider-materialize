@@ -1,4 +1,4 @@
-# # Create a AWS Private Connection
+# Create a AWS Private Connection
 # Note: you need the max_aws_privatelink_connections increased for this to work:
 # show max_aws_privatelink_connections;
 resource "materialize_connection_aws_privatelink" "example_privatelink_connection" {

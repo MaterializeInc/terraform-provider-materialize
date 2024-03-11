@@ -76,6 +76,19 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
 
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:1.4.0
+    ports:
+      - 4566:4566
+    environment:
+      HOSTNAME: localhost
+      SERVICES: iam
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - ./integration/localstack/local_stack.sh:/docker-entrypoint-initaws.d/create_localstack_infra.sh
+
   mysql:
     container_name: mysql
     image: mysql:8.0

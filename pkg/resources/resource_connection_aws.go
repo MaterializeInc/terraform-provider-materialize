@@ -12,60 +12,70 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
+var connectionAwsSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("connection", true, false),
 	"schema_name":        SchemaNameSchema("connection", false),
 	"database_name":      DatabaseNameSchema("connection", false),
 	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"comment":            CommentSchema(false),
-	"service_name": {
-		Description: "The name of the AWS PrivateLink service.",
+	"endpoint": {
+		Description: "Override the default AWS endpoint URL.",
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 	},
-	"availability_zones": {
-		Description: "The availability zones of the AWS PrivateLink service.",
-		Type:        schema.TypeList,
-		Elem:        &schema.Schema{Type: schema.TypeString},
-		Required:    true,
+	"aws_region": {
+		Description: "The AWS region to connect to.",
+		Type:        schema.TypeString,
+		Optional:    true,
 		ForceNew:    true,
 	},
-	"principal": {
-		Description: "The principal of the AWS PrivateLink service.",
+	"access_key_id":     ValueSecretSchema("access_key_id", "The access key ID to connect with.", false),
+	"secret_access_key": IdentifierSchema("secret_access_key", "The secret access key corresponding to the specified access key ID.", false),
+	"session_token":     ValueSecretSchema("session_token", "The session token corresponding to the specified access key ID.", false),
+	"assume_role_arn": {
+		Description: "The Amazon Resource Name (ARN) of the IAM role to assume.",
 		Type:        schema.TypeString,
-		Computed:    true,
-		Sensitive:   true,
+		Optional:    true,
+		ForceNew:    true,
 	},
+	"assume_role_session_name": {
+		Description:  "The session name to use when assuming the role.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		RequiredWith: []string{"assume_role_arn"},
+	},
+	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
 
-func ConnectionAwsPrivatelink() *schema.Resource {
+func ConnectionAws() *schema.Resource {
 	return &schema.Resource{
-		Description: "An AWS PrivateLink connection establishes a link to an AWS PrivateLink service.",
+		Description: "An Amazon Web Services (AWS) connection provides Materialize with access to an Identity and Access Management (IAM) user or role in your AWS account.",
 
-		CreateContext: connectionAwsPrivatelinkCreate,
-		ReadContext:   connectionAwsPrivatelinkRead,
-		UpdateContext: connectionAwsPrivatelinkUpdate,
+		CreateContext: connectionAwsCreate,
+		ReadContext:   connectionAwsRead,
+		UpdateContext: connectionAwsUpdate,
 		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: connectionAwsPrivatelinkSchema,
+		Schema: connectionAwsSchema,
 	}
 }
 
-func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func connectionAwsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	s, err := materialize.ScanConnectionAwsPrivatelink(metaDb, utils.ExtractId(i))
+	s, err := materialize.ScanConnectionAws(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -87,7 +97,41 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("principal", s.Principal.String); err != nil {
+	if err := d.Set("endpoint", s.Endpoint.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("aws_region", s.AwsRegion.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Note: Cannot set nested attributes with this SDK
+	// https://github.com/hashicorp/terraform-plugin-sdk/issues/459
+	// if err := d.Set("access_key_id.0.text", s.AccessKeyId.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
+
+	// if err := d.Set("access_key_id.secret", s.AccessKeyIdSecretId.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
+
+	// if err := d.Set("secret_access_key", s.AccessKeyIdSecretId.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
+
+	// if err := d.Set("session_token.text", s.SessionToken.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
+
+	// if err := d.Set("session_token.secret", s.SessionTokenSecretId.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
+
+	if err := d.Set("assume_role_arn", s.AssumeRoleArn.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("assume_role_session_name", s.AssumeRoleSessionName.String); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -107,7 +151,7 @@ func connectionAwsPrivatelinkRead(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func connectionAwsCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -117,15 +161,41 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewConnectionAwsPrivatelinkBuilder(metaDb, o)
+	b := materialize.NewConnectionAwsBuilder(metaDb, o)
 
-	if v, ok := d.GetOk("service_name"); ok {
-		b.PrivateLinkServiceName(v.(string))
+	if v, ok := d.GetOk("endpoint"); ok {
+		b.Endpoint(v.(string))
 	}
 
-	if v, ok := d.GetOk("availability_zones"); ok {
-		azs := materialize.GetSliceValueString(v.([]interface{}))
-		b.PrivateLinkAvailabilityZones(azs)
+	if v, ok := d.GetOk("aws_region"); ok {
+		b.AwsRegion(v.(string))
+	}
+
+	if v, ok := d.GetOk("access_key_id"); ok {
+		a := materialize.GetValueSecretStruct(v)
+		b.AccessKeyId(a)
+	}
+
+	if v, ok := d.GetOk("secret_access_key"); ok {
+		s := materialize.GetIdentifierSchemaStruct(v)
+		b.SecretAccessKey(s)
+	}
+
+	if v, ok := d.GetOk("session_token"); ok {
+		s := materialize.GetValueSecretStruct(v)
+		b.SessionToken(s)
+	}
+
+	if v, ok := d.GetOk("assume_role_arn"); ok {
+		b.AssumeRoleArn(v.(string))
+	}
+
+	if v, ok := d.GetOk("assume_role_session_name"); ok {
+		b.AssumeRoleSessionName(v.(string))
+	}
+
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
 	}
 
 	// create resource
@@ -162,10 +232,10 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return connectionAwsPrivatelinkRead(ctx, d, meta)
+	return connectionAwsRead(ctx, d, meta)
 }
 
-func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -179,7 +249,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewConnectionAwsPrivatelinkBuilder(metaDb, o)
+		b := materialize.NewConnectionAwsBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
@@ -202,5 +272,5 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	return connectionAwsPrivatelinkRead(ctx, d, meta)
+	return connectionAwsRead(ctx, d, meta)
 }
