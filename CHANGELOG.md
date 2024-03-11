@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.6.7 - 2024-03-11
+
+### Features
+* New resource `materialize_connection_mysql` [#480](https://github.com/MaterializeInc/terraform-provider-materialize/pull/480)
+* New resource `materialize_source_mysql` [#486](https://github.com/MaterializeInc/terraform-provider-materialize/pull/486)
+* New resource `materialize_connection_aws` [#492](https://github.com/MaterializeInc/terraform-provider-materialize/pull/492)
+
+### BugFixes
+* Add region prefix hint message [#488](https://github.com/MaterializeInc/terraform-provider-materialize/pull/488)
+
+### Misc
+* Acceptance tests for SCIM config resource [#483](https://github.com/MaterializeInc/terraform-provider-materialize/pull/483)
+* Acceptance tests for SCIM config data source [#485](https://github.com/MaterializeInc/terraform-provider-materialize/pull/485)
+* Dependency updates: [#484](https://github.com/MaterializeInc/terraform-provider-materialize/pull/484), [#494](https://github.com/MaterializeInc/terraform-provider-materialize/pull/494), [#495](https://github.com/MaterializeInc/terraform-provider-materialize/pull/495)
+
 ## 0.6.6 - 2024-02-29
 
 ### Features
