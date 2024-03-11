@@ -167,6 +167,7 @@ func TestAccSourcePostgres_disappears(t *testing.T) {
 						},
 					),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

@@ -65,6 +65,7 @@ func TestAccSourceMySQL_disappears(t *testing.T) {
 						},
 					),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

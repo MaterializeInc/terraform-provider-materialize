@@ -109,6 +109,7 @@ func TestAccView_disappears(t *testing.T) {
 						},
 					),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

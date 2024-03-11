@@ -291,6 +291,7 @@ func TestAccCluster_disappears(t *testing.T) {
 					testAccCheckClusterExists("materialize_cluster.test_managed_cluster"),
 					testAccCheckObjectDisappears(materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName + "_managed"}),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

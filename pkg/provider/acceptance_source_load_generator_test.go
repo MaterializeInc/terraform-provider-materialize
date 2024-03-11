@@ -206,6 +206,7 @@ func TestAccSourceLoadGenerator_disappears(t *testing.T) {
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					testAccCheckSourceLoadGeneratorDisappears(sourceName),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},
