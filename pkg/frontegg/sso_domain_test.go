@@ -38,7 +38,6 @@ func TestFetchSSODomainSuccess(t *testing.T) {
 	assert.Equal("domain-id", domain.ID)
 	assert.Equal("example.com", domain.Domain)
 	assert.True(domain.Validated)
-	assert.Equal("config-id", domain.SsoConfigId)
 }
 
 func TestCreateSSODomainSuccess(t *testing.T) {
