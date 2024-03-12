@@ -8,7 +8,6 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -32,6 +31,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Type:         schema.TypeList,
 		Elem:         &schema.Schema{Type: schema.TypeString},
 		Computed:     true,
+		Optional:     true,
 		RequiredWith: []string{"size"},
 	},
 	"introspection_interval":        IntrospectionIntervalSchema(false, []string{"size"}),
@@ -239,8 +239,9 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("availability_zones") {
 			_, n := d.GetChange("availability_zones")
-			b := materialize.NewClusterBuilder(meta.(*sqlx.DB), o)
-			if err := b.SetAvailabilityZones(n.([]string)); err != nil {
+			azs := materialize.GetSliceValueString(n.([]interface{}))
+			b := materialize.NewClusterBuilder(metaDb, o)
+			if err := b.SetAvailabilityZones(azs); err != nil {
 				return diag.FromErr(err)
 			}
 		}

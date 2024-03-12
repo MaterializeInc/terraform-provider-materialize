@@ -42,7 +42,7 @@ func TestAccCluster_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "idle_arrangement_merge_effort", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "availability_zones.#", "0"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "availability_zones.#", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "Comment"),
 				),
 			},
@@ -337,6 +337,7 @@ func testAccClusterResource(
 		idle_arrangement_merge_effort = %[9]s
 		disk                          = %[10]s
 		comment                       = "%[11]s"
+		availability_zones            = ["test1", "test2"]
 	}
 	`,
 		roleName,
