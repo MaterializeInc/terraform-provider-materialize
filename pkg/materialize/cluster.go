@@ -174,6 +174,7 @@ type ClusterParams struct {
 	Size              sql.NullString `db:"size"`
 	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
 	Disk              sql.NullBool   `db:"disk"`
+	AvailabilityZones pq.StringArray `db:"availability_zones"`
 	Comment           sql.NullString `db:"comment"`
 	OwnerName         sql.NullString `db:"owner_name"`
 	Privileges        pq.StringArray `db:"privileges"`
@@ -187,6 +188,7 @@ var clusterQuery = NewBaseQuery(`
 		mz_clusters.size,
 		mz_clusters.replication_factor,
 		mz_clusters.disk,
+		mz_clusters.availability_zones,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_clusters.privileges

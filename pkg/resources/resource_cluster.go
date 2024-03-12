@@ -26,13 +26,14 @@ var clusterSchema = map[string]*schema.Schema{
 		RequiredWith: []string{"size"},
 	},
 	"disk": DiskSchema(false),
-	// "availability_zones": {
-	// 	Description: "The specific availability zones of the cluster.",
-	// 	Type:        schema.TypeList,
-	// 	Elem:        &schema.Schema{Type: schema.TypeString},
-	// 	Computed:    true,
-	// 	RequiredWith: []string{"size"},
-	// },
+	"availability_zones": {
+		Description:  "The specific availability zones of the cluster.",
+		Type:         schema.TypeList,
+		Elem:         &schema.Schema{Type: schema.TypeString},
+		Computed:     true,
+		Optional:     true,
+		RequiredWith: []string{"size"},
+	},
 	"introspection_interval":        IntrospectionIntervalSchema(false, []string{"size"}),
 	"introspection_debugging":       IntrospectionDebuggingSchema(false, []string{"size"}),
 	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(false, []string{"size"}),
@@ -93,6 +94,10 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("availability_zones", s.AvailabilityZones); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("comment", s.Comment.String); err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,11 +134,10 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			}
 		}
 
-		// TODO: Disable until supported on create
-		// if v, ok := d.GetOk("availability_zones"); ok {
-		// 	azs := materialize.GetSliceValueString(v.([]interface{}))
-		// 	b.AvailabilityZones(azs)
-		// }
+		if v, ok := d.GetOk("availability_zones"); ok {
+			f := materialize.GetSliceValueString(v.([]interface{}))
+			b.AvailabilityZones(f)
+		}
 
 		if v, ok := d.GetOk("introspection_interval"); ok {
 			b.IntrospectionInterval(v.(string))
@@ -233,14 +237,14 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			}
 		}
 
-		// if d.HasChange("availability_zones") {
-		// 	_, n := d.GetChange("availability_zones")
-		// 	azs := materialize.GetSliceValueString(n.([]interface{}))
-		// 	b := materialize.NewClusterBuilder(metaDb, o)
-		// 	if err := b.SetAvailabilityZones(azs); err != nil {
-		// 		return diag.FromErr(err)
-		// 	}
-		// }
+		if d.HasChange("availability_zones") {
+			_, n := d.GetChange("availability_zones")
+			azs := materialize.GetSliceValueString(n.([]interface{}))
+			b := materialize.NewClusterBuilder(metaDb, o)
+			if err := b.SetAvailabilityZones(azs); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 
 		if d.HasChange("introspection_interval") {
 			_, n := d.GetChange("introspection_interval")

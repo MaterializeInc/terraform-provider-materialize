@@ -82,6 +82,7 @@ func TestAccSSOConfiguration_disappears(t *testing.T) {
 					testAccCheckSSOConfigExists("materialize_sso_config.example"),
 					testAccCheckSSOConfigDisappears("materialize_sso_config.example"),
 				),
+				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
 		},

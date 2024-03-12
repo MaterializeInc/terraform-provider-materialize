@@ -27,6 +27,7 @@ resource "materialize_cluster" "example_cluster" {
 
 ### Optional
 
+- `availability_zones` (List of String) The specific availability zones of the cluster.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
 - `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
