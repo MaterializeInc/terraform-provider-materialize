@@ -23,7 +23,7 @@ type MaterializeProvider struct {
 	client  *utils.ProviderMeta
 }
 
-type providerData struct {
+type providerModelV0 struct {
 	Endpoint      types.String `tfsdk:"endpoint"`
 	CloudEndpoint types.String `tfsdk:"cloud_endpoint"`
 	BaseEndpoint  types.String `tfsdk:"base_endpoint"`
@@ -95,7 +95,7 @@ func (p *MaterializeProvider) DataSources(ctx context.Context) []func() datasour
 
 // Configure implements the logic from your providerConfigure function adapted for the Plugin Framework
 func (p *MaterializeProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var config providerData
+	var config providerModelV0
 
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -103,7 +103,9 @@ func (p *MaterializeProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
-	// Extracting values from providerData or falling back to environment variables
+	log.Printf("[DEBUG] Provider configuration: %+v\n", config)
+
+	// Extracting values from providerModelV0 or falling back to environment variables
 	password := config.Password.ValueString()
 	if password == "" {
 		password = os.Getenv("MZ_PASSWORD")
@@ -227,6 +229,10 @@ func (p *MaterializeProvider) Configure(ctx context.Context, req provider.Config
 
 	log.Printf("[DEBUG] Initialized DB clients for regions: %v\n", dbClients)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Store the configured values in the provider instance for later use
 	p.client = &utils.ProviderMeta{
 		DB:             dbClients,
@@ -235,4 +241,9 @@ func (p *MaterializeProvider) Configure(ctx context.Context, req provider.Config
 		DefaultRegion:  clients.Region(defaultRegion),
 		RegionsEnabled: regionsEnabled,
 	}
+	providerData := &utils.ProviderData{
+		Client: p.client,
+	}
+	resp.DataSourceData = providerData
+	resp.ResourceData = providerData
 }
