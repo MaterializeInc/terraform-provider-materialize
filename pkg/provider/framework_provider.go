@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -83,20 +85,12 @@ func (p *MaterializeProvider) Schema(ctx context.Context, req provider.SchemaReq
 
 func (p *MaterializeProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		func() resource.Resource {
-			// return resourceExample{}
-			return nil
-		},
+		resources.NewClusterResource,
 	}
 }
 
 func (p *MaterializeProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		func() datasource.DataSource {
-			// return dataSourceExample{}
-			return nil
-		},
-	}
+	return []func() datasource.DataSource{}
 }
 
 // Configure implements the logic from your providerConfigure function adapted for the Plugin Framework

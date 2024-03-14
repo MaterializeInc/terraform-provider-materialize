@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
@@ -41,6 +42,7 @@ func main() {
 	providers := []func() tfprotov6.ProviderServer{
 		// disabled until ready to start using
 		// providerserver.NewProtocol6(provider.New(version)()),
+		providerserver.NewProtocol6(provider.New(version)),
 		func() tfprotov6.ProviderServer {
 			return upgradedSdkServer
 		},
