@@ -33,14 +33,6 @@ type SSOConfig struct {
 	Domains           []Domain
 }
 
-// Domain represents the structure for SSO domain.
-type Domain struct {
-	ID          string `json:"id"`
-	Domain      string `json:"domain"`
-	Validated   bool   `json:"validated"`
-	SsoConfigId string `json:"ssoConfigId"`
-}
-
 type SSOConfigurationsResponse []SSOConfig
 
 // Helper function to flatten the SSO configurations data
