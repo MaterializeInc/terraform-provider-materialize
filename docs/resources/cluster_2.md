@@ -17,4 +17,21 @@ description: |-
 
 ### Required
 
-- `name` (String) The name of the cluster.
+- `name` (String) The identifier for the cluster.
+
+### Optional
+
+- `availability_zones` (List of String) The specific availability zones of the cluster.
+- `comment` (String) **Public Preview** Comment on an object in the database.
+- `disk` (Boolean) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access. Disk replicas are deprecated and will be removed in a future release. The `disk` attribute will be enabled by default for 'cc' clusters
+- `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
+- `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
+- `introspection_interval` (String) The interval at which to collect introspection data.
+- `ownership_role` (String) The ownership role of the object.
+- `region` (String) The region to use for the resource connection. If not set, the default region is used.
+- `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
+- `size` (String) The size of the managed cluster.
+
+### Read-Only
+
+- `id` (String) The Cluster ID
