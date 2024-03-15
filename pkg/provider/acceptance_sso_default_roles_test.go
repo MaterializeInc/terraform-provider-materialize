@@ -33,6 +33,54 @@ func TestAccSSODefaultRoles_basic(t *testing.T) {
 	})
 }
 
+func TestAccSSODefaultRoles_update(t *testing.T) {
+	resourceName := "materialize_sso_default_roles.example"
+	initialRoleIDs := []string{"Admin", "Member"}
+	updatedRoleIDs := []string{"Admin"}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSSODefaultRolesConfig(initialRoleIDs),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSSODefaultRolesExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "roles.#", "2"),
+				),
+			},
+			{
+				Config: testAccSSODefaultRolesConfig(updatedRoleIDs),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSSODefaultRolesExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "roles.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "roles.0", updatedRoleIDs[0]),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSSODefaultRoles_disappears(t *testing.T) {
+	resourceName := "materialize_sso_default_roles.example"
+	roleIDs := []string{"Admin", "Member"}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSSODefaultRolesConfig(roleIDs),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSSODefaultRolesExists(resourceName),
+					testAccCheckSSODefaultRolesDisappears(resourceName),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccSSODefaultRolesConfig(roleIDs []string) string {
 	rolesStr := ""
 	for _, id := range roleIDs {
@@ -76,6 +124,26 @@ func testAccCheckSSODefaultRolesExists(resourceName string) resource.TestCheckFu
 
 		if len(roleIDs) == 0 {
 			return fmt.Errorf("SSO Default Roles not found")
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckSSODefaultRolesDisappears(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
+
+		meta := testAccProvider.Meta()
+		providerMeta, _ := utils.GetProviderMeta(meta)
+		client := providerMeta.Frontegg
+
+		err := frontegg.ClearSSODefaultRoles(context.Background(), client, rs.Primary.Attributes["sso_config_id"])
+		if err != nil {
+			return fmt.Errorf("Error clearing SSO default roles: %s", err)
 		}
 
 		return nil
