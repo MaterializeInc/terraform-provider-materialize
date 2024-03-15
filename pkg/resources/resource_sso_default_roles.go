@@ -1,13 +1,9 @@
 package resources
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -58,10 +54,9 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 	ssoConfigID := d.Get("sso_config_id").(string)
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	// Fetch role IDs based on role names
-	roleMap, err := utils.ListRoles(ctx, client)
+	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
+		return diag.FromErr(err)
 	}
 
 	var roleIDs []string
@@ -73,39 +68,9 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	// Prepare payload for PUT request
-	payload := map[string]interface{}{
-		"roleIds": roleIDs,
-	}
-
-	requestBody, err := json.Marshal(payload)
+	err = frontegg.SetSSODefaultRoles(ctx, client, ssoConfigID, roleIDs)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	// Construct the PUT request
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/roles", client.Endpoint, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "PUT", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Send the request
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusCreated {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error setting SSO default roles: status %d, response: %s", resp.StatusCode, string(responseData))
 	}
 
 	d.SetId(ssoConfigID)
@@ -125,43 +90,18 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	// Construct the GET request
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/roles", client.Endpoint, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	roleIDs, err := frontegg.GetSSODefaultRoles(ctx, client, ssoConfigID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
 
-	// Send the request
-	resp, err := client.HTTPClient.Do(req)
+	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error reading SSO default roles: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
-	var configRoles SSOConfigRolesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&configRoles); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Map role IDs back to names
-	roleMap, err := utils.ListRoles(ctx, client)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
 
 	var roleNames []string
-	for _, roleID := range configRoles.RoleIds {
+	for _, roleID := range roleIDs {
 		for name, id := range roleMap {
 			if id == roleID {
 				roleNames = append(roleNames, name)
@@ -186,40 +126,9 @@ func ssoDefaultRolesDelete(ctx context.Context, d *schema.ResourceData, meta int
 
 	ssoConfigID := d.Id()
 
-	// Prepare an empty payload to clear the default roles
-	payload := map[string]interface{}{
-		// Empty array to signify no roles
-		"roleIds": []string{},
-	}
-
-	requestBody, err := json.Marshal(payload)
+	err = frontegg.ClearSSODefaultRoles(ctx, client, ssoConfigID)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	// Construct the PUT request
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/roles", client.Endpoint, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "PUT", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Send the request
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusCreated {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error clearing SSO default roles: status %d, response: %s", resp.StatusCode, string(responseData))
 	}
 
 	d.SetId("")

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,7 +72,7 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
 	// Fetch role IDs based on role names.
-	roleMap, err := utils.ListRoles(ctx, client)
+	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
@@ -170,7 +171,7 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	// Fetch role mappings from the API.
-	roleMap, err := utils.ListRoles(ctx, client)
+	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
@@ -216,7 +217,7 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
 	// Fetch role IDs based on role names
-	roleMap, err := utils.ListRoles(ctx, client)
+	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
