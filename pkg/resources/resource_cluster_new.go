@@ -2,17 +2,20 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 // Define the resource schema and methods.
@@ -25,8 +28,7 @@ func NewClusterResource() resource.Resource {
 }
 
 func (r *clusterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = "materialize_cluster_2"
-	// resp.TypeName = req.ProviderTypeName + "_cluster_2"
+	resp.TypeName = req.ProviderTypeName + "_cluster_2"
 }
 
 type ClusterStateModelV0 struct {
@@ -79,10 +81,9 @@ func (r *clusterResource) Configure(ctx context.Context, req resource.ConfigureR
 		return
 	}
 
-	// client, ok := req.ProviderData.(*provider.ProviderData)
 	client, ok := req.ProviderData.(*utils.ProviderData)
 
-	// Verbously log the reg.ProviderData
+	// Verbously log the reg.ProviderData for debugging purposes.
 	log.Printf("[DEBUG] ProviderData contents: %+v\n", fmt.Sprintf("%+v", req.ProviderData))
 
 	if !ok {
@@ -197,8 +198,17 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	// After all operations are successful and you have the cluster ID:
 	clusterID := utils.TransformIdWithRegion(string(region), i)
 
-	// Update the ID in the state and set the entire state in the response
+	// Update the ID in the state
 	state.ID = types.StringValue(clusterID)
+
+	// After the cluster is successfully created, read its current state
+	readState, _ := r.read(ctx, &state, false)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Update the state with the freshly read information
+	diags = resp.State.Set(ctx, readState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -206,13 +216,269 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	// Implementation for Read operation
+	var state ClusterStateModelV0
+	// Retrieve the current state
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Extract the ID and region from the state
+	clusterID := state.ID.ValueString()
+
+	metaDb, region, err := utils.NewGetDBClientFromMeta(r.client, state.Region.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to get DB client", err.Error())
+		return
+	}
+
+	s, err := materialize.ScanCluster(metaDb, utils.ExtractId(clusterID))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// If no rows are returned, set the resource ID to an empty string to mark it as removed
+			state.ID = types.String{}
+			resp.State.Set(ctx, state)
+			return
+		} else {
+			resp.Diagnostics.AddError("Failed to read the cluster", err.Error())
+			return
+		}
+	}
+
+	// Update the state with the fetched values
+	state.ID = types.StringValue(utils.TransformIdWithRegion(string(region), clusterID))
+	state.Name = types.StringValue(s.ClusterName.String)
+	state.OwnershipRole = types.StringValue(s.OwnerName.String)
+	state.ReplicationFactor = types.Int64Value(s.ReplicationFactor.Int64)
+	state.Size = types.StringValue(s.Size.String)
+	state.Disk = types.BoolValue(s.Disk.Bool)
+
+	// Convert the availability zones to the appropriate type
+	azs := make([]types.String, len(s.AvailabilityZones))
+	for i, az := range s.AvailabilityZones {
+		azs[i] = types.StringValue(az)
+	}
+	azValues := make([]attr.Value, len(s.AvailabilityZones))
+	for i, az := range s.AvailabilityZones {
+		azValues[i] = types.StringValue(az)
+	}
+
+	azList, diags := types.ListValue(types.StringType, azValues)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	state.AvailabilityZones = azList
+	state.Comment = types.StringValue(s.Comment.String)
+
+	// Set the updated state in the response
+	resp.State.Set(ctx, state)
 }
 
 func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// Implementation for Update operation
+	var plan ClusterStateModelV0
+	var state ClusterStateModelV0
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	metaDb, _, err := utils.NewGetDBClientFromMeta(r.client, state.Region.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to get DB client", err.Error())
+		return
+	}
+
+	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: state.Name.ValueString()}
+	b := materialize.NewClusterBuilder(metaDb, o)
+
+	// Update cluster attributes if they have changed
+	if state.OwnershipRole.ValueString() != plan.OwnershipRole.ValueString() {
+		ownershipBuilder := materialize.NewOwnershipBuilder(metaDb, o)
+		if err := ownershipBuilder.Alter(plan.OwnershipRole.ValueString()); err != nil {
+			resp.Diagnostics.AddError("Failed to update ownership role", err.Error())
+			return
+		}
+	}
+
+	if state.Size.ValueString() != plan.Size.ValueString() {
+		if err := b.Resize(plan.Size.ValueString()); err != nil {
+			resp.Diagnostics.AddError("Failed to resize the cluster", err.Error())
+			return
+		}
+	}
+
+	// Handle changes in the 'disk' attribute
+	if state.Disk.ValueBool() != plan.Disk.ValueBool() {
+		if err := b.SetDisk(plan.Disk.ValueBool()); err != nil {
+			resp.Diagnostics.AddError("Failed to update disk setting", err.Error())
+			return
+		}
+	}
+
+	// Handle changes in the 'replication_factor' attribute
+	if state.ReplicationFactor.ValueInt64() != plan.ReplicationFactor.ValueInt64() {
+		if err := b.SetReplicationFactor(int(plan.ReplicationFactor.ValueInt64())); err != nil {
+			resp.Diagnostics.AddError("Failed to update replication factor", err.Error())
+			return
+		}
+	}
+
+	// Handle changes in the 'availability_zones' attribute
+	if !state.AvailabilityZones.Equal(plan.AvailabilityZones) {
+		azs := make([]string, len(plan.AvailabilityZones.Elements()))
+		for i, elem := range plan.AvailabilityZones.Elements() {
+			azs[i] = elem.(types.String).ValueString()
+		}
+		if err := b.SetAvailabilityZones(azs); err != nil {
+			resp.Diagnostics.AddError("Failed to update availability zones", err.Error())
+			return
+		}
+	}
+
+	// Handle changes in the 'introspection_interval' attribute
+	if state.IntrospectionInterval.ValueString() != plan.IntrospectionInterval.ValueString() {
+		if err := b.SetIntrospectionInterval(plan.IntrospectionInterval.ValueString()); err != nil {
+			resp.Diagnostics.AddError("Failed to update introspection interval", err.Error())
+			return
+		}
+	}
+
+	// Handle changes in the 'introspection_debugging' attribute
+	if state.IntrospectionDebugging.ValueBool() != plan.IntrospectionDebugging.ValueBool() {
+		if err := b.SetIntrospectionDebugging(plan.IntrospectionDebugging.ValueBool()); err != nil {
+			resp.Diagnostics.AddError("Failed to update introspection debugging", err.Error())
+			return
+		}
+	}
+
+	// Handle changes in the 'idle_arrangement_merge_effort' attribute
+	if state.IdleArrangementMergeEffort.ValueInt64() != plan.IdleArrangementMergeEffort.ValueInt64() {
+		if err := b.SetIdleArrangementMergeEffort(int(plan.IdleArrangementMergeEffort.ValueInt64())); err != nil {
+			resp.Diagnostics.AddError("Failed to update idle arrangement merge effort", err.Error())
+			return
+		}
+	}
+
+	// After updating the cluster, read its current state
+	updatedState, _ := r.read(ctx, &plan, false)
+	// Update the state with the freshly read information
+	diags = resp.State.Set(ctx, updatedState)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Implementation for Delete operation
+	// Retrieve the current state
+	var state ClusterStateModelV0
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	metaDb, _, err := utils.NewGetDBClientFromMeta(r.client, state.Region.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to get DB client", err.Error())
+		return
+	}
+
+	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: state.Name.ValueString()}
+	b := materialize.NewClusterBuilder(metaDb, o)
+
+	// Drop the cluster
+	if err := b.Drop(); err != nil {
+		resp.Diagnostics.AddError("Failed to delete the cluster", err.Error())
+		return
+	}
+
+	// After successful deletion, clear the state by setting ID to empty
+	state.ID = types.String{}
+	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *clusterResource) read(ctx context.Context, data *ClusterStateModelV0, dryRun bool) (*ClusterStateModelV0, diag.Diagnostics) {
+	diags := diag.Diagnostics{}
+
+	metaDb, _, err := utils.NewGetDBClientFromMeta(r.client, data.Region.ValueString())
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Failed to get DB client",
+			Detail:   err.Error(),
+		})
+		return data, diags
+	}
+
+	clusterID := data.ID.ValueString()
+	clusterDetails, err := materialize.ScanCluster(metaDb, utils.ExtractId(clusterID))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			data.ID = types.String{}
+			data.Name = types.String{}
+			data.Size = types.String{}
+			data.ReplicationFactor = types.Int64{}
+			data.Disk = types.Bool{}
+			data.AvailabilityZones = types.List{}
+			data.IntrospectionInterval = types.String{}
+			data.IntrospectionDebugging = types.Bool{}
+			data.IdleArrangementMergeEffort = types.Int64{}
+			data.OwnershipRole = types.String{}
+			data.Comment = types.String{}
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Failed to read the cluster",
+				Detail:   err.Error(),
+			})
+		}
+		return data, diags
+	}
+
+	// Set the values from clusterDetails to data, checking for null values.
+	data.ID = types.StringValue(clusterID)
+	data.Name = types.StringValue(getNullString(clusterDetails.ClusterName))
+	data.ReplicationFactor = types.Int64Value(clusterDetails.ReplicationFactor.Int64)
+	data.Disk = types.BoolValue(clusterDetails.Disk.Bool)
+	data.OwnershipRole = types.StringValue(getNullString(clusterDetails.OwnerName))
+
+	// TODO: Fix failing error for the following fields when they are not set
+	// data.Size = types.StringValue(getNullString(clusterDetails.Size))
+	// data.Comment = types.StringValue(getNullString(clusterDetails.Comment))
+	// data.Region = types.StringValue(string(region))
+
+	// Handle the AvailabilityZones which is a slice of strings.
+	azValues := make([]attr.Value, len(clusterDetails.AvailabilityZones))
+	for i, az := range clusterDetails.AvailabilityZones {
+		azValues[i] = types.StringValue(az)
+	}
+
+	azList, _ := types.ListValue(types.StringType, azValues)
+
+	data.AvailabilityZones = azList
+
+	return data, diags
+}
+
+// getNullString checks if the sql.NullString is valid and returns the string or an empty string if not.
+func getNullString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
 }
