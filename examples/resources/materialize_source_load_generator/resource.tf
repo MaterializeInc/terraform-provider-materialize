@@ -7,10 +7,9 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
   counter_options {
     tick_interval = "500ms"
-    scale_factor  = 0.01
   }
 }
 
 # CREATE SOURCE schema.source_load_generator
 #   FROM LOAD GENERATOR COUNTER
-#   (TICK INTERVAL '500ms' SCALE FACTOR 0.01);
+#   (TICK INTERVAL '500ms');

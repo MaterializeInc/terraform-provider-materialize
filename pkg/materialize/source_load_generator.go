@@ -9,7 +9,6 @@ import (
 
 type CounterOptions struct {
 	TickInterval   string
-	ScaleFactor    float64
 	MaxCardinality int
 }
 
@@ -20,10 +19,6 @@ func GetCounterOptionsStruct(v interface{}) CounterOptions {
 		o.TickInterval = v.(string)
 	}
 
-	if v, ok := u["scale_factor"]; ok {
-		o.ScaleFactor = v.(float64)
-	}
-
 	if v, ok := u["max_cardinality"]; ok {
 		o.MaxCardinality = v.(int)
 	}
@@ -32,7 +27,6 @@ func GetCounterOptionsStruct(v interface{}) CounterOptions {
 
 type AuctionOptions struct {
 	TickInterval string
-	ScaleFactor  float64
 }
 
 func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
@@ -42,15 +36,11 @@ func GetAuctionOptionsStruct(v interface{}) AuctionOptions {
 		o.TickInterval = v.(string)
 	}
 
-	if v, ok := u["scale_factor"]; ok {
-		o.ScaleFactor = v.(float64)
-	}
 	return o
 }
 
 type MarketingOptions struct {
 	TickInterval string
-	ScaleFactor  float64
 }
 
 func GetMarketingOptionsStruct(v interface{}) MarketingOptions {
@@ -60,9 +50,6 @@ func GetMarketingOptionsStruct(v interface{}) MarketingOptions {
 		o.TickInterval = v.(string)
 	}
 
-	if v, ok := u["scale_factor"]; ok {
-		o.ScaleFactor = v.(float64)
-	}
 	return o
 }
 
@@ -162,7 +149,7 @@ func (b *SourceLoadgenBuilder) Create() error {
 		}
 	}
 
-	for _, t := range []float64{b.counterOptions.ScaleFactor, b.auctionOptions.ScaleFactor, b.marketingOptions.ScaleFactor, b.tpchOptions.ScaleFactor} {
+	for _, t := range []float64{b.tpchOptions.ScaleFactor} {
 		if t != 0 {
 			p = append(p, fmt.Sprintf(`SCALE FACTOR %.2f`, t))
 		}

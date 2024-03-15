@@ -38,7 +38,7 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR AUCTION
-			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
+			\(TICK INTERVAL '1s'\)
 			FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -46,7 +46,6 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 		b.LoadGeneratorType("AUCTION")
 		b.AuctionOptions(AuctionOptions{
 			TickInterval: "1s",
-			ScaleFactor:  0.01,
 		})
 
 		if err := b.Create(); err != nil {
@@ -60,7 +59,7 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR MARKETING
-			\(TICK INTERVAL '1s', SCALE FACTOR 0.01\)
+			\(TICK INTERVAL '1s'\)
 			FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -68,7 +67,6 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 		b.LoadGeneratorType("MARKETING")
 		b.MarketingOptions(MarketingOptions{
 			TickInterval: "1s",
-			ScaleFactor:  0.01,
 		})
 
 		if err := b.Create(); err != nil {
