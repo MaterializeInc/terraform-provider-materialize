@@ -36,7 +36,7 @@ type FronteggRole struct {
 
 // ListRoles fetches roles from the Frontegg API and returns a map of role names to their IDs.
 func ListSSORoles(ctx context.Context, client *clients.FronteggClient) (map[string]string, error) {
-	rolesURL := fmt.Sprintf("%s/identity/resources/roles/v2", client.Endpoint)
+	rolesURL := fmt.Sprintf("%s%s", client.Endpoint, SSORolesApiPathV2)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", rolesURL, nil)
 	if err != nil {

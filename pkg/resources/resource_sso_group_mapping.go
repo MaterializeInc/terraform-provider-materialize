@@ -1,12 +1,8 @@
 package resources
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
@@ -32,15 +28,11 @@ var SSORoleGroupMappingSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "List of role names associated with the group.",
 	},
-}
-
-// GroupMapping represents the structure for SSO group role mapping.
-type GroupMapping struct {
-	ID          string   `json:"id"`
-	Group       string   `json:"group"`
-	Enabled     bool     `json:"enabled"`
-	RoleIds     []string `json:"roleIds"`
-	SsoConfigId string   `json:"-"`
+	"enabled": {
+		Type:        schema.TypeBool,
+		Computed:    true,
+		Description: "Whether the group mapping is enabled.",
+	},
 }
 
 func SSORoleGroupMapping() *schema.Resource {
@@ -86,52 +78,16 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	payload := map[string]interface{}{
-		"group":   group,
-		"roleIds": roleIDs,
-	}
-
-	requestBody, err := json.Marshal(payload)
+	groupMapping, err := frontegg.CreateSSOGroupMapping(ctx, client, ssoConfigID, group, roleIDs)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups", client.Endpoint, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error creating SSO group mapping: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return diag.FromErr(err)
-	}
-
-	groupID, ok := result["id"].(string)
-	if !ok {
-		return diag.Errorf("error retrieving ID from SSO group mapping creation response")
-	}
-
-	d.SetId(groupID)
+	d.SetId(groupMapping.ID)
 	return ssoGroupMappingRead(ctx, d, meta)
 }
 
+// ssoGroupMappingRead reads the state of the SSO group role mapping from the API and updates the Terraform resource.
 func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
@@ -144,29 +100,9 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 	ssoConfigID = d.Get("sso_config_id").(string)
 	groupID = d.Id()
 
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups", client.Endpoint, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	// Fetch group mappings from the API.
+	groups, err := frontegg.GetSSOGroupMappings(ctx, client, ssoConfigID)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error reading SSO group mappings: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
-
-	var groups []GroupMapping
-	if err := json.NewDecoder(resp.Body).Decode(&groups); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -176,10 +112,10 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
 
-	for _, group := range groups {
+	for _, group := range *groups {
 		if group.ID == groupID {
 			d.Set("group", group.Group)
-			d.Set("role_ids", group.RoleIds)
+			d.Set("roles", convertToStringInterface(group.RoleIds))
 			d.Set("enabled", group.Enabled)
 
 			// Convert role IDs to role names
@@ -214,9 +150,9 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	ssoConfigID := d.Get("sso_config_id").(string)
 	group := d.Get("group").(string)
+	groupID := d.Id()
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	// Fetch role IDs based on role names
 	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
@@ -231,41 +167,9 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	// Prepare payload for the PATCH request
-	payload := map[string]interface{}{
-		"group":   group,
-		"roleIds": roleIDs,
-	}
-
-	// Serialize the payload
-	requestBody, err := json.Marshal(payload)
+	_, err = frontegg.UpdateSSOGroupMapping(ctx, client, ssoConfigID, groupID, group, roleIDs)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	// Construct the PATCH request
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups/%s", client.Endpoint, ssoConfigID, d.Id())
-	req, err := http.NewRequestWithContext(ctx, "PATCH", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Send the request
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error updating SSO group mapping: status %d, response: %s", resp.StatusCode, string(responseData))
 	}
 
 	return ssoGroupMappingRead(ctx, d, meta)
@@ -279,29 +183,11 @@ func ssoGroupMappingDelete(ctx context.Context, d *schema.ResourceData, meta int
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Get("sso_config_id").(string)
+	groupID := d.Id()
 
-	// Construct the DELETE request
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations/%s/groups/%s", client.Endpoint, ssoConfigID, d.Id())
-	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, nil)
+	err = frontegg.DeleteSSOGroupMapping(ctx, client, ssoConfigID, groupID)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Send the request
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error deleting SSO group mapping: status %d, response: %s", resp.StatusCode, string(responseData))
 	}
 
 	d.SetId("")
