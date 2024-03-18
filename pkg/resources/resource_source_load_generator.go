@@ -28,6 +28,15 @@ var scale_factor = &schema.Schema{
 	ForceNew:    true,
 }
 
+var scale_factor_deprecated = &schema.Schema{
+	Description: "(Deprecated) The scale factor for the generator. Defaults to 0.01 (~ 10MB).",
+	Deprecated:  "Scale factor is deprecated and will be removed in a future release.",
+	Type:        schema.TypeFloat,
+	Optional:    true,
+	Default:     0.01,
+	ForceNew:    true,
+}
+
 var sourceLoadgenSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
@@ -49,7 +58,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
-				"scale_factor":  scale_factor,
+				"scale_factor":  scale_factor_deprecated,
 				"max_cardinality": {
 					Description: "Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.",
 					Type:        schema.TypeInt,
@@ -70,7 +79,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
-				"scale_factor":  scale_factor,
+				"scale_factor":  scale_factor_deprecated,
 			},
 		},
 		Optional:      true,
@@ -85,7 +94,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"tick_interval": tick_interval,
-				"scale_factor":  scale_factor,
+				"scale_factor":  scale_factor_deprecated,
 			},
 		},
 		Optional:      true,
