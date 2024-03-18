@@ -71,7 +71,7 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	// Fetch role IDs based on role names.
-	roleMap, err := utils.ListRoles(ctx, client)
+	roleMap, err := frontegg.ListSSORoles(ctx, client)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
 	}
