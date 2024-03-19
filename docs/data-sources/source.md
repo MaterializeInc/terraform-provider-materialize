@@ -31,12 +31,12 @@ data "materialize_source" "materialize_schema" {
 ### Optional
 
 - `database_name` (String) Limit sources to a specific database
+- `region` (String) The region in which the resource is located.
 - `schema_name` (String) Limit sources to a specific schema within a specific database
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String) The region in which the resource is located.
 - `sources` (List of Object) The sources in the account (see [below for nested schema](#nestedatt--sources))
 
 <a id="nestedatt--sources"></a>

@@ -31,12 +31,12 @@ data "materialize_view" "materialize_schema" {
 ### Optional
 
 - `database_name` (String) Limit views to a specific database
+- `region` (String) The region in which the resource is located.
 - `schema_name` (String) Limit views to a specific schema within a specific database
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String) The region in which the resource is located.
 - `views` (List of Object) The views in the account (see [below for nested schema](#nestedatt--views))
 
 <a id="nestedatt--views"></a>

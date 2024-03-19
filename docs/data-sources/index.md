@@ -31,13 +31,13 @@ data "materialize_index" "materialize_schema" {
 ### Optional
 
 - `database_name` (String) Limit indexes to a specific database
+- `region` (String) The region in which the resource is located.
 - `schema_name` (String) Limit indexes to a specific schema within a specific database
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `indexes` (List of Object) The indexes in the account (see [below for nested schema](#nestedatt--indexes))
-- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--indexes"></a>
 ### Nested Schema for `indexes`

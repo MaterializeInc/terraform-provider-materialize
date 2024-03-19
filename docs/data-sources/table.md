@@ -18,12 +18,12 @@ description: |-
 ### Optional
 
 - `database_name` (String) Limit tables to a specific database
+- `region` (String) The region in which the resource is located.
 - `schema_name` (String) Limit tables to a specific schema within a specific database
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String) The region in which the resource is located.
 - `tables` (List of Object) The tables in the account (see [below for nested schema](#nestedatt--tables))
 
 <a id="nestedatt--tables"></a>

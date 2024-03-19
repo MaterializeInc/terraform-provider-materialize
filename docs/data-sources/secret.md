@@ -31,12 +31,12 @@ data "materialize_secret" "materialize_schema" {
 ### Optional
 
 - `database_name` (String) Limit secrets to a specific database
+- `region` (String) The region in which the resource is located.
 - `schema_name` (String) Limit secrets to a specific schema within a specific database
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `region` (String) The region in which the resource is located.
 - `secrets` (List of Object) The secrets in the account (see [below for nested schema](#nestedatt--secrets))
 
 <a id="nestedatt--secrets"></a>
