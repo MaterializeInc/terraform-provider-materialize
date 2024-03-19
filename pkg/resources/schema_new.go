@@ -148,9 +148,10 @@ func NewRegionSchema() schema.StringAttribute {
 	return schema.StringAttribute{
 		Description: "The region to use for the resource connection. If not set, the default region is used.",
 		Optional:    true,
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.RequiresReplace(),
-		},
+		Computed:    true,
+		// PlanModifiers: []planmodifier.String{
+		// 	stringplanmodifier.RequiresReplace(),
+		// },
 	}
 }
 

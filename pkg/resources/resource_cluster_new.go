@@ -113,6 +113,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.AddError("Failed to get DB client", err.Error())
 		return
 	}
+	state.Region = types.StringValue(string(region))
 
 	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: state.Name.ValueString()}
 	b := materialize.NewClusterBuilder(metaDb, o)
@@ -131,7 +132,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		if strings.HasSuffix(size, "cc") || strings.HasSuffix(size, "C") {
 			// DISK option not supported for cluster sizes ending in cc or C.
 			log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
-			b.Disk(true)
+			state.Disk = types.BoolValue(true)
 		} else if !state.Disk.IsNull() {
 			b.Disk(state.Disk.ValueBool())
 		}
@@ -164,17 +165,16 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Ownership.
-	// TODO: Fix failing error
-	// if !state.OwnershipRole.IsNull() {
-	// 	ownership := materialize.NewOwnershipBuilder(metaDb, o)
+	if !state.OwnershipRole.IsNull() && state.OwnershipRole.ValueString() != "" {
+		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
-	// 	if err := ownership.Alter(state.OwnershipRole.ValueString()); err != nil {
-	// 		log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
-	// 		b.Drop()
-	// 		resp.Diagnostics.AddError("Failed to set ownership", err.Error())
-	// 		return
-	// 	}
-	// }
+		if err := ownership.Alter(state.OwnershipRole.ValueString()); err != nil {
+			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
+			b.Drop()
+			resp.Diagnostics.AddError("Failed to set ownership", err.Error())
+			return
+		}
+	}
 
 	// Object comment.
 	if !state.Comment.IsNull() {
@@ -217,6 +217,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state ClusterStateModelV0
+
 	// Retrieve the current state
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -224,57 +225,15 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Extract the ID and region from the state
-	clusterID := state.ID.ValueString()
+	// Use the lower-case read function to get the updated state
+	updatedState, _ := r.read(ctx, &state, false)
 
-	metaDb, region, err := utils.NewGetDBClientFromMeta(r.client, state.Region.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Failed to get DB client", err.Error())
-		return
-	}
-
-	s, err := materialize.ScanCluster(metaDb, utils.ExtractId(clusterID))
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// If no rows are returned, set the resource ID to an empty string to mark it as removed
-			state.ID = types.String{}
-			resp.State.Set(ctx, state)
-			return
-		} else {
-			resp.Diagnostics.AddError("Failed to read the cluster", err.Error())
-			return
-		}
-	}
-
-	// Update the state with the fetched values
-	state.ID = types.StringValue(utils.TransformIdWithRegion(string(region), clusterID))
-	state.Name = types.StringValue(s.ClusterName.String)
-	state.OwnershipRole = types.StringValue(s.OwnerName.String)
-	state.ReplicationFactor = types.Int64Value(s.ReplicationFactor.Int64)
-	state.Size = types.StringValue(s.Size.String)
-	state.Disk = types.BoolValue(s.Disk.Bool)
-
-	// Convert the availability zones to the appropriate type
-	azs := make([]types.String, len(s.AvailabilityZones))
-	for i, az := range s.AvailabilityZones {
-		azs[i] = types.StringValue(az)
-	}
-	azValues := make([]attr.Value, len(s.AvailabilityZones))
-	for i, az := range s.AvailabilityZones {
-		azValues[i] = types.StringValue(az)
-	}
-
-	azList, diags := types.ListValue(types.StringType, azValues)
+	// Set the updated state in the response
+	diags = resp.State.Set(ctx, updatedState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	state.AvailabilityZones = azList
-	state.Comment = types.StringValue(s.Comment.String)
-
-	// Set the updated state in the response
-	resp.State.Set(ctx, state)
 }
 
 func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -292,17 +251,18 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	metaDb, _, err := utils.NewGetDBClientFromMeta(r.client, state.Region.ValueString())
+	metaDb, region, err := utils.NewGetDBClientFromMeta(r.client, state.Region.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to get DB client", err.Error())
 		return
 	}
+	state.Region = types.StringValue(string(region))
 
 	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: state.Name.ValueString()}
 	b := materialize.NewClusterBuilder(metaDb, o)
 
 	// Update cluster attributes if they have changed
-	if state.OwnershipRole.ValueString() != plan.OwnershipRole.ValueString() {
+	if state.OwnershipRole.ValueString() != plan.OwnershipRole.ValueString() && plan.OwnershipRole.ValueString() != "" {
 		ownershipBuilder := materialize.NewOwnershipBuilder(metaDb, o)
 		if err := ownershipBuilder.Alter(plan.OwnershipRole.ValueString()); err != nil {
 			resp.Diagnostics.AddError("Failed to update ownership role", err.Error())
@@ -319,9 +279,15 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// Handle changes in the 'disk' attribute
 	if state.Disk.ValueBool() != plan.Disk.ValueBool() {
-		if err := b.SetDisk(plan.Disk.ValueBool()); err != nil {
-			resp.Diagnostics.AddError("Failed to update disk setting", err.Error())
-			return
+		if strings.HasSuffix(state.Size.ValueString(), "cc") || strings.HasSuffix(state.Size.ValueString(), "C") {
+			// DISK option not supported for cluster sizes ending in cc or C.
+			log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", state.Size.ValueString())
+			state.Disk = types.BoolValue(true)
+		} else {
+			if err := b.SetDisk(plan.Disk.ValueBool()); err != nil {
+				resp.Diagnostics.AddError("Failed to update disk setting", err.Error())
+				return
+			}
 		}
 	}
 
@@ -334,7 +300,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Handle changes in the 'availability_zones' attribute
-	if !state.AvailabilityZones.Equal(plan.AvailabilityZones) {
+	if !state.AvailabilityZones.Equal(plan.AvailabilityZones) && len(plan.AvailabilityZones.Elements()) > 0 {
 		azs := make([]string, len(plan.AvailabilityZones.Elements()))
 		for i, elem := range plan.AvailabilityZones.Elements() {
 			azs[i] = elem.(types.String).ValueString()
@@ -415,7 +381,7 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 func (r *clusterResource) read(ctx context.Context, data *ClusterStateModelV0, dryRun bool) (*ClusterStateModelV0, diag.Diagnostics) {
 	diags := diag.Diagnostics{}
 
-	metaDb, _, err := utils.NewGetDBClientFromMeta(r.client, data.Region.ValueString())
+	metaDb, region, err := utils.NewGetDBClientFromMeta(r.client, data.Region.ValueString())
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -457,10 +423,26 @@ func (r *clusterResource) read(ctx context.Context, data *ClusterStateModelV0, d
 	data.Disk = types.BoolValue(clusterDetails.Disk.Bool)
 	data.OwnershipRole = types.StringValue(getNullString(clusterDetails.OwnerName))
 
-	// TODO: Fix failing error for the following fields when they are not set
-	// data.Size = types.StringValue(getNullString(clusterDetails.Size))
-	// data.Comment = types.StringValue(getNullString(clusterDetails.Comment))
-	// data.Region = types.StringValue(string(region))
+	// Handle the Size attribute
+	if clusterDetails.Size.Valid && clusterDetails.Size.String != "" {
+		data.Size = types.StringValue(clusterDetails.Size.String)
+	} else {
+		data.Size = types.StringNull()
+	}
+
+	// Handle the Comment attribute
+	if clusterDetails.Comment.Valid && clusterDetails.Comment.String != "" {
+		data.Comment = types.StringValue(clusterDetails.Comment.String)
+	} else {
+		data.Comment = types.StringNull()
+	}
+
+	regionStr := string(region)
+	if regionStr != "" {
+		data.Region = types.StringValue(regionStr)
+	} else {
+		data.Region = types.StringNull()
+	}
 
 	// Handle the AvailabilityZones which is a slice of strings.
 	azValues := make([]attr.Value, len(clusterDetails.AvailabilityZones))
