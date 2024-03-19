@@ -31,6 +31,7 @@ resource "materialize_sso_group_mapping" "example_sso_group_mapping" {
 
 ### Read-Only
 
+- `enabled` (Boolean) Whether the group mapping is enabled.
 - `id` (String) The ID of this resource.
 
 ## Import
