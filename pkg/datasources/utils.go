@@ -25,5 +25,6 @@ func RegionSchema() *schema.Schema {
 		Description: "The region in which the resource is located.",
 		Type:        schema.TypeString,
 		Computed:    true,
+		Optional:    true,
 	}
 }

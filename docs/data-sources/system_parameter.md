@@ -22,12 +22,12 @@ data "materialize_system_parameter" "all" {}
 ### Optional
 
 - `name` (String) The name of the specific system parameter to fetch.
+- `region` (String) The region in which the resource is located.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `parameters` (List of Object) (see [below for nested schema](#nestedatt--parameters))
-- `region` (String) The region in which the resource is located.
 
 <a id="nestedatt--parameters"></a>
 ### Nested Schema for `parameters`
