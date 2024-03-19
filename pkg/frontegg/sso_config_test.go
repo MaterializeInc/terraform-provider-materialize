@@ -113,3 +113,42 @@ func TestDeleteSSOConfigurationSuccess(t *testing.T) {
 	err := DeleteSSOConfiguration(context.Background(), client, "test-id")
 	assert.NoError(err)
 }
+
+func TestFetchSSOConfigurationsRawSuccess(t *testing.T) {
+	assert := assert.New(t)
+
+	// Mock server that returns a raw JSON response
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[{"id":"raw-id","enabled":true}]`))
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	rawData, err := FetchSSOConfigurationsRaw(context.Background(), client)
+	assert.NoError(err)
+	assert.NotNil(rawData)
+}
+
+func TestFetchSSOConfigurationsRawFailure(t *testing.T) {
+	assert := assert.New(t)
+
+	// Mock server that returns an error status code
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`Internal Server Error`))
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	_, err := FetchSSOConfigurationsRaw(context.Background(), client)
+	assert.Error(err)
+}

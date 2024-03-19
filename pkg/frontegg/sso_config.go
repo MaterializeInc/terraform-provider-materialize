@@ -90,6 +90,39 @@ func FetchSSOConfigurations(ctx context.Context, client *clients.FronteggClient)
 	return configurations, nil
 }
 
+// FetchSSOConfigurationsRaw fetches the raw SSO configurations
+func FetchSSOConfigurationsRaw(ctx context.Context, client *clients.FronteggClient) ([]byte, error) {
+	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSOConfigurationsApiPathV1)
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request for SSO configurations: %w", err)
+	}
+
+	req.Header.Add("Authorization", "Bearer "+client.Token)
+
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request for SSO configurations: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var sb strings.Builder
+		_, err = io.Copy(&sb, resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body for SSO configurations: %w", err)
+		}
+		return nil, fmt.Errorf("error reading SSO configurations: status %d, response: %s", resp.StatusCode, sb.String())
+	}
+
+	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode SSO configurations: %w", err)
+	}
+
+	return responseData, nil
+}
+
 // CreateSSOConfiguration creates a new SSO configuration
 func CreateSSOConfiguration(ctx context.Context, client *clients.FronteggClient, ssoConfig SSOConfig) (*SSOConfig, error) {
 	requestBody, err := json.Marshal(ssoConfig)

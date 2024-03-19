@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -138,35 +136,14 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	client := providerMeta.Frontegg
 
-	endpoint := fmt.Sprintf("%s/frontegg/team/resources/sso/v1/configurations", client.Endpoint)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	rawConfigurations, err := frontegg.FetchSSOConfigurationsRaw(ctx, client)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	log.Printf("[DEBUG] Sending request to %s", endpoint)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	log.Printf("[DEBUG] Received status code: %d", resp.StatusCode)
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error reading SSO configurations: status %d, response: %s", resp.StatusCode, string(responseData))
 	}
 
 	var ssoConfigurations []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&ssoConfigurations); err != nil {
-		return diag.FromErr(err)
+	if err := json.Unmarshal(rawConfigurations, &ssoConfigurations); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to unmarshal SSO configurations: %w", err))
 	}
 
 	var configurations []map[string]interface{}
