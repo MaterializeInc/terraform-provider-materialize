@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.6.8 - 2024-03-20
+
+### Features
+* Allow `region` option for data sources [#506](https://github.com/MaterializeInc/terraform-provider-materialize/pull/506)
+* Remove scale factor for auction/counter load generator sources [#502](https://github.com/MaterializeInc/terraform-provider-materialize/pull/502)
+* Add cluster availability zone attribute [#498](https://github.com/MaterializeInc/terraform-provider-materialize/pull/498)
+
+### Misc
+* Added acceptance tests for SSO group mapping resource [#505](https://github.com/MaterializeInc/terraform-provider-materialize/pull/505)
+* Added acceptance tests for SSO default roles resource [#503](https://github.com/MaterializeInc/terraform-provider-materialize/pull/503)
+* Added acceptance tests for SSO domain resource [#497](https://github.com/MaterializeInc/terraform-provider-materialize/pull/497)
+
 ## 0.6.7 - 2024-03-11
 
 ### Features
