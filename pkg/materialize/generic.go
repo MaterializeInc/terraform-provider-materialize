@@ -77,3 +77,50 @@ func (b *Builder) resize(name, size string) error {
 	q := fmt.Sprintf(`ALTER %s %s SET (SIZE = '%s');`, b.entity, name, size)
 	return b.exec(q)
 }
+
+func (b *Builder) alter(name, option string, val interface{}, isSecret, validate bool) error {
+	var setValue string
+
+	switch v := val.(type) {
+	case ValueSecretStruct:
+		if v.Text != "" {
+			setValue = fmt.Sprintf("'%s'", v.Text)
+		} else if v.Secret.Name != "" {
+			setValue = fmt.Sprintf("SECRET %s", v.Secret.QualifiedName())
+		}
+	case IdentifierSchemaStruct:
+		prefix := ""
+		if isSecret {
+			prefix = "SECRET "
+		}
+		setValue = fmt.Sprintf("%s%s", prefix, v.QualifiedName())
+	case string:
+		setValue = fmt.Sprintf("'%s'", v)
+	case int:
+		setValue = fmt.Sprintf("%d", v)
+	default:
+		return fmt.Errorf("unsupported value type: %T", val)
+	}
+
+	validateClause := ""
+	if !validate {
+		validateClause = " WITH (validate false)"
+	}
+
+	if setValue == "" {
+		return fmt.Errorf("no valid value provided for type: %T", val)
+	}
+
+	query := fmt.Sprintf(`ALTER %s %s SET (%s = %s)%s;`, b.entity, name, option, setValue, validateClause)
+	return b.exec(query)
+}
+
+func (b *Builder) alterDrop(name, option string, validate bool) error {
+	validateClause := ""
+	if !validate {
+		validateClause = " WITH (validate false)"
+	}
+
+	query := fmt.Sprintf(`ALTER %s %s DROP( %s)%s;`, b.entity, name, option, validateClause)
+	return b.exec(query)
+}
