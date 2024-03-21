@@ -60,6 +60,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
+	validate := d.Get("validate").(bool)
 
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -73,6 +74,76 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		b := materialize.NewConnection(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
+		}
+	}
+
+	// If host has changed alter the connection
+	if d.HasChange("host") {
+		oldHost, newHost := d.GetChange("host")
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Alter("HOST", newHost, false, validate); err != nil {
+			d.Set("host", oldHost)
+			return diag.FromErr(err)
+		}
+	}
+
+	// If port has changed alter the connection
+	if d.HasChange("PORT") {
+		oldPort, newPort := d.GetChange("port")
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Alter("port", newPort, false, validate); err != nil {
+			d.Set("port", oldPort)
+			return diag.FromErr(err)
+		}
+	}
+
+	// If user has changed alter the connection
+	if d.HasChange("user") {
+		oldUser, newUser := d.GetChange("user")
+		user := materialize.GetValueSecretStruct(newUser)
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Alter("USER", user, false, validate); err != nil {
+			d.Set("user", oldUser)
+			return diag.FromErr(err)
+		}
+	}
+
+	// If password has changed alter the connection
+	if d.HasChange("password") {
+		oldPassword, newPassword := d.GetChange("password")
+		password := materialize.GetIdentifierSchemaStruct(newPassword)
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Alter("PASSWORD", password, true, validate); err != nil {
+			d.Set("password", oldPassword)
+			return diag.FromErr(err)
+		}
+	}
+
+	// If database has changed alter the connection
+	if d.HasChange("database") {
+		oldDatabase, newDatabase := d.GetChange("database")
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Alter("DATABASE", newDatabase, false, validate); err != nil {
+			d.Set("database", oldDatabase)
+			return diag.FromErr(err)
+		}
+	}
+
+	// If SSH tunnel has changed alter the connection
+	if d.HasChange("ssh_tunnel") {
+		oldTunnel, newTunnel := d.GetChange("ssh_tunnel")
+		b := materialize.NewConnection(metaDb, o)
+		if newTunnel == nil || len(newTunnel.([]interface{})) == 0 {
+			if err := b.AlterDrop("SSH TUNNEL", validate); err != nil {
+				d.Set("ssh_tunnel", oldTunnel)
+				return diag.FromErr(err)
+			}
+		} else {
+			tunnel := materialize.GetIdentifierSchemaStruct(newTunnel)
+			if err := b.Alter("SSH TUNNEL", tunnel, false, validate); err != nil {
+				d.Set("ssh_tunnel", oldTunnel)
+				return diag.FromErr(err)
+			}
 		}
 	}
 
