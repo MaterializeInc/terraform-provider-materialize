@@ -40,7 +40,7 @@ var indexSchema = map[string]*schema.Schema{
 	},
 	"qualified_sql_name": QualifiedNameSchema("index"),
 	"comment":            CommentSchema(false),
-	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true),
+	"obj_name":           IdentifierSchema("obj_name", "The name of the source, view, or materialized view on which you want to create an index.", true, true),
 	"cluster_name": {
 		Description: "The cluster to maintain this index.",
 		Type:        schema.TypeString,

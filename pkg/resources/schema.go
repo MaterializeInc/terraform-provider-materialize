@@ -90,7 +90,7 @@ func ValidateConnectionSchema() *schema.Schema {
 	}
 }
 
-func IdentifierSchema(elem, description string, required bool) *schema.Schema {
+func IdentifierSchema(elem, description string, required, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -118,12 +118,12 @@ func IdentifierSchema(elem, description string, required bool) *schema.Schema {
 		Optional:    !required,
 		MinItems:    1,
 		MaxItems:    1,
-		ForceNew:    true,
+		ForceNew:    forceNew,
 		Description: description,
 	}
 }
 
-func ValueSecretSchema(elem string, description string, required bool) *schema.Schema {
+func ValueSecretSchema(elem string, description string, required, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -139,6 +139,7 @@ func ValueSecretSchema(elem string, description string, required bool) *schema.S
 					elem,
 					fmt.Sprintf("The `%s` secret value. Conflicts with `text` within this block.", elem),
 					false,
+					true,
 				),
 			},
 		},
@@ -146,7 +147,7 @@ func ValueSecretSchema(elem string, description string, required bool) *schema.S
 		Optional:    !required,
 		MinItems:    1,
 		MaxItems:    1,
-		ForceNew:    true,
+		ForceNew:    forceNew,
 		Description: fmt.Sprintf("%s. Can be supplied as either free text using `text` or reference to a secret object using `secret`.", description),
 	}
 }
@@ -164,7 +165,7 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, true),
 							"key_strategy": {
 								Description:  "How Materialize will define the Avro schema reader key strategy.",
 								Type:         schema.TypeString,
@@ -190,7 +191,7 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, true),
 							"message": {
 								Description: "The name of the Protobuf message to use for the source.",
 								Type:        schema.TypeString,
@@ -272,7 +273,7 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
+							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true, true),
 							"avro_key_fullname": {
 								Description: "The full name of the Avro key schema.",
 								Type:        schema.TypeString,
@@ -294,7 +295,7 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								ForceNew:    true,
 								Elem: &schema.Resource{
 									Schema: map[string]*schema.Schema{
-										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true),
+										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true, true),
 										"doc": {
 											Description: "Documentation string.",
 											Type:        schema.TypeString,
@@ -321,7 +322,7 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								ForceNew:    true,
 								Elem: &schema.Resource{
 									Schema: map[string]*schema.Schema{
-										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true),
+										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true, true),
 										"column": {
 											Description: "Name of the column in the Avro schema to apply to.",
 											Type:        schema.TypeString,

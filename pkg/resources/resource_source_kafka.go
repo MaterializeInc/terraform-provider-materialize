@@ -19,7 +19,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("source"),
 	"size":               ObjectSizeSchema("source"),
-	"kafka_connection":   IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true),
+	"kafka_connection":   IdentifierSchema("kafka_connection", "The Kafka connection to use in the source.", true, true),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
@@ -137,7 +137,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:      true,
 		ConflictsWith: []string{"start_offset"},
 	},
-	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
+	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false, true),
 	"subsource":       SubsourceSchema(),
 	"ownership_role":  OwnershipRoleSchema(),
 	"region":          RegionSchema(),
