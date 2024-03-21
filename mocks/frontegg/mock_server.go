@@ -595,13 +595,29 @@ func listSSOConfigs(w http.ResponseWriter, r *http.Request) {
 	mutex.Lock()
 	configs := make([]SSOConfig, 0, len(ssoConfigs))
 	for _, config := range ssoConfigs {
+		// Ensure that Domains and Groups are not nil
+		if config.Domains == nil {
+			config.Domains = []Domain{}
+		}
+		if config.Groups == nil {
+			config.Groups = []GroupMapping{}
+		}
+		// Initialize RoleIds if it's nil
+		if config.RoleIds == nil {
+			config.RoleIds = []string{}
+		}
 		configs = append(configs, config)
 	}
 	mutex.Unlock()
 
-	responseBytes, _ := json.Marshal(configs)
-	fmt.Printf("Response body: %s\n", string(responseBytes))
+	responseBytes, err := json.Marshal(configs)
+	if err != nil {
+		fmt.Printf("Error marshaling response: %v\n", err)
+		sendResponse(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
 
+	fmt.Printf("Response body: %s\n", string(responseBytes))
 	sendResponse(w, http.StatusOK, configs)
 }
 
