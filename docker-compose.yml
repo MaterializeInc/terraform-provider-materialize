@@ -9,7 +9,7 @@ services:
     command:
       - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
-      - --bootstrap-builtin-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --all-features
