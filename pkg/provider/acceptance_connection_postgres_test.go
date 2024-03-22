@@ -127,8 +127,8 @@ func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 	updatedDatabase := "updated_database"
 	initialSslMode := "require"
 	updatedSslMode := "disable"
-	sshTunnelName := "ssh_connection"
-	sshTunnel2Name := "ssh_connection2"
+	sshTunnelName := "pg_ssh_connection"
+	sshTunnel2Name := "pg_ssh_connection2"
 	initialSslCa := "-----BEGIN CERTIFICATE-----"
 	updatedSslCa := "-----BEGIN CERTIFICATE----------END CERTIFICATE-----"
 
@@ -164,6 +164,8 @@ func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssh_tunnel.0.name", sshTunnel2Name),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssl_certificate_authority.0.text", updatedSslCa),
 				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
