@@ -1,14 +1,9 @@
 package resources
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
-	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -88,41 +83,11 @@ func resourceSCIM2ConfigurationsCreate(ctx context.Context, d *schema.ResourceDa
 		SyncToUserManagement: true,
 	}
 
-	configData, err := json.Marshal(config)
+	newConfig, err := frontegg.CreateSCIM2Configuration(ctx, client, config)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	endpoint := fmt.Sprintf("%s/frontegg/directory/resources/v1/configurations/scim2", client.Endpoint)
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(configData))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		var sb strings.Builder
-		_, err = io.Copy(&sb, resp.Body)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("error creating SCIM 2.0 configuration: status %d, response: %s", resp.StatusCode, sb.String())
-	}
-
-	var newConfig frontegg.SCIM2Configuration
-	if err := json.NewDecoder(resp.Body).Decode(&newConfig); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Get the token ID from the response and set it as the ID of the resource:
 	if err := d.Set("token", newConfig.Token); err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,22 +110,9 @@ func resourceSCIM2ConfigurationsDelete(ctx context.Context, d *schema.ResourceDa
 	}
 	client := providerMeta.Frontegg
 
-	endpoint := fmt.Sprintf("%s/frontegg/directory/resources/v1/configurations/scim2/%s", client.Endpoint, d.Id())
-	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, nil)
+	err = frontegg.DeleteSCIM2Configuration(ctx, client, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		return diag.Errorf("error deleting SCIM 2.0 configuration: status %d", resp.StatusCode)
 	}
 
 	d.SetId("")
