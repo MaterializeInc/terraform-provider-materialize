@@ -44,12 +44,12 @@ func (c *Connection) QualifiedName() string {
 	return QualifiedName(c.DatabaseName, c.SchemaName, c.ConnectionName)
 }
 
-func (b *Connection) Alter(option string, val interface{}, isSecret, validate bool) error {
-	return b.ddl.alter(b.QualifiedName(), option, val, isSecret, validate)
+func (b *Connection) Alter(options map[string]interface{}, isSecret, validate bool) error {
+	return b.ddl.alter(b.QualifiedName(), options, isSecret, validate)
 }
 
-func (b *Connection) AlterDrop(option string, validate bool) error {
-	return b.ddl.alterDrop(b.QualifiedName(), option, validate)
+func (b *Connection) AlterDrop(options []string, validate bool) error {
+	return b.ddl.alterDrop(b.QualifiedName(), options, validate)
 }
 
 func (b *Connection) Rename(newConnectionName string) error {

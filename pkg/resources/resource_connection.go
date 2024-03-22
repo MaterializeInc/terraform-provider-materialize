@@ -80,7 +80,10 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if d.HasChange("host") {
 		oldHost, newHost := d.GetChange("host")
 		b := materialize.NewConnection(metaDb, o)
-		if err := b.Alter("HOST", newHost, false, validate); err != nil {
+		options := map[string]interface{}{
+			"HOST": newHost,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
 			d.Set("host", oldHost)
 			return diag.FromErr(err)
 		}
@@ -89,7 +92,10 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if d.HasChange("port") {
 		oldPort, newPort := d.GetChange("port")
 		b := materialize.NewConnection(metaDb, o)
-		if err := b.Alter("PORT", newPort, false, validate); err != nil {
+		options := map[string]interface{}{
+			"PORT": newPort,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
 			d.Set("port", oldPort)
 			return diag.FromErr(err)
 		}
@@ -99,7 +105,10 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldUser, newUser := d.GetChange("user")
 		user := materialize.GetValueSecretStruct(newUser)
 		b := materialize.NewConnection(metaDb, o)
-		if err := b.Alter("USER", user, false, validate); err != nil {
+		options := map[string]interface{}{
+			"USER": user,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
 			d.Set("user", oldUser)
 			return diag.FromErr(err)
 		}
@@ -109,7 +118,10 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldPassword, newPassword := d.GetChange("password")
 		password := materialize.GetIdentifierSchemaStruct(newPassword)
 		b := materialize.NewConnection(metaDb, o)
-		if err := b.Alter("PASSWORD", password, true, validate); err != nil {
+		options := map[string]interface{}{
+			"PASSWORD": password,
+		}
+		if err := b.Alter(options, true, validate); err != nil {
 			d.Set("password", oldPassword)
 			return diag.FromErr(err)
 		}
@@ -118,7 +130,10 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if d.HasChange("database") {
 		oldDatabase, newDatabase := d.GetChange("database")
 		b := materialize.NewConnection(metaDb, o)
-		if err := b.Alter("DATABASE", newDatabase, false, validate); err != nil {
+		options := map[string]interface{}{
+			"DATABASE": newDatabase,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
 			d.Set("database", oldDatabase)
 			return diag.FromErr(err)
 		}
@@ -128,13 +143,16 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldTunnel, newTunnel := d.GetChange("ssh_tunnel")
 		b := materialize.NewConnection(metaDb, o)
 		if newTunnel == nil || len(newTunnel.([]interface{})) == 0 {
-			if err := b.AlterDrop("SSH TUNNEL", validate); err != nil {
+			if err := b.AlterDrop([]string{"SSH TUNNEL"}, validate); err != nil {
 				d.Set("ssh_tunnel", oldTunnel)
 				return diag.FromErr(err)
 			}
 		} else {
 			tunnel := materialize.GetIdentifierSchemaStruct(newTunnel)
-			if err := b.Alter("SSH TUNNEL", tunnel, false, validate); err != nil {
+			options := map[string]interface{}{
+				"SSH TUNNEL": tunnel,
+			}
+			if err := b.Alter(options, false, validate); err != nil {
 				d.Set("ssh_tunnel", oldTunnel)
 				return diag.FromErr(err)
 			}
@@ -145,49 +163,50 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldSslCa, newSslCa := d.GetChange("ssl_certificate_authority")
 		b := materialize.NewConnection(metaDb, o)
 		if newSslCa == nil || len(newSslCa.([]interface{})) == 0 {
-			if err := b.AlterDrop("SSL CERTIFICATE AUTHORITY", validate); err != nil {
+			if err := b.AlterDrop([]string{"SSL CERTIFICATE AUTHORITY"}, validate); err != nil {
 				d.Set("ssl_certificate_authority", oldSslCa)
 				return diag.FromErr(err)
 			}
 		} else {
 			sslCa := materialize.GetValueSecretStruct(newSslCa)
-			if err := b.Alter("SSL CERTIFICATE AUTHORITY", sslCa, true, validate); err != nil {
+			options := map[string]interface{}{
+				"SSL CERTIFICATE AUTHORITY": sslCa,
+			}
+			if err := b.Alter(options, true, validate); err != nil {
 				d.Set("ssl_certificate_authority", oldSslCa)
 				return diag.FromErr(err)
 			}
 		}
 	}
 
-	if d.HasChange("ssl_certificate") {
+	if d.HasChange("ssl_certificate") || d.HasChange("ssl_key") {
 		oldSslCert, newSslCert := d.GetChange("ssl_certificate")
-		b := materialize.NewConnection(metaDb, o)
-		if newSslCert == nil || len(newSslCert.([]interface{})) == 0 {
-			if err := b.AlterDrop("SSL CERTIFICATE", validate); err != nil {
-				d.Set("ssl_certificate", oldSslCert)
-				return diag.FromErr(err)
-			}
-		} else {
-			sslCert := materialize.GetValueSecretStruct(newSslCert)
-			if err := b.Alter("SSL CERTIFICATE", sslCert, true, validate); err != nil {
-				d.Set("ssl_certificate", oldSslCert)
-				return diag.FromErr(err)
-			}
-		}
-	}
-
-	if d.HasChange("ssl_key") {
 		oldSslKey, newSslKey := d.GetChange("ssl_key")
 		b := materialize.NewConnection(metaDb, o)
-		if newSslKey == nil || len(newSslKey.([]interface{})) == 0 {
-			if err := b.AlterDrop("SSL KEY", validate); err != nil {
+
+		if (newSslCert == nil || len(newSslCert.([]interface{})) == 0) || (newSslKey == nil || len(newSslKey.([]interface{})) == 0) {
+			// Drop both SSL CERTIFICATE and SSL KEY in a single statement
+			if err := b.AlterDrop([]string{"SSL CERTIFICATE", "SSL KEY"}, validate); err != nil {
+				d.Set("ssl_certificate", oldSslCert)
 				d.Set("ssl_key", oldSslKey)
 				return diag.FromErr(err)
 			}
 		} else {
-			sslKey := materialize.GetIdentifierSchemaStruct(newSslKey)
-			if err := b.Alter("SSL KEY", sslKey, true, validate); err != nil {
-				d.Set("ssl_key", oldSslKey)
-				return diag.FromErr(err)
+			options := make(map[string]interface{})
+			if newSslCert != nil && len(newSslCert.([]interface{})) > 0 {
+				sslCert := materialize.GetValueSecretStruct(newSslCert)
+				options["SSL CERTIFICATE"] = sslCert
+			}
+			if newSslKey != nil && len(newSslKey.([]interface{})) > 0 {
+				sslKey := materialize.GetIdentifierSchemaStruct(newSslKey)
+				options["SSL KEY"] = sslKey
+			}
+			if len(options) > 0 {
+				if err := b.Alter(options, true, validate); err != nil {
+					d.Set("ssl_certificate", oldSslCert)
+					d.Set("ssl_key", oldSslKey)
+					return diag.FromErr(err)
+				}
 			}
 		}
 	}
@@ -195,13 +214,16 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if d.HasChange("ssl_mode") {
 		oldSslMode, newSslMode := d.GetChange("ssl_mode")
 		b := materialize.NewConnection(metaDb, o)
-		if newSslMode == nil {
-			if err := b.AlterDrop("SSL MODE", validate); err != nil {
+		if newSslMode == nil || newSslMode == "" {
+			if err := b.AlterDrop([]string{"SSL MODE"}, validate); err != nil {
 				d.Set("ssl_mode", oldSslMode)
 				return diag.FromErr(err)
 			}
 		} else {
-			if err := b.Alter("SSL MODE", newSslMode, false, validate); err != nil {
+			options := map[string]interface{}{
+				"SSL MODE": newSslMode,
+			}
+			if err := b.Alter(options, false, validate); err != nil {
 				d.Set("ssl_mode", oldSslMode)
 				return diag.FromErr(err)
 			}
@@ -212,13 +234,16 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldAwsPrivatelink, newAwsPrivatelink := d.GetChange("aws_privatelink")
 		b := materialize.NewConnection(metaDb, o)
 		if newAwsPrivatelink == nil || len(newAwsPrivatelink.([]interface{})) == 0 {
-			if err := b.AlterDrop("AWS PRIVATELINK", validate); err != nil {
+			if err := b.AlterDrop([]string{"AWS PRIVATELINK"}, validate); err != nil {
 				d.Set("aws_privatelink", oldAwsPrivatelink)
 				return diag.FromErr(err)
 			}
 		} else {
 			awsPrivatelink := materialize.GetIdentifierSchemaStruct(newAwsPrivatelink)
-			if err := b.Alter("AWS PRIVATELINK", awsPrivatelink, false, validate); err != nil {
+			options := map[string]interface{}{
+				"AWS PRIVATELINK": awsPrivatelink,
+			}
+			if err := b.Alter(options, false, validate); err != nil {
 				d.Set("aws_privatelink", oldAwsPrivatelink)
 				return diag.FromErr(err)
 			}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
@@ -78,28 +79,37 @@ func (b *Builder) resize(name, size string) error {
 	return b.exec(q)
 }
 
-func (b *Builder) alter(name, option string, val interface{}, isSecret, validate bool) error {
-	var setValue string
+func (b *Builder) alter(name string, options map[string]interface{}, isSecret, validate bool) error {
+	var setClauses []string
+	for option, val := range options {
+		var setValue string
+		switch v := val.(type) {
+		case ValueSecretStruct:
+			if v.Text != "" {
+				setValue = fmt.Sprintf("'%s'", v.Text)
+			} else if v.Secret.Name != "" {
+				setValue = fmt.Sprintf("SECRET %s", v.Secret.QualifiedName())
+			}
+		case IdentifierSchemaStruct:
+			prefix := ""
+			if isSecret {
+				prefix = "SECRET "
+			}
+			setValue = fmt.Sprintf("%s%s", prefix, v.QualifiedName())
+		case string:
+			setValue = fmt.Sprintf("'%s'", v)
+		case int:
+			setValue = fmt.Sprintf("%d", v)
+		default:
+			return fmt.Errorf("unsupported value type for option %s: %T", option, val)
+		}
 
-	switch v := val.(type) {
-	case ValueSecretStruct:
-		if v.Text != "" {
-			setValue = fmt.Sprintf("'%s'", v.Text)
-		} else if v.Secret.Name != "" {
-			setValue = fmt.Sprintf("SECRET %s", v.Secret.QualifiedName())
+		if setValue == "" {
+			return fmt.Errorf("no valid value provided for option %s: %T", option, val)
 		}
-	case IdentifierSchemaStruct:
-		prefix := ""
-		if isSecret {
-			prefix = "SECRET "
-		}
-		setValue = fmt.Sprintf("%s%s", prefix, v.QualifiedName())
-	case string:
-		setValue = fmt.Sprintf("'%s'", v)
-	case int:
-		setValue = fmt.Sprintf("%d", v)
-	default:
-		return fmt.Errorf("unsupported value type: %T", val)
+
+		setClause := fmt.Sprintf("%s = %s", option, setValue)
+		setClauses = append(setClauses, setClause)
 	}
 
 	validateClause := ""
@@ -107,20 +117,30 @@ func (b *Builder) alter(name, option string, val interface{}, isSecret, validate
 		validateClause = " WITH (validate false)"
 	}
 
-	if setValue == "" {
-		return fmt.Errorf("no valid value provided for type: %T", val)
-	}
-
-	query := fmt.Sprintf(`ALTER %s %s SET (%s = %s)%s;`, b.entity, name, option, setValue, validateClause)
+	// Joining each SET clause distinctly
+	setClauseString := "SET (" + strings.Join(setClauses, "), SET(") + ")"
+	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, setClauseString, validateClause)
 	return b.exec(query)
 }
 
-func (b *Builder) alterDrop(name, option string, validate bool) error {
+func (b *Builder) alterDrop(name string, options []string, validate bool) error {
 	validateClause := ""
 	if !validate {
 		validateClause = " WITH (validate false)"
 	}
 
-	query := fmt.Sprintf(`ALTER %s %s DROP( %s)%s;`, b.entity, name, option, validateClause)
+	// Construct each DROP clause separately
+	dropClauses := []string{}
+	for _, option := range options {
+		dropClause := fmt.Sprintf("DROP( %s )", option)
+		dropClauses = append(dropClauses, dropClause)
+	}
+
+	// Join the DROP clauses with commas
+	optionsClause := strings.Join(dropClauses, ", ")
+
+	// Construct the final query
+	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, optionsClause, validateClause)
+
 	return b.exec(query)
 }
