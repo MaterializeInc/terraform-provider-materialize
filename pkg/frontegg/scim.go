@@ -13,6 +13,10 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 )
 
+const (
+	SCIM2ConfigurationsApiPathV1 = "/frontegg/directory/resources/v1/configurations/scim2"
+)
+
 // SCIM 2.0 Configurations API response
 type SCIM2Configuration struct {
 	ID                   string    `json:"id"`
@@ -45,7 +49,7 @@ func FlattenSCIM2Configurations(configurations SCIM2ConfigurationsResponse) []in
 
 // FetchSCIM2Configurations fetches the SCIM 2.0 configurations
 func FetchSCIM2Configurations(ctx context.Context, client *clients.FronteggClient) (SCIM2ConfigurationsResponse, error) {
-	endpoint := fmt.Sprintf("%s/frontegg/directory/resources/v1/configurations/scim2", client.Endpoint)
+	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SCIM2ConfigurationsApiPathV1)
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -83,7 +87,7 @@ func CreateSCIM2Configuration(ctx context.Context, client *clients.FronteggClien
 		return nil, err
 	}
 
-	endpoint := fmt.Sprintf("%s/frontegg/directory/resources/v1/configurations/scim2", client.Endpoint)
+	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SCIM2ConfigurationsApiPathV1)
 	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(configData))
 	if err != nil {
 		return nil, err
@@ -117,7 +121,7 @@ func CreateSCIM2Configuration(ctx context.Context, client *clients.FronteggClien
 
 // DeleteSCIM2Configuration deletes an existing SCIM 2.0 configuration
 func DeleteSCIM2Configuration(ctx context.Context, client *clients.FronteggClient, id string) error {
-	endpoint := fmt.Sprintf("%s/frontegg/directory/resources/v1/configurations/scim2/%s", client.Endpoint, id)
+	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, SCIM2ConfigurationsApiPathV1, id)
 	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, nil)
 	if err != nil {
 		return err
