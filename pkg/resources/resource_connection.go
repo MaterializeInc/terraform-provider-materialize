@@ -77,7 +77,6 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	// If host has changed alter the connection
 	if d.HasChange("host") {
 		oldHost, newHost := d.GetChange("host")
 		b := materialize.NewConnection(metaDb, o)
@@ -87,17 +86,15 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	// If port has changed alter the connection
-	if d.HasChange("PORT") {
+	if d.HasChange("port") {
 		oldPort, newPort := d.GetChange("port")
 		b := materialize.NewConnection(metaDb, o)
-		if err := b.Alter("port", newPort, false, validate); err != nil {
+		if err := b.Alter("PORT", newPort, false, validate); err != nil {
 			d.Set("port", oldPort)
 			return diag.FromErr(err)
 		}
 	}
 
-	// If user has changed alter the connection
 	if d.HasChange("user") {
 		oldUser, newUser := d.GetChange("user")
 		user := materialize.GetValueSecretStruct(newUser)
@@ -108,7 +105,6 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	// If password has changed alter the connection
 	if d.HasChange("password") {
 		oldPassword, newPassword := d.GetChange("password")
 		password := materialize.GetIdentifierSchemaStruct(newPassword)
@@ -119,7 +115,6 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	// If database has changed alter the connection
 	if d.HasChange("database") {
 		oldDatabase, newDatabase := d.GetChange("database")
 		b := materialize.NewConnection(metaDb, o)
@@ -129,7 +124,6 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	// If SSH tunnel has changed alter the connection
 	if d.HasChange("ssh_tunnel") {
 		oldTunnel, newTunnel := d.GetChange("ssh_tunnel")
 		b := materialize.NewConnection(metaDb, o)
@@ -142,6 +136,90 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			tunnel := materialize.GetIdentifierSchemaStruct(newTunnel)
 			if err := b.Alter("SSH TUNNEL", tunnel, false, validate); err != nil {
 				d.Set("ssh_tunnel", oldTunnel)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("ssl_certificate_authority") {
+		oldSslCa, newSslCa := d.GetChange("ssl_certificate_authority")
+		b := materialize.NewConnection(metaDb, o)
+		if newSslCa == nil || len(newSslCa.([]interface{})) == 0 {
+			if err := b.AlterDrop("SSL CERTIFICATE AUTHORITY", validate); err != nil {
+				d.Set("ssl_certificate_authority", oldSslCa)
+				return diag.FromErr(err)
+			}
+		} else {
+			sslCa := materialize.GetValueSecretStruct(newSslCa)
+			if err := b.Alter("SSL CERTIFICATE AUTHORITY", sslCa, true, validate); err != nil {
+				d.Set("ssl_certificate_authority", oldSslCa)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("ssl_certificate") {
+		oldSslCert, newSslCert := d.GetChange("ssl_certificate")
+		b := materialize.NewConnection(metaDb, o)
+		if newSslCert == nil || len(newSslCert.([]interface{})) == 0 {
+			if err := b.AlterDrop("SSL CERTIFICATE", validate); err != nil {
+				d.Set("ssl_certificate", oldSslCert)
+				return diag.FromErr(err)
+			}
+		} else {
+			sslCert := materialize.GetValueSecretStruct(newSslCert)
+			if err := b.Alter("SSL CERTIFICATE", sslCert, true, validate); err != nil {
+				d.Set("ssl_certificate", oldSslCert)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("ssl_key") {
+		oldSslKey, newSslKey := d.GetChange("ssl_key")
+		b := materialize.NewConnection(metaDb, o)
+		if newSslKey == nil || len(newSslKey.([]interface{})) == 0 {
+			if err := b.AlterDrop("SSL KEY", validate); err != nil {
+				d.Set("ssl_key", oldSslKey)
+				return diag.FromErr(err)
+			}
+		} else {
+			sslKey := materialize.GetIdentifierSchemaStruct(newSslKey)
+			if err := b.Alter("SSL KEY", sslKey, true, validate); err != nil {
+				d.Set("ssl_key", oldSslKey)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("ssl_mode") {
+		oldSslMode, newSslMode := d.GetChange("ssl_mode")
+		b := materialize.NewConnection(metaDb, o)
+		if newSslMode == nil {
+			if err := b.AlterDrop("SSL MODE", validate); err != nil {
+				d.Set("ssl_mode", oldSslMode)
+				return diag.FromErr(err)
+			}
+		} else {
+			if err := b.Alter("SSL MODE", newSslMode, false, validate); err != nil {
+				d.Set("ssl_mode", oldSslMode)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("aws_privatelink") {
+		oldAwsPrivatelink, newAwsPrivatelink := d.GetChange("aws_privatelink")
+		b := materialize.NewConnection(metaDb, o)
+		if newAwsPrivatelink == nil || len(newAwsPrivatelink.([]interface{})) == 0 {
+			if err := b.AlterDrop("AWS PRIVATELINK", validate); err != nil {
+				d.Set("aws_privatelink", oldAwsPrivatelink)
+				return diag.FromErr(err)
+			}
+		} else {
+			awsPrivatelink := materialize.GetIdentifierSchemaStruct(newAwsPrivatelink)
+			if err := b.Alter("AWS PRIVATELINK", awsPrivatelink, false, validate); err != nil {
+				d.Set("aws_privatelink", oldAwsPrivatelink)
 				return diag.FromErr(err)
 			}
 		}
