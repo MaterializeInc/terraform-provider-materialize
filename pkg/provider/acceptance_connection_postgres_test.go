@@ -113,6 +113,62 @@ func TestAccConnPostgres_disappears(t *testing.T) {
 	})
 }
 
+func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
+	initialSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	updatedSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	updatedConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	initialHost := "initial_host"
+	updatedHost := "updated_host"
+	initialPort := "5432"
+	updatedPort := "5433"
+	initialDatabase := "initial_database"
+	updatedDatabase := "updated_database"
+	initialSslMode := "require"
+	updatedSslMode := "disable"
+	sshTunnelName := "ssh_connection"
+	sshTunnel2Name := "ssh_connection2"
+	initialSslCa := "-----BEGIN CERTIFICATE-----"
+	updatedSslCa := "-----BEGIN CERTIFICATE----------END CERTIFICATE-----"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllConnPostgresDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnPostgresResourceUpdates(roleName, initialSecretName, connectionName, initialHost, initialPort, sshTunnelName, initialDatabase, initialSslMode, initialSslCa),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "host", initialHost),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "port", initialPort),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "database", initialDatabase),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssl_mode", initialSslMode),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssh_tunnel.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssh_tunnel.0.name", sshTunnelName),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssl_certificate_authority.0.text", initialSslCa),
+				),
+			},
+			{
+				Config: testAccConnPostgresResourceUpdates(roleName, updatedSecretName, updatedConnectionName, updatedHost, updatedPort, sshTunnel2Name, updatedDatabase, updatedSslMode, updatedSslCa),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "name", updatedConnectionName),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "host", updatedHost),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "port", updatedPort),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "database", updatedDatabase),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssl_mode", updatedSslMode),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssh_tunnel.#", "1"),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssh_tunnel.0.name", sshTunnel2Name),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssl_certificate_authority.0.text", updatedSslCa),
+				),
+			},
+		},
+	})
+}
+
 func testAccConnPostgresResource(roleName, secretName, connectionName, connection2Name, connectionOwner string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
@@ -158,6 +214,65 @@ resource "materialize_connection_postgres" "test_role" {
 	depends_on = [materialize_role.test]
 }
 `, roleName, secretName, connectionName, connection2Name, connectionOwner)
+}
+
+func testAccConnPostgresResourceUpdates(roleName, secretName, connectionName, host, port, sshTunnelName, database, sslMode, sslCa string) string {
+	return fmt.Sprintf(`
+	resource "materialize_role" "test" {
+		name = "%[1]s"
+	}
+
+	resource "materialize_secret" "postgres_password" {
+		name  = "%[2]s"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_ssh_tunnel" "ssh_connection" {
+		name        = "pg_ssh_connection"
+		schema_name = "public"
+		comment     = "connection ssh tunnel comment"
+
+		host = "ssh_host"
+		user = "ssh_user"
+		port = 22
+	}
+
+	resource "materialize_connection_ssh_tunnel" "ssh_connection2" {
+		name        = "pg_ssh_connection2"
+		schema_name = "public"
+		comment     = "connection ssh tunnel 2 comment"
+
+		host = "ssh_host2"
+		user = "ssh_user2"
+		port = 22
+	}
+
+	resource "materialize_connection_postgres" "test" {
+		name           = "%[3]s"
+		host           = "%[4]s"
+		port           = %[5]s
+		user {
+			text = "postgres"
+		}
+		password {
+			name          = materialize_secret.postgres_password.name
+			schema_name   = materialize_secret.postgres_password.schema_name
+			database_name = materialize_secret.postgres_password.database_name
+		}
+		ssh_tunnel {
+			name = "%[6]s"
+		}
+		database       = "%[7]s"
+		ssl_mode       = "%[8]s"
+		ssl_certificate_authority {
+		    text = "%[9]s"
+		}
+
+		comment        = "Test connection"
+		ownership_role = materialize_role.test.name
+		validate	   = false
+	}
+	`, roleName, secretName, connectionName, host, port, sshTunnelName, database, sslMode, sslCa)
 }
 
 func testAccCheckConnPostgresExists(name string) resource.TestCheckFunc {
