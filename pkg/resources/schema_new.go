@@ -93,7 +93,7 @@ func NewIntrospectionIntervalSchema(forceNew bool, alsoRequires []string) schema
 		Description: "The interval at which to collect introspection data.",
 		Optional:    true,
 		Computed:    true,
-		Default:     stringdefault.StaticString("1m"),
+		Default:     stringdefault.StaticString("1s"),
 		Validators: []validator.String{
 			stringvalidator.AlsoRequires(expressions...),
 		},

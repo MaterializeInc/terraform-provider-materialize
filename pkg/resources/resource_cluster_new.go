@@ -58,7 +58,7 @@ func ClusterSchema() map[string]schema.Attribute {
 		"name":                          NewObjectNameSchema("cluster", true, true),
 		"comment":                       NewCommentSchema(false),
 		"ownership_role":                NewOwnershipRoleSchema(),
-		"size":                          NewSizeSchema("managed cluster", false, false, []string{"replication_factor", "availability_zones"}),
+		"size":                          NewSizeSchema("managed cluster", false, false, []string{"replication_factor"}),
 		"replication_factor":            NewReplicationFactorSchema(),
 		"disk":                          NewDiskSchema(false),
 		"availability_zones":            NewAvailabilityZonesSchema(),
@@ -185,6 +185,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			b.Drop()
 			resp.Diagnostics.AddError("Failed to add comment", err.Error())
 			return
+		} else {
+			state.Comment = types.StringValue(state.Comment.ValueString())
 		}
 	}
 
@@ -225,7 +227,6 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Use the lower-case read function to get the updated state
 	updatedState, _ := r.read(ctx, &state, false)
 
 	// Set the updated state in the response
@@ -335,6 +336,18 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
+	// Handle changes in the 'comment' attribute
+	if !state.Comment.Equal(plan.Comment) {
+		commentBuilder := materialize.NewCommentBuilder(metaDb, o)
+		if err := commentBuilder.Object(plan.Comment.ValueString()); err != nil {
+			resp.Diagnostics.AddError("Failed to update comment", err.Error())
+			return
+		} else {
+			// If the comment update was successful, reflect the change in the state
+			state.Comment = types.StringValue(plan.Comment.ValueString())
+		}
+	}
+
 	// After updating the cluster, read its current state
 	updatedState, _ := r.read(ctx, &plan, false)
 	// Update the state with the freshly read information
@@ -416,21 +429,15 @@ func (r *clusterResource) read(ctx context.Context, data *ClusterStateModelV0, d
 		return data, diags
 	}
 
-	// Set the values from clusterDetails to data, checking for null values.
+	// Set the values from clusterDetails to data, ensuring that nulls and empty strings are treated consistently.
 	data.ID = types.StringValue(clusterID)
 	data.Name = types.StringValue(getNullString(clusterDetails.ClusterName))
 	data.ReplicationFactor = types.Int64Value(clusterDetails.ReplicationFactor.Int64)
 	data.Disk = types.BoolValue(clusterDetails.Disk.Bool)
 	data.OwnershipRole = types.StringValue(getNullString(clusterDetails.OwnerName))
 
-	// Handle the Size attribute
-	if clusterDetails.Size.Valid && clusterDetails.Size.String != "" {
-		data.Size = types.StringValue(clusterDetails.Size.String)
-	} else {
-		data.Size = types.StringNull()
-	}
-
-	// Handle the Comment attribute
+	// Normalize empty strings to nulls for size and comment to match the old behavior
+	data.Size = normalizeStringToNull(clusterDetails.Size)
 	if clusterDetails.Comment.Valid && clusterDetails.Comment.String != "" {
 		data.Comment = types.StringValue(clusterDetails.Comment.String)
 	} else {
@@ -438,21 +445,14 @@ func (r *clusterResource) read(ctx context.Context, data *ClusterStateModelV0, d
 	}
 
 	regionStr := string(region)
-	if regionStr != "" {
-		data.Region = types.StringValue(regionStr)
-	} else {
-		data.Region = types.StringNull()
-	}
+	data.Region = types.StringValue(regionStr)
 
-	// Handle the AvailabilityZones which is a slice of strings.
+	// Availability Zones
 	azValues := make([]attr.Value, len(clusterDetails.AvailabilityZones))
 	for i, az := range clusterDetails.AvailabilityZones {
 		azValues[i] = types.StringValue(az)
 	}
-
-	azList, _ := types.ListValue(types.StringType, azValues)
-
-	data.AvailabilityZones = azList
+	data.AvailabilityZones, _ = types.ListValue(types.StringType, azValues)
 
 	return data, diags
 }
@@ -463,4 +463,12 @@ func getNullString(ns sql.NullString) string {
 		return ns.String
 	}
 	return ""
+}
+
+// normalizeStringToNull converts an empty string or a valid null string to a Terraform null type.
+func normalizeStringToNull(str sql.NullString) types.String {
+	if !str.Valid || str.String == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(str.String)
 }
