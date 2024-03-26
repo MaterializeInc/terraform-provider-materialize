@@ -118,10 +118,15 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:      true,
 		ConflictsWith: []string{"counter_options", "auction_options", "marketing_options"},
 	},
-	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false, true),
-	"subsource":       SubsourceSchema(),
-	"ownership_role":  OwnershipRoleSchema(),
-	"region":          RegionSchema(),
+	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "expose_progress",
+		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"subsource":      SubsourceSchema(),
+	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func SourceLoadgen() *schema.Resource {

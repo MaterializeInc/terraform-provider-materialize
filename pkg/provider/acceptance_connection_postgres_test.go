@@ -116,7 +116,7 @@ func TestAccConnPostgres_disappears(t *testing.T) {
 func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 	initialSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	updatedSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	initialConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	updatedConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	initialHost := "initial_host"
@@ -138,10 +138,10 @@ func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 		CheckDestroy:      testAccCheckAllConnPostgresDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConnPostgresResourceUpdates(roleName, initialSecretName, connectionName, initialHost, initialPort, sshTunnelName, initialDatabase, initialSslMode, initialSslCa),
+				Config: testAccConnPostgresResourceUpdates(roleName, initialSecretName, initialConnectionName, initialHost, initialPort, sshTunnelName, initialDatabase, initialSslMode, initialSslCa),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
-					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "name", connectionName),
+					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "name", initialConnectionName),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "host", initialHost),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "port", initialPort),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "database", initialDatabase),

@@ -120,7 +120,12 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 								Type:        schema.TypeBool,
 								Optional:    true,
 							},
-							"secret": IdentifierSchema("secret", "The secret for the check options.", false, true),
+							"secret": IdentifierSchema(IdentifierSchemaParams{
+								Elem:        "secret",
+								Description: "The secret for the check options.",
+								Required:    false,
+								ForceNew:    true,
+							}),
 						},
 					},
 					MinItems: 1,

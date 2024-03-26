@@ -44,8 +44,18 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 				},
-				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", false, true),
-				"ssh_tunnel":             IdentifierSchema("ssh_tunnel", "The name of an SSH tunnel connection to route network traffic through by default.", false, true),
+				"privatelink_connection": IdentifierSchema(IdentifierSchemaParams{
+					Elem:        "privatelink_connection",
+					Description: "The AWS PrivateLink connection name in Materialize.",
+					Required:    false,
+					ForceNew:    true,
+				}),
+				"ssh_tunnel": IdentifierSchema(IdentifierSchemaParams{
+					Elem:        "ssh_tunnel",
+					Description: "The name of an SSH tunnel connection to route network traffic through by default.",
+					Required:    false,
+					ForceNew:    true,
+				}),
 			},
 		},
 	},
@@ -60,7 +70,12 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		ForceNew:      true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"privatelink_connection": IdentifierSchema("privatelink_connection", "The AWS PrivateLink connection name in Materialize.", true, true),
+				"privatelink_connection": IdentifierSchema(IdentifierSchemaParams{
+					Elem:        "privatelink_connection",
+					Description: "The AWS PrivateLink connection name in Materialize.",
+					Required:    true,
+					ForceNew:    true,
+				}),
 				"privatelink_connection_port": {
 					Description: "The port of the AWS PrivateLink connection.",
 					Type:        schema.TypeInt,
@@ -88,7 +103,12 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, true),
-	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Kafka broker.", false, true),
+	"ssl_key": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "ssl_key",
+		Description: "The client key for the Kafka broker.",
+		Required:    false,
+		ForceNew:    true,
+	}),
 	"sasl_mechanisms": {
 		Description:  "The SASL mechanism for the Kafka broker.",
 		Type:         schema.TypeString,
@@ -100,9 +120,19 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		},
 		ForceNew: true,
 	},
-	"sasl_username":  ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, true),
-	"sasl_password":  IdentifierSchema("sasl_password", "The SASL password for the Kafka broker.", false, true),
-	"ssh_tunnel":     IdentifierSchema("ssh_tunnel", "The default SSH tunnel configuration for the Kafka brokers.", false, true),
+	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, true),
+	"sasl_password": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "sasl_password",
+		Description: "The SASL password for the Kafka broker.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"ssh_tunnel": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "ssh_tunnel",
+		Description: "The default SSH tunnel configuration for the Kafka brokers.",
+		Required:    false,
+		ForceNew:    true,
+	}),
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),

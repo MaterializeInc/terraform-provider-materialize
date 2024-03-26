@@ -24,14 +24,34 @@ var connectionConfluentSchemaRegistrySchema = map[string]*schema.Schema{
 	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Confluent Schema Registry.", false, true),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Confluent Schema Registry.", false, true),
-	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the Confluent Schema Registry.", false, true),
-	"password":                  IdentifierSchema("password", "The password for the Confluent Schema Registry.", false, true),
-	"username":                  ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false, true),
-	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the Confluent Schema Registry.", false, true),
-	"aws_privatelink":           IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the Confluent Schema Registry.", false, true),
-	"validate":                  ValidateConnectionSchema(),
-	"ownership_role":            OwnershipRoleSchema(),
-	"region":                    RegionSchema(),
+	"ssl_key": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "ssl_key",
+		Description: "The client key for the Confluent Schema Registry.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"password": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "password",
+		Description: "The password for the Confluent Schema Registry.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"username": ValueSecretSchema("username", "The username for the Confluent Schema Registry.", false, true),
+	"ssh_tunnel": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "ssh_tunnel",
+		Description: "The SSH tunnel configuration for the Confluent Schema Registry.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"aws_privatelink": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "aws_privatelink",
+		Description: "The AWS PrivateLink configuration for the Confluent Schema Registry.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"validate":       ValidateConnectionSchema(),
+	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func ConnectionConfluentSchemaRegistry() *schema.Resource {

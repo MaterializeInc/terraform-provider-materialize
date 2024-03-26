@@ -19,7 +19,12 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("source"),
 	"size":               ObjectSizeSchema("source"),
-	"mysql_connection":   IdentifierSchema("mysql_connection", "The MySQL connection to use in the source.", true, true),
+	"mysql_connection": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "mysql_connection",
+		Description: "The MySQL connection to use in the source.",
+		Required:    true,
+		ForceNew:    true,
+	}),
 	"ignore_columns": {
 		Description: "Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.",
 		Type:        schema.TypeList,
