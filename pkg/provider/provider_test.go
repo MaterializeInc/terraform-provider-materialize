@@ -165,3 +165,50 @@ func testAccCheckGrantDefaultPrivilegeExists(objectType, grantName, granteeName,
 		return nil
 	}
 }
+
+// func TestMuxServer(t *testing.T) {
+// 	resource.Test(t, resource.TestCase{
+// 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+// 			"examplecloud": func() (tfprotov6.ProviderServer, error) {
+// 				ctx := context.Background()
+
+// 				upgradedSdkServer, err := tf5to6server.UpgradeServer(
+// 					ctx,
+// 					Provider("dev").GRPCProvider,
+// 				)
+
+// 				if err != nil {
+// 					return nil, err
+// 				}
+
+// 				providers := []func() tfprotov6.ProviderServer{
+// 					// providerserver.NewProtocol6(New()),
+// 					func() tfprotov6.ProviderServer {
+// 						return upgradedSdkServer
+// 					},
+// 				}
+
+// 				muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
+
+// 				if err != nil {
+// 					return nil, err
+// 				}
+
+// 				return muxServer.ProviderServer(), nil
+// 			},
+// 		},
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccMuxServerConfig(),
+// 			},
+// 		},
+// 	})
+// }
+
+// func testAccMuxServerConfig() string {
+// 	return `
+// 	provider "materialize" {
+// 		password = "mzp_1b2a3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"
+// 	}
+// 	`
+// }
