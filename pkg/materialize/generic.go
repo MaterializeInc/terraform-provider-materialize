@@ -86,7 +86,7 @@ func (b *Builder) alter(name string, options map[string]interface{}, isSecret, v
 		switch v := val.(type) {
 		case ValueSecretStruct:
 			if v.Text != "" {
-				setValue = fmt.Sprintf("'%s'", v.Text)
+				setValue = fmt.Sprintf("%s", QuoteString(v.Text))
 			} else if v.Secret.Name != "" {
 				setValue = fmt.Sprintf("SECRET %s", v.Secret.QualifiedName())
 			}
@@ -97,7 +97,7 @@ func (b *Builder) alter(name string, options map[string]interface{}, isSecret, v
 			}
 			setValue = fmt.Sprintf("%s%s", prefix, v.QualifiedName())
 		case string:
-			setValue = fmt.Sprintf("'%s'", v)
+			setValue = fmt.Sprintf("%s", QuoteString(v))
 		case int:
 			setValue = fmt.Sprintf("%d", v)
 		default:
