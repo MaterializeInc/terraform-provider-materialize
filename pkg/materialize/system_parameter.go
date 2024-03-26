@@ -32,7 +32,7 @@ func (b *SystemParameterBuilder) Reset() error {
 
 func ShowSystemParameter(conn *sqlx.DB, paramName string) (string, error) {
 	var paramValue string
-	query := fmt.Sprintf(`SHOW "%s";`, paramName)
+	query := fmt.Sprintf(`SHOW %s;`, QuoteIdentifier(paramName))
 	err := conn.QueryRow(query).Scan(&paramValue)
 	if err != nil {
 		return "", fmt.Errorf("error reading system parameter %s: %v", paramName, err)

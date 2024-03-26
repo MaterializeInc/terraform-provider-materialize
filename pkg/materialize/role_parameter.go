@@ -23,19 +23,19 @@ func NewRoleParameterBuilder(conn *sqlx.DB, roleName, variableName, variableValu
 }
 
 func (b *RoleParameterBuilder) Set() error {
-	q := fmt.Sprintf(`ALTER ROLE "%s" SET "%s" TO '%s';`, b.roleName, b.variableName, b.variableValue)
+	q := fmt.Sprintf(`ALTER ROLE %s SET %s TO %s;`, QuoteIdentifier(b.roleName), QuoteIdentifier(b.variableName), QuoteString(b.variableValue))
 	return b.ddl.exec(q)
 }
 
 func (b *RoleParameterBuilder) Reset() error {
-	q := fmt.Sprintf(`ALTER ROLE "%s" RESET "%s";`, b.roleName, b.variableName)
+	q := fmt.Sprintf(`ALTER ROLE %s RESET %s;`, QuoteIdentifier(b.roleName), QuoteIdentifier(b.variableName))
 	return b.ddl.exec(q)
 }
 
 // TODO: Once possible, implement ShowRoleParameter
 func ShowRoleParameter(conn *sqlx.DB, roleName, variableName string) (string, error) {
 	var variableValue string
-	query := fmt.Sprintf(`SHOW "%s";`, variableName)
+	query := fmt.Sprintf(`SHOW %s;`, QuoteIdentifier(variableName))
 	err := conn.QueryRow(query).Scan(&variableValue)
 	if err != nil {
 		return "", fmt.Errorf("error reading variable %s for role %s: %v", variableName, roleName, err)
