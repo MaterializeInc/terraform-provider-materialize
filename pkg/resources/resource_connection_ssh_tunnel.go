@@ -195,6 +195,23 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(metaDb, o)
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(metaDb, o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("host") {
 		oldHost, newHost := d.GetChange("host")
 		b := materialize.NewConnection(metaDb, o)
@@ -227,23 +244,6 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 		if err := b.Alter(options, false, validate); err != nil {
 			d.Set("port", oldPort)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("ownership_role") {
-		_, newRole := d.GetChange("ownership_role")
-		b := materialize.NewOwnershipBuilder(metaDb, o)
-		if err := b.Alter(newRole.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("comment") {
-		_, newComment := d.GetChange("comment")
-		b := materialize.NewCommentBuilder(metaDb, o)
-
-		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
 		}
 	}
