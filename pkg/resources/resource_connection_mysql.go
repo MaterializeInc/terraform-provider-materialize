@@ -32,12 +32,27 @@ var connectionMySQLSchema = map[string]*schema.Schema{
 		Default:     3306,
 		ForceNew:    true,
 	},
-	"user":                      ValueSecretSchema("user", "The MySQL database username.", true),
-	"password":                  IdentifierSchema("password", "The MySQL database password.", false),
-	"ssh_tunnel":                IdentifierSchema("ssh_tunnel", "The SSH tunnel configuration for the MySQL database.", false),
-	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the MySQL database.", false),
-	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the MySQL database.", false),
-	"ssl_key":                   IdentifierSchema("ssl_key", "The client key for the MySQL database.", false),
+	"user": ValueSecretSchema("user", "The MySQL database username.", true, true),
+	"password": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "password",
+		Description: "The MySQL database password.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"ssh_tunnel": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "ssh_tunnel",
+		Description: "The SSH tunnel configuration for the MySQL database.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the MySQL database.", false, true),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the MySQL database.", false, true),
+	"ssl_key": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "ssl_key",
+		Description: "The client key for the MySQL database.",
+		Required:    false,
+		ForceNew:    true,
+	}),
 	"ssl_mode": {
 		Description:  "The SSL mode for the MySQL database. Allowed values are " + strings.Join(mysqlSSLMode, ", ") + ".",
 		Type:         schema.TypeString,
@@ -45,10 +60,15 @@ var connectionMySQLSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(mysqlSSLMode, true),
 	},
-	"aws_privatelink": IdentifierSchema("aws_privatelink", "The AWS PrivateLink configuration for the MySQL database.", false),
-	"validate":        ValidateConnectionSchema(),
-	"ownership_role":  OwnershipRoleSchema(),
-	"region":          RegionSchema(),
+	"aws_privatelink": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "aws_privatelink",
+		Description: "The AWS PrivateLink configuration for the MySQL database.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"validate":       ValidateConnectionSchema(),
+	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func ConnectionMySQL() *schema.Resource {

@@ -30,9 +30,14 @@ var connectionAwsSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"access_key_id":     ValueSecretSchema("access_key_id", "The access key ID to connect with.", false),
-	"secret_access_key": IdentifierSchema("secret_access_key", "The secret access key corresponding to the specified access key ID.", false),
-	"session_token":     ValueSecretSchema("session_token", "The session token corresponding to the specified access key ID.", false),
+	"access_key_id": ValueSecretSchema("access_key_id", "The access key ID to connect with.", false, true),
+	"secret_access_key": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "secret_access_key",
+		Description: "The secret access key corresponding to the specified access key ID.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"session_token": ValueSecretSchema("session_token", "The session token corresponding to the specified access key ID.", false, true),
 	"assume_role_arn": {
 		Description: "The Amazon Resource Name (ARN) of the IAM role to assume.",
 		Type:        schema.TypeString,

@@ -12,6 +12,13 @@ const (
 	defaultDatabase = "materialize"
 )
 
+type IdentifierSchemaParams struct {
+	Elem        string
+	Description string
+	Required    bool
+	ForceNew    bool
+}
+
 func ObjectNameSchema(resource string, required, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
@@ -90,40 +97,40 @@ func ValidateConnectionSchema() *schema.Schema {
 	}
 }
 
-func IdentifierSchema(elem, description string, required bool) *schema.Schema {
+func IdentifierSchema(params IdentifierSchemaParams) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {
-					Description: fmt.Sprintf("The %s name.", elem),
+					Description: fmt.Sprintf("The %s name.", params.Elem),
 					Type:        schema.TypeString,
 					Required:    true,
 				},
 				"schema_name": {
-					Description: fmt.Sprintf("The %s schema name. Defaults to `public`.", elem),
+					Description: fmt.Sprintf("The %s schema name. Defaults to `public`.", params.Elem),
 					Type:        schema.TypeString,
 					Optional:    true,
 					Default:     defaultSchema,
 				},
 				"database_name": {
-					Description: fmt.Sprintf("The %s database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.", elem),
+					Description: fmt.Sprintf("The %s database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.", params.Elem),
 					Type:        schema.TypeString,
 					Optional:    true,
 					DefaultFunc: schema.EnvDefaultFunc("MZ_DATABASE", defaultDatabase),
 				},
 			},
 		},
-		Required:    required,
-		Optional:    !required,
+		Required:    params.Required,
+		Optional:    !params.Required,
 		MinItems:    1,
 		MaxItems:    1,
-		ForceNew:    true,
-		Description: description,
+		ForceNew:    params.ForceNew,
+		Description: params.Description,
 	}
 }
 
-func ValueSecretSchema(elem string, description string, required bool) *schema.Schema {
+func ValueSecretSchema(elem string, description string, required, forceNew bool) *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -135,18 +142,19 @@ func ValueSecretSchema(elem string, description string, required bool) *schema.S
 					Sensitive:     true,
 					ConflictsWith: []string{fmt.Sprintf("%s.0.secret", elem)},
 				},
-				"secret": IdentifierSchema(
-					elem,
-					fmt.Sprintf("The `%s` secret value. Conflicts with `text` within this block.", elem),
-					false,
-				),
+				"secret": IdentifierSchema(IdentifierSchemaParams{
+					Elem:        elem,
+					Description: fmt.Sprintf("The `%s` secret value. Conflicts with `text` within this block.", elem),
+					Required:    false,
+					ForceNew:    true,
+				}),
 			},
 		},
 		Required:    required,
 		Optional:    !required,
 		MinItems:    1,
 		MaxItems:    1,
-		ForceNew:    true,
+		ForceNew:    forceNew,
 		Description: fmt.Sprintf("%s. Can be supplied as either free text using `text` or reference to a secret object using `secret`.", description),
 	}
 }
@@ -164,7 +172,12 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
+							"schema_registry_connection": IdentifierSchema(IdentifierSchemaParams{
+								Elem:        "schema_registry_connection",
+								Description: "The name of a schema registry connection.",
+								Required:    true,
+								ForceNew:    true,
+							}),
 							"key_strategy": {
 								Description:  "How Materialize will define the Avro schema reader key strategy.",
 								Type:         schema.TypeString,
@@ -190,7 +203,12 @@ func FormatSpecSchema(elem string, description string, required bool) *schema.Sc
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
+							"schema_registry_connection": IdentifierSchema(IdentifierSchemaParams{
+								Elem:        "schema_registry_connection",
+								Description: "The name of a schema registry connection.",
+								Required:    true,
+								ForceNew:    true,
+							}),
 							"message": {
 								Description: "The name of the Protobuf message to use for the source.",
 								Type:        schema.TypeString,
@@ -272,7 +290,12 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"schema_registry_connection": IdentifierSchema("schema_registry_connection", "The name of a schema registry connection.", true),
+							"schema_registry_connection": IdentifierSchema(IdentifierSchemaParams{
+								Elem:        "schema_registry_connection",
+								Description: "The name of a schema registry connection.",
+								Required:    true,
+								ForceNew:    true,
+							}),
 							"avro_key_fullname": {
 								Description: "The full name of the Avro key schema.",
 								Type:        schema.TypeString,
@@ -294,7 +317,12 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								ForceNew:    true,
 								Elem: &schema.Resource{
 									Schema: map[string]*schema.Schema{
-										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true),
+										"object": IdentifierSchema(IdentifierSchemaParams{
+											Elem:        "object",
+											Description: "The object to apply the Avro documentation.",
+											Required:    true,
+											ForceNew:    true,
+										}),
 										"doc": {
 											Description: "Documentation string.",
 											Type:        schema.TypeString,
@@ -321,7 +349,12 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								ForceNew:    true,
 								Elem: &schema.Resource{
 									Schema: map[string]*schema.Schema{
-										"object": IdentifierSchema("object", "The object to apply the Avro documentation.", true),
+										"object": IdentifierSchema(IdentifierSchemaParams{
+											Elem:        "object",
+											Description: "The object to apply the Avro documentation.",
+											Required:    true,
+											ForceNew:    true,
+										}),
 										"column": {
 											Description: "Name of the column in the Avro schema to apply to.",
 											Type:        schema.TypeString,

@@ -12,14 +12,19 @@ import (
 )
 
 var sourcePostgresSchema = map[string]*schema.Schema{
-	"name":                ObjectNameSchema("source", true, false),
-	"schema_name":         SchemaNameSchema("source", false),
-	"database_name":       DatabaseNameSchema("source", false),
-	"qualified_sql_name":  QualifiedNameSchema("source"),
-	"comment":             CommentSchema(false),
-	"cluster_name":        ObjectClusterNameSchema("source"),
-	"size":                ObjectSizeSchema("source"),
-	"postgres_connection": IdentifierSchema("postgres_connection", "The PostgreSQL connection to use in the source.", true),
+	"name":               ObjectNameSchema("source", true, false),
+	"schema_name":        SchemaNameSchema("source", false),
+	"database_name":      DatabaseNameSchema("source", false),
+	"qualified_sql_name": QualifiedNameSchema("source"),
+	"comment":            CommentSchema(false),
+	"cluster_name":       ObjectClusterNameSchema("source"),
+	"size":               ObjectSizeSchema("source"),
+	"postgres_connection": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "postgres_connection",
+		Description: "The PostgreSQL connection to use in the source.",
+		Required:    true,
+		ForceNew:    true,
+	}),
 	"publication": {
 		Description: "The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).",
 		Type:        schema.TypeString,
@@ -62,10 +67,15 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		MinItems:      1,
 		ConflictsWith: []string{"table"},
 	},
-	"expose_progress": IdentifierSchema("expose_progress", "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.", false),
-	"subsource":       SubsourceSchema(),
-	"ownership_role":  OwnershipRoleSchema(),
-	"region":          RegionSchema(),
+	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "expose_progress",
+		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"subsource":      SubsourceSchema(),
+	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
 }
 
 func SourcePostgres() *schema.Resource {

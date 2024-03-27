@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
@@ -76,4 +77,70 @@ func (b *Builder) rename(oldName, newName string) error {
 func (b *Builder) resize(name, size string) error {
 	q := fmt.Sprintf(`ALTER %s %s SET (SIZE = '%s');`, b.entity, name, size)
 	return b.exec(q)
+}
+
+func (b *Builder) alter(name string, options map[string]interface{}, isSecret, validate bool) error {
+	var setClauses []string
+	for option, val := range options {
+		var setValue string
+		switch v := val.(type) {
+		case ValueSecretStruct:
+			if v.Text != "" {
+				setValue = fmt.Sprintf("%s", QuoteString(v.Text))
+			} else if v.Secret.Name != "" {
+				setValue = fmt.Sprintf("SECRET %s", v.Secret.QualifiedName())
+			}
+		case IdentifierSchemaStruct:
+			prefix := ""
+			if isSecret {
+				prefix = "SECRET "
+			}
+			setValue = fmt.Sprintf("%s%s", prefix, v.QualifiedName())
+		case string:
+			setValue = fmt.Sprintf("%s", QuoteString(v))
+		case int:
+			setValue = fmt.Sprintf("%d", v)
+		default:
+			return fmt.Errorf("unsupported value type for option %s: %T", option, val)
+		}
+
+		if setValue == "" {
+			return fmt.Errorf("no valid value provided for option %s: %T", option, val)
+		}
+
+		setClause := fmt.Sprintf("%s = %s", option, setValue)
+		setClauses = append(setClauses, setClause)
+	}
+
+	validateClause := ""
+	if !validate {
+		validateClause = " WITH (validate false)"
+	}
+
+	// Joining each SET clause distinctly
+	setClauseString := "SET (" + strings.Join(setClauses, "), SET(") + ")"
+	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, setClauseString, validateClause)
+	return b.exec(query)
+}
+
+func (b *Builder) alterDrop(name string, options []string, validate bool) error {
+	validateClause := ""
+	if !validate {
+		validateClause = " WITH (validate false)"
+	}
+
+	// Construct each DROP clause separately
+	dropClauses := []string{}
+	for _, option := range options {
+		dropClause := fmt.Sprintf("DROP( %s )", option)
+		dropClauses = append(dropClauses, dropClause)
+	}
+
+	// Join the DROP clauses with commas
+	optionsClause := strings.Join(dropClauses, ", ")
+
+	// Construct the final query
+	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, optionsClause, validateClause)
+
+	return b.exec(query)
 }

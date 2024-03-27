@@ -20,8 +20,18 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 	"comment":            CommentSchema(false),
 	"cluster_name":       ObjectClusterNameSchema("sink"),
 	"size":               ObjectSizeSchema("sink"),
-	"from":               IdentifierSchema("from", "The name of the source, table or materialized view you want to send to the sink.", true),
-	"kafka_connection":   IdentifierSchema("kafka_connection", "The name of the Kafka connection to use in the sink.", true),
+	"from": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "from",
+		Description: "The name of the source, table or materialized view you want to send to the sink.",
+		Required:    true,
+		ForceNew:    true,
+	}),
+	"kafka_connection": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "kafka_connection",
+		Description: "The name of the Kafka connection to use in the sink.",
+		Required:    true,
+		ForceNew:    true,
+	}),
 	"topic": {
 		Description: "The Kafka topic you want to subscribe to.",
 		Type:        schema.TypeString,
