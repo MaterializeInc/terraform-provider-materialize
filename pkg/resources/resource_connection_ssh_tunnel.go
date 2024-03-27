@@ -22,19 +22,19 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Description: "The host of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    true,
+		ForceNew:    false,
 	},
 	"user": {
 		Description: "The user of the SSH tunnel.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    true,
+		ForceNew:    false,
 	},
 	"port": {
 		Description: "The port of the SSH tunnel.",
 		Type:        schema.TypeInt,
 		Required:    true,
-		ForceNew:    true,
+		ForceNew:    false,
 	},
 	"public_key_1": {
 		Description: "The first public key associated with the SSH tunnel.",
@@ -46,6 +46,7 @@ var connectionSshTunnelSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -177,6 +178,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
+	validate := d.Get("validate").(bool)
 
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -189,6 +191,42 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewConnectionSshTunnelBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("host") {
+		oldHost, newHost := d.GetChange("host")
+		b := materialize.NewConnection(metaDb, o)
+		options := map[string]interface{}{
+			"HOST": newHost,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
+			d.Set("host", oldHost)
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("user") {
+		oldUser, newUser := d.GetChange("user")
+		b := materialize.NewConnection(metaDb, o)
+		options := map[string]interface{}{
+			"USER": newUser,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
+			d.Set("user", oldUser)
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("port") {
+		oldPort, newPort := d.GetChange("port")
+		b := materialize.NewConnection(metaDb, o)
+		options := map[string]interface{}{
+			"PORT": newPort,
+		}
+		if err := b.Alter(options, false, validate); err != nil {
+			d.Set("port", oldPort)
 			return diag.FromErr(err)
 		}
 	}

@@ -53,6 +53,9 @@ func TestAccConnSshTunnel_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connectionName := fmt.Sprintf("old_%s", slug)
 	newConnectionName := fmt.Sprintf("new_%s", slug)
+	newHostName := "new_ssh_host"
+	newPort := "2222"
+	newUser := "new_ssh_user"
 	connection2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
@@ -64,10 +67,13 @@ func TestAccConnSshTunnel_update(t *testing.T) {
 				Config: testAccConnSshTunnelResource(roleName, connectionName, connection2Name, "mz_system"),
 			},
 			{
-				Config: testAccConnSshTunnelResource(roleName, newConnectionName, connection2Name, roleName),
+				Config: testAccConnSshTunnelResourceUpdated(roleName, newConnectionName, newHostName, newUser, newPort, connection2Name, roleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnSshTunnelExists("materialize_connection_ssh_tunnel.test"),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "name", newConnectionName),
+					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "host", newHostName),
+					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "user", newUser),
+					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "port", newPort),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_connection_ssh_tunnel.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newConnectionName)),
@@ -119,6 +125,7 @@ resource "materialize_connection_ssh_tunnel" "test" {
 	user        = "ssh_user"
 	port        = 22
 	comment     = "object comment"
+	validate    = false
 }
 
 resource "materialize_connection_ssh_tunnel" "test_role" {
@@ -128,10 +135,40 @@ resource "materialize_connection_ssh_tunnel" "test_role" {
 	user        = "ssh_user"
 	port        = 22
 	ownership_role = "%[4]s"
+	validate = false
 
 	depends_on = [materialize_role.test]
 }
 `, roleName, connectionName, connection2Name, connectionOwner)
+}
+
+func testAccConnSshTunnelResourceUpdated(roleName, connectionName, host, user, port, connection2Name, connectionOwner string) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+    name = "%[1]s"
+}
+
+resource "materialize_connection_ssh_tunnel" "test" {
+    name        = "%[2]s"
+    schema_name = "public"
+    host        = "%[3]s"
+    user        = "%[4]s"
+    port        = %[5]s
+    comment     = "object comment updated"
+	validate    = false
+}
+
+resource "materialize_connection_ssh_tunnel" "test_role" {
+    name            = "%[6]s"
+    schema_name     = "public"
+    host            = "%[3]s"
+    user            = "%[4]s"
+    port            = %[5]s
+    ownership_role  = "%[7]s"
+	validate    = false
+    depends_on = [materialize_role.test]
+}
+`, roleName, connectionName, host, user, port, connection2Name, connectionOwner)
 }
 
 func testAccCheckConnSshTunnelExists(name string) resource.TestCheckFunc {
