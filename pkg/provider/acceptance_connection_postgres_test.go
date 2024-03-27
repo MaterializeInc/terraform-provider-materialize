@@ -237,6 +237,8 @@ func testAccConnPostgresResourceUpdates(roleName, secretName, connectionName, ho
 		host = "ssh_host"
 		user = "ssh_user"
 		port = 22
+
+		validate = false
 	}
 
 	resource "materialize_connection_ssh_tunnel" "ssh_connection2" {
@@ -247,6 +249,8 @@ func testAccConnPostgresResourceUpdates(roleName, secretName, connectionName, ho
 		host = "ssh_host2"
 		user = "ssh_user2"
 		port = 22
+
+		validate = false
 	}
 
 	resource "materialize_connection_postgres" "test" {

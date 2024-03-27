@@ -263,17 +263,21 @@ func testAccConnKafkaMultipleBrokerResource(connectionName string) string {
 func testAccConnKafkaSshResource(connectionName string) string {
 	return fmt.Sprintf(`
 	resource "materialize_connection_ssh_tunnel" "ssh_connection_1" {
-		name = "%[1]s_ssh_conn_1"	  
+		name = "%[1]s_ssh_conn_1"
 		host = "ssh_host"
 		user = "ssh_user"
 		port = 22
+
+		validate = false
 	}
 
 	resource "materialize_connection_ssh_tunnel" "ssh_connection_2" {
-		name = "%[1]s_ssh_conn_2"	  
+		name = "%[1]s_ssh_conn_2"
 		host = "ssh_host"
 		user = "ssh_user"
 		port = 22
+
+		validate = false
 	}
 
 	resource "materialize_connection_kafka" "test" {
