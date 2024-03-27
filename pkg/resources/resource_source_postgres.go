@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -38,8 +39,8 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"table": {
-		Description: "Creates subsources for specific tables. If neither table or schema is specified, will default to ALL TABLES",
-		Type:        schema.TypeList,
+		Description: "Creates subsources for specific tables in the Postgres connection.",
+		Type:        schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {
@@ -51,21 +52,12 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 					Description: "The alias of the table.",
 					Type:        schema.TypeString,
 					Optional:    true,
+					Computed:    true,
 				},
 			},
 		},
-		Optional:      true,
-		MinItems:      1,
-		ConflictsWith: []string{"schema"},
-	},
-	"schema": {
-		Description:   "Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES",
-		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeString},
-		Optional:      true,
-		ForceNew:      true,
-		MinItems:      1,
-		ConflictsWith: []string{"table"},
+		Required: true,
+		MinItems: 1,
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
@@ -83,7 +75,7 @@ func SourcePostgres() *schema.Resource {
 		Description: "A Postgres source describes a PostgreSQL instance you want Materialize to read data from.",
 
 		CreateContext: sourcePostgresCreate,
-		ReadContext:   sourceRead,
+		ReadContext:   sourcePostgresRead,
 		UpdateContext: sourcePostgresUpdate,
 		DeleteContext: sourceDelete,
 
@@ -93,6 +85,90 @@ func SourcePostgres() *schema.Resource {
 
 		Schema: sourcePostgresSchema,
 	}
+}
+
+func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	i := d.Id()
+
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanSource(metaDb, utils.ExtractId(i))
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	if err := d.Set("name", s.SourceName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", s.Size.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.Source{SourceName: s.SourceName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	deps, err := materialize.ListDependencies(metaDb, utils.ExtractId(i), "source")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// TODO: We need to use a query that retrieves name and alias
+	// Tables
+	// tMaps := []interface{}{}
+	// for _, dep := range deps {
+	// 	tMap := map[string]interface{}{}
+	// 	tMap["name"] = dep.ObjectName.String
+	// 	tMap["alias"] = dep.ObjectName.String
+	// 	tMaps = append(tMaps, tMap)
+	// }
+	// if err := d.Set("table", tMaps); err != nil {
+	// 	return diag.FromErr(err)
+	// }
+
+	// Subsources
+	sMaps := []interface{}{}
+	for _, dep := range deps {
+		sMap := map[string]interface{}{}
+		sMap["name"] = dep.ObjectName.String
+		sMap["schema_name"] = dep.SchemaName.String
+		sMap["database_name"] = dep.DatabaseName.String
+		sMaps = append(sMaps, sMap)
+	}
+	if err := d.Set("subsource", sMaps); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
 }
 
 func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -121,13 +197,9 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("table"); ok {
-		tables := materialize.GetTableStruct(v.([]interface{}))
-		b.Table(tables)
-	}
-
-	if v, ok := d.GetOk("schema"); ok {
-		schemas := materialize.GetSliceValueString(v.([]interface{}))
-		b.Schema(schemas)
+		tables := v.(*schema.Set).List()
+		t := materialize.GetTableStruct(tables)
+		b.Table(t)
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
@@ -174,7 +246,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourcePostgresRead(ctx, d, meta)
 }
 
 func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -209,9 +281,8 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if d.HasChange("table") {
 		ot, nt := d.GetChange("table")
-		addTables := materialize.DiffTableStructs(nt.([]interface{}), ot.([]interface{}))
-		dropTables := materialize.DiffTableStructs(ot.([]interface{}), nt.([]interface{}))
-
+		addTables := materialize.DiffTableStructs(nt.(*schema.Set).List(), ot.(*schema.Set).List())
+		dropTables := materialize.DiffTableStructs(ot.(*schema.Set).List(), nt.(*schema.Set).List())
 		if len(addTables) > 0 {
 			var colDiff []string
 			if d.HasChange("text_columns") {
@@ -239,7 +310,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	return sourceRead(ctx, d, meta)
+	return sourcePostgresRead(ctx, d, meta)
 }
 
 func diffTextColumns(arr1, arr2 []interface{}) []string {
