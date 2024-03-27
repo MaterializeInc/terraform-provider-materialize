@@ -32,6 +32,12 @@ resource "materialize_grant_system_privilege" "role_1_system_createcluster" {
   privilege = "CREATECLUSTER"
 }
 
+resource "materialize_cluster_grant" "cluster_grant_public" {
+  role_name    = "PUBLIC"
+  privilege    = "USAGE"
+  cluster_name = materialize_cluster.cluster.name
+}
+
 output "qualified_role" {
   value = materialize_role.role_1.qualified_sql_name
 }
