@@ -151,6 +151,7 @@ func scimGroupRoleUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 
 func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	groupID := d.Get("group_id").(string)
+	roleNames := expandStringSet(d.Get("roles").(*schema.Set))
 
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
@@ -158,9 +159,14 @@ func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
-	err = frontegg.RemoveRolesFromGroup(ctx, client, groupID, nil)
+	roleIDs, err := getRoleIDsByName(ctx, client, roleNames)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error removing all roles from SCIM group: %s", err))
+		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
+	}
+
+	err = frontegg.RemoveRolesFromGroup(ctx, client, groupID, roleIDs)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error removing roles from SCIM group: %s", err))
 	}
 
 	// Forcing deletion by setting an empty ID

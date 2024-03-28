@@ -281,6 +281,7 @@ func AddRolesToGroup(ctx context.Context, client *clients.FronteggClient, groupI
 // RemoveRolesFromGroup removes roles from an existing group in Frontegg.
 func RemoveRolesFromGroup(ctx context.Context, client *clients.FronteggClient, groupId string, roleIds []string) error {
 	endpoint := fmt.Sprintf("%s%s/%s/roles", client.Endpoint, SCIMGroupsApiPathV1, groupId)
+
 	params := AddRolesToGroupParams{
 		RoleIds: roleIds,
 	}
