@@ -64,6 +64,11 @@ type SCIMGroupsResponse struct {
 	Groups []ScimGroup `json:"groups"`
 }
 
+// AddRolesToGroupParams represents the parameters for adding roles to a group.
+type AddRolesToGroupParams struct {
+	RoleIds []string `json:"roleIds"`
+}
+
 // CreateSCIMGroup creates a new group in Frontegg.
 func CreateSCIMGroup(ctx context.Context, client *clients.FronteggClient, params GroupCreateParams) (*ScimGroup, error) {
 	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SCIMGroupsApiPathV1)
@@ -238,6 +243,162 @@ func FetchSCIMGroups(ctx context.Context, client *clients.FronteggClient) ([]Sci
 	}
 
 	return groupsResponse.Groups, nil
+}
+
+// AddRolesToGroup adds roles to an existing group in Frontegg.
+func AddRolesToGroup(ctx context.Context, client *clients.FronteggClient, groupId string, roleIds []string) error {
+	endpoint := fmt.Sprintf("%s%s/%s/roles", client.Endpoint, SCIMGroupsApiPathV1, groupId)
+	params := AddRolesToGroupParams{
+		RoleIds: roleIds,
+	}
+	payloadBytes, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+client.Token)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		var sb strings.Builder
+		_, err = io.Copy(&sb, resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("error adding roles to SCIM group: status %d, response: %s", resp.StatusCode, sb.String())
+	}
+
+	return nil
+}
+
+// RemoveRolesFromGroup removes roles from an existing group in Frontegg.
+func RemoveRolesFromGroup(ctx context.Context, client *clients.FronteggClient, groupId string, roleIds []string) error {
+	endpoint := fmt.Sprintf("%s%s/%s/roles", client.Endpoint, SCIMGroupsApiPathV1, groupId)
+	params := AddRolesToGroupParams{
+		RoleIds: roleIds,
+	}
+	payloadBytes, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+client.Token)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var sb strings.Builder
+		_, err = io.Copy(&sb, resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("error removing roles from SCIM group: status %d, response: %s", resp.StatusCode, sb.String())
+	}
+
+	return nil
+}
+
+// AddUsersToGroup adds users to an existing group in Frontegg.
+func AddUsersToGroup(ctx context.Context, client *clients.FronteggClient, groupId string, userIds []string) error {
+	endpoint := fmt.Sprintf("%s%s/%s/users", client.Endpoint, SCIMGroupsApiPathV1, groupId)
+	params := struct {
+		UserIds []string `json:"userIds"`
+	}{
+		UserIds: userIds,
+	}
+	payloadBytes, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+client.Token)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		var sb strings.Builder
+		_, err = io.Copy(&sb, resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("error adding users to SCIM group: status %d, response: %s", resp.StatusCode, sb.String())
+	}
+
+	return nil
+}
+
+// RemoveUsersFromGroup removes users from an existing group in Frontegg.
+func RemoveUsersFromGroup(ctx context.Context, client *clients.FronteggClient, groupId string, userIds []string) error {
+	endpoint := fmt.Sprintf("%s%s/%s/users", client.Endpoint, SCIMGroupsApiPathV1, groupId)
+	params := struct {
+		UserIds []string `json:"userIds"`
+	}{
+		UserIds: userIds,
+	}
+	payloadBytes, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+client.Token)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var sb strings.Builder
+		_, err = io.Copy(&sb, resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("error removing users from SCIM group: status %d, response: %s", resp.StatusCode, sb.String())
+	}
+
+	return nil
 }
 
 // Helper function to flatten the roles data

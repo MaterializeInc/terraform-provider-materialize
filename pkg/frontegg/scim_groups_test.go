@@ -2,6 +2,7 @@ package frontegg
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -244,5 +245,171 @@ func TestGetSCIMGroupByIDFailure(t *testing.T) {
 	}
 
 	_, err := GetSCIMGroupByID(context.Background(), client, "group-id")
+	assert.Error(err)
+}
+
+func TestAddRolesToGroupSuccess(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal("POST", r.Method, "Expected POST request")
+		assert.Equal("/frontegg/identity/resources/groups/v1/test-group-id/roles", r.URL.Path)
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := AddRolesToGroup(context.Background(), client, "test-group-id", []string{"role1", "role2"})
+	assert.NoError(err)
+}
+
+func TestAddRolesToGroupFailure(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal("POST", r.Method, "Expected POST request")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := AddRolesToGroup(context.Background(), client, "test-group-id", []string{"role1", "role2"})
+	assert.Error(err)
+}
+
+func TestRemoveRolesFromGroupSuccess(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal("DELETE", r.Method, "Expected DELETE request")
+		assert.Equal("/frontegg/identity/resources/groups/v1/test-group-id/roles", r.URL.Path)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := RemoveRolesFromGroup(context.Background(), client, "test-group-id", []string{"role1", "role2"})
+	assert.NoError(err)
+}
+
+func TestRemoveRolesFromGroupFailure(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal("DELETE", r.Method, "Expected DELETE request")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := RemoveRolesFromGroup(context.Background(), client, "test-group-id", []string{"role1", "role2"})
+	assert.Error(err)
+}
+
+func TestAddUsersToGroupSuccess(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal("POST", r.Method, "Expected POST request")
+		assert.Equal("/frontegg/identity/resources/groups/v1/group-id/users", r.URL.Path)
+
+		var body struct {
+			UserIds []string `json:"userIds"`
+		}
+		err := json.NewDecoder(r.Body).Decode(&body)
+		assert.NoError(err)
+		assert.ElementsMatch([]string{"user1", "user2"}, body.UserIds)
+
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := AddUsersToGroup(context.Background(), client, "group-id", []string{"user1", "user2"})
+	assert.NoError(err)
+}
+
+func TestAddUsersToGroupFailure(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := AddUsersToGroup(context.Background(), client, "group-id", []string{"user1", "user2"})
+	assert.Error(err)
+}
+
+func TestRemoveUsersFromGroupSuccess(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal("DELETE", r.Method, "Expected DELETE request")
+		assert.Equal("/frontegg/identity/resources/groups/v1/group-id/users", r.URL.Path)
+
+		var body struct {
+			UserIds []string `json:"userIds"`
+		}
+		err := json.NewDecoder(r.Body).Decode(&body)
+		assert.NoError(err)
+		assert.ElementsMatch([]string{"user1", "user2"}, body.UserIds)
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := RemoveUsersFromGroup(context.Background(), client, "group-id", []string{"user1", "user2"})
+	assert.NoError(err)
+}
+
+func TestRemoveUsersFromGroupFailure(t *testing.T) {
+	assert := assert.New(t)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+	}))
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		Endpoint:   mockServer.URL,
+		HTTPClient: mockServer.Client(),
+	}
+
+	err := RemoveUsersFromGroup(context.Background(), client, "group-id", []string{"user1", "user2"})
 	assert.Error(err)
 }
