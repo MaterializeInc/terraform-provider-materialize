@@ -225,6 +225,8 @@ resource "materialize_connection_ssh_tunnel" "ssh_connection" {
   host = "ssh_host"
   user = "ssh_user"
   port = 22
+
+  validate = false
 }
 
 resource "materialize_connection_kafka" "kafka_conn_ssh_default" {

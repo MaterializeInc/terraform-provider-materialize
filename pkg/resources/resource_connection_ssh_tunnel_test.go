@@ -92,6 +92,15 @@ func TestResourceConnectionSshTunnelUpdate(t *testing.T) {
 		// Comment
 		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."old_conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
+		// Host
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(HOST = 'localhost'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// User
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(USER = 'user'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Port
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(PORT = 123\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
 		// Query Params
 		pp := `WHERE mz_connections.id = 'u1'`
 		testhelpers.MockConnectionSshTunnelScan(mock, pp)
