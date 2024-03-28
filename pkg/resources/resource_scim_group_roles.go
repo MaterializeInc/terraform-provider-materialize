@@ -78,7 +78,13 @@ func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	var roleNames []interface{}
 	for _, role := range group.Roles {
-		roleName := strings.TrimSpace(strings.SplitN(role.Name, " ", 2)[1])
+		splitRoleName := strings.SplitN(role.Name, " ", 2)
+		roleName := ""
+		if len(splitRoleName) > 1 {
+			roleName = strings.TrimSpace(splitRoleName[1])
+		} else {
+			roleName = strings.TrimSpace(splitRoleName[0])
+		}
 		roleNames = append(roleNames, roleName)
 	}
 

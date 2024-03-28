@@ -64,6 +64,7 @@ func scim2GroupRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, d.Id())
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
 	}
 
