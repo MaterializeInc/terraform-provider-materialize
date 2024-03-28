@@ -11,7 +11,7 @@ resource "materialize_user" "example_users2" {
 
 resource "materialize_scim_group_users" "example_scim_group_users" {
   group_id = materialize_scim_group.example_scim_group.id
-  users    = [
+  users = [
     materialize_user.example_users1.id,
     materialize_user.example_users2.id,
   ]

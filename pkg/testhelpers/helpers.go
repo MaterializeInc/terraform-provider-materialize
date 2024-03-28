@@ -167,6 +167,8 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 			case http.MethodPost:
 				if strings.HasSuffix(trimmedPath, "/roles") {
 					handleAddRolesToGroup(w, req, r, groupID)
+				} else if strings.HasSuffix(trimmedPath, "/users") {
+					handleAddUsersToGroup(w, req, r, groupID)
 				} else if groupID == "" {
 					handleCreateScimGroup(w, req, r)
 				} else {
@@ -179,7 +181,9 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 					http.Error(w, "Group ID is required for PATCH method", http.StatusBadRequest)
 				}
 			case http.MethodDelete:
-				if groupID != "" {
+				if strings.HasSuffix(trimmedPath, "/users") {
+					handleDeleteScimGroup(w, req, r, groupID)
+				} else if groupID != "" {
 					handleDeleteScimGroup(w, req, r, groupID)
 				} else {
 					http.Error(w, "Group ID is required for DELETE method", http.StatusBadRequest)
@@ -717,6 +721,27 @@ func handleAddRolesToGroup(w http.ResponseWriter, req *http.Request, r *require.
 		}
 		w.WriteHeader(http.StatusCreated)
 		fmt.Fprintf(w, "Roles added to group %s successfully", groupID)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleAddUsersToGroup simulates adding users to a SCIM group.
+func handleAddUsersToGroup(w http.ResponseWriter, req *http.Request, r *require.Assertions, groupID string) {
+	switch req.Method {
+	case http.MethodPost:
+		// Parse the request body to get the user IDs to be added
+		var params struct {
+			UserIds []string `json:"userIds"`
+		}
+		err := json.NewDecoder(req.Body).Decode(&params)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// Simulate adding users to the group
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, "Users added to group %s successfully", groupID)
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
