@@ -131,6 +131,10 @@ type MaterializeRole struct {
 }
 
 func (b *MaterializeRole) QualifiedName() string {
+	// If role name is PUBLIC, it should not be quoted as it is a pseudo-role
+	if b.name == "PUBLIC" {
+		return b.name
+	}
 	return QualifiedName(b.name)
 }
 

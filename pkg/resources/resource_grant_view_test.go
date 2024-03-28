@@ -54,6 +54,45 @@ func TestResourceGrantViewCreate(t *testing.T) {
 	})
 }
 
+func TestResourceGrantViewCreatePublic(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":     "PUBLIC",
+		"privilege":     "USAGE",
+		"view_name":     "view",
+		"schema_name":   "schema",
+		"database_name": "database",
+	}
+	d := schema.TestResourceDataRaw(t, GrantView().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+
+		// Create
+		mock.ExpectExec(
+			`GRANT USAGE ON TABLE "database"."schema"."view" TO PUBLIC;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Grant Id
+		gp := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_views.name = 'view'`
+		testhelpers.MockViewScan(mock, gp)
+
+		// Query Params
+		pp := `WHERE mz_views.id = 'u1'`
+		testhelpers.MockViewScan(mock, pp)
+
+		if err := grantViewCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:GRANT|VIEW|u1|p|USAGE" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
 func TestResourceGrantViewDelete(t *testing.T) {
 	r := require.New(t)
 
