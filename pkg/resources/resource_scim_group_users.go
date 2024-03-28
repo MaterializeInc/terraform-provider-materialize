@@ -31,8 +31,14 @@ func SCIM2GroupUsers() *schema.Resource {
 		ReadContext:   scimGroupUsersRead,
 		UpdateContext: scimGroupUsersUpdate,
 		DeleteContext: scimGroupUsersDelete,
-		Schema:        ScimGroupUsersSchema,
-		Description:   "The materialize_scim_group_users resource allows managing users within a SCIM group in Frontegg.",
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
+		Schema: ScimGroupUsersSchema,
+
+		Description: "The materialize_scim_group_users resource allows managing users within a SCIM group in Frontegg.",
 	}
 }
 
@@ -66,6 +72,7 @@ func scimGroupUsersRead(ctx context.Context, d *schema.ResourceData, meta interf
 
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
 	}
 
@@ -94,6 +101,7 @@ func scimGroupUsersUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Get the current users assigned to the group
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
 	}
 

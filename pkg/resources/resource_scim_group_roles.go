@@ -33,8 +33,14 @@ func SCIM2GroupRoles() *schema.Resource {
 		ReadContext:   scimGroupRoleRead,
 		UpdateContext: scimGroupRoleUpdate,
 		DeleteContext: scimGroupRoleDelete,
-		Schema:        ScimGroupRoleSchema,
-		Description:   "The materialize_scim_group_role resource allows managing roles within a SCIM group in Frontegg.",
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
+		Schema: ScimGroupRoleSchema,
+
+		Description: "The materialize_scim_group_role resource allows managing roles within a SCIM group in Frontegg.",
 	}
 }
 
@@ -73,6 +79,7 @@ func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
 	}
 
@@ -108,6 +115,7 @@ func scimGroupRoleUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	// Get the current roles assigned to the group
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
 	}
 

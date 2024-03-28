@@ -29,8 +29,14 @@ func SCIM2Group() *schema.Resource {
 		ReadContext:   scim2GroupRead,
 		UpdateContext: scim2GroupUpdate,
 		DeleteContext: scim2GroupDelete,
-		Schema:        Scim2GroupSchema,
-		Description:   "The SCIM group resource allows you to manage user groups in Frontegg.",
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
+		Schema: Scim2GroupSchema,
+
+		Description: "The SCIM group resource allows you to manage user groups in Frontegg.",
 	}
 }
 
