@@ -134,13 +134,8 @@ func TestUpdateSCIMGroupSuccess(t *testing.T) {
 		Metadata:    "updated-metadata",
 	}
 
-	group, err := UpdateSCIMGroup(context.Background(), client, "group-id", params)
+	err := UpdateSCIMGroup(context.Background(), client, "group-id", params)
 	assert.NoError(err)
-	assert.NotNil(group)
-	assert.Equal("group-id", group.ID)
-	assert.Equal("Updated Group", group.Name)
-	assert.Equal("Updated description", group.Description)
-	assert.Equal("updated-metadata", group.Metadata)
 }
 
 func TestUpdateSCIMGroupFailure(t *testing.T) {
@@ -164,7 +159,7 @@ func TestUpdateSCIMGroupFailure(t *testing.T) {
 		Metadata:    "updated-metadata",
 	}
 
-	_, err := UpdateSCIMGroup(context.Background(), client, "group-id", params)
+	err := UpdateSCIMGroup(context.Background(), client, "group-id", params)
 	assert.Error(err)
 }
 

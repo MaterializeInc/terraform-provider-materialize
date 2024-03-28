@@ -91,6 +91,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_role_parameter":                       resources.RoleParameter(),
 			"materialize_schema":                               resources.Schema(),
 			"materialize_scim_config":                          resources.SCIM2Configuration(),
+			"materialize_scim_group":                           resources.SCIM2Group(),
 			"materialize_sso_config":                           resources.SSOConfiguration(),
 			"materialize_sso_domain":                           resources.SSODomain(),
 			"materialize_sso_group_mapping":                    resources.SSORoleGroupMapping(),

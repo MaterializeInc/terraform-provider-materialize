@@ -110,17 +110,17 @@ func CreateSCIMGroup(ctx context.Context, client *clients.FronteggClient, params
 }
 
 // UpdateSCIMGroup updates an existing group in Frontegg.
-func UpdateSCIMGroup(ctx context.Context, client *clients.FronteggClient, groupID string, params GroupUpdateParams) (*ScimGroup, error) {
+func UpdateSCIMGroup(ctx context.Context, client *clients.FronteggClient, groupID string, params GroupUpdateParams) error {
 	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, SCIMGroupsApiPathV1, groupID)
 	payloadBytes, err := json.Marshal(params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	body := bytes.NewReader(payloadBytes)
 
 	req, err := http.NewRequestWithContext(ctx, "PATCH", endpoint, body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req.Header.Add("Authorization", "Bearer "+client.Token)
@@ -128,7 +128,7 @@ func UpdateSCIMGroup(ctx context.Context, client *clients.FronteggClient, groupI
 
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -136,17 +136,12 @@ func UpdateSCIMGroup(ctx context.Context, client *clients.FronteggClient, groupI
 		var sb strings.Builder
 		_, err = io.Copy(&sb, resp.Body)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return nil, fmt.Errorf("error updating SCIM group: status %d, response: %s", resp.StatusCode, sb.String())
+		return fmt.Errorf("error updating SCIM group: status %d, response: %s", resp.StatusCode, sb.String())
 	}
 
-	var group ScimGroup
-	if err := json.NewDecoder(resp.Body).Decode(&group); err != nil {
-		return nil, err
-	}
-
-	return &group, nil
+	return nil
 }
 
 // DeleteSCIMGroup deletes an existing group in Frontegg.
