@@ -165,7 +165,9 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 			log.Printf("req.URL.Path: %s, groupID: %s", req.URL.Path, groupID)
 			switch req.Method {
 			case http.MethodPost:
-				if groupID == "" {
+				if strings.HasSuffix(trimmedPath, "/roles") {
+					handleAddRolesToGroup(w, req, r, groupID)
+				} else if groupID == "" {
 					handleCreateScimGroup(w, req, r)
 				} else {
 					http.Error(w, "Invalid request for POST method", http.StatusBadRequest)
@@ -701,6 +703,23 @@ func handleCreateScimGroup(w http.ResponseWriter, req *http.Request, r *require.
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(mockGroup)
+}
+
+func handleAddRolesToGroup(w http.ResponseWriter, req *http.Request, r *require.Assertions, groupID string) {
+	switch req.Method {
+	case http.MethodPost:
+		// Parse the request body
+		var params frontegg.AddRolesToGroupParams
+		err := json.NewDecoder(req.Body).Decode(&params)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, "Roles added to group %s successfully", groupID)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 // handleUpdateScimGroup simulates updating a SCIM group
