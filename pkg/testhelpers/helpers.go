@@ -152,13 +152,46 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 		case strings.HasPrefix(req.URL.Path, "/frontegg/team/resources/sso/v1/configurations/"):
 			handleSSOConfigAndDomainRequests(w, req)
 		case strings.HasPrefix(req.URL.Path, "/frontegg/identity/resources/groups/v1"):
+			// Removing the base path to potentially get the groupID
+			trimmedPath := strings.TrimPrefix(req.URL.Path, "/frontegg/identity/resources/groups/v1/")
+			groupID := ""
+			if trimmedPath != "" {
+				// If there's something after the base path, consider it as the groupID
+				parts := strings.Split(trimmedPath, "/")
+				if len(parts) > 0 {
+					groupID = parts[0]
+				}
+			}
+			log.Printf("req.URL.Path: %s, groupID: %s", req.URL.Path, groupID)
 			switch req.Method {
 			case http.MethodPost:
-				// TODO: Implement logic for creating a group
-				w.WriteHeader(http.StatusCreated)
+				if groupID == "" {
+					handleCreateScimGroup(w, req, r)
+				} else {
+					http.Error(w, "Invalid request for POST method", http.StatusBadRequest)
+				}
+			case http.MethodPatch:
+				if groupID != "" {
+					handleUpdateScimGroup(w, req, r, groupID)
+				} else {
+					http.Error(w, "Group ID is required for PATCH method", http.StatusBadRequest)
+				}
+			case http.MethodDelete:
+				if groupID != "" {
+					handleDeleteScimGroup(w, req, r, groupID)
+				} else {
+					http.Error(w, "Group ID is required for DELETE method", http.StatusBadRequest)
+				}
 			case http.MethodGet:
-				handleListScimGroups(w, req, r)
+				if groupID != "" {
+					handleGetScimGroupByID(w, req, r, groupID)
+				} else {
+					handleListScimGroups(w, req, r)
+				}
+			default:
+				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 			}
+
 		case strings.HasPrefix(req.URL.Path, "/frontegg/directory/resources/v1/configurations/scim2"):
 			handleSCIM2ConfigurationRequests(w, req, r)
 
@@ -651,6 +684,59 @@ func handleListScimGroups(w http.ResponseWriter, req *http.Request, r *require.A
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to encode response: %s", err), http.StatusInternalServerError)
 	}
+}
+
+// handleCreateScimGroup simulates creating a SCIM group
+func handleCreateScimGroup(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	var params frontegg.GroupCreateParams
+	err := json.NewDecoder(req.Body).Decode(&params)
+	r.NoError(err)
+
+	mockGroup := frontegg.ScimGroup{
+		ID:          fmt.Sprintf("%d", time.Now().Unix()),
+		Name:        params.Name,
+		Description: params.Description,
+		Metadata:    params.Metadata,
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(mockGroup)
+}
+
+// handleUpdateScimGroup simulates updating a SCIM group
+func handleUpdateScimGroup(w http.ResponseWriter, req *http.Request, r *require.Assertions, groupID string) {
+	var params frontegg.GroupUpdateParams
+	err := json.NewDecoder(req.Body).Decode(&params)
+	r.NoError(err)
+
+	// Simulate updating the group by returning the same ID with potentially new data
+	mockGroup := frontegg.ScimGroup{
+		ID:          groupID,
+		Name:        params.Name,
+		Description: params.Description,
+		Metadata:    params.Metadata,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(mockGroup)
+}
+
+// handleDeleteScimGroup simulates deleting a SCIM group
+func handleDeleteScimGroup(w http.ResponseWriter, req *http.Request, r *require.Assertions, groupID string) {
+	// Simply send a 200 OK status to indicate successful deletion
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleGetScimGroupByID simulates fetching a SCIM group by ID
+func handleGetScimGroupByID(w http.ResponseWriter, req *http.Request, r *require.Assertions, groupID string) {
+	mockGroup := frontegg.ScimGroup{
+		ID:          groupID,
+		Name:        "Test Group",
+		Description: "A test group description",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(mockGroup)
 }
 
 func handleSCIM2ConfigurationRequests(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
