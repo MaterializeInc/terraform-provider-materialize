@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.6.9 - 2024-03-29
+
+### Features
+* Add `PUBLIC` pseudo-role to resource grants [#524](https://github.com/MaterializeInc/terraform-provider-materialize/pull/524)
+* Add `materialize_role_parameter` resource [#522](https://github.com/MaterializeInc/terraform-provider-materialize/pull/522)
+* Allow `ALTER CONNECTION` updates for `resource_connection_postgres` [#511](https://github.com/MaterializeInc/terraform-provider-materialize/pull/511)
+* Allow `ALTER CONNECTION` updates for SSH tunnels [#523](https://github.com/MaterializeInc/terraform-provider-materialize/pull/523)
+
+### BugFixes
+* Fix failing environmentd bootstrap [#512](https://github.com/MaterializeInc/terraform-provider-materialize/pull/512)
+
+### Misc
+
+* Added acceptance tests for:
+  * Cloud region data source [#521](https://github.com/MaterializeInc/terraform-provider-materialize/pull/521)
+  * SCIM config resource [#520](https://github.com/MaterializeInc/terraform-provider-materialize/pull/520)
+  * SCIM Groups data source [#509](https://github.com/MaterializeInc/terraform-provider-materialize/pull/509)
+  * SSO config data source [#507](https://github.com/MaterializeInc/terraform-provider-materialize/pull/507)
+
 ## 0.6.8 - 2024-03-20
 
 ### Features
