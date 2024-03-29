@@ -69,7 +69,10 @@ func scimGroupRoleCreate(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	groupID := d.Get("group_id").(string)
+	groupID := d.Id()
+	if groupID == "" {
+		return diag.Errorf("group ID is not set")
+	}
 
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
@@ -85,19 +88,12 @@ func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	var roleNames []interface{}
 	for _, role := range group.Roles {
-		splitRoleName := strings.SplitN(role.Name, " ", 2)
-		roleName := ""
-		if len(splitRoleName) > 1 {
-			roleName = strings.TrimSpace(splitRoleName[1])
-		} else {
-			roleName = strings.TrimSpace(splitRoleName[0])
-		}
+		roleName := strings.TrimPrefix(role.Name, "Organization ")
 		roleNames = append(roleNames, roleName)
 	}
 
-	if err := d.Set("roles", roleNames); err != nil {
-		return diag.FromErr(err)
-	}
+	d.Set("group_id", groupID)
+	d.Set("roles", roleNames)
 
 	return nil
 }

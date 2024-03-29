@@ -62,7 +62,10 @@ func scimGroupUsersCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func scimGroupUsersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	groupID := d.Get("group_id").(string)
+	groupID := d.Id()
+	if groupID == "" {
+		return diag.Errorf("group ID is not set")
+	}
 
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
@@ -81,9 +84,8 @@ func scimGroupUsersRead(ctx context.Context, d *schema.ResourceData, meta interf
 		userIDs = append(userIDs, user.ID)
 	}
 
-	if err := d.Set("users", userIDs); err != nil {
-		return diag.FromErr(err)
-	}
+	d.Set("group_id", groupID)
+	d.Set("users", userIDs)
 
 	return nil
 }
