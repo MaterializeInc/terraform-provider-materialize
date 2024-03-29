@@ -24,11 +24,12 @@ type AppPassword struct {
 }
 
 type User struct {
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	ProfilePictureURL string `json:"profilePictureUrl"`
-	Verified          bool   `json:"verified"`
-	Metadata          string `json:"metadata"`
+	ID                string         `json:"id"`
+	Email             string         `json:"email"`
+	ProfilePictureURL string         `json:"profilePictureUrl"`
+	Verified          bool           `json:"verified"`
+	Metadata          string         `json:"metadata"`
+	Roles             []FronteggRole `json:"roles"`
 }
 
 type FronteggRole struct {
@@ -212,7 +213,11 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
-	var newUser User
+	var newUser struct {
+		User
+		RoleIDs []string `json:"roleIds"`
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -221,15 +226,28 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	userID := generateUserID()
 	newUser.ID = userID
 
-	// Store the new user
+	// Map role IDs to role names and update the newUser.Roles slice
+	for _, roleID := range newUser.RoleIDs {
+		var roleName string
+		switch roleID {
+		case "1":
+			roleName = "Organization Admin"
+		case "2":
+			roleName = "Organization Member"
+		}
+
+		if roleName != "" {
+			newUser.Roles = append(newUser.Roles, FronteggRole{ID: roleID, Name: roleName})
+		}
+	}
+
 	mutex.Lock()
-	users[userID] = newUser
+	users[userID] = newUser.User
 	mutex.Unlock()
 
 	w.WriteHeader(http.StatusCreated)
-	// Return the created user
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newUser)
+	json.NewEncoder(w).Encode(newUser.User)
 }
 
 func generateUserID() string {
