@@ -127,8 +127,8 @@ func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 	updatedDatabase := "updated_database"
 	initialSslMode := "require"
 	updatedSslMode := "disable"
-	sshTunnelName := "pg_ssh_connection"
-	sshTunnel2Name := "pg_ssh_connection2"
+	sshTunnelName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	sshTunnel2Name := sshTunnelName + "_2"
 	initialSslCa := "-----BEGIN CERTIFICATE-----"
 	updatedSslCa := "-----BEGIN CERTIFICATE----------END CERTIFICATE-----"
 
@@ -230,7 +230,7 @@ func testAccConnPostgresResourceUpdates(roleName, secretName, connectionName, ho
 	}
 
 	resource "materialize_connection_ssh_tunnel" "ssh_connection" {
-		name        = "pg_ssh_connection"
+		name        = "%[6]s"
 		schema_name = "public"
 		comment     = "connection ssh tunnel comment"
 
@@ -242,7 +242,7 @@ func testAccConnPostgresResourceUpdates(roleName, secretName, connectionName, ho
 	}
 
 	resource "materialize_connection_ssh_tunnel" "ssh_connection2" {
-		name        = "pg_ssh_connection2"
+		name        = "%[6]s_2"
 		schema_name = "public"
 		comment     = "connection ssh tunnel 2 comment"
 
