@@ -24,11 +24,12 @@ type AppPassword struct {
 }
 
 type User struct {
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	ProfilePictureURL string `json:"profilePictureUrl"`
-	Verified          bool   `json:"verified"`
-	Metadata          string `json:"metadata"`
+	ID                string         `json:"id"`
+	Email             string         `json:"email"`
+	ProfilePictureURL string         `json:"profilePictureUrl"`
+	Verified          bool           `json:"verified"`
+	Metadata          string         `json:"metadata"`
+	Roles             []FronteggRole `json:"roles"`
 }
 
 type FronteggRole struct {
@@ -100,11 +101,66 @@ type SCIM2Configuration struct {
 
 type SCIM2ConfigurationsResponse []SCIM2Configuration
 
+// GroupCreateParams represents the parameters for creating a new group.
+type GroupCreateParams struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Color       string `json:"color,omitempty"`
+	Metadata    string `json:"metadata,omitempty"`
+}
+
+// GroupUpdateParams represents the parameters for updating an existing group.
+type GroupUpdateParams struct {
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Color       string `json:"color,omitempty"`
+	Metadata    string `json:"metadata,omitempty"`
+}
+
+// ScimGroup represents the structure of a group in the response.
+type ScimGroup struct {
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Metadata    string     `json:"metadata"`
+	Roles       []ScimRole `json:"roles"`
+	Users       []ScimUser `json:"users"`
+	ManagedBy   string     `json:"managedBy"`
+	Color       string     `json:"color"`
+}
+
+// ScimRole represents the structure of a role within a group.
+type ScimRole struct {
+	ID          string `json:"id"`
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	IsDefault   bool   `json:"is_default"`
+}
+
+// ScimUser represents the structure of a user within a group.
+type ScimUser struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+// SCIMGroupsResponse represents the overall structure of the response from the SCIM groups API.
+type SCIMGroupsResponse struct {
+	Groups []ScimGroup `json:"groups"`
+}
+
+// AddRolesToGroupParams represents the parameters for adding roles to a group.
+type AddRolesToGroupParams struct {
+	RoleIds []string `json:"roleIds"`
+}
+
 var (
 	appPasswords       = make(map[string]AppPassword)
 	users              = make(map[string]User)
 	ssoConfigs         = make(map[string]SSOConfig)
 	scimConfigurations = make(map[string]SCIM2Configuration)
+	groups             = make(map[string]ScimGroup)
 	mutex              = &sync.Mutex{}
 )
 
@@ -117,6 +173,7 @@ func main() {
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations", handleSSOConfigRequest)
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations/", handleSSOConfigAndDomainRequest)
 	http.HandleFunc("/frontegg/identity/resources/groups/v1", handleSCIMGroupsRequest)
+	http.HandleFunc("/frontegg/identity/resources/groups/v1/", handleSCIMGroupsParamRequest)
 	http.HandleFunc("/frontegg/directory/resources/v1/configurations/scim2", handleSCIM2ConfigurationsRequest)
 	http.HandleFunc("/frontegg/directory/resources/v1/configurations/scim2/", handleSCIMConfigurationByID)
 
@@ -156,7 +213,11 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
-	var newUser User
+	var newUser struct {
+		User
+		RoleIDs []string `json:"roleIds"`
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -165,15 +226,28 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	userID := generateUserID()
 	newUser.ID = userID
 
-	// Store the new user
+	// Map role IDs to role names and update the newUser.Roles slice
+	for _, roleID := range newUser.RoleIDs {
+		var roleName string
+		switch roleID {
+		case "1":
+			roleName = "Organization Admin"
+		case "2":
+			roleName = "Organization Member"
+		}
+
+		if roleName != "" {
+			newUser.Roles = append(newUser.Roles, FronteggRole{ID: roleID, Name: roleName})
+		}
+	}
+
 	mutex.Lock()
-	users[userID] = newUser
+	users[userID] = newUser.User
 	mutex.Unlock()
 
 	w.WriteHeader(http.StatusCreated)
-	// Return the created user
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newUser)
+	json.NewEncoder(w).Encode(newUser.User)
 }
 
 func generateUserID() string {
@@ -461,11 +535,68 @@ func handleGroupMappingRequests(w http.ResponseWriter, r *http.Request, ssoConfi
 	}
 }
 
+func handleSCIMGroupsParamRequest(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	// Extract the group ID and potential action from the URL path
+	trimmedPath := strings.TrimPrefix(r.URL.Path, "/frontegg/identity/resources/groups/v1/")
+	trimmedPath = strings.Split(trimmedPath, "?")[0]
+	parts := strings.Split(trimmedPath, "/")
+	groupID := ""
+	if len(parts) > 0 {
+		groupID = parts[0]
+	}
+
+	switch r.Method {
+	case http.MethodPost:
+		if strings.Contains(trimmedPath, "/roles") && groupID != "" {
+			// Add roles to a group
+			handleAddRolesToGroup(w, r, groupID)
+		} else if strings.Contains(trimmedPath, "/users") && groupID != "" {
+			// Add users to a group
+			handleAddUsersToGroup(w, r, groupID)
+		} else {
+			http.Error(w, "Invalid request for POST method", http.StatusBadRequest)
+		}
+	case http.MethodPatch:
+		if groupID != "" {
+			// Update a group
+			handleUpdateScimGroup(w, r, groupID)
+		} else {
+			http.Error(w, "Group ID is required for PATCH method", http.StatusBadRequest)
+		}
+	case http.MethodDelete:
+		if strings.Contains(trimmedPath, "/roles") && groupID != "" {
+			// Remove roles from a group
+			handleRemoveRolesFromGroup(w, r, groupID)
+		} else if strings.Contains(trimmedPath, "/users") && groupID != "" {
+			// Remove users from a group
+			handleRemoveUsersFromGroup(w, r, groupID)
+		} else if groupID != "" {
+			// Delete a group
+			handleDeleteScimGroup(w, r, groupID)
+		} else {
+			http.Error(w, "Group ID is required for DELETE method", http.StatusBadRequest)
+		}
+	case http.MethodGet:
+		if groupID != "" {
+			// Get a specific group by ID
+			handleGetScimGroupByID(w, r, groupID)
+		} else {
+			// List all groups
+			listSCIMGroups(w, r)
+		}
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// Handle scim groups create and list
 func handleSCIMGroupsRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO: add support for creating groups and updating groups
 	switch r.Method {
 	case http.MethodGet:
 		listSCIMGroups(w, r)
+	case http.MethodPost:
+		handleCreateScimGroup(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -483,10 +614,121 @@ func handleSCIM2ConfigurationsRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func listSCIMGroups(w http.ResponseWriter, r *http.Request) {
-	// TODO: update this to return the groups that are created by the user
-	w.Header().Set("Content-Type", "application/json")
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	allGroups := make([]ScimGroup, 0, len(groups))
+	for _, group := range groups {
+		allGroups = append(allGroups, group)
+	}
+
+	// Respond with all the groups encoded as JSON
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"groups":[]}`))
+	json.NewEncoder(w).Encode(SCIMGroupsResponse{Groups: allGroups})
+}
+
+func handleCreateScimGroup(w http.ResponseWriter, r *http.Request) {
+	var params GroupCreateParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Create a new group with the provided parameters
+	newGroup := ScimGroup{
+		ID:          uuid.New().String(),
+		Name:        params.Name,
+		Description: params.Description,
+		Metadata:    params.Metadata,
+		Roles:       []ScimRole{},
+		Users:       []ScimUser{},
+	}
+
+	// Store the new group in the mock data store
+	mutex.Lock()
+	groups[newGroup.ID] = newGroup
+	mutex.Unlock()
+
+	// Respond with the newly created group
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newGroup)
+}
+
+func handleUpdateScimGroup(w http.ResponseWriter, r *http.Request, groupID string) {
+	var params GroupUpdateParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	group, exists := groups[groupID]
+	mutex.Unlock()
+
+	if !exists {
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Update the group's attributes if they are provided in the request
+	if params.Name != "" {
+		group.Name = params.Name
+	}
+	if params.Description != "" {
+		group.Description = params.Description
+	}
+	if params.Color != "" {
+		group.Color = params.Color
+	}
+	if params.Metadata != "" {
+		group.Metadata = params.Metadata
+	}
+
+	// Update the group in the mock data store
+	mutex.Lock()
+	groups[groupID] = group
+	mutex.Unlock()
+
+	// Respond with the updated group data
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(group)
+}
+
+func handleDeleteScimGroup(w http.ResponseWriter, r *http.Request, groupID string) {
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	// Check if the group exists
+	_, exists := groups[groupID]
+	if !exists {
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Delete the group from the mock data store
+	delete(groups, groupID)
+
+	// Respond with a 200 OK status to indicate successful deletion
+	w.WriteHeader(http.StatusOK)
+}
+
+func handleGetScimGroupByID(w http.ResponseWriter, r *http.Request, groupID string) {
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	group, exists := groups[groupID]
+	mutex.Unlock()
+
+	if !exists {
+		// If the group does not exist, return a 404 Not Found status
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// If the group exists, encode it to JSON and return it with a 200 OK status
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(group)
 }
 
 func handleSCIMConfigurationByID(w http.ResponseWriter, r *http.Request) {
@@ -496,6 +738,173 @@ func handleSCIMConfigurationByID(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func handleAddRolesToGroup(w http.ResponseWriter, r *http.Request, groupID string) {
+	logRequest(r)
+	var params AddRolesToGroupParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	group, exists := groups[groupID]
+	if !exists {
+		// If the group does not exist, return a 404 Not Found status
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	for _, roleID := range params.RoleIds {
+		// Check if the role is already in the group to prevent duplicates
+		found := false
+		for _, role := range group.Roles {
+			if role.ID == roleID {
+				found = true
+				break
+			}
+		}
+
+		// If the role is not found, add it to the group with a specific name based on its ID
+		if !found {
+			roleName := ""
+			switch roleID {
+			case "1":
+				roleName = "Organization Admin"
+			case "2":
+				roleName = "Organization Member"
+			}
+			group.Roles = append(group.Roles, ScimRole{ID: roleID, Name: roleName})
+		}
+	}
+
+	// Update the group in the mock data store
+	groups[groupID] = group
+
+	// Respond with a 201 Created status
+	w.WriteHeader(http.StatusCreated)
+}
+
+func handleRemoveRolesFromGroup(w http.ResponseWriter, r *http.Request, groupID string) {
+	var params AddRolesToGroupParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	group, exists := groups[groupID]
+	if !exists {
+		// If the group does not exist, return a 404 Not Found status
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Remove the specified roles from the group
+	for _, roleID := range params.RoleIds {
+		for i, role := range group.Roles {
+			if role.ID == roleID {
+				// Remove the role from the slice
+				group.Roles = append(group.Roles[:i], group.Roles[i+1:]...)
+				break
+			}
+		}
+	}
+
+	// Update the group in the mock data store
+	groups[groupID] = group
+
+	// Respond with a 200 OK status to indicate successful removal
+	w.WriteHeader(http.StatusOK)
+}
+
+func handleAddUsersToGroup(w http.ResponseWriter, r *http.Request, groupID string) {
+	var params struct {
+		UserIds []string `json:"userIds"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	group, exists := groups[groupID]
+	if !exists {
+		// If the group does not exist, return a 404 Not Found status
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Add the specified users to the group, avoiding duplicates
+	for _, userID := range params.UserIds {
+		// Check if the user is already in the group
+		found := false
+		for _, user := range group.Users {
+			if user.ID == userID {
+				found = true
+				break
+			}
+		}
+
+		// If the user is not found, add them to the group
+		if !found {
+			group.Users = append(group.Users, ScimUser{ID: userID})
+		}
+	}
+
+	// Update the group in the mock data store
+	groups[groupID] = group
+
+	// Respond with a 201 Created status
+	w.WriteHeader(http.StatusCreated)
+}
+
+func handleRemoveUsersFromGroup(w http.ResponseWriter, r *http.Request, groupID string) {
+	var params struct {
+		UserIds []string `json:"userIds"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Lock the mutex before accessing the shared resource
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	group, exists := groups[groupID]
+	if !exists {
+		// If the group does not exist, return a 404 Not Found status
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Remove the specified users from the group
+	for _, userID := range params.UserIds {
+		for i, user := range group.Users {
+			if user.ID == userID {
+				// Remove the user from the group
+				group.Users = append(group.Users[:i], group.Users[i+1:]...)
+				break
+			}
+		}
+	}
+
+	// Update the group in the mock data store
+	groups[groupID] = group
+
+	// Respond with a 200 OK status to indicate successful removal
+	w.WriteHeader(http.StatusOK)
 }
 
 func listSCIMConfigurations(w http.ResponseWriter) {

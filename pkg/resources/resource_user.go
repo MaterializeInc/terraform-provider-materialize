@@ -128,6 +128,14 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	d.Set("verified", userResponse.Verified)
 	d.Set("metadata", userResponse.Metadata)
 
+	roleNames := make([]string, len(userResponse.Roles))
+	for i, role := range userResponse.Roles {
+		// Directly trim the "Organization " prefix from the role name.
+		roleName := strings.TrimPrefix(role.Name, "Organization ")
+		roleNames[i] = roleName
+	}
+	d.Set("roles", roleNames)
+
 	return nil
 }
 

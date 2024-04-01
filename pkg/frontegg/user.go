@@ -21,14 +21,21 @@ type UserRequest struct {
 	RoleIDs []string `json:"roleIds"`
 }
 
+type UserRole struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 // UserResponse represents the structure of a user response from Frontegg APIs.
 type UserResponse struct {
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	ProfilePictureURL string `json:"profilePictureUrl"`
-	Verified          bool   `json:"verified"`
-	Metadata          string `json:"metadata"`
-	Provider          string `json:"provider"`
+	ID                string     `json:"id"`
+	Email             string     `json:"email"`
+	ProfilePictureURL string     `json:"profilePictureUrl"`
+	Verified          bool       `json:"verified"`
+	Metadata          string     `json:"metadata"`
+	Provider          string     `json:"provider"`
+	Roles             []UserRole `json:"roles"`
 }
 
 // CreateUser creates a new user in Frontegg.
