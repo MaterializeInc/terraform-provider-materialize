@@ -1,7 +1,6 @@
 package frontegg
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -42,22 +41,15 @@ type UserResponse struct {
 func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest UserRequest) (UserResponse, error) {
 	var userResponse UserResponse
 
-	requestBody, err := json.Marshal(userRequest)
+	requestBody, err := jsonEncode(userRequest)
 	if err != nil {
 		return userResponse, err
 	}
 
-	url := fmt.Sprintf("%s%s", client.Endpoint, UsersApiPathV2)
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
+	endpoint := fmt.Sprintf("%s%s", client.Endpoint, UsersApiPathV2)
+	resp, err := doRequest(ctx, client, "POST", endpoint, requestBody)
 	if err != nil {
-		return userResponse, fmt.Errorf("creating request failed: %w", err)
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return userResponse, fmt.Errorf("executing request failed: %w", err)
+		return userResponse, err
 	}
 	defer resp.Body.Close()
 
@@ -65,7 +57,7 @@ func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest
 		return userResponse, clients.HandleApiError(resp)
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
 		return userResponse, fmt.Errorf("decoding response failed: %w", err)
 	}
 
@@ -76,17 +68,10 @@ func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest
 func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string) (UserResponse, error) {
 	var userResponse UserResponse
 
-	url := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
+	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
-		return userResponse, fmt.Errorf("creating request failed: %w", err)
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return userResponse, fmt.Errorf("executing request failed: %w", err)
+		return userResponse, err
 	}
 	defer resp.Body.Close()
 
@@ -94,7 +79,7 @@ func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string
 		return userResponse, clients.HandleApiError(resp)
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
 		return userResponse, fmt.Errorf("decoding response failed: %w", err)
 	}
 
@@ -103,16 +88,10 @@ func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string
 
 // DeleteUser deletes a user from Frontegg.
 func DeleteUser(ctx context.Context, client *clients.FronteggClient, userID string) error {
-	url := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
-	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
+	resp, err := doRequest(ctx, client, "DELETE", endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("creating request failed: %w", err)
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("executing request failed: %w", err)
+		return err
 	}
 	defer resp.Body.Close()
 

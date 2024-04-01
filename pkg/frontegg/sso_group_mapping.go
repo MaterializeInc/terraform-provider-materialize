@@ -1,11 +1,9 @@
 package frontegg
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -32,32 +30,17 @@ func CreateSSOGroupMapping(ctx context.Context, client *clients.FronteggClient, 
 		"roleIds": roleIDs,
 	}
 
-	requestBody, err := json.Marshal(payload)
+	requestBody, err := jsonEncode(payload)
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint := fmt.Sprintf("%s%s/%s/groups", client.Endpoint, SSOGroupMappingApiPathV1, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "POST", endpoint, requestBody)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("error creating SSO group mapping: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
 
 	var result GroupMapping
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -70,25 +53,11 @@ func CreateSSOGroupMapping(ctx context.Context, client *clients.FronteggClient, 
 // GetSSOGroupMappings retrieves all SSO group role mappings for a specific SSO configuration.
 func GetSSOGroupMappings(ctx context.Context, client *clients.FronteggClient, ssoConfigID string) (*[]GroupMapping, error) {
 	endpoint := fmt.Sprintf("%s%s/%s/groups", client.Endpoint, SSOGroupMappingApiPathV1, ssoConfigID)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("error reading SSO group mappings: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
 
 	var groups []GroupMapping
 	if err := json.NewDecoder(resp.Body).Decode(&groups); err != nil {
@@ -128,32 +97,17 @@ func UpdateSSOGroupMapping(ctx context.Context, client *clients.FronteggClient, 
 		"roleIds": roleIDs,
 	}
 
-	requestBody, err := json.Marshal(payload)
+	requestBody, err := jsonEncode(payload)
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint := fmt.Sprintf("%s%s/%s/groups/%s", client.Endpoint, SSOGroupMappingApiPathV1, ssoConfigID, groupID)
-	req, err := http.NewRequestWithContext(ctx, "PATCH", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "PATCH", endpoint, requestBody)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("error updating SSO group mapping: status %d, response: %s", resp.StatusCode, string(responseData))
-	}
 
 	var result GroupMapping
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -166,24 +120,14 @@ func UpdateSSOGroupMapping(ctx context.Context, client *clients.FronteggClient, 
 // DeleteSSOGroupMapping deletes an existing SSO group role mapping.
 func DeleteSSOGroupMapping(ctx context.Context, client *clients.FronteggClient, ssoConfigID, groupID string) error {
 	endpoint := fmt.Sprintf("%s%s/%s/groups/%s", client.Endpoint, SSOGroupMappingApiPathV1, ssoConfigID, groupID)
-	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "DELETE", endpoint, nil)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		responseData, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("error deleting SSO group mapping: status %d, response: %s", resp.StatusCode, string(responseData))
+		return fmt.Errorf("error deleting SSO group mapping: status %d", resp.StatusCode)
 	}
 
 	return nil

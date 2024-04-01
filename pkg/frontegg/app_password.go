@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -26,37 +24,16 @@ const (
 // ListAppPasswords fetches a list of app passwords from the API.
 func ListAppPasswords(ctx context.Context, client *clients.FronteggClient) ([]AppPasswordResponse, error) {
 	var passwords []AppPasswordResponse
+	endpoint := GetAppPasswordApiEndpoint(client, ApiTokenPath)
 
-	// Construct the request URL
-	url := GetAppPasswordApiEndpoint(client, ApiTokenPath)
-
-	// Create and send the HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating request failed: %w", err)
-	}
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	// Execute the request
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("executing request failed: %w", err)
+		return nil, fmt.Errorf("request to list app passwords failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Check the response code
-	if resp.StatusCode != http.StatusOK {
-		return nil, clients.HandleApiError(resp)
-	}
-
-	// Decode the response body
-	responseBody, readErr := io.ReadAll(resp.Body)
-	if readErr != nil {
-		return nil, fmt.Errorf("reading response body failed: %w", readErr)
-	}
-
-	if err := json.Unmarshal(responseBody, &passwords); err != nil {
-		return nil, fmt.Errorf("decoding response failed: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&passwords); err != nil {
+		return nil, fmt.Errorf("decoding app passwords failed: %w", err)
 	}
 
 	return passwords, nil
