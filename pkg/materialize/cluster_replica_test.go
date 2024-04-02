@@ -11,7 +11,7 @@ import (
 func TestClusterReplicaCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', DISK, AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE, IDLE ARRANGEMENT MERGE EFFORT = 1;`,
+			`CREATE CLUSTER REPLICA "cluster"."replica" SIZE = 'xsmall', DISK, AVAILABILITY ZONE = 'us-east-1', INTROSPECTION INTERVAL = '1s', INTROSPECTION DEBUGGING = TRUE;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "replica", ClusterName: "cluster"}
@@ -21,7 +21,6 @@ func TestClusterReplicaCreate(t *testing.T) {
 		b.AvailabilityZone("us-east-1")
 		b.IntrospectionInterval("1s")
 		b.IntrospectionDebugging()
-		b.IdleArrangementMergeEffort(1)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

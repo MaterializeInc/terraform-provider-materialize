@@ -18,7 +18,6 @@ type ClusterReplicaBuilder struct {
 	availabilityZone           string
 	introspectionInterval      string
 	introspectionDebugging     bool
-	idleArrangementMergeEffort int
 }
 
 func NewClusterReplicaBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterReplicaBuilder {
@@ -58,11 +57,6 @@ func (b *ClusterReplicaBuilder) IntrospectionDebugging() *ClusterReplicaBuilder 
 	return b
 }
 
-func (b *ClusterReplicaBuilder) IdleArrangementMergeEffort(e int) *ClusterReplicaBuilder {
-	b.idleArrangementMergeEffort = e
-	return b
-}
-
 func (b *ClusterReplicaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CLUSTER REPLICA %s`, b.QualifiedName()))
@@ -90,11 +84,6 @@ func (b *ClusterReplicaBuilder) Create() error {
 
 	if b.introspectionDebugging {
 		p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
-	}
-
-	if b.idleArrangementMergeEffort != 0 {
-		m := fmt.Sprintf(` IDLE ARRANGEMENT MERGE EFFORT = %d`, b.idleArrangementMergeEffort)
-		p = append(p, m)
 	}
 
 	if len(p) > 0 {

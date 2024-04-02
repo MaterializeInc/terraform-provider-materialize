@@ -36,7 +36,6 @@ var clusterSchema = map[string]*schema.Schema{
 	},
 	"introspection_interval":        IntrospectionIntervalSchema(false, []string{"size"}),
 	"introspection_debugging":       IntrospectionDebuggingSchema(false, []string{"size"}),
-	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(false, []string{"size"}),
 	"region":                        RegionSchema(),
 }
 
@@ -146,10 +145,6 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
 			b.IntrospectionDebugging()
 		}
-
-		if v, ok := d.GetOk("idle_arrangement_merge_effort"); ok {
-			b.IdleArrangementMergeEffort(v.(int))
-		}
 	}
 
 	// create resource
@@ -256,13 +251,6 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		if d.HasChange("introspection_debugging") {
 			_, n := d.GetChange("introspection_debugging")
 			if err := b.SetIntrospectionDebugging(n.(bool)); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-
-		if d.HasChange("idle_arrangement_merge_effort") {
-			_, n := d.GetChange("idle_arrangement_merge_effort")
-			if err := b.SetIdleArrangementMergeEffort(n.(int)); err != nil {
 				return diag.FromErr(err)
 			}
 		}

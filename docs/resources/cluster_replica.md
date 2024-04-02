@@ -35,7 +35,6 @@ resource "materialize_cluster_replica" "example_cluster_replica" {
 - `availability_zone` (String) The specific availability zone of the replica.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
-- `idle_arrangement_merge_effort` (Number) The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.

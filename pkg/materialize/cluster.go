@@ -19,7 +19,6 @@ type ClusterBuilder struct {
 	availabilityZones          []string
 	introspectionInterval      string
 	introspectionDebugging     bool
-	idleArrangementMergeEffort int
 }
 
 func NewClusterBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterBuilder {
@@ -63,11 +62,6 @@ func (b *ClusterBuilder) IntrospectionDebugging() *ClusterBuilder {
 	return b
 }
 
-func (b *ClusterBuilder) IdleArrangementMergeEffort(e int) *ClusterBuilder {
-	b.idleArrangementMergeEffort = e
-	return b
-}
-
 func (b *ClusterBuilder) Create() error {
 	q := strings.Builder{}
 
@@ -105,11 +99,6 @@ func (b *ClusterBuilder) Create() error {
 
 		if b.introspectionDebugging {
 			p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
-		}
-
-		if b.idleArrangementMergeEffort != 0 {
-			m := fmt.Sprintf(` IDLE ARRANGEMENT MERGE EFFORT = %d`, b.idleArrangementMergeEffort)
-			p = append(p, m)
 		}
 
 		if len(p) > 0 {
@@ -158,11 +147,6 @@ func (b *ClusterBuilder) SetIntrospectionInterval(introspectionInterval string) 
 
 func (b *ClusterBuilder) SetIntrospectionDebugging(introspectionDebugging bool) error {
 	q := fmt.Sprintf(`ALTER CLUSTER %s SET (INTROSPECTION DEBUGGING %t);`, b.QualifiedName(), introspectionDebugging)
-	return b.ddl.exec(q)
-}
-
-func (b *ClusterBuilder) SetIdleArrangementMergeEffort(idleArrangementMergeEffort int) error {
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (IDLE ARRANGEMENT MERGE EFFORT %d);`, b.QualifiedName(), idleArrangementMergeEffort)
 	return b.ddl.exec(q)
 }
 

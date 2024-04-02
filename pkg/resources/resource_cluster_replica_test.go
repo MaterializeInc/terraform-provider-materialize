@@ -22,7 +22,6 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 		"availability_zone":             "use1-az1",
 		"introspection_interval":        "10s",
 		"introspection_debugging":       true,
-		"idle_arrangement_merge_effort": 100,
 		"comment":                       "object comment",
 	}
 	d := schema.TestResourceDataRaw(t, ClusterReplica().Schema, in)
@@ -35,8 +34,7 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 			SIZE = 'small',
 			AVAILABILITY ZONE = 'use1-az1',
 			INTROSPECTION INTERVAL = '10s',
-			INTROSPECTION DEBUGGING = TRUE,
-			IDLE ARRANGEMENT MERGE EFFORT = 100;`,
+			INTROSPECTION DEBUGGING = TRUE;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Comment
