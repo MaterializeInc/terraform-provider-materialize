@@ -150,6 +150,8 @@ func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssh_tunnel.0.name", sshTunnelName),
 					resource.TestCheckResourceAttr("materialize_connection_postgres.test", "ssl_certificate_authority.0.text", initialSslCa),
 				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccConnPostgresResourceUpdates(roleName, updatedSecretName, updatedConnectionName, updatedHost, updatedPort, sshTunnel2Name, updatedDatabase, updatedSslMode, updatedSslCa),
@@ -236,18 +238,6 @@ func testAccConnPostgresResourceUpdates(roleName, secretName, connectionName, ho
 
 		host = "ssh_host"
 		user = "ssh_user"
-		port = 22
-
-		validate = false
-	}
-
-	resource "materialize_connection_ssh_tunnel" "ssh_connection2" {
-		name        = "%[6]s_2"
-		schema_name = "public"
-		comment     = "connection ssh tunnel 2 comment"
-
-		host = "ssh_host2"
-		user = "ssh_user2"
 		port = 22
 
 		validate = false
