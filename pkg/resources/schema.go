@@ -457,16 +457,6 @@ func IntrospectionDebuggingSchema(forceNew bool, requiredWith []string) *schema.
 	}
 }
 
-func IdleArrangementMergeEffortSchema(forceNew bool, requiredWith []string) *schema.Schema {
-	return &schema.Schema{
-		Description:  "The amount of effort to exert compacting arrangements during idle periods. This is an unstable option! It may be changed or removed at any time.",
-		Type:         schema.TypeInt,
-		Optional:     true,
-		ForceNew:     forceNew,
-		RequiredWith: requiredWith,
-	}
-}
-
 func GranteeNameSchema() *schema.Schema {
 	return &schema.Schema{
 		Description: "The role name that will gain the default privilege. Use the `PUBLIC` pseudo-role to grant privileges to all roles.",

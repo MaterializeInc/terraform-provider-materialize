@@ -19,7 +19,6 @@ var inCluster = map[string]interface{}{
 	"availability_zones":            []interface{}{"use1-az1", "use1-az2"},
 	"introspection_interval":        "10s",
 	"introspection_debugging":       true,
-	"idle_arrangement_merge_effort": 100,
 	"ownership_role":                "joe",
 }
 
@@ -37,8 +36,7 @@ func TestResourceClusterCreate(t *testing.T) {
 			REPLICATION FACTOR 2,
 			AVAILABILITY ZONES = \['use1-az1','use1-az2'\],
 			INTROSPECTION INTERVAL = '10s',
-			INTROSPECTION DEBUGGING = TRUE,
-			IDLE ARRANGEMENT MERGE EFFORT = 100;
+			INTROSPECTION DEBUGGING = TRUE;
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership

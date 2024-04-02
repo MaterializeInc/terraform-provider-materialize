@@ -31,7 +31,6 @@ func TestAccClusterReplica_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "introspection_debugging", "false"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "disk", "true"),
-					resource.TestCheckNoResourceAttr("materialize_cluster_replica.test", "idle_arrangement_merge_effort"),
 					resource.TestCheckResourceAttr("materialize_cluster_replica.test", "comment", ""),
 				),
 			},

@@ -27,7 +27,6 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 	},
 	"introspection_interval":        IntrospectionIntervalSchema(true, []string{}),
 	"introspection_debugging":       IntrospectionDebuggingSchema(true, []string{}),
-	"idle_arrangement_merge_effort": IdleArrangementMergeEffortSchema(true, []string{}),
 	"region":                        RegionSchema(),
 }
 
@@ -128,10 +127,6 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
 		b.IntrospectionDebugging()
-	}
-
-	if v, ok := d.GetOk("idle_arrangement_merge_effort"); ok {
-		b.IdleArrangementMergeEffort(v.(int))
 	}
 
 	// create resource

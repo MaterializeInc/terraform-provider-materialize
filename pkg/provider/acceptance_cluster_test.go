@@ -22,7 +22,7 @@ func TestAccCluster_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "1s", "true", "2", "true", "Comment"),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "1s", "true", "true", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestMatchResourceAttr("materialize_cluster.test", "id", terraformObjectIdRegex),
@@ -40,7 +40,6 @@ func TestAccCluster_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "idle_arrangement_merge_effort", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "true"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "availability_zones.#", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "Comment"),
@@ -66,7 +65,7 @@ func TestAccClusterCCSize_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "25cc", "1", "1s", "true", "2", "true", "Comment"),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "25cc", "1", "1s", "true", "true", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "name", clusterName+"_managed"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "ownership_role", "mz_system"),
@@ -74,7 +73,6 @@ func TestAccClusterCCSize_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "idle_arrangement_merge_effort", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "true"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "Comment"),
 				),
@@ -153,7 +151,7 @@ func TestAccCluster_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterResource(roleName, oldClusterName, cluster2Name, "mz_system", "2xsmall", "2", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", oldClusterName),
@@ -168,13 +166,12 @@ func TestAccCluster_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "idle_arrangement_merge_effort", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "false"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "Comment"),
 				),
 			},
 			{
-				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, "3xsmall", "1", "2s", "false", "1", "true", "New Comment"),
+				Config: testAccClusterResource(roleName, newClusterName, cluster2Name, roleName, "3xsmall", "1", "2s", "false", "true", "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
@@ -188,7 +185,6 @@ func TestAccCluster_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "1"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "2s"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "false"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "idle_arrangement_merge_effort", "1"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "true"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "New Comment"),
 				),
@@ -208,14 +204,14 @@ func TestAccCluster_updateName(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterManagedResource(oldClusterName, "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(oldClusterName, "2xsmall", "2", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", oldClusterName),
 				),
 			},
 			{
-				Config: testAccClusterManagedResource(newClusterName, "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(newClusterName, "2xsmall", "2", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", newClusterName),
@@ -233,14 +229,14 @@ func TestAccCluster_updateSize(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterManagedResource(clusterName, "2xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "2xsmall", "2", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "size", "2xsmall"),
 				),
 			},
 			{
-				Config: testAccClusterManagedResource(clusterName, "3xsmall", "2", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "3xsmall", "2", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "size", "3xsmall"),
@@ -258,14 +254,14 @@ func TestAccCluster_updateReplicationFactor(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterManagedResource(clusterName, "2xsmall", "3", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "2xsmall", "3", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "3"),
 				),
 			},
 			{
-				Config: testAccClusterManagedResource(clusterName, "3xsmall", "1", "1s", "true", "2", "false", "Comment"),
+				Config: testAccClusterManagedResource(clusterName, "3xsmall", "1", "1s", "true", "false", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "1"),
@@ -285,7 +281,7 @@ func TestAccCluster_disappears(t *testing.T) {
 		CheckDestroy:      testAccCheckAllClusterDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "1s", "true", "2", "true", "Comment"),
+				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "1s", "true", "true", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
 					testAccCheckObjectDisappears(materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}),
@@ -308,7 +304,6 @@ func testAccClusterResource(
 	clusterReplicationFactor,
 	introspectionInterval,
 	introspectionDebugging,
-	idleArrangementMergeEffort,
 	disk,
 	comment string,
 ) string {
@@ -334,9 +329,8 @@ func testAccClusterResource(
 		replication_factor            = %[6]s
 		introspection_interval        = "%[7]s"
 		introspection_debugging       = %[8]s
-		idle_arrangement_merge_effort = %[9]s
-		disk                          = %[10]s
-		comment                       = "%[11]s"
+		disk                          = %[9]s
+		comment                       = "%[10]s"
 		availability_zones            = ["test1", "test2"]
 	}
 	`,
@@ -348,7 +342,6 @@ func testAccClusterResource(
 		clusterReplicationFactor,
 		introspectionInterval,
 		introspectionDebugging,
-		idleArrangementMergeEffort,
 		disk,
 		comment)
 }
@@ -380,7 +373,6 @@ func testAccClusterManagedResource(
 	clusterReplicationFactor,
 	introspectionInterval,
 	introspectionDebugging,
-	idleArrangementMergeEffort,
 	disk,
 	comment string) string {
 	return fmt.Sprintf(`
@@ -390,9 +382,8 @@ func testAccClusterManagedResource(
 		replication_factor            = %[3]s
 		introspection_interval        = "%[4]s"
 		introspection_debugging       = %[5]s
-		idle_arrangement_merge_effort = %[6]s
-		disk                          = %[7]s
-		comment                       = "%[8]s"
+		disk                          = %[6]s
+		comment                       = "%[7]s"
 	}
 	`,
 		clusterName,
@@ -400,7 +391,6 @@ func testAccClusterManagedResource(
 		clusterReplicationFactor,
 		introspectionInterval,
 		introspectionDebugging,
-		idleArrangementMergeEffort,
 		disk,
 		comment)
 }

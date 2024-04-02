@@ -71,8 +71,7 @@ func TestClusterManagedAllCreate(t *testing.T) {
 			REPLICATION FACTOR 2,
 			AVAILABILITY ZONES = \['us-east-1'\],
 			INTROSPECTION INTERVAL = '1s',
-			INTROSPECTION DEBUGGING = TRUE,
-			IDLE ARRANGEMENT MERGE EFFORT = 1;
+			INTROSPECTION DEBUGGING = TRUE;
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -83,7 +82,6 @@ func TestClusterManagedAllCreate(t *testing.T) {
 		b.AvailabilityZones([]string{"us-east-1"})
 		b.IntrospectionInterval("1s")
 		b.IntrospectionDebugging()
-		b.IdleArrangementMergeEffort(1)
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
 		}
