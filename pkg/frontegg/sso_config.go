@@ -1,7 +1,6 @@
 package frontegg
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -60,27 +59,11 @@ func FlattenSSOConfigurations(configurations SSOConfigurationsResponse) []interf
 // FetchSSOConfigurations fetches the SSO configurations
 func FetchSSOConfigurations(ctx context.Context, client *clients.FronteggClient) (SSOConfigurationsResponse, error) {
 	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSOConfigurationsApiPathV1)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var sb strings.Builder
-		_, err = io.Copy(&sb, resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("error reading SSO configurations: status %d, response: %s", resp.StatusCode, sb.String())
-	}
 
 	var configurations SSOConfigurationsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&configurations); err != nil {
@@ -93,66 +76,28 @@ func FetchSSOConfigurations(ctx context.Context, client *clients.FronteggClient)
 // FetchSSOConfigurationsRaw fetches the raw SSO configurations
 func FetchSSOConfigurationsRaw(ctx context.Context, client *clients.FronteggClient) ([]byte, error) {
 	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSOConfigurationsApiPathV1)
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request for SSO configurations: %w", err)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request for SSO configurations: %w", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		var sb strings.Builder
-		_, err = io.Copy(&sb, resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read response body for SSO configurations: %w", err)
-		}
-		return nil, fmt.Errorf("error reading SSO configurations: status %d, response: %s", resp.StatusCode, sb.String())
-	}
-
-	responseData, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode SSO configurations: %w", err)
-	}
-
-	return responseData, nil
+	return io.ReadAll(resp.Body)
 }
 
 // CreateSSOConfiguration creates a new SSO configuration
 func CreateSSOConfiguration(ctx context.Context, client *clients.FronteggClient, ssoConfig SSOConfig) (*SSOConfig, error) {
-	requestBody, err := json.Marshal(ssoConfig)
+	requestBody, err := jsonEncode(ssoConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSOConfigurationsApiPathV1)
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "POST", endpoint, requestBody)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		var sb strings.Builder
-		_, err = io.Copy(&sb, resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("error creating SSO configuration: status %d, response: %s", resp.StatusCode, sb.String())
-	}
 
 	var newConfig SSOConfig
 	if err := json.NewDecoder(resp.Body).Decode(&newConfig); err != nil {
@@ -164,34 +109,17 @@ func CreateSSOConfiguration(ctx context.Context, client *clients.FronteggClient,
 
 // UpdateSSOConfiguration updates an existing SSO configuration
 func UpdateSSOConfiguration(ctx context.Context, client *clients.FronteggClient, ssoConfig SSOConfig) (*SSOConfig, error) {
-	requestBody, err := json.Marshal(ssoConfig)
+	requestBody, err := jsonEncode(ssoConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, SSOConfigurationsApiPathV1, ssoConfig.Id)
-	req, err := http.NewRequestWithContext(ctx, "PATCH", endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "PATCH", endpoint, requestBody)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var sb strings.Builder
-		_, err = io.Copy(&sb, resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("error updating SSO configuration: status %d, response: %s", resp.StatusCode, sb.String())
-	}
 
 	var updatedConfig SSOConfig
 	if err := json.NewDecoder(resp.Body).Decode(&updatedConfig); err != nil {
@@ -204,14 +132,7 @@ func UpdateSSOConfiguration(ctx context.Context, client *clients.FronteggClient,
 // DeleteSSOConfiguration deletes an existing SSO configuration
 func DeleteSSOConfiguration(ctx context.Context, client *clients.FronteggClient, configId string) error {
 	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, SSOConfigurationsApiPathV1, configId)
-	req, err := http.NewRequestWithContext(ctx, "DELETE", endpoint, nil)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Add("Authorization", "Bearer "+client.Token)
-
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := doRequest(ctx, client, "DELETE", endpoint, nil)
 	if err != nil {
 		return err
 	}
