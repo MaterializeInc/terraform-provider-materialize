@@ -274,7 +274,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 				"ENDPOINT": newEndpoint.(string),
 			}
 			if err := b.Alter(options, false, validate); err != nil {
-				d.Set("host", oldEndpoint)
+				d.Set("endpoint", oldEndpoint)
 				return diag.FromErr(err)
 			}
 		}
