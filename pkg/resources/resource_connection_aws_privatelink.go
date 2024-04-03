@@ -22,14 +22,14 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 		Description: "The name of the AWS PrivateLink service.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    true,
+		ForceNew:    false,
 	},
 	"availability_zones": {
 		Description: "The availability zones of the AWS PrivateLink service.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Required:    true,
-		ForceNew:    true,
+		ForceNew:    false,
 	},
 	"principal": {
 		Description: "The principal of the AWS PrivateLink service.",
@@ -181,6 +181,30 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewConnectionAwsPrivatelinkBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("service_name") {
+		oldServiceName, newServiceName := d.GetChange("service_name")
+		b := materialize.NewConnection(metaDb, o)
+		options := map[string]interface{}{
+			"SERVICE NAME": newServiceName.(string),
+		}
+		if err := b.Alter(options, false, false); err != nil {
+			d.Set("service_name", oldServiceName)
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("availability_zones") {
+		oldAzs, newAzs := d.GetChange("availability_zones")
+		b := materialize.NewConnection(metaDb, o)
+		options := map[string]interface{}{
+			"AVAILABILITY ZONES": materialize.GetSliceValueString(newAzs.([]interface{})),
+		}
+		if err := b.Alter(options, false, false); err != nil {
+			d.Set("availability_zones", oldAzs)
 			return diag.FromErr(err)
 		}
 	}
