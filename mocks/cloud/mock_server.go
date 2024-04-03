@@ -70,7 +70,9 @@ func regionHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(mockRegion)
 	case http.MethodPatch:
-		w.WriteHeader(http.StatusOK)
+		enabledRegion := CloudRegion{RegionInfo: nil}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(enabledRegion)
 	case http.MethodDelete:
 		w.WriteHeader(http.StatusAccepted)
 	default:
