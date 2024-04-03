@@ -83,6 +83,8 @@ func TestResourceConnectionAwsPrivatelinkUpdate(t *testing.T) {
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SERVICE NAME = 'service'\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(AVAILABILITY ZONES = \['use1-az1', 'use1-az2'\]\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_connections.id = 'u1'`

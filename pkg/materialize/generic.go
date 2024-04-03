@@ -100,6 +100,12 @@ func (b *Builder) alter(name string, options map[string]interface{}, isSecret, v
 			setValue = fmt.Sprintf("%s", QuoteString(v))
 		case int:
 			setValue = fmt.Sprintf("%d", v)
+		case []string:
+			if len(v) > 0 {
+				setValue = fmt.Sprintf("[%s]", "'"+strings.Join(v, "', '")+"'")
+			} else {
+				setValue = "[]"
+			}
 		default:
 			return fmt.Errorf("unsupported value type for option %s: %T", option, val)
 		}
