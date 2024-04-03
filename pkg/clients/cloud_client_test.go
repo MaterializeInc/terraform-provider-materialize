@@ -218,3 +218,50 @@ func TestNewCloudAPIClient(t *testing.T) {
 	require.NotNil(t, cloudAPIClient.HTTPClient)
 	require.Equal(t, anotherCustomEndpoint, cloudAPIClient.Endpoint)
 }
+
+func TestCloudAPIClient_EnableRegion_Success(t *testing.T) {
+	mockService := &MockFronteggService{
+		MockResponseStatus: http.StatusOK,
+	}
+	mockClient := &http.Client{Transport: mockService}
+	apiClient := &CloudAPIClient{
+		FronteggClient: &FronteggClient{HTTPClient: mockClient},
+		Endpoint:       "http://mockendpoint.com",
+	}
+
+	provider := CloudProvider{
+		ID:   "aws/us-east-1",
+		Name: "us-east-1",
+		Url:  "http://mockendpoint.com/api/region",
+	}
+
+	region, err := apiClient.EnableRegion(context.Background(), provider)
+	require.NoError(t, err)
+	require.NotNil(t, region)
+	require.Equal(t, "sql.materialize.com", region.RegionInfo.SqlAddress)
+	require.Equal(t, "http.materialize.com", region.RegionInfo.HttpAddress)
+	require.True(t, region.RegionInfo.Resolvable)
+	require.Equal(t, "2021-01-01T00:00:00Z", region.RegionInfo.EnabledAt)
+}
+
+func TestCloudAPIClient_EnableRegion_Error(t *testing.T) {
+	mockService := &MockFronteggService{
+		MockResponseStatus: http.StatusInternalServerError,
+	}
+	mockClient := &http.Client{Transport: mockService}
+	apiClient := &CloudAPIClient{
+		FronteggClient: &FronteggClient{HTTPClient: mockClient},
+		Endpoint:       "http://mockendpoint.com",
+	}
+
+	provider := CloudProvider{
+		ID:   "aws/us-east-1",
+		Name: "us-east-1",
+		Url:  "http://mockendpoint.com/api/region",
+	}
+
+	// Simulate an error response for EnableRegion
+	_, err := apiClient.EnableRegion(context.Background(), provider)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "cloud API returned non-200/201 status code:")
+}
