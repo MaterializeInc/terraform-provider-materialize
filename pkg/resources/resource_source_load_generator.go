@@ -37,6 +37,9 @@ var scale_factor_deprecated = &schema.Schema{
 	ForceNew:    true,
 }
 
+// Define the schema for the new KEY VALUE load generator options
+var key_value_options = &schema.Schema{}
+
 var sourceLoadgenSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
@@ -118,6 +121,55 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:      true,
 		ConflictsWith: []string{"counter_options", "auction_options", "marketing_options"},
 	},
+	"key_value_options": {
+		Description: "KEY VALUE Load Generator Options.",
+		Type:        schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"keys": {
+					Description: "The number of keys in the source.",
+					Type:        schema.TypeInt,
+					Required:    true,
+				},
+				"snapshot_rounds": {
+					Description: "The number of rounds of data to produce as the source starts up.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"transactional_snapshot": {
+					Description: "Whether to emit the snapshot as a singular transaction.",
+					Type:        schema.TypeBool,
+					Optional:    true,
+				},
+				"value_size": {
+					Description: "The number of bytes in each value.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"tick_interval": tick_interval,
+				"seed": {
+					Description: "A per-source seed for seeding the random data.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"partitions": {
+					Description: "The number of partitions to spread the keys across.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"batch_size": {
+					Description: "The number of keys per partition to produce in each update.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+			},
+		},
+		Optional:      true,
+		MinItems:      1,
+		MaxItems:      1,
+		ForceNew:      true,
+		ConflictsWith: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
+	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
 		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
@@ -189,6 +241,11 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	if v, ok := d.GetOk("tpch_options"); ok {
 		o := materialize.GetTPCHOptionsStruct(v)
 		b.TPCHOptions(o)
+	}
+
+	if v, ok := d.GetOk("key_value_options"); ok {
+		o := materialize.GetKeyValueOptionsStruct(v)
+		b.KeyValueOptions(o)
 	}
 
 	// create resource

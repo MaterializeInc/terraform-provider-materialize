@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -71,6 +72,56 @@ func GetTPCHOptionsStruct(v interface{}) TPCHOptions {
 	return o
 }
 
+type KeyValueOptions struct {
+	Keys                  int
+	SnapshotRounds        int
+	TransactionalSnapshot bool
+	ValueSize             int
+	TickInterval          string
+	Seed                  uint8
+	Partitions            int
+	BatchSize             int
+}
+
+func GetKeyValueOptionsStruct(v interface{}) KeyValueOptions {
+	var o KeyValueOptions
+	u := v.([]interface{})[0].(map[string]interface{})
+
+	if val, ok := u["keys"]; ok {
+		o.Keys = val.(int)
+	}
+
+	if val, ok := u["snapshot_rounds"]; ok {
+		o.SnapshotRounds = val.(int)
+	}
+
+	if val, ok := u["transactional_snapshot"]; ok {
+		o.TransactionalSnapshot = val.(bool)
+	}
+
+	if val, ok := u["value_size"]; ok {
+		o.ValueSize = val.(int)
+	}
+
+	if val, ok := u["tick_interval"]; ok {
+		o.TickInterval = val.(string)
+	}
+
+	if val, ok := u["seed"]; ok {
+		o.Seed = uint8(val.(int))
+	}
+
+	if val, ok := u["partitions"]; ok {
+		o.Partitions = val.(int)
+	}
+
+	if val, ok := u["batch_size"]; ok {
+		o.BatchSize = val.(int)
+	}
+
+	return o
+}
+
 type SourceLoadgenBuilder struct {
 	Source
 	clusterName       string
@@ -80,6 +131,7 @@ type SourceLoadgenBuilder struct {
 	auctionOptions    AuctionOptions
 	marketingOptions  MarketingOptions
 	tpchOptions       TPCHOptions
+	keyValueOptions   KeyValueOptions
 	exposeProgress    IdentifierSchemaStruct
 }
 
@@ -130,6 +182,11 @@ func (b *SourceLoadgenBuilder) TPCHOptions(t TPCHOptions) *SourceLoadgenBuilder 
 	return b
 }
 
+func (b *SourceLoadgenBuilder) KeyValueOptions(k KeyValueOptions) *SourceLoadgenBuilder {
+	b.keyValueOptions = k
+	return b
+}
+
 func (b *SourceLoadgenBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
@@ -152,6 +209,34 @@ func (b *SourceLoadgenBuilder) Create() error {
 	for _, t := range []float64{b.tpchOptions.ScaleFactor} {
 		if t != 0 {
 			p = append(p, fmt.Sprintf(`SCALE FACTOR %.2f`, t))
+		}
+	}
+
+	if b.loadGeneratorType == "KEY_VALUE" {
+		// Add KEY VALUE specific parameters
+		if b.keyValueOptions.Keys != 0 {
+			p = append(p, fmt.Sprintf(`KEYS %d`, b.keyValueOptions.Keys))
+		}
+		if b.keyValueOptions.SnapshotRounds != 0 {
+			p = append(p, fmt.Sprintf(`SNAPSHOT ROUNDS %d`, b.keyValueOptions.SnapshotRounds))
+		}
+		if b.keyValueOptions.TransactionalSnapshot {
+			p = append(p, fmt.Sprintf(`TRANSACTIONAL SNAPSHOT %s`, strconv.FormatBool(b.keyValueOptions.TransactionalSnapshot)))
+		}
+		if b.keyValueOptions.ValueSize != 0 {
+			p = append(p, fmt.Sprintf(`VALUE SIZE %d`, b.keyValueOptions.ValueSize))
+		}
+		if b.keyValueOptions.TickInterval != "" {
+			p = append(p, fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(b.keyValueOptions.TickInterval)))
+		}
+		if b.keyValueOptions.Seed != 0 {
+			p = append(p, fmt.Sprintf(`SEED %d`, b.keyValueOptions.Seed))
+		}
+		if b.keyValueOptions.Partitions != 0 {
+			p = append(p, fmt.Sprintf(`PARTITIONS %d`, b.keyValueOptions.Partitions))
+		}
+		if b.keyValueOptions.BatchSize != 0 {
+			p = append(p, fmt.Sprintf(`BATCH SIZE %d`, b.keyValueOptions.BatchSize))
 		}
 	}
 
