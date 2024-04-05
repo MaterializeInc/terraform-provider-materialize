@@ -11,6 +11,8 @@ services:
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --bootstrap-builtin-introspection-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-support-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --all-features
