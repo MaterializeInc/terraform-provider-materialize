@@ -213,7 +213,6 @@ func (b *SourceLoadgenBuilder) Create() error {
 	}
 
 	if b.loadGeneratorType == "KEY VALUE" {
-		// Add KEY VALUE specific parameters
 		if b.keyValueOptions.Keys != 0 {
 			p = append(p, fmt.Sprintf(`KEYS %d`, b.keyValueOptions.Keys))
 		}

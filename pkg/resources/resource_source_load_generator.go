@@ -37,9 +37,6 @@ var scale_factor_deprecated = &schema.Schema{
 	ForceNew:    true,
 }
 
-// Define the schema for the new KEY VALUE load generator options
-var key_value_options = &schema.Schema{}
-
 var sourceLoadgenSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
@@ -130,37 +127,44 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 					Description: "The number of keys in the source.",
 					Type:        schema.TypeInt,
 					Required:    true,
+					ForceNew:    true,
 				},
 				"snapshot_rounds": {
 					Description: "The number of rounds of data to produce as the source starts up.",
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 				},
 				"transactional_snapshot": {
 					Description: "Whether to emit the snapshot as a singular transaction.",
 					Type:        schema.TypeBool,
 					Optional:    true,
+					ForceNew:    true,
 				},
 				"value_size": {
 					Description: "The number of bytes in each value.",
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 				},
 				"tick_interval": tick_interval,
 				"seed": {
 					Description: "A per-source seed for seeding the random data.",
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 				},
 				"partitions": {
 					Description: "The number of partitions to spread the keys across.",
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 				},
 				"batch_size": {
 					Description: "The number of keys per partition to produce in each update.",
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 				},
 			},
 		},
