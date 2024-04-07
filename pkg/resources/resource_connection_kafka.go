@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 
@@ -26,7 +27,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		AtLeastOneOf:  []string{"kafka_broker", "aws_privatelink"},
 		Optional:      true,
 		MinItems:      1,
-		ForceNew:      true,
+		ForceNew:      false,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"broker": {
@@ -48,13 +49,13 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 					Elem:        "privatelink_connection",
 					Description: "The AWS PrivateLink connection name in Materialize.",
 					Required:    false,
-					ForceNew:    true,
+					ForceNew:    false,
 				}),
 				"ssh_tunnel": IdentifierSchema(IdentifierSchemaParams{
 					Elem:        "ssh_tunnel",
 					Description: "The name of an SSH tunnel connection to route network traffic through by default.",
 					Required:    false,
-					ForceNew:    true,
+					ForceNew:    false,
 				}),
 			},
 		},
@@ -131,7 +132,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Elem:        "ssh_tunnel",
 		Description: "The default SSH tunnel configuration for the Kafka brokers.",
 		Required:    false,
-		ForceNew:    true,
+		ForceNew:    false,
 	}),
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
@@ -144,7 +145,7 @@ func ConnectionKafka() *schema.Resource {
 
 		CreateContext: connectionKafkaCreate,
 		ReadContext:   connectionRead,
-		UpdateContext: connectionUpdate,
+		UpdateContext: connectionKafkaUpdate,
 		DeleteContext: connectionDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -256,6 +257,93 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	return connectionRead(ctx, d, meta)
+}
+
+func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	connectionName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+	validate := d.Get("validate").(bool)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+
+	if d.HasChange("kafka_broker") {
+		oldBrokers, newBrokers := d.GetChange("kafka_broker")
+		b := materialize.NewConnectionKafkaBuilder(metaDb, o)
+
+		// Convert the new brokers to the appropriate struct
+		kafkaBrokers := materialize.GetKafkaBrokersStruct(newBrokers)
+		log.Printf("[DEBUG] kafkaBrokers: %v", kafkaBrokers)
+		b.KafkaBrokers(kafkaBrokers)
+
+		// Build the brokers DDL string
+		brokersDDL := b.BuildBrokersString()
+		log.Printf("[DEBUG] brokersDDL: %s", brokersDDL)
+
+		if brokersDDL != "" {
+			// Construct and apply the options for the ALTER statement
+			options := map[string]interface{}{
+				"BROKERS": materialize.RawSQL(fmt.Sprintf("(%s)", brokersDDL)),
+			}
+			if err := b.Alter(options, false, validate); err != nil {
+				d.Set("kafka_broker", oldBrokers)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("ssh_tunnel") {
+		oldTunnel, newTunnel := d.GetChange("ssh_tunnel")
+		b := materialize.NewConnection(metaDb, o)
+		if newTunnel == nil || len(newTunnel.([]interface{})) == 0 {
+			if err := b.AlterDrop([]string{"SSH TUNNEL"}, validate); err != nil {
+				d.Set("ssh_tunnel", oldTunnel)
+				return diag.FromErr(err)
+			}
+		} else {
+			tunnel := materialize.GetIdentifierSchemaStruct(newTunnel)
+			options := map[string]interface{}{
+				"SSH TUNNEL": tunnel,
+			}
+			if err := b.Alter(options, false, validate); err != nil {
+				d.Set("ssh_tunnel", oldTunnel)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(metaDb, o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(metaDb, o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	return connectionRead(ctx, d, meta)
 }

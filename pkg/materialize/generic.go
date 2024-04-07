@@ -11,6 +11,7 @@ import (
 )
 
 type EntityType string
+type RawSQL string
 
 const (
 	ClusterReplica   EntityType = "CLUSTER REPLICA"
@@ -106,6 +107,8 @@ func (b *Builder) alter(name string, options map[string]interface{}, isSecret, v
 			} else {
 				setValue = "[]"
 			}
+		case RawSQL:
+			setValue = string(v)
 		default:
 			return fmt.Errorf("unsupported value type for option %s: %T", option, val)
 		}

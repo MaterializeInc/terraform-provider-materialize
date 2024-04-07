@@ -151,49 +151,9 @@ func (b *ConnectionKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE CONNECTION %s TO KAFKA (`, b.QualifiedName()))
 
-	var brokers = []string{}
-	for _, broker := range b.kafkaBrokers {
-		fb := strings.Builder{}
-		fb.WriteString(QuoteString(broker.Broker))
-
-		if broker.SSHTunnel.Name != "" {
-			fb.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`,
-				QualifiedName(
-					broker.SSHTunnel.DatabaseName,
-					broker.SSHTunnel.SchemaName,
-					broker.SSHTunnel.Name,
-				),
-			))
-		}
-
-		if broker.PrivateLinkConnection.Name != "" {
-			p := strings.Builder{}
-			p.WriteString(fmt.Sprintf(` USING AWS PRIVATELINK %s`,
-				QualifiedName(
-					broker.PrivateLinkConnection.DatabaseName,
-					broker.PrivateLinkConnection.SchemaName,
-					broker.PrivateLinkConnection.Name,
-				),
-			))
-			fb.WriteString(p.String())
-
-			options := []string{}
-			if broker.TargetGroupPort != 0 {
-				o := fmt.Sprintf(`PORT %d`, broker.TargetGroupPort)
-				options = append(options, o)
-			}
-			if broker.AvailabilityZone != "" {
-				o := fmt.Sprintf(`AVAILABILITY ZONE %s`, QuoteString(broker.AvailabilityZone))
-				options = append(options, o)
-			}
-			if len(options) > 0 {
-				fb.WriteString(fmt.Sprintf(` (%s)`, strings.Join(options[:], ", ")))
-			}
-		}
-		brokers = append(brokers, fb.String())
-	}
-	if len(brokers) > 0 {
-		q.WriteString(fmt.Sprintf(`BROKERS (%s)`, strings.Join(brokers[:], ", ")))
+	brokersString := b.BuildBrokersString()
+	if len(brokersString) > 0 {
+		q.WriteString(fmt.Sprintf(`BROKERS (%s)`, brokersString))
 	}
 
 	// AwsPrivateLinkConnection
@@ -255,4 +215,48 @@ func (b *ConnectionKafkaBuilder) Create() error {
 	}
 
 	return b.ddl.exec(q.String())
+}
+
+// Brokers DDL
+func (b *ConnectionKafkaBuilder) BuildBrokersString() string {
+	var brokersStrings = []string{}
+	for _, broker := range b.kafkaBrokers {
+		fb := strings.Builder{}
+		fb.WriteString(QuoteString(broker.Broker))
+
+		if broker.SSHTunnel.Name != "" {
+			fb.WriteString(fmt.Sprintf(` USING SSH TUNNEL %s`,
+				QualifiedName(
+					broker.SSHTunnel.DatabaseName,
+					broker.SSHTunnel.SchemaName,
+					broker.SSHTunnel.Name,
+				),
+			))
+		}
+
+		if broker.PrivateLinkConnection.Name != "" {
+			p := strings.Builder{}
+			p.WriteString(fmt.Sprintf(` USING AWS PRIVATELINK %s`,
+				QualifiedName(
+					broker.PrivateLinkConnection.DatabaseName,
+					broker.PrivateLinkConnection.SchemaName,
+					broker.PrivateLinkConnection.Name,
+				),
+			))
+			fb.WriteString(p.String())
+
+			options := []string{}
+			if broker.TargetGroupPort != 0 {
+				options = append(options, fmt.Sprintf(`PORT %d`, broker.TargetGroupPort))
+			}
+			if broker.AvailabilityZone != "" {
+				options = append(options, fmt.Sprintf(`AVAILABILITY ZONE %s`, QuoteString(broker.AvailabilityZone)))
+			}
+			if len(options) > 0 {
+				fb.WriteString(fmt.Sprintf(` (%s)`, strings.Join(options, ", ")))
+			}
+		}
+		brokersStrings = append(brokersStrings, fb.String())
+	}
+	return strings.Join(brokersStrings, ", ")
 }
