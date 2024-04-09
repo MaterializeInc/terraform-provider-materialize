@@ -149,6 +149,41 @@ func TestAccSourceLoadGeneratorTPCH_basic(t *testing.T) {
 	})
 }
 
+func TestAccSourceLoadGeneratorKeyValue_basic(t *testing.T) {
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllSourceLoadGeneratorsDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceLoadGeneratorKeyValueResource(sourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceName),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "KEY VALUE"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.keys", "200"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.snapshot_rounds", "5"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.transactional_snapshot", "true"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.value_size", "256"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.tick_interval", "2s"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.seed", "11"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.partitions", "10"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "key_value_options.0.batch_size", "10"),
+				),
+			},
+			{
+				ResourceName:      "materialize_source_load_generator.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
 func TestAccSourceLoadGenerator_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	sourceName := fmt.Sprintf("old_%s", slug)
@@ -314,6 +349,31 @@ func testAccSourceLoadGeneratorTPCHResource(sourceName string) string {
 		tpch_options {
 			tick_interval = "1000ms"
 			scale_factor  = 0.1
+		}
+	}
+	`, sourceName)
+}
+
+func testAccSourceLoadGeneratorKeyValueResource(sourceName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_source_load_generator" "test" {
+		name                = "%[1]s"
+		cluster_name        = "quickstart"
+		load_generator_type = "KEY VALUE"
+
+		key_value_options {
+			keys                   = 200
+			snapshot_rounds        = 5
+			transactional_snapshot = true
+			value_size             = 256
+			tick_interval          = "2s"
+			seed                   = 11
+			partitions             = 10
+			batch_size             = 10
+		}
+
+		expose_progress {
+			name = "expose_progress"
 		}
 	}
 	`, sourceName)

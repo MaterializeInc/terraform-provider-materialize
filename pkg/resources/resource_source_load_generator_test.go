@@ -58,3 +58,55 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceSourceLoadgenKeyValueCreate(t *testing.T) {
+	r := require.New(t)
+	inSourceLoadgenKeyValue := map[string]interface{}{
+		"name":                "source",
+		"schema_name":         "schema",
+		"database_name":       "database",
+		"cluster_name":        "cluster",
+		"expose_progress":     []interface{}{map[string]interface{}{"name": "progress"}},
+		"load_generator_type": "KEY VALUE",
+		"key_value_options": []interface{}{map[string]interface{}{
+			"keys":                   200,
+			"snapshot_rounds":        5,
+			"transactional_snapshot": true,
+			"value_size":             256,
+			"tick_interval":          "2s",
+			"seed":                   42,
+			"partitions":             10,
+			"batch_size":             20,
+		}},
+	}
+
+	d := schema.TestResourceDataRaw(t, SourceLoadgen().Schema, inSourceLoadgenKeyValue)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source"
+			IN CLUSTER "cluster"
+			FROM LOAD GENERATOR KEY VALUE
+			\(KEYS 200, SNAPSHOT ROUNDS 5, TRANSACTIONAL SNAPSHOT true, VALUE SIZE 256, TICK INTERVAL '2s', SEED 42, PARTITIONS 10, BATCH SIZE 20\)
+			EXPOSE PROGRESS AS "materialize"."public"."progress";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sources.name = 'source'`
+		testhelpers.MockSourceScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Subsources
+		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		testhelpers.MockSubsourceScan(mock, ps)
+
+		if err := sourceLoadgenCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
