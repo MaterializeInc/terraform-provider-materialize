@@ -68,20 +68,20 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		AtLeastOneOf:  []string{"kafka_broker", "aws_privatelink"},
 		MinItems:      1,
 		MaxItems:      1,
-		ForceNew:      true,
+		ForceNew:      false,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"privatelink_connection": IdentifierSchema(IdentifierSchemaParams{
 					Elem:        "privatelink_connection",
 					Description: "The AWS PrivateLink connection name in Materialize.",
 					Required:    true,
-					ForceNew:    true,
+					ForceNew:    false,
 				}),
 				"privatelink_connection_port": {
 					Description: "The port of the AWS PrivateLink connection.",
 					Type:        schema.TypeInt,
 					Required:    true,
-					ForceNew:    true,
+					ForceNew:    false,
 				},
 			},
 		},
@@ -90,7 +90,7 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Description:  "The security protocol to use: `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.",
 		Type:         schema.TypeString,
 		Optional:     true,
-		ForceNew:     true,
+		ForceNew:     false,
 		ValidateFunc: validation.StringInSlice(securityProtocols, true),
 		StateFunc: func(val any) string {
 			return strings.ToUpper(val.(string))
@@ -102,13 +102,13 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, true),
-	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, true),
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, false),
+	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, false),
 	"ssl_key": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "ssl_key",
 		Description: "The client key for the Kafka broker.",
 		Required:    false,
-		ForceNew:    true,
+		ForceNew:    false,
 	}),
 	"sasl_mechanisms": {
 		Description:  "The SASL mechanism for the Kafka broker.",
@@ -119,14 +119,14 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		StateFunc: func(val any) string {
 			return strings.ToUpper(val.(string))
 		},
-		ForceNew: true,
+		ForceNew: false,
 	},
-	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, true),
+	"sasl_username": ValueSecretSchema("sasl_username", "The SASL username for the Kafka broker.", false, false),
 	"sasl_password": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "sasl_password",
 		Description: "The SASL password for the Kafka broker.",
 		Required:    false,
-		ForceNew:    true,
+		ForceNew:    false,
 	}),
 	"ssh_tunnel": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "ssh_tunnel",
@@ -273,28 +273,156 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 
-	if d.HasChange("kafka_broker") {
-		oldBrokers, newBrokers := d.GetChange("kafka_broker")
-		b := materialize.NewConnectionKafkaBuilder(metaDb, o)
+	b := materialize.NewConnectionKafkaBuilder(metaDb, o)
+	options := map[string]interface{}{}
+	resetOptions := []string{}
+	addResetOption := func(option string) {
+		for _, existingOption := range resetOptions {
+			if existingOption == option {
+				return
+			}
+		}
+		resetOptions = append(resetOptions, option)
+	}
 
-		// Convert the new brokers to the appropriate struct
+	if d.HasChange("kafka_broker") {
+		_, newBrokers := d.GetChange("kafka_broker")
 		kafkaBrokers := materialize.GetKafkaBrokersStruct(newBrokers)
-		log.Printf("[DEBUG] kafkaBrokers: %v", kafkaBrokers)
 		b.KafkaBrokers(kafkaBrokers)
 
-		// Build the brokers DDL string
-		brokersDDL := b.BuildBrokersString()
-		log.Printf("[DEBUG] brokersDDL: %s", brokersDDL)
+		builderBrokersString := b.BuildBrokersString()
+		log.Printf("[DEBUG] builderBrokersString: %s", builderBrokersString)
 
-		if brokersDDL != "" {
-			// Construct and apply the options for the ALTER statement
-			options := map[string]interface{}{
-				"BROKERS": materialize.RawSQL(fmt.Sprintf("(%s)", brokersDDL)),
-			}
-			if err := b.Alter(options, false, validate); err != nil {
-				d.Set("kafka_broker", oldBrokers)
+		if builderBrokersString != "" {
+			options["BROKERS"] = materialize.RawSQL(fmt.Sprintf("(%s)", builderBrokersString))
+			addResetOption("AWS PRIVATELINK")
+		} else {
+			addResetOption("BROKERS")
+		}
+	}
+
+	if d.HasChange("aws_privatelink") {
+		_, newAwsPrivatelink := d.GetChange("aws_privatelink")
+		awsPrivateLink := materialize.GetAwsPrivateLinkConnectionStruct(newAwsPrivatelink)
+		b.KafkaAwsPrivateLink(awsPrivateLink)
+
+		awsPrivateLinkString := b.BuildAwsPrivateLinkString()
+		log.Printf("[DEBUG] awsPrivateLinkString: %s", awsPrivateLinkString)
+
+		if awsPrivateLinkString != "" {
+			options["AWS PRIVATELINK"] = materialize.RawSQL(awsPrivateLinkString)
+			addResetOption("BROKERS")
+		} else if !d.HasChange("kafka_broker") {
+			addResetOption("AWS PRIVATELINK")
+		}
+	}
+
+	if d.HasChange("ssl_certificate_authority") {
+		oldSslCa, newSslCa := d.GetChange("ssl_certificate_authority")
+		b := materialize.NewConnection(metaDb, o)
+		if newSslCa == nil || len(newSslCa.([]interface{})) == 0 {
+			if err := b.AlterDrop([]string{"SSL CERTIFICATE AUTHORITY"}, validate); err != nil {
+				d.Set("ssl_certificate_authority", oldSslCa)
 				return diag.FromErr(err)
 			}
+		} else {
+			sslCa := materialize.GetValueSecretStruct(newSslCa)
+			options := map[string]interface{}{
+				"SSL CERTIFICATE AUTHORITY": sslCa,
+			}
+			if err := b.Alter(options, nil, true, validate); err != nil {
+				d.Set("ssl_certificate_authority", oldSslCa)
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("security_protocol") {
+		_, newProtocol := d.GetChange("security_protocol")
+		if newProtocol != "" {
+			options["SECURITY PROTOCOL"] = newProtocol.(string)
+		} else {
+			addResetOption("SECURITY PROTOCOL")
+		}
+	}
+
+	if d.HasChange("ssl_certificate_authority") {
+		_, newSslCa := d.GetChange("ssl_certificate_authority")
+		if newSslCa != "" {
+			options["SSL CERTIFICATE AUTHORITY"] = materialize.GetValueSecretStruct(newSslCa)
+		} else {
+			addResetOption("SSL CERTIFICATE AUTHORITY")
+		}
+	}
+
+	if d.HasChange("ssl_certificate") || d.HasChange("ssl_key") {
+		newSslCert := d.Get("ssl_certificate")
+		newSslKey := d.Get("ssl_key")
+
+		if newSslCert != "" && newSslKey != "" {
+			options["SSL CERTIFICATE"] = materialize.GetValueSecretStruct(newSslCert)
+			options["SSL KEY"] = materialize.GetIdentifierSchemaStruct(newSslKey)
+		} else {
+			addResetOption("SSL CERTIFICATE")
+			addResetOption("SSL KEY")
+		}
+	}
+
+	if d.HasChange("sasl_mechanisms") {
+		oldMechanisms, newMechanisms := d.GetChange("sasl_mechanisms")
+		if newMechanisms != "" {
+			options["SASL MECHANISMS"] = newMechanisms.(string)
+		} else if oldMechanisms != "" {
+			addResetOption("SASL MECHANISMS")
+		}
+	}
+
+	if d.HasChange("sasl_username") || d.HasChange("sasl_password") {
+		newSaslUsername := d.Get("sasl_username")
+		newSaslPassword := d.Get("sasl_password")
+
+		if newSaslUsername != "" && newSaslPassword != "" {
+			options["SASL USERNAME"] = materialize.GetValueSecretStruct(newSaslUsername)
+			options["SASL PASSWORD"] = materialize.GetIdentifierSchemaStruct(newSaslPassword)
+		} else {
+			addResetOption("SASL USERNAME")
+			addResetOption("SASL PASSWORD")
+		}
+	}
+
+	// Apply the changes
+	if len(options) > 0 || len(resetOptions) > 0 {
+		if err := b.Alter(options, resetOptions, false, validate); err != nil {
+			// Reverting to old values if alter fails
+			if d.HasChange("security_protocol") {
+				oldValue, _ := d.GetChange("security_protocol")
+				d.Set("security_protocol", oldValue)
+			}
+			if d.HasChange("ssl_certificate_authority") {
+				oldValue, _ := d.GetChange("ssl_certificate_authority")
+				d.Set("ssl_certificate_authority", oldValue)
+			}
+			if d.HasChange("ssl_certificate") {
+				oldValue, _ := d.GetChange("ssl_certificate")
+				d.Set("ssl_certificate", oldValue)
+			}
+			if d.HasChange("ssl_key") {
+				oldValue, _ := d.GetChange("ssl_key")
+				d.Set("ssl_key", oldValue)
+			}
+			if d.HasChange("sasl_mechanisms") {
+				oldValue, _ := d.GetChange("sasl_mechanisms")
+				d.Set("sasl_mechanisms", oldValue)
+			}
+			if d.HasChange("sasl_username") {
+				oldValue, _ := d.GetChange("sasl_username")
+				d.Set("sasl_username", oldValue)
+			}
+			if d.HasChange("sasl_password") {
+				oldValue, _ := d.GetChange("sasl_password")
+				d.Set("sasl_password", oldValue)
+			}
+			return diag.FromErr(err)
 		}
 	}
 
@@ -311,7 +439,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 			options := map[string]interface{}{
 				"SSH TUNNEL": tunnel,
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("ssh_tunnel", oldTunnel)
 				return diag.FromErr(err)
 			}

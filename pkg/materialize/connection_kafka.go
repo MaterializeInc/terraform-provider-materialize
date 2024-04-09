@@ -156,12 +156,9 @@ func (b *ConnectionKafkaBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(`BROKERS (%s)`, brokersString))
 	}
 
-	// AwsPrivateLinkConnection
-	if b.awsPrivateLinkConnection.PrivateLinkConnection.Name != "" {
-		q.WriteString(fmt.Sprintf(` AWS PRIVATELINK %s`, b.awsPrivateLinkConnection.PrivateLinkConnection.QualifiedName()))
-		if b.awsPrivateLinkConnection.PrivateLinkPort != 0 {
-			q.WriteString(fmt.Sprintf(` (PORT %d)`, b.awsPrivateLinkConnection.PrivateLinkPort))
-		}
+	awsPrivateLinkString := b.BuildAwsPrivateLinkString()
+	if awsPrivateLinkString != "" {
+		q.WriteString(fmt.Sprintf(` AWS PRIVATELINK %s`, awsPrivateLinkString))
 	}
 
 	if b.kafkaSSHTunnel.Name != "" {
@@ -217,7 +214,7 @@ func (b *ConnectionKafkaBuilder) Create() error {
 	return b.ddl.exec(q.String())
 }
 
-// Brokers DDL
+// BuildBrokersString returns a string of Kafka brokers DDL
 func (b *ConnectionKafkaBuilder) BuildBrokersString() string {
 	var brokersStrings = []string{}
 	for _, broker := range b.kafkaBrokers {
@@ -259,4 +256,20 @@ func (b *ConnectionKafkaBuilder) BuildBrokersString() string {
 		brokersStrings = append(brokersStrings, fb.String())
 	}
 	return strings.Join(brokersStrings, ", ")
+}
+
+// Top level AWS PrivateLink Connection
+func (b *ConnectionKafkaBuilder) BuildAwsPrivateLinkString() string {
+	if b.awsPrivateLinkConnection.PrivateLinkConnection.Name == "" {
+		return ""
+	}
+
+	q := strings.Builder{}
+	q.WriteString(b.awsPrivateLinkConnection.PrivateLinkConnection.QualifiedName())
+
+	if b.awsPrivateLinkConnection.PrivateLinkPort != 0 {
+		q.WriteString(fmt.Sprintf(` (PORT %d)`, b.awsPrivateLinkConnection.PrivateLinkPort))
+	}
+
+	return q.String()
 }

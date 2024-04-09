@@ -80,33 +80,29 @@ func (b *Builder) resize(name, size string) error {
 	return b.exec(q)
 }
 
-func (b *Builder) alter(name string, options map[string]interface{}, isSecret, validate bool) error {
-	var setClauses []string
-	for option, val := range options {
+func (b *Builder) alter(name string, setOptions map[string]interface{}, resetOptions []string, isSecret, validate bool) error {
+	var clauses []string
+	for option, val := range setOptions {
 		var setValue string
 		switch v := val.(type) {
 		case ValueSecretStruct:
 			if v.Text != "" {
-				setValue = fmt.Sprintf("%s", QuoteString(v.Text))
+				setValue = QuoteString(v.Text)
 			} else if v.Secret.Name != "" {
-				setValue = fmt.Sprintf("SECRET %s", v.Secret.QualifiedName())
+				setValue = "SECRET " + v.Secret.QualifiedName()
 			}
 		case IdentifierSchemaStruct:
 			prefix := ""
-			if isSecret {
+			if isSecret || option == "SASL PASSWORD" {
 				prefix = "SECRET "
 			}
-			setValue = fmt.Sprintf("%s%s", prefix, v.QualifiedName())
+			setValue = prefix + v.QualifiedName()
 		case string:
-			setValue = fmt.Sprintf("%s", QuoteString(v))
+			setValue = QuoteString(v)
 		case int:
 			setValue = fmt.Sprintf("%d", v)
 		case []string:
-			if len(v) > 0 {
-				setValue = fmt.Sprintf("[%s]", "'"+strings.Join(v, "', '")+"'")
-			} else {
-				setValue = "[]"
-			}
+			setValue = fmt.Sprintf("[%s]", "'"+strings.Join(v, "', '")+"'")
 		case RawSQL:
 			setValue = string(v)
 		default:
@@ -114,11 +110,16 @@ func (b *Builder) alter(name string, options map[string]interface{}, isSecret, v
 		}
 
 		if setValue == "" {
-			return fmt.Errorf("no valid value provided for option %s: %T", option, val)
+			return fmt.Errorf("no valid value provided for option %s", option)
 		}
 
-		setClause := fmt.Sprintf("%s = %s", option, setValue)
-		setClauses = append(setClauses, setClause)
+		// Ensuring consistent spacing around SET and =
+		clauses = append(clauses, fmt.Sprintf("SET (%s = %s)", option, setValue))
+	}
+
+	for _, option := range resetOptions {
+		// Ensuring consistent spacing around RESET
+		clauses = append(clauses, fmt.Sprintf("RESET (%s)", option))
 	}
 
 	validateClause := ""
@@ -126,9 +127,10 @@ func (b *Builder) alter(name string, options map[string]interface{}, isSecret, v
 		validateClause = " WITH (validate false)"
 	}
 
-	// Joining each SET clause distinctly
-	setClauseString := "SET (" + strings.Join(setClauses, "), SET(") + ")"
-	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, setClauseString, validateClause)
+	// Joining clauses with a space instead of a comma to ensure correct spacing
+	clauseString := strings.Join(clauses, ", ")
+	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, clauseString, validateClause)
+
 	return b.exec(query)
 }
 

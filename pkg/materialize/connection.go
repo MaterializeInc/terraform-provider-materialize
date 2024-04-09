@@ -44,8 +44,8 @@ func (c *Connection) QualifiedName() string {
 	return QualifiedName(c.DatabaseName, c.SchemaName, c.ConnectionName)
 }
 
-func (b *Connection) Alter(options map[string]interface{}, isSecret, validate bool) error {
-	return b.ddl.alter(b.QualifiedName(), options, isSecret, validate)
+func (b *Connection) Alter(setOptions map[string]interface{}, resetOptions []string, isSecret, validate bool) error {
+	return b.ddl.alter(b.QualifiedName(), setOptions, resetOptions, isSecret, validate)
 }
 
 func (b *Connection) AlterDrop(options []string, validate bool) error {
