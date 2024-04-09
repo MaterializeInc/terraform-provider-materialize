@@ -75,7 +75,6 @@ func TestResourceConnectionAwsPrivatelinkReadIdMigration(t *testing.T) {
 func TestResourceConnectionAwsPrivatelinkUpdate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
-
 	// Set current state
 	d.SetId("u1")
 	d.Set("name", "old_conn")

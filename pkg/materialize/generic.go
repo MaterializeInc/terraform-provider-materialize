@@ -93,7 +93,7 @@ func (b *Builder) alter(name string, setOptions map[string]interface{}, resetOpt
 			}
 		case IdentifierSchemaStruct:
 			prefix := ""
-			if isSecret || option == "SASL PASSWORD" {
+			if isSecret || option == "SASL PASSWORD" || option == "SSL KEY" {
 				prefix = "SECRET "
 			}
 			setValue = prefix + v.QualifiedName()
@@ -113,12 +113,10 @@ func (b *Builder) alter(name string, setOptions map[string]interface{}, resetOpt
 			return fmt.Errorf("no valid value provided for option %s", option)
 		}
 
-		// Ensuring consistent spacing around SET and =
 		clauses = append(clauses, fmt.Sprintf("SET (%s = %s)", option, setValue))
 	}
 
 	for _, option := range resetOptions {
-		// Ensuring consistent spacing around RESET
 		clauses = append(clauses, fmt.Sprintf("RESET (%s)", option))
 	}
 
@@ -127,7 +125,6 @@ func (b *Builder) alter(name string, setOptions map[string]interface{}, resetOpt
 		validateClause = " WITH (validate false)"
 	}
 
-	// Joining clauses with a space instead of a comma to ensure correct spacing
 	clauseString := strings.Join(clauses, ", ")
 	query := fmt.Sprintf(`ALTER %s %s %s%s;`, b.entity, name, clauseString, validateClause)
 

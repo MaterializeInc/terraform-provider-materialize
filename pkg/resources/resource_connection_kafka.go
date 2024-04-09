@@ -289,9 +289,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		_, newBrokers := d.GetChange("kafka_broker")
 		kafkaBrokers := materialize.GetKafkaBrokersStruct(newBrokers)
 		b.KafkaBrokers(kafkaBrokers)
-
 		builderBrokersString := b.BuildBrokersString()
-		log.Printf("[DEBUG] builderBrokersString: %s", builderBrokersString)
 
 		if builderBrokersString != "" {
 			options["BROKERS"] = materialize.RawSQL(fmt.Sprintf("(%s)", builderBrokersString))
@@ -307,33 +305,12 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		b.KafkaAwsPrivateLink(awsPrivateLink)
 
 		awsPrivateLinkString := b.BuildAwsPrivateLinkString()
-		log.Printf("[DEBUG] awsPrivateLinkString: %s", awsPrivateLinkString)
 
 		if awsPrivateLinkString != "" {
 			options["AWS PRIVATELINK"] = materialize.RawSQL(awsPrivateLinkString)
 			addResetOption("BROKERS")
 		} else if !d.HasChange("kafka_broker") {
 			addResetOption("AWS PRIVATELINK")
-		}
-	}
-
-	if d.HasChange("ssl_certificate_authority") {
-		oldSslCa, newSslCa := d.GetChange("ssl_certificate_authority")
-		b := materialize.NewConnection(metaDb, o)
-		if newSslCa == nil || len(newSslCa.([]interface{})) == 0 {
-			if err := b.AlterDrop([]string{"SSL CERTIFICATE AUTHORITY"}, validate); err != nil {
-				d.Set("ssl_certificate_authority", oldSslCa)
-				return diag.FromErr(err)
-			}
-		} else {
-			sslCa := materialize.GetValueSecretStruct(newSslCa)
-			options := map[string]interface{}{
-				"SSL CERTIFICATE AUTHORITY": sslCa,
-			}
-			if err := b.Alter(options, nil, true, validate); err != nil {
-				d.Set("ssl_certificate_authority", oldSslCa)
-				return diag.FromErr(err)
-			}
 		}
 	}
 
@@ -348,10 +325,10 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	if d.HasChange("ssl_certificate_authority") {
 		_, newSslCa := d.GetChange("ssl_certificate_authority")
-		if newSslCa != "" {
-			options["SSL CERTIFICATE AUTHORITY"] = materialize.GetValueSecretStruct(newSslCa)
-		} else {
+		if newSslCa == nil || len(newSslCa.([]interface{})) == 0 {
 			addResetOption("SSL CERTIFICATE AUTHORITY")
+		} else {
+			options["SSL CERTIFICATE AUTHORITY"] = materialize.GetValueSecretStruct(newSslCa)
 		}
 	}
 
@@ -359,7 +336,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		newSslCert := d.Get("ssl_certificate")
 		newSslKey := d.Get("ssl_key")
 
-		if newSslCert != "" && newSslKey != "" {
+		if newSslCert != nil && len(newSslCert.([]interface{})) > 0 && newSslKey != nil && len(newSslKey.([]interface{})) > 0 {
 			options["SSL CERTIFICATE"] = materialize.GetValueSecretStruct(newSslCert)
 			options["SSL KEY"] = materialize.GetIdentifierSchemaStruct(newSslKey)
 		} else {
@@ -381,7 +358,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		newSaslUsername := d.Get("sasl_username")
 		newSaslPassword := d.Get("sasl_password")
 
-		if newSaslUsername != "" && newSaslPassword != "" {
+		if newSaslUsername != nil && len(newSaslUsername.([]interface{})) > 0 && newSaslPassword != nil && len(newSaslPassword.([]interface{})) > 0 {
 			options["SASL USERNAME"] = materialize.GetValueSecretStruct(newSaslUsername)
 			options["SASL PASSWORD"] = materialize.GetIdentifierSchemaStruct(newSaslPassword)
 		} else {
