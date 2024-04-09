@@ -124,7 +124,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"keys": {
-					Description: "The number of keys in the source.",
+					Description: "The number of keys in the source. This must be divisible by the product of 'partitions' and 'batch_size'.",
 					Type:        schema.TypeInt,
 					Required:    true,
 					ForceNew:    true,
