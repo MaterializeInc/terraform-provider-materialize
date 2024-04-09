@@ -97,7 +97,7 @@ Optional:
 
 Required:
 
-- `keys` (Number) The number of keys in the source.
+- `keys` (Number) The number of keys in the source. This must be divisible by the product of 'partitions' and 'batch_size'.
 
 Optional:
 
