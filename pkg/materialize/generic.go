@@ -102,7 +102,11 @@ func (b *Builder) alter(name string, setOptions map[string]interface{}, resetOpt
 		case int:
 			setValue = fmt.Sprintf("%d", v)
 		case []string:
-			setValue = fmt.Sprintf("[%s]", "'"+strings.Join(v, "', '")+"'")
+			var quotedValues []string
+			for _, elem := range v {
+				quotedValues = append(quotedValues, QuoteString(elem))
+			}
+			setValue = fmt.Sprintf("[%s]", strings.Join(quotedValues, ", "))
 		case RawSQL:
 			setValue = string(v)
 		default:
