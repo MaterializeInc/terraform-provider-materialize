@@ -191,7 +191,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		options := map[string]interface{}{
 			"SERVICE NAME": newServiceName.(string),
 		}
-		if err := b.Alter(options, false, false); err != nil {
+		if err := b.Alter(options, nil, false, false); err != nil {
 			d.Set("service_name", oldServiceName)
 			return diag.FromErr(err)
 		}
@@ -203,7 +203,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		options := map[string]interface{}{
 			"AVAILABILITY ZONES": materialize.GetSliceValueString(newAzs.([]interface{})),
 		}
-		if err := b.Alter(options, false, false); err != nil {
+		if err := b.Alter(options, nil, false, false); err != nil {
 			d.Set("availability_zones", oldAzs)
 			return diag.FromErr(err)
 		}

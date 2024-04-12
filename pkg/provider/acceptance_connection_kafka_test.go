@@ -184,6 +184,175 @@ func TestAccConnKafka_update(t *testing.T) {
 	})
 }
 
+func TestAccConnKafka_updateExtended(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaSASLResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.kafka_connection"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection", "security_protocol", "SASL_SSL"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection", "sasl_mechanisms", "SCRAM-SHA-512"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection", "kafka_broker.#", "2"),
+				),
+			},
+			{
+				Config: testAccConnKafkaSSLResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.kafka_connection2"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection2", "security_protocol", "SSL"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection2", "kafka_broker.#", "2"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection2", "ssl_certificate.0.text", "certificate-content"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection2", "ssl_certificate_authority.0.text", "ca-content"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_connection2", "ssl_key.0.name", connectionName+"_ssl_secret"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccConnKafka_updateBrokersToPrivatelink(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaBrokerResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.kafka_broker_conn"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_broker_conn", "kafka_broker.#", "2"),
+					resource.TestCheckNoResourceAttr("materialize_connection_kafka.kafka_broker_conn", "aws_privatelink.#"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_broker_conn", "kafka_broker.0.broker", "redpanda:9092"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_broker_conn", "kafka_broker.1.broker", "redpanda:9093"),
+				),
+			},
+			{
+				Config: testAccConnKafkaPrivatelinkResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists("materialize_connection_kafka.kafka_privatelink_conn"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink_conn", "aws_privatelink.#", "1"),
+					resource.TestCheckNoResourceAttr("materialize_connection_kafka.kafka_privatelink_conn", "kafka_broker.#"),
+				),
+			},
+		},
+	})
+}
+
+func testAccConnKafkaBrokerResource(connectionName string) string {
+	return fmt.Sprintf(`
+resource "materialize_connection_kafka" "kafka_broker_conn" {
+  name = "%s"
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+  kafka_broker {
+    broker = "redpanda:9093"
+  }
+  validate = false
+}
+`, connectionName)
+}
+
+func testAccConnKafkaPrivatelinkResource(connectionName string) string {
+	return fmt.Sprintf(`
+resource "materialize_connection_kafka" "kafka_privatelink_conn" {
+  name = "%s"
+  aws_privatelink {
+    privatelink_connection {
+      name = "privatelink_conn"
+      database_name = "materialize"
+      schema_name = "public"
+    }
+    privatelink_connection_port = 9092
+  }
+  validate = false
+}
+`, connectionName)
+}
+
+func testAccConnKafkaSASLResource(connectionName string) string {
+	return fmt.Sprintf(`
+resource "materialize_secret" "sasl_password" {
+	name  = "%[1]s_sasl_password"
+	value = "sasl_password"
+}
+
+resource "materialize_connection_kafka" "kafka_connection" {
+  name              = "%[1]s"
+  security_protocol = "SASL_SSL"
+  sasl_mechanisms   = "SCRAM-SHA-512"
+  sasl_username {
+   text = "sasl_username"
+  }
+  sasl_password {
+    name          = materialize_secret.sasl_password.name
+    database_name = materialize_secret.sasl_password.database_name
+    schema_name   = materialize_secret.sasl_password.schema_name
+  }
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+  kafka_broker {
+    broker = "redpanda:9093"
+  }
+  validate = false
+}
+`, connectionName)
+}
+
+func testAccConnKafkaSSLResource(connectionName string) string {
+	return fmt.Sprintf(`
+resource "materialize_secret" "ssl_secret" {
+	name  = "%[1]s_ssl_secret"
+	value = "ssl_secret"
+}
+
+resource "materialize_connection_ssh_tunnel" "ssh_connection_extended" {
+	name = "%[1]s_ssh_conn_extended"
+	host = "ssh_host"
+	user = "ssh_user"
+	port = 22
+
+	validate = false
+}
+
+resource "materialize_connection_kafka" "kafka_connection2" {
+  name              = "%[1]s"
+  comment           = "connection kafka comment"
+  security_protocol = "SSL"
+  ssl_certificate {
+    text = "certificate-content"
+  }
+  ssl_key {
+    name = materialize_secret.ssl_secret.name
+	database_name = materialize_secret.ssl_secret.database_name
+	schema_name = materialize_secret.ssl_secret.schema_name
+  }
+  ssl_certificate_authority {
+    text = "ca-content"
+  }
+  kafka_broker {
+    broker = "redpanda:9093"
+  }
+  kafka_broker {
+    broker = "redpanda:9092"
+    ssh_tunnel {
+      name          = materialize_connection_ssh_tunnel.ssh_connection_extended.name
+      database_name = materialize_connection_ssh_tunnel.ssh_connection_extended.database_name
+      schema_name   = materialize_connection_ssh_tunnel.ssh_connection_extended.schema_name
+    }
+  }
+  validate = false
+}
+`, connectionName)
+}
+
 func TestAccConnKafka_disappears(t *testing.T) {
 	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	connection2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)

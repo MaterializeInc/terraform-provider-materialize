@@ -93,7 +93,7 @@ func TestResourceConnectionAwsUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(ACCESS KEY ID = 'foo'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SECRET ACCESS KEY = SECRET "materialize"."public"."conn_secret"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SESSION TOKEN = SECRET "materialize"."public"."conn_session"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(ASSUME ROLE ARN = 'arn:aws:iam::123456789012:role/role'\), SET\(ASSUME ROLE SESSION NAME = 'session'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(ASSUME ROLE ARN = 'arn:aws:iam::123456789012:role/role'\), SET \(ASSUME ROLE SESSION NAME = 'session'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_connections.id = 'u1'`

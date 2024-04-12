@@ -218,7 +218,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		options := map[string]interface{}{
 			"HOST": newHost,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("host", oldHost)
 			return diag.FromErr(err)
 		}
@@ -230,7 +230,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		options := map[string]interface{}{
 			"USER": newUser,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("user", oldUser)
 			return diag.FromErr(err)
 		}
@@ -242,7 +242,7 @@ func connectionSshTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta
 		options := map[string]interface{}{
 			"PORT": newPort,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("port", oldPort)
 			return diag.FromErr(err)
 		}

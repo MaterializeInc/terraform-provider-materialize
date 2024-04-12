@@ -273,7 +273,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 			options := map[string]interface{}{
 				"ENDPOINT": newEndpoint.(string),
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("endpoint", oldEndpoint)
 				return diag.FromErr(err)
 			}
@@ -292,7 +292,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 			options := map[string]interface{}{
 				"REGION": newRegion.(string),
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("aws_region", oldRegion)
 				return diag.FromErr(err)
 			}
@@ -312,7 +312,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 			options := map[string]interface{}{
 				"ACCESS KEY ID": materialize.GetValueSecretStruct(newAccessKeyId),
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("access_key_id", oldAccessKeyId)
 				return diag.FromErr(err)
 			}
@@ -331,7 +331,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 			options := map[string]interface{}{
 				"SECRET ACCESS KEY": materialize.GetIdentifierSchemaStruct(newSecretAccessKey),
 			}
-			if err := b.Alter(options, true, validate); err != nil {
+			if err := b.Alter(options, nil, true, validate); err != nil {
 				d.Set("secret_access_key", oldSecretAccessKey)
 				return diag.FromErr(err)
 			}
@@ -350,7 +350,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 			options := map[string]interface{}{
 				"SESSION TOKEN": materialize.GetValueSecretStruct(newSessionToken),
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("session_token", oldSessionToken)
 				return diag.FromErr(err)
 			}
@@ -377,7 +377,7 @@ func connectionAwsUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 
 		// Perform the alteration only if there are options to update
 		if len(options) > 0 {
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("assume_role_arn", oldAssumeRoleArn)
 				d.Set("assume_role_session_name", oldAssumeRoleSessionName)
 				return diag.FromErr(err)

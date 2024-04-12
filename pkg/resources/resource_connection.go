@@ -83,7 +83,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		options := map[string]interface{}{
 			"HOST": newHost,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("host", oldHost)
 			return diag.FromErr(err)
 		}
@@ -95,7 +95,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		options := map[string]interface{}{
 			"PORT": newPort,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("port", oldPort)
 			return diag.FromErr(err)
 		}
@@ -108,7 +108,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		options := map[string]interface{}{
 			"USER": user,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("user", oldUser)
 			return diag.FromErr(err)
 		}
@@ -121,7 +121,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		options := map[string]interface{}{
 			"PASSWORD": password,
 		}
-		if err := b.Alter(options, true, validate); err != nil {
+		if err := b.Alter(options, nil, true, validate); err != nil {
 			d.Set("password", oldPassword)
 			return diag.FromErr(err)
 		}
@@ -133,7 +133,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		options := map[string]interface{}{
 			"DATABASE": newDatabase,
 		}
-		if err := b.Alter(options, false, validate); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("database", oldDatabase)
 			return diag.FromErr(err)
 		}
@@ -152,7 +152,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			options := map[string]interface{}{
 				"SSH TUNNEL": tunnel,
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("ssh_tunnel", oldTunnel)
 				return diag.FromErr(err)
 			}
@@ -172,7 +172,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			options := map[string]interface{}{
 				"SSL CERTIFICATE AUTHORITY": sslCa,
 			}
-			if err := b.Alter(options, true, validate); err != nil {
+			if err := b.Alter(options, nil, true, validate); err != nil {
 				d.Set("ssl_certificate_authority", oldSslCa)
 				return diag.FromErr(err)
 			}
@@ -202,7 +202,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 				options["SSL KEY"] = sslKey
 			}
 			if len(options) > 0 {
-				if err := b.Alter(options, true, validate); err != nil {
+				if err := b.Alter(options, nil, true, validate); err != nil {
 					d.Set("ssl_certificate", oldSslCert)
 					d.Set("ssl_key", oldSslKey)
 					return diag.FromErr(err)
@@ -223,7 +223,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			options := map[string]interface{}{
 				"SSL MODE": newSslMode,
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("ssl_mode", oldSslMode)
 				return diag.FromErr(err)
 			}
@@ -243,7 +243,7 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			options := map[string]interface{}{
 				"AWS PRIVATELINK": awsPrivatelink,
 			}
-			if err := b.Alter(options, false, validate); err != nil {
+			if err := b.Alter(options, nil, false, validate); err != nil {
 				d.Set("aws_privatelink", oldAwsPrivatelink)
 				return diag.FromErr(err)
 			}
