@@ -103,6 +103,60 @@ func TestAccConnConfluentSchemaRegistry_disappears(t *testing.T) {
 	})
 }
 
+func TestAccConnConfluentSchemaRegistry_updateExtended(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	// Initial settings
+	initialURL := "http://initial-redpanda:8081"
+	initialUsername := "initial_user"
+	initialPasswordName := "initial_password"
+	initialSSLKey := "initial_ssl_key"
+	initialSSLCert := "initial_ssl_cert"
+	initialSSLCA := "initial_ca_cert"
+
+	// Updated settings
+	updatedURL := "http://updated-redpanda:8081"
+	updatedUsername := "updated_user"
+	updatedPasswordName := "updated_password"
+	updatedSSLKey := "updated_ssl_key"
+	updatedSSLCert := "updated_ssl_cert"
+	updatedSSLCA := "updated_ca_cert"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllConnConfluentSchemaRegistryDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, initialURL, initialUsername, initialPasswordName, "materialize", "public", initialSSLCert, initialSSLKey, "materialize", "public", initialSSLCA, "true"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.csr_updates"),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "url", initialURL),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "username.text", initialUsername),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "password.name", initialPasswordName),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate.text", initialSSLCert),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_key.name", initialSSLKey),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate_authority.text", initialSSLCA),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "validate", "true"),
+				),
+			},
+			{
+				Config: testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, updatedURL, updatedUsername, updatedPasswordName, "materialize", "public", updatedSSLCert, updatedSSLKey, "materialize", "public", updatedSSLCA, "false"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.csr_updates"),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "url", updatedURL),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "username.text", updatedUsername),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "password.name", updatedPasswordName),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate.text", updatedSSLCert),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_key.name", updatedSSLKey),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate_authority.text", updatedSSLCA),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "validate", "false"),
+				),
+			},
+		},
+	})
+}
+
 func testAccConnConfluentSchemaRegistryResource(roleName, connectionName, connection2Name, connectionOwner string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
@@ -122,6 +176,55 @@ resource "materialize_connection_confluent_schema_registry" "test_role" {
 	depends_on = [materialize_role.test]
 }
 `, roleName, connectionName, connection2Name, connectionOwner)
+}
+
+func testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, url, usernameText, passwordName, passwordDBName, passwordSchemaName, sslCertText, sslKeyName, sslKeyDBName, sslKeySchemaName, sslCAText, validate string) string {
+	return fmt.Sprintf(`
+resource "materialize_secret" "csr_password2" {
+    name          = "%[4]s"
+    database_name = "%[5]s"
+    schema_name   = "%[6]s"
+    text          = "secret_password"
+}
+
+resource "materialize_secret" "ssl_key2" {
+    name          = "%[8]s"
+    database_name = "%[9]s"
+    schema_name   = "%[10]s"
+    text          = "secret_ssl_key"
+}
+
+resource "materialize_connection_confluent_schema_registry" "csr_updates" {
+    name                      = "%[1]s"
+    url                       = "%[2]s"
+
+    username {
+        text = "%[3]s"
+    }
+
+    password {
+        name          = materialize_secret.csr_password2.name
+        database_name = materialize_secret.csr_password2.database_name
+        schema_name   = materialize_secret.csr_password2.schema_name
+    }
+
+    ssl_certificate {
+        text = "%[7]s"
+    }
+
+    ssl_key {
+        name          = materialize_secret.ssl_key2.name
+        database_name = materialize_secret.ssl_key2.database_name
+        schema_name   = materialize_secret.ssl_key2.schema_name
+    }
+
+    ssl_certificate_authority {
+        text = "%[11]s"
+    }
+
+    validate = %[12]s
+}
+`, connectionName, url, usernameText, passwordName, passwordDBName, passwordSchemaName, sslCertText, sslKeyName, sslKeyDBName, sslKeySchemaName, sslCAText, validate)
 }
 
 func testAccCheckConnConfluentSchemaRegistryExists(name string) resource.TestCheckFunc {
