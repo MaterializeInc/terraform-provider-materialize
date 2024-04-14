@@ -128,29 +128,27 @@ func TestAccConnConfluentSchemaRegistry_updateExtended(t *testing.T) {
 		CheckDestroy:      testAccCheckAllConnConfluentSchemaRegistryDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, initialURL, initialUsername, initialPasswordName, "materialize", "public", initialSSLCert, initialSSLKey, "materialize", "public", initialSSLCA, "true"),
+				Config: testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, initialURL, initialUsername, initialPasswordName, initialSSLCert, initialSSLKey, initialSSLCA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.csr_updates"),
 					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "url", initialURL),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "username.text", initialUsername),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "password.name", initialPasswordName),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate.text", initialSSLCert),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_key.name", initialSSLKey),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate_authority.text", initialSSLCA),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "validate", "true"),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "username.0.text", initialUsername),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "password.0.name", initialPasswordName),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate.0.text", initialSSLCert),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_key.0.name", initialSSLKey),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate_authority.0.text", initialSSLCA),
 				),
 			},
 			{
-				Config: testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, updatedURL, updatedUsername, updatedPasswordName, "materialize", "public", updatedSSLCert, updatedSSLKey, "materialize", "public", updatedSSLCA, "false"),
+				Config: testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, updatedURL, updatedUsername, updatedPasswordName, updatedSSLCert, updatedSSLKey, updatedSSLCA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.csr_updates"),
 					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "url", updatedURL),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "username.text", updatedUsername),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "password.name", updatedPasswordName),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate.text", updatedSSLCert),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_key.name", updatedSSLKey),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate_authority.text", updatedSSLCA),
-					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "validate", "false"),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "username.0.text", updatedUsername),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "password.0.name", updatedPasswordName),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate.0.text", updatedSSLCert),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_key.0.name", updatedSSLKey),
+					resource.TestCheckResourceAttr("materialize_connection_confluent_schema_registry.csr_updates", "ssl_certificate_authority.0.text", updatedSSLCA),
 				),
 			},
 		},
@@ -178,20 +176,16 @@ resource "materialize_connection_confluent_schema_registry" "test_role" {
 `, roleName, connectionName, connection2Name, connectionOwner)
 }
 
-func testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, url, usernameText, passwordName, passwordDBName, passwordSchemaName, sslCertText, sslKeyName, sslKeyDBName, sslKeySchemaName, sslCAText, validate string) string {
+func testAccConnConfluentSchemaRegistryResourceUpdates(connectionName, url, usernameText, passwordName, sslCertText, sslKeyName, sslCAText string) string {
 	return fmt.Sprintf(`
 resource "materialize_secret" "csr_password2" {
-    name          = "%[4]s"
-    database_name = "%[5]s"
-    schema_name   = "%[6]s"
-    text          = "secret_password"
+	name  = "%[4]s"
+	value = "csr_password"
 }
 
 resource "materialize_secret" "ssl_key2" {
-    name          = "%[8]s"
-    database_name = "%[9]s"
-    schema_name   = "%[10]s"
-    text          = "secret_ssl_key"
+    name  = "%[6]s"
+	value = "ssl_key"
 }
 
 resource "materialize_connection_confluent_schema_registry" "csr_updates" {
@@ -209,7 +203,7 @@ resource "materialize_connection_confluent_schema_registry" "csr_updates" {
     }
 
     ssl_certificate {
-        text = "%[7]s"
+        text = "%[5]s"
     }
 
     ssl_key {
@@ -219,12 +213,12 @@ resource "materialize_connection_confluent_schema_registry" "csr_updates" {
     }
 
     ssl_certificate_authority {
-        text = "%[11]s"
+        text = "%[7]s"
     }
 
-    validate = %[12]s
+    validate = false
 }
-`, connectionName, url, usernameText, passwordName, passwordDBName, passwordSchemaName, sslCertText, sslKeyName, sslKeyDBName, sslKeySchemaName, sslCAText, validate)
+`, connectionName, url, usernameText, passwordName, sslCertText, sslKeyName, sslCAText)
 }
 
 func testAccCheckConnConfluentSchemaRegistryExists(name string) resource.TestCheckFunc {
