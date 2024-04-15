@@ -11,7 +11,7 @@ import (
 func TestConnectionAwsPrivatelinkCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."privatelink_conn" TO AWS PRIVATELINK \(SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES \('use1-az1', 'use1-az2'\)\);`,
+			`CREATE CONNECTION "database"."schema"."privatelink_conn" TO AWS PRIVATELINK \(SERVICE NAME 'com.amazonaws.us-east-1.materialize.example',AVAILABILITY ZONES \('use1-az1', 'use1-az2'\)\) WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "privatelink_conn", SchemaName: "schema", DatabaseName: "database"}

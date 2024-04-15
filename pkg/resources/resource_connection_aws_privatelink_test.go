@@ -18,6 +18,7 @@ var inAwsPrivatelink = map[string]interface{}{
 	"database_name":      "database",
 	"service_name":       "service",
 	"availability_zones": []interface{}{"use1-az1", "use1-az2"},
+	"validate":           false,
 }
 
 func TestResourceConnectionAwsPrivatelinkCreate(t *testing.T) {
@@ -29,7 +30,7 @@ func TestResourceConnectionAwsPrivatelinkCreate(t *testing.T) {
 		// Create
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."conn"
-			TO AWS PRIVATELINK \(SERVICE NAME 'service',AVAILABILITY ZONES \('use1-az1', 'use1-az2'\)\)`,
+			TO AWS PRIVATELINK \(SERVICE NAME 'service',AVAILABILITY ZONES \('use1-az1', 'use1-az2'\)\) WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

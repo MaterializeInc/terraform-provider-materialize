@@ -37,6 +37,7 @@ var connectionAwsPrivatelinkSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Sensitive:   true,
 	},
+	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -128,6 +129,10 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 		b.PrivateLinkAvailabilityZones(azs)
 	}
 
+	if v, ok := d.GetOk("validate"); ok {
+		b.Validate(v.(bool))
+	}
+
 	// create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
@@ -169,6 +174,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
+	validate := d.Get("validate").(bool)
 
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -191,7 +197,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		options := map[string]interface{}{
 			"SERVICE NAME": newServiceName.(string),
 		}
-		if err := b.Alter(options, nil, false, false); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("service_name", oldServiceName)
 			return diag.FromErr(err)
 		}
@@ -203,7 +209,7 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 		options := map[string]interface{}{
 			"AVAILABILITY ZONES": materialize.GetSliceValueString(newAzs.([]interface{})),
 		}
-		if err := b.Alter(options, nil, false, false); err != nil {
+		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("availability_zones", oldAzs)
 			return diag.FromErr(err)
 		}
