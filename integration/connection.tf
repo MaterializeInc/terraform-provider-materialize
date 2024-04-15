@@ -175,6 +175,29 @@ resource "materialize_connection_confluent_schema_registry" "csr_with_basic_auth
   validate = false
 }
 
+resource "materialize_connection_confluent_schema_registry" "csr_with_aws_privatelink" {
+  name = "csr_with_aws_privatelink"
+  url  = "http://redpanda:8081"
+
+  username {
+    text = "username"
+  }
+
+  password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  aws_privatelink {
+    name          = "privatelink_conn"
+    database_name = "materialize"
+    schema_name   = "public"
+  }
+
+  validate = false
+}
+
 resource "materialize_connection_confluent_schema_registry" "schema_registry_basic_auth_ssl" {
   name = "schema_registry_basic_auth_ssl"
   url  = "http://redpanda:8081"

@@ -65,3 +65,44 @@ func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceConnectionConfluentSchemaRegistryUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "old_conn")
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(URL = 'http://localhost:8081'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(USER = 'user'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(PASSWORD = SECRET "materialize"."public"."password"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SSL CERTIFICATE AUTHORITY = SECRET "materialize"."public"."ssl"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SSL CERTIFICATE = SECRET "materialize"."public"."ssl"\), SET \(SSL KEY = SECRET "ssl_key"."public"."ssl"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."old_conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		pp := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionScan(mock, pp)
+
+		// Execute the update function
+		if err := connectionConfluentSchemaRegistryUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		// Check that all expectations were met
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+}

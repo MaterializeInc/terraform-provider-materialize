@@ -235,9 +235,9 @@ func TestAccConnKafka_updateBrokersToPrivatelink(t *testing.T) {
 			{
 				Config: testAccConnKafkaPrivatelinkResource(connectionName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConnKafkaExists("materialize_connection_kafka.kafka_privatelink_conn"),
-					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_privatelink_conn", "aws_privatelink.#", "1"),
-					resource.TestCheckNoResourceAttr("materialize_connection_kafka.kafka_privatelink_conn", "kafka_broker.#"),
+					testAccCheckConnKafkaExists("materialize_connection_kafka.kafka_broker_conn"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.kafka_broker_conn", "aws_privatelink.#", "1"),
+					resource.TestCheckNoResourceAttr("materialize_connection_kafka.kafka_broker_conn", "kafka_broker.#"),
 				),
 			},
 		},
@@ -261,7 +261,7 @@ resource "materialize_connection_kafka" "kafka_broker_conn" {
 
 func testAccConnKafkaPrivatelinkResource(connectionName string) string {
 	return fmt.Sprintf(`
-resource "materialize_connection_kafka" "kafka_privatelink_conn" {
+resource "materialize_connection_kafka" "kafka_broker_conn" {
   name = "%s"
   aws_privatelink {
     privatelink_connection {
