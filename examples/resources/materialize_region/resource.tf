@@ -1,3 +1,3 @@
 resource "materialize_region" "example" {
-  region_id = "aws/eu-west-2"
+  region_id = "aws/us-east-1"
 }

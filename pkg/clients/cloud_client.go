@@ -116,7 +116,7 @@ func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudPro
 	return &region, nil
 }
 
-// EnableRegion sends a PATCH request to enable a region and polls until the region is enabled or a timeout is reached.
+// EnableRegion sends a PATCH request to enable a cloud region
 func (c *CloudAPIClient) EnableRegion(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
 	endpoint := fmt.Sprintf("%s/api/region", provider.Url)
 	emptyJSONPayload := bytes.NewBuffer([]byte("{}"))
