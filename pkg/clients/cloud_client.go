@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -111,6 +112,39 @@ func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudPro
 	}
 
 	log.Printf("[DEBUG] Region details response body: %+v\n", region)
+
+	return &region, nil
+}
+
+// EnableRegion sends a PATCH request to enable a cloud region
+func (c *CloudAPIClient) EnableRegion(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
+	endpoint := fmt.Sprintf("%s/api/region", provider.Url)
+	emptyJSONPayload := bytes.NewBuffer([]byte("{}"))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, endpoint, emptyJSONPayload)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request to enable region: %v", err)
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := c.FronteggClient.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error sending request to enable region: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %v", err)
+		}
+		return nil, fmt.Errorf("cloud API returned non-200/201 status code: %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	var region CloudRegion
+	if err := json.NewDecoder(resp.Body).Decode(&region); err != nil {
+		return nil, err
+	}
 
 	return &region, nil
 }
