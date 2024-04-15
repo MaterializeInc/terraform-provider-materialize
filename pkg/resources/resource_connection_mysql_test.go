@@ -68,3 +68,54 @@ func TestResourceConnectionMySQLCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceConnectionMySQLUpdate(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionMySQL().Schema, inMySQL)
+
+	// Set current state
+	d.SetId("u1")
+	d.Set("name", "conn")
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Name Change
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Host
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(HOST = 'mysql_host'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Port
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(PORT = 3306\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// User
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(USER = SECRET "materialize"."public"."user"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Password
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(PASSWORD = SECRET "materialize"."public"."password"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// SSH Tunnel
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSH TUNNEL = "tunnel_database"."tunnel_schema"."ssh_conn"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// SSL Certificate Authority
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSL CERTIFICATE AUTHORITY = SECRET "ssl_database"."public"."root"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// SSL Certificate and Key
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSL CERTIFICATE = SECRET "materialize"."public"."cert"\), SET \(SSL KEY = SECRET "materialize"."public"."key"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// SSL Mode
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSL MODE = 'verify-ca'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Params
+		p := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionScan(mock, p)
+
+		// Execute the update function
+		if err := connectionUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
