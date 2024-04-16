@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -34,6 +35,10 @@ type ProviderMeta struct {
 	RegionsEnabled map[clients.Region]bool
 }
 
+type ProviderData struct {
+	Client *ProviderMeta
+}
+
 var DefaultRegion string
 
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
@@ -47,6 +52,19 @@ func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
 	}
 
 	return providerMeta, nil
+}
+
+func NewGetProviderMeta(meta interface{}) (*ProviderData, error) {
+	providerData := meta.(*ProviderData)
+
+	if err := providerData.Client.Frontegg.NeedsTokenRefresh(); err != nil {
+		err := providerData.Client.Frontegg.RefreshToken()
+		if err != nil {
+			return nil, fmt.Errorf("failed to refresh token: %v", err)
+		}
+	}
+
+	return providerData, nil
 }
 
 func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, clients.Region, error) {
@@ -80,6 +98,47 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 
 	// Retrieve the appropriate DBClient for the region from the map
 	dbClient, exists := providerMeta.DB[region]
+	if !exists {
+		return nil, region, fmt.Errorf("no database client for region: %s", region)
+	}
+
+	return dbClient.SQLX(), region, nil
+}
+
+func NewGetDBClientFromMeta(meta interface{}, regionString string) (*sqlx.DB, clients.Region, error) {
+
+	log.Printf("[DEBUG] Received provider meta of type %T: %+v\n", meta, meta)
+
+	providerData, err := NewGetProviderMeta(meta)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Determine the region to use, if one is not specified, use the default region
+	var region clients.Region
+	if regionString != "" {
+		region = clients.Region(regionString)
+	} else {
+		region = providerData.Client.DefaultRegion
+	}
+
+	// Check if the region is enabled using the stored information
+	enabled, exists := providerData.Client.RegionsEnabled[region]
+	if !exists {
+		var regions []string
+		for regionKey := range providerData.Client.RegionsEnabled {
+			regions = append(regions, string(regionKey))
+		}
+		enabledRegions := strings.Join(regions, ", ")
+		return nil, region, fmt.Errorf("region not found: '%s'. Currently enabled regions: %s", region, enabledRegions)
+	}
+
+	if !enabled {
+		return nil, region, fmt.Errorf("region '%s' is not enabled", region)
+	}
+
+	// Retrieve the appropriate DBClient for the region from the map
+	dbClient, exists := providerData.Client.DB[region]
 	if !exists {
 		return nil, region, fmt.Errorf("no database client for region: %s", region)
 	}
