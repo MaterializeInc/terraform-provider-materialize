@@ -129,8 +129,8 @@ func TestAccConnPostgres_updateConnectionAttributes(t *testing.T) {
 	updatedSslMode := "disable"
 	sshTunnelName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	sshTunnel2Name := sshTunnelName + "_2"
-	initialSslCa := "-----BEGIN CERTIFICATE-----"
-	updatedSslCa := "-----BEGIN CERTIFICATE----------END CERTIFICATE-----"
+	initialSslCa := "initial_ssl_ca"
+	updatedSslCa := "updated_ssl_ca"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

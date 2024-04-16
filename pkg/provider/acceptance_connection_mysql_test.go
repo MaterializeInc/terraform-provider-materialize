@@ -104,6 +104,52 @@ func TestAccConnectionMySQL_disappears(t *testing.T) {
 	})
 }
 
+func TestAccConnectionMySQL_updateAttributes(t *testing.T) {
+	initialSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	updatedSecretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	initialConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	updatedConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	initialHost := "initial_mysql_host"
+	updatedHost := "updated_mysql_host"
+	initialPort := 3306
+	updatedPort := 3307
+	initialSslMode := "verify-ca"
+	updatedSslMode := "required"
+	initialSslCa := "initial_ssl_ca"
+	updatedSslCa := "updated_ssl_ca"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllConnKafkaDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnectionMySQLResourceUpdates(roleName, initialSecretName, initialConnectionName, initialHost, initialPort, initialSslMode, initialSslCa),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionMySQLExists("materialize_connection_mysql.mysql_update"),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "name", initialConnectionName),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "host", initialHost),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "port", fmt.Sprintf("%d", initialPort)),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "ssl_mode", initialSslMode),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "ssl_certificate_authority.0.text", initialSslCa),
+				),
+			},
+			{
+				Config: testAccConnectionMySQLResourceUpdates(roleName, updatedSecretName, updatedConnectionName, updatedHost, updatedPort, updatedSslMode, updatedSslCa),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionMySQLExists("materialize_connection_mysql.mysql_update"),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "name", updatedConnectionName),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "host", updatedHost),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "port", fmt.Sprintf("%d", updatedPort)),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "ssl_mode", updatedSslMode),
+					resource.TestCheckResourceAttr("materialize_connection_mysql.mysql_update", "ssl_certificate_authority.0.text", updatedSslCa),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckAllConnectionMySQLDestroyed(s *terraform.State) error {
 	meta := testAccProvider.Meta()
 	db, _, err := utils.GetDBClientFromMeta(meta, nil)
@@ -170,6 +216,41 @@ resource "materialize_connection_mysql" "test_role" {
 	depends_on = [materialize_role.test]
 }
 `, roleName, secretName, connectionName, connection2Name, connectionOwner)
+}
+
+func testAccConnectionMySQLResourceUpdates(roleName, secretName, connectionName, host string, port int, sslMode, ca string) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%[1]s"
+}
+
+resource "materialize_secret" "mysql_password" {
+	name  = "%[2]s"
+	value = "c2VjcmV0Cg=="
+}
+
+resource "materialize_connection_mysql" "mysql_update" {
+	name           = "%[3]s"
+	host           = "%[4]s"
+	port           = %[5]d
+	user {
+		text = "mysqluser"
+	}
+	password {
+		name          = materialize_secret.mysql_password.name
+		schema_name   = materialize_secret.mysql_password.schema_name
+		database_name = materialize_secret.mysql_password.database_name
+	}
+	ssl_mode       = "%[6]s"
+	ssl_certificate_authority {
+		text = "%[7]s"
+	}
+
+	comment        = "Test connection"
+	ownership_role = materialize_role.test.name
+	validate       = false
+}
+`, roleName, secretName, connectionName, host, port, sslMode, ca)
 }
 
 func testAccCheckConnectionMySQLExists(name string) resource.TestCheckFunc {
