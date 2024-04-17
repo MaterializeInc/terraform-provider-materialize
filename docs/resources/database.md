@@ -28,6 +28,7 @@ resource "materialize_database" "example_database" {
 ### Optional
 
 - `comment` (String) **Public Preview** Comment on an object in the database.
+- `no_public_schema` (Boolean) When set to true, the default 'public' schema will be dropped from the database.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 

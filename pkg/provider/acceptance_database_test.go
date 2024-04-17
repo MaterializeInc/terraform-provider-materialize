@@ -39,9 +39,10 @@ func TestAccDatabase_basic(t *testing.T) {
 						),
 					},
 					{
-						ResourceName:      "materialize_database.test",
-						ImportState:       true,
-						ImportStateVerify: true,
+						ResourceName:            "materialize_database.test",
+						ImportState:             true,
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"no_public_schema"},
 					},
 				},
 			})
@@ -108,6 +109,53 @@ func TestAccDatabase_disappears(t *testing.T) {
 	})
 }
 
+func TestAccDatabase_noPublicSchema(t *testing.T) {
+	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllDatabasesDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDatabaseNoSchemaResource(databaseName, roleName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDatabaseExists("materialize_database.no_schema_test"),
+					resource.TestCheckResourceAttr("materialize_database.no_schema_test", "name", databaseName),
+					resource.TestCheckResourceAttr("materialize_database.no_schema_test", "ownership_role", roleName),
+					resource.TestCheckResourceAttr("materialize_database.no_schema_test", "no_public_schema", "true"),
+					testAccCheckPublicSchemaNotExists("data.materialize_schema.no_schema_test"),
+				),
+			},
+			{
+				ResourceName:            "materialize_database.no_schema_test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"no_public_schema"},
+			},
+		},
+	})
+}
+
+func testAccDatabaseNoSchemaResource(databaseName, roleName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_role" "test" {
+		name = "%[2]s"
+	}
+    resource "materialize_database" "no_schema_test" {
+        name = "%[1]s"
+        no_public_schema = true
+        ownership_role = "%[2]s"
+
+		depends_on = [materialize_role.test]
+    }
+	data "materialize_schema" "no_schema_test" {
+		database_name = materialize_database.no_schema_test.name
+	}
+    `, databaseName, roleName)
+}
+
 func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner, comment string) string {
 	return fmt.Sprintf(`
 	resource "materialize_role" "test" {
@@ -164,4 +212,25 @@ func testAccCheckAllDatabasesDestroyed(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+func testAccCheckPublicSchemaNotExists(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
+
+		for i := 0; ; i++ {
+			key := fmt.Sprintf("schemas.%d.name", i)
+			if name, ok := rs.Primary.Attributes[key]; ok {
+				if name == "public" {
+					return fmt.Errorf("Public schema exists when it should not")
+				}
+			} else {
+				break
+			}
+		}
+		return nil
+	}
 }

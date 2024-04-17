@@ -34,6 +34,11 @@ func (b *DatabaseBuilder) Drop() error {
 	return b.ddl.drop(qn)
 }
 
+func (b *DatabaseBuilder) DropPublicSchema() error {
+	q := fmt.Sprintf(`DROP SCHEMA IF EXISTS %s.%s;`, b.QualifiedName(), QuoteIdentifier("public"))
+	return b.ddl.exec(q)
+}
+
 type DatabaseParams struct {
 	DatabaseId   sql.NullString `db:"id"`
 	DatabaseName sql.NullString `db:"database_name"`
