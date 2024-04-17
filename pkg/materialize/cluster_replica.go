@@ -10,14 +10,14 @@ import (
 
 // DDL
 type ClusterReplicaBuilder struct {
-	ddl                        Builder
-	replicaName                string
-	clusterName                string
-	size                       string
-	disk                       bool
-	availabilityZone           string
-	introspectionInterval      string
-	introspectionDebugging     bool
+	ddl                    Builder
+	replicaName            string
+	clusterName            string
+	size                   string
+	disk                   bool
+	availabilityZone       string
+	introspectionInterval  string
+	introspectionDebugging bool
 }
 
 func NewClusterReplicaBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterReplicaBuilder {

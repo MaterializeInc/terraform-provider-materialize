@@ -25,9 +25,9 @@ var clusterReplicaSchema = map[string]*schema.Schema{
 		Computed:    true,
 		ForceNew:    true,
 	},
-	"introspection_interval":        IntrospectionIntervalSchema(true, []string{}),
-	"introspection_debugging":       IntrospectionDebuggingSchema(true, []string{}),
-	"region":                        RegionSchema(),
+	"introspection_interval":  IntrospectionIntervalSchema(true, []string{}),
+	"introspection_debugging": IntrospectionDebuggingSchema(true, []string{}),
+	"region":                  RegionSchema(),
 }
 
 func ClusterReplica() *schema.Resource {

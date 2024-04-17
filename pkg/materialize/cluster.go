@@ -3,6 +3,7 @@ package materialize
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -11,20 +12,42 @@ import (
 
 // DDL
 type ClusterBuilder struct {
-	ddl                        Builder
-	clusterName                string
-	replicationFactor          *int
-	size                       string
-	disk                       bool
-	availabilityZones          []string
-	introspectionInterval      string
-	introspectionDebugging     bool
+	ddl                    Builder
+	clusterName            string
+	replicationFactor      *int
+	size                   string
+	disk                   bool
+	availabilityZones      []string
+	introspectionInterval  string
+	introspectionDebugging bool
+	schedulingConfig       SchedulingConfig
 }
 
 func NewClusterBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterBuilder {
 	return &ClusterBuilder{
 		ddl:         Builder{conn, Cluster},
 		clusterName: obj.Name,
+	}
+}
+
+type SchedulingConfig struct {
+	onRefresh               bool
+	rehydrationTimeEstimate string
+}
+
+func GetSchedulingConfig(v interface{}) SchedulingConfig {
+	if v == nil || len(v.([]interface{})) == 0 {
+		return SchedulingConfig{}
+	}
+
+	s, ok := v.([]interface{})[0].(map[string]interface{})
+	if !ok {
+		return SchedulingConfig{}
+	}
+
+	return SchedulingConfig{
+		onRefresh:               s["on_refresh"].(bool),
+		rehydrationTimeEstimate: s["rehydration_time_estimate"].(string),
 	}
 }
 
@@ -59,6 +82,11 @@ func (b *ClusterBuilder) IntrospectionInterval(i string) *ClusterBuilder {
 
 func (b *ClusterBuilder) IntrospectionDebugging() *ClusterBuilder {
 	b.introspectionDebugging = true
+	return b
+}
+
+func (b *ClusterBuilder) Scheduling(v []interface{}) *ClusterBuilder {
+	b.schedulingConfig = GetSchedulingConfig(v)
 	return b
 }
 
@@ -101,6 +129,14 @@ func (b *ClusterBuilder) Create() error {
 			p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
 		}
 
+		if b.schedulingConfig.onRefresh {
+			scheduleStatement := ` SCHEDULE = ON REFRESH`
+			if b.schedulingConfig.rehydrationTimeEstimate != "" {
+				scheduleStatement += fmt.Sprintf(` (REHYDRATION TIME ESTIMATE = %s)`, QuoteString(b.schedulingConfig.rehydrationTimeEstimate))
+			}
+			p = append(p, scheduleStatement)
+		}
+
 		if len(p) > 0 {
 			p := strings.Join(p[:], ",")
 			q.WriteString(fmt.Sprintf(`,%s`, p))
@@ -110,6 +146,8 @@ func (b *ClusterBuilder) Create() error {
 	}
 
 	q.WriteString(`;`)
+
+	log.Printf("[DEBUG] CREATE cluster query: %s", q.String())
 
 	return b.ddl.exec(q.String())
 }
@@ -147,6 +185,23 @@ func (b *ClusterBuilder) SetIntrospectionInterval(introspectionInterval string) 
 
 func (b *ClusterBuilder) SetIntrospectionDebugging(introspectionDebugging bool) error {
 	q := fmt.Sprintf(`ALTER CLUSTER %s SET (INTROSPECTION DEBUGGING %t);`, b.QualifiedName(), introspectionDebugging)
+	return b.ddl.exec(q)
+}
+
+func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) error {
+	schedulingConfig := GetSchedulingConfig(s)
+	var scheduleStatement, q string
+	if schedulingConfig.onRefresh {
+		scheduleStatement = `SCHEDULE = ON REFRESH`
+		if schedulingConfig.rehydrationTimeEstimate != "" {
+			scheduleStatement += fmt.Sprintf(` (REHYDRATION TIME ESTIMATE = %s)`, QuoteString(schedulingConfig.rehydrationTimeEstimate))
+		}
+		q = fmt.Sprintf(`ALTER CLUSTER %s SET (%s);`, b.QualifiedName(), scheduleStatement)
+	} else {
+		q = fmt.Sprintf(`ALTER CLUSTER %s RESET (SCHEDULE);`, b.QualifiedName())
+	}
+
+	log.Printf("[DEBUG] SetSchedulingConfig query: %s", q)
 	return b.ddl.exec(q)
 }
 

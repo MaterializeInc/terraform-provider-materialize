@@ -35,11 +35,20 @@ resource "materialize_cluster" "example_cluster" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
+- `scheduling` (Block List, Max: 1) Defines the scheduling parameters for the cluster. (see [below for nested schema](#nestedblock--scheduling))
 - `size` (String) The size of the managed cluster.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--scheduling"></a>
+### Nested Schema for `scheduling`
+
+Optional:
+
+- `on_refresh` (Boolean) Enable scheduling to refresh the cluster.
+- `rehydration_time_estimate` (String) Estimated time to rehydrate the cluster during refresh.
 
 ## Import
 
