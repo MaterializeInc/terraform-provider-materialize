@@ -37,11 +37,12 @@ var clusterSchema = map[string]*schema.Schema{
 	"introspection_interval":  IntrospectionIntervalSchema(false, []string{"size"}),
 	"introspection_debugging": IntrospectionDebuggingSchema(false, []string{"size"}),
 	"scheduling": {
-		Type:         schema.TypeList,
-		Optional:     true,
-		MaxItems:     1,
-		Description:  "Defines the scheduling parameters for the cluster.",
-		RequiredWith: []string{"size"},
+		Type:          schema.TypeList,
+		Optional:      true,
+		MaxItems:      1,
+		Description:   "Defines the scheduling parameters for the cluster.",
+		RequiredWith:  []string{"size"},
+		ConflictsWith: []string{"replication_factor"},
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"on_refresh": {

@@ -271,6 +271,28 @@ func TestAccCluster_updateReplicationFactor(t *testing.T) {
 	})
 }
 
+func TestAccClusterWithScheduling(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	size := "3xsmall"
+	rehydrationTimeEstimate := "1 hour"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterWithSchedulingConfig(clusterName, size, rehydrationTimeEstimate, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "size", size),
+					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "scheduling.0.on_refresh", "true"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "scheduling.0.rehydration_time_estimate", rehydrationTimeEstimate),
+				),
+			},
+		},
+	})
+}
+
 func TestAccCluster_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -393,6 +415,23 @@ func testAccClusterManagedResource(
 		introspectionDebugging,
 		disk,
 		comment)
+}
+
+func testAccClusterWithSchedulingConfig(clusterName, size, rehydrationTimeEstimate string, onRefresh bool) string {
+	onRefreshStr := "false"
+	if onRefresh {
+		onRefreshStr = "true"
+	}
+	return fmt.Sprintf(`
+resource "materialize_cluster" "test_scheduling" {
+    name                    = "%s"
+    size                    = "%s"
+    scheduling {
+        on_refresh                = %s
+        rehydration_time_estimate = "%s"
+    }
+}
+`, clusterName, size, onRefreshStr, rehydrationTimeEstimate)
 }
 
 func testAccCheckClusterExists(name string) resource.TestCheckFunc {
