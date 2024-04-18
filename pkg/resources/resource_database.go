@@ -13,13 +13,7 @@ import (
 )
 
 var databaseSchema = map[string]*schema.Schema{
-	"name": ObjectNameSchema("database", true, true),
-	"no_public_schema": {
-		Description: "When set to true, the default 'public' schema will be dropped from the database.",
-		Type:        schema.TypeBool,
-		Optional:    true,
-		Default:     false,
-	},
+	"name":           ObjectNameSchema("database", true, true),
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -91,10 +85,9 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	if d.Get("no_public_schema").(bool) {
-		if err := b.DropPublicSchema(); err != nil {
-			return diag.FromErr(err)
-		}
+	// drop public schema by default
+	if err := b.DropPublicSchema(); err != nil {
+		return diag.FromErr(err)
 	}
 
 	// ownership
@@ -153,15 +146,6 @@ func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("no_public_schema") {
-		b := materialize.NewDatabaseBuilder(metaDb, o)
-		if _, newNoPublicSchema := d.GetChange("no_public_schema"); newNoPublicSchema.(bool) {
-			if err := b.DropPublicSchema(); err != nil {
-				return diag.FromErr(err)
-			}
 		}
 	}
 

@@ -27,6 +27,9 @@ func TestResourceDatabaseCreate(t *testing.T) {
 			`CREATE DATABASE "database";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
+		// Drop public schema
+		mock.ExpectExec(`DROP SCHEMA IF EXISTS "database"."public";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database'`
 		testhelpers.MockDatabaseScan(mock, ip)

@@ -36,13 +36,13 @@ func TestAccDatabase_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("materialize_database.test_role", "name", database2Name),
 							resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", roleName),
 							resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "Comment"),
+							testAccCheckPublicSchemaNotExists("data.materialize_schema.no_schema_test"),
 						),
 					},
 					{
-						ResourceName:            "materialize_database.test",
-						ImportState:             true,
-						ImportStateVerify:       true,
-						ImportStateVerifyIgnore: []string{"no_public_schema"},
+						ResourceName:      "materialize_database.test",
+						ImportState:       true,
+						ImportStateVerify: true,
 					},
 				},
 			})
@@ -66,6 +66,7 @@ func TestAccDatabase_update(t *testing.T) {
 					testAccCheckDatabaseExists("materialize_database.test_role"),
 					resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "Comment"),
+					testAccCheckPublicSchemaNotExists("data.materialize_schema.no_schema_test"),
 				),
 			},
 			{
@@ -109,53 +110,6 @@ func TestAccDatabase_disappears(t *testing.T) {
 	})
 }
 
-func TestAccDatabase_noPublicSchema(t *testing.T) {
-	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAllDatabasesDestroyed,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDatabaseNoSchemaResource(databaseName, roleName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatabaseExists("materialize_database.no_schema_test"),
-					resource.TestCheckResourceAttr("materialize_database.no_schema_test", "name", databaseName),
-					resource.TestCheckResourceAttr("materialize_database.no_schema_test", "ownership_role", roleName),
-					resource.TestCheckResourceAttr("materialize_database.no_schema_test", "no_public_schema", "true"),
-					testAccCheckPublicSchemaNotExists("data.materialize_schema.no_schema_test"),
-				),
-			},
-			{
-				ResourceName:            "materialize_database.no_schema_test",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"no_public_schema"},
-			},
-		},
-	})
-}
-
-func testAccDatabaseNoSchemaResource(databaseName, roleName string) string {
-	return fmt.Sprintf(`
-	resource "materialize_role" "test" {
-		name = "%[2]s"
-	}
-    resource "materialize_database" "no_schema_test" {
-        name = "%[1]s"
-        no_public_schema = true
-        ownership_role = "%[2]s"
-
-		depends_on = [materialize_role.test]
-    }
-	data "materialize_schema" "no_schema_test" {
-		database_name = materialize_database.no_schema_test.name
-	}
-    `, databaseName, roleName)
-}
-
 func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner, comment string) string {
 	return fmt.Sprintf(`
 	resource "materialize_role" "test" {
@@ -172,6 +126,10 @@ func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner
 		comment = "%[5]s"
 
 		depends_on = [materialize_role.test]
+	}
+
+	data "materialize_schema" "no_schema_test" {
+		database_name = materialize_database.test.name
 	}
 	`, roleName, databaseName, databse2Name, databaseOwner, comment)
 }
