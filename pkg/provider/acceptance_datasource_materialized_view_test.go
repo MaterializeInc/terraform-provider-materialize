@@ -72,6 +72,16 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 		name    = "%[1]s_2"
 	}
 
+	resource "materialize_schema" "public_schema" {
+		name          = "public"
+		database_name = materialize_database.test.name
+	}
+
+	resource "materialize_schema" "public_schema2" {
+		name          = "public"
+		database_name = materialize_database.test_2.name
+	}
+
 	resource "materialize_schema" "test" {
 		name          = "%[1]s"
 		database_name = materialize_database.test.name
