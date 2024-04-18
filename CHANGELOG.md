@@ -25,7 +25,7 @@
 ### Misc
 * Add additional `materialize_connection_postgres` unit tests (#542)
 * Define builtin probe cluster size (#536)
-* Remove unnecessary ssh connections in Postgress tests (#531)
+* Remove unnecessary SSH connections in Postgres tests (#531)
 * Refactor the Frontegg package (#530)
 * Use unique SSH conn name to fix CI flakes (#527)
 
