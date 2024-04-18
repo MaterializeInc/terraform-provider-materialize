@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## 0.6.10 - 2024-04-19
+
+### Features
+* Allow `ALTER CONNECTION` updates for the following connection resources:
+  * `materialize_connection_mysql` resource (#541)
+  * `materialize_connection_confluent_schema_registry` resource (#540)
+  * `materialize_connection_kafka` resource (#538)
+  * `materialize_connection_aws_privatelink` resource (#533)
+  * `materialize_connection_aws` resource (#529)
+
+* Add support for Frontegg SCIM groups which includes the following new resources (#525):
+  * `materialize_scim_group`
+  * `materialize_scim_group_roles`
+  * `materialize_scim_group_users`
+
+* Add support for the key value load generator source (#537)
+* New `materialize_region` resource (#535)
+* Add `validate` parameter to `materialize_aws_privatelink` connection (#539)
+* Remove `idle_arrangement_merge_effort` option from `materialize_cluster` (#532)
+
+### Misc
+* Add additional `materialize_connection_postgres` unit tests (#542)
+* Define builtin probe cluster size (#536)
+* Remove unnecessary SSH connections in Postgres tests (#531)
+* Refactor the Frontegg package (#530)
+* Use unique SSH conn name to fix CI flakes (#527)
+
 ## 0.6.9 - 2024-03-29
 
 ### Features
