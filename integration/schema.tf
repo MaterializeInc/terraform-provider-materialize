@@ -4,6 +4,18 @@ resource "materialize_schema" "public" {
   comment       = "public schema comment"
 }
 
+resource "materialize_schema" "db1_public" {
+  name          = "public"
+  database_name = materialize_database.db1.name
+  comment       = "public schema comment"
+}
+
+resource "materialize_schema" "db2_public" {
+  name          = "public"
+  database_name = materialize_database.db2.name
+  comment       = "public schema comment"
+}
+
 resource "materialize_schema" "schema" {
   name          = "example_schema"
   database_name = materialize_database.database.name
