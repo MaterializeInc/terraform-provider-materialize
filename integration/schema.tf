@@ -1,3 +1,9 @@
+resource "materialize_schema" "public" {
+  name          = "public"
+  database_name = materialize_database.database.name
+  comment       = "public schema comment"
+}
+
 resource "materialize_schema" "schema" {
   name          = "example_schema"
   database_name = materialize_database.database.name
