@@ -47,7 +47,14 @@ resource "materialize_cluster" "example_cluster" {
 
 Optional:
 
-- `on_refresh` (Boolean) Enable scheduling to refresh the cluster.
+- `on_refresh` (Block List, Max: 1) Configuration for refreshing the cluster. (see [below for nested schema](#nestedblock--scheduling--on_refresh))
+
+<a id="nestedblock--scheduling--on_refresh"></a>
+### Nested Schema for `scheduling.on_refresh`
+
+Optional:
+
+- `enabled` (Boolean) Enable scheduling to refresh the cluster.
 - `rehydration_time_estimate` (String) Estimated time to rehydrate the cluster during refresh.
 
 ## Import

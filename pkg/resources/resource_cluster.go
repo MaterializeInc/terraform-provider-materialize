@@ -46,15 +46,24 @@ var clusterSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"on_refresh": {
-					Type:        schema.TypeBool,
+					Type:        schema.TypeList,
 					Optional:    true,
-					Description: "Enable scheduling to refresh the cluster.",
-				},
-				"rehydration_time_estimate": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					RequiredWith: []string{"scheduling.0.on_refresh"},
-					Description:  "Estimated time to rehydrate the cluster during refresh.",
+					MaxItems:    1,
+					Description: "Configuration for refreshing the cluster.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"enabled": {
+								Type:        schema.TypeBool,
+								Optional:    true,
+								Description: "Enable scheduling to refresh the cluster.",
+							},
+							"rehydration_time_estimate": {
+								Type:        schema.TypeString,
+								Optional:    true,
+								Description: "Estimated time to rehydrate the cluster during refresh.",
+							},
+						},
+					},
 				},
 			},
 		},

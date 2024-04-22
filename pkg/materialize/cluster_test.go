@@ -107,10 +107,15 @@ func TestClusterWithSchedulingCreate(t *testing.T) {
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
+
 		b.Scheduling([]interface{}{
 			map[string]interface{}{
-				"on_refresh":                true,
-				"rehydration_time_estimate": "2 hours",
+				"on_refresh": []interface{}{
+					map[string]interface{}{
+						"enabled":                   true,
+						"rehydration_time_estimate": "2 hours",
+					},
+				},
 			},
 		})
 

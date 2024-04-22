@@ -3,7 +3,6 @@ package materialize
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -31,23 +30,44 @@ func NewClusterBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterBuilder {
 }
 
 type SchedulingConfig struct {
-	onRefresh               bool
-	rehydrationTimeEstimate string
+	OnRefresh OnRefreshConfig
+}
+
+type OnRefreshConfig struct {
+	Enabled                 bool
+	RehydrationTimeEstimate string
 }
 
 func GetSchedulingConfig(v interface{}) SchedulingConfig {
-	if v == nil || len(v.([]interface{})) == 0 {
+	if v == nil {
 		return SchedulingConfig{}
 	}
 
-	s, ok := v.([]interface{})[0].(map[string]interface{})
+	configSlice, ok := v.([]interface{})
+	if !ok || len(configSlice) == 0 {
+		return SchedulingConfig{}
+	}
+
+	configMap, ok := configSlice[0].(map[string]interface{})
+	if !ok {
+		return SchedulingConfig{}
+	}
+
+	onRefreshSlice, ok := configMap["on_refresh"].([]interface{})
+	if !ok || len(onRefreshSlice) == 0 {
+		return SchedulingConfig{}
+	}
+
+	onRefreshMap, ok := onRefreshSlice[0].(map[string]interface{})
 	if !ok {
 		return SchedulingConfig{}
 	}
 
 	return SchedulingConfig{
-		onRefresh:               s["on_refresh"].(bool),
-		rehydrationTimeEstimate: s["rehydration_time_estimate"].(string),
+		OnRefresh: OnRefreshConfig{
+			Enabled:                 onRefreshMap["enabled"].(bool),
+			RehydrationTimeEstimate: onRefreshMap["rehydration_time_estimate"].(string),
+		},
 	}
 }
 
@@ -129,10 +149,10 @@ func (b *ClusterBuilder) Create() error {
 			p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
 		}
 
-		if b.schedulingConfig.onRefresh {
-			scheduleStatement := ` SCHEDULE = ON REFRESH`
-			if b.schedulingConfig.rehydrationTimeEstimate != "" {
-				scheduleStatement += fmt.Sprintf(` (REHYDRATION TIME ESTIMATE = %s)`, QuoteString(b.schedulingConfig.rehydrationTimeEstimate))
+		if b.schedulingConfig.OnRefresh.Enabled {
+			scheduleStatement := " SCHEDULE = ON REFRESH"
+			if b.schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
+				scheduleStatement += fmt.Sprintf(" (REHYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.RehydrationTimeEstimate))
 			}
 			p = append(p, scheduleStatement)
 		}
@@ -146,8 +166,6 @@ func (b *ClusterBuilder) Create() error {
 	}
 
 	q.WriteString(`;`)
-
-	log.Printf("[DEBUG] CREATE cluster query: %s", q.String())
 
 	return b.ddl.exec(q.String())
 }
@@ -190,18 +208,21 @@ func (b *ClusterBuilder) SetIntrospectionDebugging(introspectionDebugging bool) 
 
 func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) error {
 	schedulingConfig := GetSchedulingConfig(s)
-	var scheduleStatement, q string
-	if schedulingConfig.onRefresh {
-		scheduleStatement = `SCHEDULE = ON REFRESH`
-		if schedulingConfig.rehydrationTimeEstimate != "" {
-			scheduleStatement += fmt.Sprintf(` (REHYDRATION TIME ESTIMATE = %s)`, QuoteString(schedulingConfig.rehydrationTimeEstimate))
+	var scheduleStatement string
+	var q string
+
+	// Check if the scheduling is enabled and set the appropriate SQL command.
+	if schedulingConfig.OnRefresh.Enabled {
+		scheduleStatement = "SCHEDULE = ON REFRESH"
+		if schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
+			scheduleStatement += fmt.Sprintf(" (REHYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.RehydrationTimeEstimate))
 		}
-		q = fmt.Sprintf(`ALTER CLUSTER %s SET (%s);`, b.QualifiedName(), scheduleStatement)
+		q = fmt.Sprintf("ALTER CLUSTER %s SET (%s);", b.QualifiedName(), scheduleStatement)
 	} else {
-		q = fmt.Sprintf(`ALTER CLUSTER %s RESET (SCHEDULE);`, b.QualifiedName())
+		// Reset the schedule settings if not enabled.
+		q = fmt.Sprintf("ALTER CLUSTER %s RESET (SCHEDULE);", b.QualifiedName())
 	}
 
-	log.Printf("[DEBUG] SetSchedulingConfig query: %s", q)
 	return b.ddl.exec(q)
 }
 

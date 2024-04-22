@@ -21,8 +21,12 @@ var inCluster = map[string]interface{}{
 	"introspection_debugging": true,
 	"scheduling": []interface{}{
 		map[string]interface{}{
-			"on_refresh":                true,
-			"rehydration_time_estimate": "2 hours",
+			"on_refresh": []interface{}{
+				map[string]interface{}{
+					"enabled":                   true,
+					"rehydration_time_estimate": "2 hours",
+				},
+			},
 		},
 	},
 	"ownership_role": "joe",
