@@ -77,11 +77,13 @@ func testAccDatasourceView(nameSpace string) string {
 	resource "materialize_schema" "test" {
 		name          = "%[1]s"
 		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.public_schema.name
 	}
 
 	resource "materialize_view" "a" {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
   		statement = <<SQL
 			SELECT
     		1 AS id
@@ -111,6 +113,7 @@ func testAccDatasourceView(nameSpace string) string {
 	resource "materialize_view" "d" {
 		name          = "%[1]s_d"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.public_schema2.name
   		statement = <<SQL
 			SELECT
     		1 AS id
@@ -120,6 +123,7 @@ func testAccDatasourceView(nameSpace string) string {
 	resource "materialize_view" "e" {
 		name          = "%[1]s_e"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.public_schema2.name
   		statement = <<SQL
 			SELECT
     		1 AS id

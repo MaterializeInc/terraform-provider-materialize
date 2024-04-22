@@ -101,6 +101,8 @@ resource "materialize_database_grant_default_privilege" "complex" {
     materialize_role.target_2,
     materialize_database.db1,
     materialize_database.db2,
+    materialize_schema.schema1,
+    materialize_schema.schema2,
   ]
 }
 
