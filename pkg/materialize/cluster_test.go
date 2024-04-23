@@ -98,3 +98,29 @@ func TestClusterDrop(t *testing.T) {
 		}
 	})
 }
+
+func TestClusterWithSchedulingCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `CREATE CLUSTER "cluster" SIZE 'xsmall', SCHEDULE = ON REFRESH \(REHYDRATION TIME ESTIMATE = '2 hours'\);`
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+
+		b.Scheduling([]interface{}{
+			map[string]interface{}{
+				"on_refresh": []interface{}{
+					map[string]interface{}{
+						"enabled":                   true,
+						"rehydration_time_estimate": "2 hours",
+					},
+				},
+			},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}

@@ -16,13 +16,13 @@ func TestResourceClusterReplicaCreate(t *testing.T) {
 	r := require.New(t)
 
 	in := map[string]interface{}{
-		"name":                          "replica",
-		"cluster_name":                  "cluster",
-		"size":                          "small",
-		"availability_zone":             "use1-az1",
-		"introspection_interval":        "10s",
-		"introspection_debugging":       true,
-		"comment":                       "object comment",
+		"name":                    "replica",
+		"cluster_name":            "cluster",
+		"size":                    "small",
+		"availability_zone":       "use1-az1",
+		"introspection_interval":  "10s",
+		"introspection_debugging": true,
+		"comment":                 "object comment",
 	}
 	d := schema.TestResourceDataRaw(t, ClusterReplica().Schema, in)
 	r.NotNil(d)

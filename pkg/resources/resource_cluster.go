@@ -34,9 +34,41 @@ var clusterSchema = map[string]*schema.Schema{
 		Optional:     true,
 		RequiredWith: []string{"size"},
 	},
-	"introspection_interval":        IntrospectionIntervalSchema(false, []string{"size"}),
-	"introspection_debugging":       IntrospectionDebuggingSchema(false, []string{"size"}),
-	"region":                        RegionSchema(),
+	"introspection_interval":  IntrospectionIntervalSchema(false, []string{"size"}),
+	"introspection_debugging": IntrospectionDebuggingSchema(false, []string{"size"}),
+	"scheduling": {
+		Type:          schema.TypeList,
+		Optional:      true,
+		MaxItems:      1,
+		Description:   "Defines the scheduling parameters for the cluster.",
+		RequiredWith:  []string{"size"},
+		ConflictsWith: []string{"replication_factor"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"on_refresh": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "Configuration for refreshing the cluster.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"enabled": {
+								Type:        schema.TypeBool,
+								Optional:    true,
+								Description: "Enable scheduling to refresh the cluster.",
+							},
+							"rehydration_time_estimate": {
+								Type:        schema.TypeString,
+								Optional:    true,
+								Description: "Estimated time to rehydrate the cluster during refresh.",
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	"region": RegionSchema(),
 }
 
 func Cluster() *schema.Resource {
@@ -145,6 +177,10 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		if v, ok := d.GetOk("introspection_debugging"); ok && v.(bool) {
 			b.IntrospectionDebugging()
 		}
+
+		if v, ok := d.GetOk("scheduling"); ok {
+			b.Scheduling(v.([]interface{}))
+		}
 	}
 
 	// create resource
@@ -251,6 +287,14 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		if d.HasChange("introspection_debugging") {
 			_, n := d.GetChange("introspection_debugging")
 			if err := b.SetIntrospectionDebugging(n.(bool)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		if d.HasChange("scheduling") {
+			o, n := d.GetChange("scheduling")
+			if err := b.SetSchedulingConfig(n); err != nil {
+				d.Set("scheduling", o)
 				return diag.FromErr(err)
 			}
 		}

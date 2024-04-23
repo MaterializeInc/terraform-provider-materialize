@@ -13,13 +13,23 @@ import (
 )
 
 var inCluster = map[string]interface{}{
-	"name":                          "cluster",
-	"size":                          "3xsmall",
-	"replication_factor":            2,
-	"availability_zones":            []interface{}{"use1-az1", "use1-az2"},
-	"introspection_interval":        "10s",
-	"introspection_debugging":       true,
-	"ownership_role":                "joe",
+	"name":                    "cluster",
+	"size":                    "3xsmall",
+	"replication_factor":      2,
+	"availability_zones":      []interface{}{"use1-az1", "use1-az2"},
+	"introspection_interval":  "10s",
+	"introspection_debugging": true,
+	"scheduling": []interface{}{
+		map[string]interface{}{
+			"on_refresh": []interface{}{
+				map[string]interface{}{
+					"enabled":                   true,
+					"rehydration_time_estimate": "2 hours",
+				},
+			},
+		},
+	},
+	"ownership_role": "joe",
 }
 
 func TestResourceClusterCreate(t *testing.T) {
@@ -36,7 +46,8 @@ func TestResourceClusterCreate(t *testing.T) {
 			REPLICATION FACTOR 2,
 			AVAILABILITY ZONES = \['use1-az1','use1-az2'\],
 			INTROSPECTION INTERVAL = '10s',
-			INTROSPECTION DEBUGGING = TRUE;
+			INTROSPECTION DEBUGGING = TRUE,
+			SCHEDULE = ON REFRESH \(REHYDRATION TIME ESTIMATE = '2 hours'\);
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership

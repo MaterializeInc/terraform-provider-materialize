@@ -12,6 +12,18 @@ resource "materialize_cluster" "cluster_sink" {
   size = "3xsmall"
 }
 
+
+resource "materialize_cluster" "scheduling_cluster" {
+  name = "scheduling_cluster"
+  size = "25cc"
+  scheduling {
+    on_refresh {
+      enabled                   = true
+      rehydration_time_estimate = "1 hour"
+    }
+  }
+}
+
 resource "materialize_cluster" "no_replication" {
   name               = "no_replication"
   size               = "25cc"
