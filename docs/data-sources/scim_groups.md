@@ -38,7 +38,7 @@ Read-Only:
 - `users` (List of Object) (see [below for nested schema](#nestedobjatt--groups--users))
 
 <a id="nestedobjatt--groups--roles"></a>
-### Nested Schema for `groups.roles`
+### Nested Schema for ``
 
 Read-Only:
 
@@ -50,7 +50,7 @@ Read-Only:
 
 
 <a id="nestedobjatt--groups--users"></a>
-### Nested Schema for `groups.users`
+### Nested Schema for ``
 
 Read-Only:
 
