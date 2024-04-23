@@ -25,7 +25,7 @@ resource "materialize_database" "example" {
 # The Terraform provider on the other hand does not create a public schema by default
 # Optionally you can create a public schema in the database using the materialize_schema resource
 resource "materialize_schema" "public" {
-  name     = "public"
+  name          = "public"
   database_name = materialize_database.example.name
 }
 
