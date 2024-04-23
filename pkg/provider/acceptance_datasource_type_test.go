@@ -93,6 +93,7 @@ func testAccDatasourceType(nameSpace string) string {
 	resource "materialize_type" "d" {
 		name          = "%[1]s_d"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.public_schema2.name
 		list_properties {
 			element_type = "int4"
   		}
@@ -101,6 +102,7 @@ func testAccDatasourceType(nameSpace string) string {
 	resource "materialize_type" "e" {
 		name          = "%[1]s_e"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.public_schema2.name
 		list_properties {
 			element_type = "int4"
   		}

@@ -39,7 +39,7 @@ func TestAccDatasourceView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_view.test_database", "views.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_view.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_view.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_view.test_database_schema", "views.#", "2"),
+					resource.TestCheckResourceAttr("data.materialize_view.test_database_schema", "views.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_view.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_view.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_view.test_database_2", "views.#", "2"),
@@ -77,7 +77,6 @@ func testAccDatasourceView(nameSpace string) string {
 	resource "materialize_schema" "test" {
 		name          = "%[1]s"
 		database_name = materialize_database.test.name
-		schema_name   = materialize_schema.public_schema.name
 	}
 
 	resource "materialize_view" "a" {

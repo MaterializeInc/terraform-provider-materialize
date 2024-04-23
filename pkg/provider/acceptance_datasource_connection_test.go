@@ -115,7 +115,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 	resource "materialize_connection_kafka" "e" {
 		name              = "%[1]s_e"
 		database_name     = materialize_database.test_2.name
-		script_name       = materialize_schema.public_schema2.name
+		schema_name       = materialize_schema.public_schema2.name
 		security_protocol = "PLAINTEXT"
 	  
 		kafka_broker {
