@@ -59,6 +59,8 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 	var region clients.Region
 	if d != nil && d.Get("region") != "" {
 		region = clients.Region(d.Get("region").(string))
+	} else if d != nil && ExtractRegion(d.Id()) != "" {
+		region = clients.Region(ExtractRegion(d.Id()))
 	} else {
 		region = providerMeta.DefaultRegion
 	}
@@ -109,4 +111,14 @@ func ExtractId(oldID string) string {
 		return oldID
 	}
 	return parts[1]
+}
+
+// Function to get the region from the region + ID string
+func ExtractRegion(oldID string) string {
+	parts := strings.Split(oldID, ":")
+	if len(parts) < 2 {
+		// Return an empty string if the ID doesn't have a region
+		return ""
+	}
+	return parts[0]
 }
