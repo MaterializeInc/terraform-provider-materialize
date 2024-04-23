@@ -138,7 +138,6 @@ resource "materialize_schema_grant_default_privilege" "complex" {
   grantee_name     = each.value.grantee
   target_role_name = materialize_role.target.name
   database_name    = each.value.database
-  schema_name      = each.value.schema
 
   depends_on = [
     materialize_role.bi,
