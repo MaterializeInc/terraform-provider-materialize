@@ -24,7 +24,7 @@ func TestAccDatasourceConnection_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database", "connections.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "connections.#", "2"),
+					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "connections.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_connection.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_2", "connections.#", "2"),

@@ -68,6 +68,7 @@ func testAccDatasourceSource(nameSpace string) string {
 	resource "materialize_source_load_generator" "a" {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.public_schema.name
 		cluster_name  = "quickstart"
 		load_generator_type = "COUNTER"
 	}
@@ -75,7 +76,7 @@ func testAccDatasourceSource(nameSpace string) string {
 	resource "materialize_source_load_generator" "b" {
 		name          = "%[1]s_b"
 		database_name = materialize_database.test.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema.name
 		cluster_name  = "quickstart"
 		load_generator_type = "COUNTER"
 	}
@@ -83,7 +84,7 @@ func testAccDatasourceSource(nameSpace string) string {
 	resource "materialize_source_load_generator" "c" {
 		name          = "%[1]s_c"
 		database_name = materialize_database.test.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema.name
 		cluster_name  = "quickstart"
 		load_generator_type = "COUNTER"
 	}
