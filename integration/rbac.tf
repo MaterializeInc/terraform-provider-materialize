@@ -201,7 +201,7 @@ variable "table_grants" {
       grantee : "de",
       privilege : "UPDATE",
       database : "db1",
-      schema : "public",
+      schema : "schema1",
     },
   }
 }
