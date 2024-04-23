@@ -101,6 +101,8 @@ resource "materialize_database_grant_default_privilege" "complex" {
     materialize_role.target_2,
     materialize_database.db1,
     materialize_database.db2,
+    materialize_schema.schema1,
+    materialize_schema.schema2,
   ]
 }
 
@@ -199,7 +201,7 @@ variable "table_grants" {
       grantee : "de",
       privilege : "UPDATE",
       database : "db1",
-      schema : "public",
+      schema : "schema1",
     },
   }
 }

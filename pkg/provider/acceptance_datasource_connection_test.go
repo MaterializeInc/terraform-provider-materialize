@@ -24,7 +24,7 @@ func TestAccDatasourceConnection_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database", "connections.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "connections.#", "2"),
+					resource.TestCheckResourceAttr("data.materialize_connection.test_database_schema", "connections.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_connection.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_2", "connections.#", "2"),
@@ -49,6 +49,16 @@ func testAccDatasourceConnection(nameSpace string) string {
 		name    = "%[1]s_2"
 	}
 
+	resource "materialize_schema" "public_schema" {
+		name          = "public"
+		database_name = materialize_database.test.name
+	}
+
+	resource "materialize_schema" "public_schema2" {
+		name          = "public"
+		database_name = materialize_database.test_2.name
+	}
+
 	resource "materialize_schema" "test" {
 		name          = "%[1]s"
 		database_name = materialize_database.test.name
@@ -57,6 +67,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 	resource "materialize_connection_kafka" "a" {
 		name              = "%[1]s_a"
 		database_name     = materialize_database.test.name
+		schema_name       = materialize_schema.test.name
 		security_protocol = "PLAINTEXT"
 	  
 		kafka_broker {
@@ -92,6 +103,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 	resource "materialize_connection_kafka" "d" {
 		name              = "%[1]s_d"
 		database_name     = materialize_database.test_2.name
+		schema_name       = materialize_schema.public_schema2.name
 		security_protocol = "PLAINTEXT"
 	  
 		kafka_broker {
@@ -103,6 +115,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 	resource "materialize_connection_kafka" "e" {
 		name              = "%[1]s_e"
 		database_name     = materialize_database.test_2.name
+		schema_name       = materialize_schema.public_schema2.name
 		security_protocol = "PLAINTEXT"
 	  
 		kafka_broker {

@@ -24,7 +24,7 @@ func TestAccDatasourceSecret_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_secret.test_database", "secrets.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_secret.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_secret.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_secret.test_database_schema", "secrets.#", "2"),
+					resource.TestCheckResourceAttr("data.materialize_secret.test_database_schema", "secrets.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_secret.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_secret.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_secret.test_database_2", "secrets.#", "2"),
@@ -54,10 +54,16 @@ func testAccDatasourceSecret(nameSpace string) string {
 		database_name = materialize_database.test.name
 	}
 
+	resource "materialize_schema" "test_2" {
+		name          = "%[1]s_2"
+		database_name = materialize_database.test_2.name
+	}
+
 	resource "materialize_secret" "a" {
 		name          = "%[1]s_a"
 		value         = "some-secret-value"
 		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
 	}
 
 	resource "materialize_secret" "b" {
@@ -78,12 +84,14 @@ func testAccDatasourceSecret(nameSpace string) string {
 		name          = "%[1]s_d"
 		value         = "some-secret-value"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.test_2.name
 	}
 
 	resource "materialize_secret" "e" {
 		name  = "%[1]s_e"
 		value = "some-secret-value"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.test_2.name
 	}
 
 	data "materialize_secret" "test_all" {

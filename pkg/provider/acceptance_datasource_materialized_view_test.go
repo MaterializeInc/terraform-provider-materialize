@@ -47,7 +47,7 @@ func TestAccDatasourceMaterializedView_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database", "materialized_views.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_schema", "materialized_views.#", "2"),
+					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_schema", "materialized_views.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_materialized_view.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_materialized_view.test_database_2", "materialized_views.#", "2"),
@@ -72,6 +72,16 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 		name    = "%[1]s_2"
 	}
 
+	resource "materialize_schema" "public_schema" {
+		name          = "public"
+		database_name = materialize_database.test.name
+	}
+
+	resource "materialize_schema" "public_schema2" {
+		name          = "public"
+		database_name = materialize_database.test_2.name
+	}
+
 	resource "materialize_schema" "test" {
 		name          = "%[1]s"
 		database_name = materialize_database.test.name
@@ -80,6 +90,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	resource "materialize_materialized_view" "a" {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
 		cluster_name  = "quickstart"
 		comment       = "some comment"
 	  
@@ -117,6 +128,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	resource "materialize_materialized_view" "d" {
 		name          = "%[1]s_d"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.public_schema2.name
 		cluster_name  = "quickstart"
 	  
 		statement = <<SQL
@@ -128,6 +140,7 @@ func testAccDatasourceMaterializedView(nameSpace string) string {
 	resource "materialize_materialized_view" "e" {
 		name          = "%[1]s_e"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.public_schema2.name
 		cluster_name  = "quickstart"
 	  
 		statement = <<SQL

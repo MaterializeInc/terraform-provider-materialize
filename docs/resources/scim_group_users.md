@@ -3,7 +3,7 @@
 page_title: "materialize_scim_group_users Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The materializescimgroup_users resource allows managing users within a SCIM group in Frontegg.
+  The materialize_scim_group_users resource allows managing users within a SCIM group in Frontegg.
 ---
 
 # materialize_scim_group_users (Resource)

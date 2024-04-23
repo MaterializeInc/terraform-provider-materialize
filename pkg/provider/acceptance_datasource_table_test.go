@@ -24,7 +24,7 @@ func TestAccDatasourceTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_table.test_database", "tables.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_table.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_table.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_table.test_database_schema", "tables.#", "2"),
+					resource.TestCheckResourceAttr("data.materialize_table.test_database_schema", "tables.#", "3"),
 					resource.TestCheckResourceAttr("data.materialize_table.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_table.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_table.test_database_2", "tables.#", "2"),
@@ -54,9 +54,16 @@ func testAccDatasourceTable(nameSpace string) string {
 		database_name = materialize_database.test.name
 	}
 
+	resource "materialize_schema" "test_2" {
+		name          = "%[1]s_2"
+		database_name = materialize_database.test_2.name
+	}
+
+
 	resource "materialize_table" "a" {
 		name          = "%[1]s_a"
 		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
 		comment       = "some comment"
 
 		column {
@@ -92,6 +99,7 @@ func testAccDatasourceTable(nameSpace string) string {
 	resource "materialize_table" "d" {
 		name          = "%[1]s_d"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.test_2.name
 		column {
 			name = "column_1"
 			type = "text"
@@ -101,6 +109,7 @@ func testAccDatasourceTable(nameSpace string) string {
 	resource "materialize_table" "e" {
 		name          = "%[1]s_e"
 		database_name = materialize_database.test_2.name
+		schema_name   = materialize_schema.test_2.name
 		column {
 			name = "column_1"
 			type = "text"

@@ -36,6 +36,7 @@ func TestAccDatabase_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("materialize_database.test_role", "name", database2Name),
 							resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", roleName),
 							resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "Comment"),
+							testAccCheckPublicSchemaNotExists("data.materialize_schema.no_schema_test"),
 						),
 					},
 					{
@@ -65,6 +66,7 @@ func TestAccDatabase_update(t *testing.T) {
 					testAccCheckDatabaseExists("materialize_database.test_role"),
 					resource.TestCheckResourceAttr("materialize_database.test_role", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_database.test_role", "comment", "Comment"),
+					testAccCheckPublicSchemaNotExists("data.materialize_schema.no_schema_test"),
 				),
 			},
 			{
@@ -125,6 +127,10 @@ func testAccDatabaseResource(roleName, databaseName, databse2Name, databaseOwner
 
 		depends_on = [materialize_role.test]
 	}
+
+	data "materialize_schema" "no_schema_test" {
+		database_name = materialize_database.test.name
+	}
 	`, roleName, databaseName, databse2Name, databaseOwner, comment)
 }
 
@@ -164,4 +170,25 @@ func testAccCheckAllDatabasesDestroyed(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+func testAccCheckPublicSchemaNotExists(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
+
+		for i := 0; ; i++ {
+			key := fmt.Sprintf("schemas.%d.name", i)
+			if name, ok := rs.Primary.Attributes[key]; ok {
+				if name == "public" {
+					return fmt.Errorf("Public schema exists when it should not")
+				}
+			} else {
+				break
+			}
+		}
+		return nil
+	}
 }

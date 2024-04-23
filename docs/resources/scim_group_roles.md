@@ -3,7 +3,7 @@
 page_title: "materialize_scim_group_roles Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The materializescimgroup_role resource allows managing roles within a SCIM group in Frontegg.
+  The materialize_scim_group_role resource allows managing roles within a SCIM group in Frontegg.
 ---
 
 # materialize_scim_group_roles (Resource)

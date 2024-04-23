@@ -21,7 +21,9 @@ var databaseSchema = map[string]*schema.Schema{
 
 func Database() *schema.Resource {
 	return &schema.Resource{
-		Description: "The highest level namespace hierarchy in Materialize.",
+		Description: "The highest level namespace hierarchy in Materialize.\n\n" +
+			"**Note**: This resource will not automatically create a public schema." +
+			"If needed, the public schema must be explicitly defined in your configuration using the `materialize_schema` resource.",
 
 		CreateContext: databaseCreate,
 		ReadContext:   databaseRead,
@@ -82,6 +84,11 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	// create resource
 	if err := b.Create(); err != nil {
+		return diag.FromErr(err)
+	}
+
+	// drop public schema by default
+	if err := b.DropPublicSchema(); err != nil {
 		return diag.FromErr(err)
 	}
 
