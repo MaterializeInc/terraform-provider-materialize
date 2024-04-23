@@ -68,35 +68,35 @@ func testAccDatasourceSecret(nameSpace string) string {
 		name          = "%[1]s_a"
 		value         = "some-secret-value"
 		database_name = materialize_database.test.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema.name
 	}
 
 	resource "materialize_secret" "b" {
 		name          = "%[1]s_b"
 		value         = "some-secret-value"
 		database_name = materialize_database.test.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema.name
 	}
 
 	resource "materialize_secret" "c" {
 		name          = "%[1]s_c"
 		value         = "some-secret-value"
 		database_name = materialize_database.test.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema.name
 	}
 
 	resource "materialize_secret" "d" {
 		name          = "%[1]s_d"
 		value         = "some-secret-value"
 		database_name = materialize_database.test_2.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema2.name
 	}
 
 	resource "materialize_secret" "e" {
 		name  = "%[1]s_e"
 		value = "some-secret-value"
 		database_name = materialize_database.test_2.name
-		schema_name   = materialize_schema.test.name
+		schema_name   = materialize_schema.public_schema2.name
 	}
 
 	data "materialize_secret" "test_all" {
