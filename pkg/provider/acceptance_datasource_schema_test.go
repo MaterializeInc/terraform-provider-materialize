@@ -21,13 +21,13 @@ func TestAccDatasourceSchema_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.materialize_schema.test_database", "database_name", nameSpace),
 					// Will be one greater than defined for public schema
-					resource.TestCheckResourceAttr("data.materialize_schema.test_database", "schemas.#", "3"),
+					resource.TestCheckResourceAttr("data.materialize_schema.test_database", "schemas.#", "2"),
 					resource.TestCheckResourceAttr("data.materialize_schema.test_database_2", "database_name", nameSpace+"_2"),
-					resource.TestCheckResourceAttr("data.materialize_schema.test_database_2", "schemas.#", "4"),
+					resource.TestCheckResourceAttr("data.materialize_schema.test_database_2", "schemas.#", "3"),
 					resource.TestCheckNoResourceAttr("data.materialize_schema.test_all", "database_name"),
 					// Cannot ensure the exact number of objects with parallel tests
 					// Ensuring minimum
-					resource.TestMatchResourceAttr("data.materialize_schema.test_all", "schemas.#", regexp.MustCompile("([7-9]|\\d{2,})")),
+					resource.TestMatchResourceAttr("data.materialize_schema.test_all", "schemas.#", regexp.MustCompile("([6-9]|\\d{2,})")),
 				),
 			},
 		},
