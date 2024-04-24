@@ -85,9 +85,10 @@ func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	// Check if role contains member
 	mapping, _ := materialize.ParseRolePrivileges(roles)
 
+	// Check if role contains member and if not, set id to empty string so that it can be recreated
 	if !slices.Contains(mapping[key.roleId], key.memberId) {
 		d.SetId("")
-		return diag.Errorf("role does contain member %s", key.memberId)
+		return nil
 	}
 
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
