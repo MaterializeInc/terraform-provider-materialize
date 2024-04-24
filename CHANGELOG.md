@@ -16,7 +16,7 @@
 * Fix an issue where resource imports were failing when using a non-default region [#550](https://github.com/MaterializeInc/terraform-provider-materialize/pull/550)
 
 ### Misc.
-* Routine Dependabot updates [#549](https://github.com/MaterializeInc/terraform-provider-materialize/pull/549)
+* Routine dependency updates [#549](https://github.com/MaterializeInc/terraform-provider-materialize/pull/549)
 
 ## 0.6.10 - 2024-04-19
 
