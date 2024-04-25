@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.7.0 - 2024-04-24
+
+### Breaking Changes
+* **`public` schemas are no longer created by default**: In previous versions, the `materialize_database` resource automatically created a `public` schema in each new database, mimicking traditional SQL database behavior. Starting with version `v0.7.0`, this default behavior has been removed. Users must now explicitly define and manage `public` schemas within their Terraform configurations. This change is designed to align the Terraform provider's behavior more closely with its design principles, ensuring consistency and predictability.
+    * **Action Required**: Explicitly define `public` schemas in your Terraform configurations if needed. Along with the required grant `USAGE` to the `PUBLIC` pseudo-role for the public schema
+    * **Migration Guide**: This only affects newly created databases. Details on adapting to this change are available [here](https://github.com/MaterializeInc/terraform-provider-materialize/pull/546)
+
+### Features
+* Add scheduling attribute to the `materialize_cluster` resource [#545](https://github.com/MaterializeInc/terraform-provider-materialize/pull/545)
+
+### Bug Fixes
+* Fix an issue where resource imports were failing when using a non-default region [#550](https://github.com/MaterializeInc/terraform-provider-materialize/pull/550)
+
+### Misc.
+* Routine dependency updates [#549](https://github.com/MaterializeInc/terraform-provider-materialize/pull/549)
+
 ## 0.6.10 - 2024-04-19
 
 ### Features
