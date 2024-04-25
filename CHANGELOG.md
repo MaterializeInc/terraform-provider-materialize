@@ -5,7 +5,7 @@
 ## 0.7.0 - 2024-04-24
 
 ### Breaking Changes
-* **Drop `public` Schema Creation by Default**: In previous versions, the `materialize_database` resource automatically created a `public` schema in each new database, mimicking traditional SQL database behavior. Starting with version `v0.7.0`, this default behavior has been removed. Users must now explicitly define and manage `public` schemas within their Terraform configurations. This change is designed to align the Terraform provider's behavior more closely with its design principles, ensuring consistency and predictability.
+* **`public` schemas are no longer created by default**: In previous versions, the `materialize_database` resource automatically created a `public` schema in each new database, mimicking traditional SQL database behavior. Starting with version `v0.7.0`, this default behavior has been removed. Users must now explicitly define and manage `public` schemas within their Terraform configurations. This change is designed to align the Terraform provider's behavior more closely with its design principles, ensuring consistency and predictability.
     * **Action Required**: Explicitly define `public` schemas in your Terraform configurations if needed. Along with the required grant `USAGE` to the `PUBLIC` pseudo-role for the public schema
     * **Migration Guide**: This only affects newly created databases. Details on adapting to this change are available [here](https://github.com/MaterializeInc/terraform-provider-materialize/pull/546)
 
