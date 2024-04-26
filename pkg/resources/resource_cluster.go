@@ -165,9 +165,11 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			}
 		}
 
-		if v, ok := d.GetOk("availability_zones"); ok {
+		if v, ok := d.GetOk("availability_zones"); ok && len(v.([]interface{})) > 0 {
 			f := materialize.GetSliceValueString(v.([]interface{}))
-			b.AvailabilityZones(f)
+			if len(f) > 0 {
+				b.AvailabilityZones(f)
+			}
 		}
 
 		if v, ok := d.GetOk("introspection_interval"); ok {

@@ -26,7 +26,12 @@ func QualifiedName(fields ...string) string {
 func GetSliceValueString(v []interface{}) []string {
 	var o []string
 	for _, i := range v {
-		o = append(o, i.(string))
+		if i != nil {
+			str, ok := i.(string)
+			if ok {
+				o = append(o, str)
+			}
+		}
 	}
 	return o
 }

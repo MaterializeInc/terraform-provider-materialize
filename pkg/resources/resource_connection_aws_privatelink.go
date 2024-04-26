@@ -124,9 +124,11 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 		b.PrivateLinkServiceName(v.(string))
 	}
 
-	if v, ok := d.GetOk("availability_zones"); ok {
+	if v, ok := d.GetOk("availability_zones"); ok && len(v.([]interface{})) > 0 {
 		azs := materialize.GetSliceValueString(v.([]interface{}))
-		b.PrivateLinkAvailabilityZones(azs)
+		if len(azs) > 0 {
+			b.PrivateLinkAvailabilityZones(azs)
+		}
 	}
 
 	if v, ok := d.GetOk("validate"); ok {
