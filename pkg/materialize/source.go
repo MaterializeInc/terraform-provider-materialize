@@ -91,7 +91,7 @@ func (b *Source) Rename(newConnectionName string) error {
 
 func (b *Source) Drop() error {
 	qn := b.QualifiedName()
-	return b.ddl.drop(qn)
+	return b.ddl.dropCascade(qn)
 }
 
 type SourceParams struct {

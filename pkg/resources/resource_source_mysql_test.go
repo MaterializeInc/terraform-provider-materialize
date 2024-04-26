@@ -50,7 +50,7 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources (added this mock expectation)
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_objects.type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceMySQLCreate(context.TODO(), d, db); err != nil {
@@ -78,7 +78,7 @@ func TestResourceSourceMySQLUpdate(t *testing.T) {
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_objects.type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceMySQLUpdate(context.TODO(), d, db); err != nil {

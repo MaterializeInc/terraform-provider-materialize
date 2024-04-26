@@ -25,7 +25,7 @@ var dependencyQuery = NewBaseQuery(`
 		mz_objects.type
 	FROM mz_internal.mz_object_dependencies
 	JOIN mz_objects
-		ON mz_object_dependencies.referenced_object_id = mz_objects.id
+		ON mz_object_dependencies.object_id = mz_objects.id
 	JOIN mz_schemas
 		ON mz_objects.schema_id = mz_schemas.id
 	JOIN mz_databases
@@ -33,7 +33,7 @@ var dependencyQuery = NewBaseQuery(`
 
 func ListDependencies(conn *sqlx.DB, objectId, objectType string) ([]DependencyParams, error) {
 	p := map[string]string{
-		"mz_object_dependencies.object_id": objectId,
+		"mz_object_dependencies.referenced_object_id": objectId,
 	}
 
 	if objectType != "" {

@@ -127,6 +127,7 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 	s := strings.Join(subsrc, ", ")
 
 	q := strings.Builder{}
+	// TODO: Extend the drop subsource to support schema_name and database_name so we can construct the qualified name safely
 	q.WriteString(fmt.Sprintf(`ALTER SOURCE %s ADD SUBSOURCE %s`, b.QualifiedName(), s))
 
 	if len(textColumns) > 0 {
@@ -150,6 +151,7 @@ func (b *Source) DropSubsource(subsources []TableStruct) error {
 		}
 	}
 	s := strings.Join(subsrc, ", ")
-	q := fmt.Sprintf(`ALTER SOURCE %s DROP SUBSOURCE %s;`, b.QualifiedName(), s)
+	// TODO: Extend the drop subsource to support schema_name and database_name so we can construct the qualified name safely
+	q := fmt.Sprintf(`DROP SOURCE %s;`, s)
 	return b.ddl.exec(q)
 }

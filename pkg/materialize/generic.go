@@ -70,6 +70,11 @@ func (b *Builder) drop(name string) error {
 	return b.exec(q)
 }
 
+func (b *Builder) dropCascade(name string) error {
+	q := fmt.Sprintf(`DROP %s %s CASCADE;`, b.entity, name)
+	return b.exec(q)
+}
+
 func (b *Builder) rename(oldName, newName string) error {
 	q := fmt.Sprintf(`ALTER %s %s RENAME TO %s;`, b.entity, oldName, newName)
 	return b.exec(q)

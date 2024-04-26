@@ -122,7 +122,7 @@ func TestSourceAddSubsourceTextColumns(t *testing.T) {
 func TestSourceDropSubsource(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`ALTER SOURCE "database"."schema"."source" DROP SUBSOURCE "table_1", "table_alias";`,
+			`DROP SOURCE "table_1", "table_alias";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourcePostgresBuilder(db, sourcePostgres)
