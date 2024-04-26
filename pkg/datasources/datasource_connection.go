@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -24,6 +25,11 @@ func Connection() *schema.Resource {
 				Optional:     true,
 				Description:  "Limit connections to a specific schema within a specific database",
 				RequiredWith: []string{"database_name"},
+			},
+			"connection_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Limit connections to a specific connection ID",
 			},
 			"connections": {
 				Type:        schema.TypeList,
@@ -59,38 +65,54 @@ func Connection() *schema.Resource {
 	}
 }
 
+func formatConnectionData(connectionParams materialize.ConnectionParams) map[string]interface{} {
+	return map[string]interface{}{
+		"id":            connectionParams.ConnectionId.String,
+		"name":          connectionParams.ConnectionName.String,
+		"schema_name":   connectionParams.SchemaName.String,
+		"database_name": connectionParams.DatabaseName.String,
+		"type":          connectionParams.ConnectionType.String,
+	}
+}
+
 func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	connectionId := d.Get("connection_id").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-
-	var diags diag.Diagnostics
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	dataSource, err := materialize.ListConnections(metaDb, schemaName, databaseName)
-	if err != nil {
-		return diag.FromErr(err)
+
+	var connectionData materialize.ConnectionParams
+	var connections []materialize.ConnectionParams
+	var tfId string
+
+	if connectionId != "" {
+		connectionData, err = materialize.ScanConnection(metaDb, connectionId)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		connections = []materialize.ConnectionParams{connectionData}
+		tfId = fmt.Sprintf("%s|%s", connectionData.ConnectionId.String, "connections")
+	} else {
+		connections, err = materialize.ListConnections(metaDb, schemaName, databaseName)
+		tfId = "connections"
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	connectionFormats := []map[string]interface{}{}
-	for _, p := range dataSource {
-		connectionMap := map[string]interface{}{}
-
-		connectionMap["id"] = p.ConnectionId.String
-		connectionMap["name"] = p.ConnectionName.String
-		connectionMap["schema_name"] = p.SchemaName.String
-		connectionMap["database_name"] = p.DatabaseName.String
-		connectionMap["type"] = p.ConnectionType.String
-
-		connectionFormats = append(connectionFormats, connectionMap)
+	connectionFormats := make([]map[string]interface{}, len(connections))
+	for i, conn := range connections {
+		connectionFormats[i] = formatConnectionData(conn)
 	}
 
 	if err := d.Set("connections", connectionFormats); err != nil {
 		return diag.FromErr(err)
 	}
 
-	SetId(string(region), "connections", databaseName, schemaName, d)
-	return diags
+	SetId(string(region), tfId, databaseName, schemaName, d)
+	return nil
 }
