@@ -214,12 +214,18 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 
 		if v, ok := u["only"]; ok {
-			o := materialize.GetSliceValueString(v.([]interface{}))
+			o, err := materialize.GetSliceValueString("only", v.([]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			i.Only = o
 		}
 
 		if v, ok := u["not"]; ok {
-			n := materialize.GetSliceValueString(v.([]interface{}))
+			n, err := materialize.GetSliceValueString("not", v.([]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			i.Not = n
 		}
 		b.IncludeHeaders(i)

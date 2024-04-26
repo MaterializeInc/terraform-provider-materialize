@@ -126,10 +126,12 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("schema"); ok && len(v.([]interface{})) > 0 {
-		schemas := materialize.GetSliceValueString(v.([]interface{}))
-		if len(schemas) > 0 {
-			b.Schema(schemas)
+		schemas, err := materialize.GetSliceValueString("schema", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		b.Schema(schemas)
+
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
@@ -138,10 +140,11 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("text_columns"); ok && len(v.([]interface{})) > 0 {
-		columns := materialize.GetSliceValueString(v.([]interface{}))
-		if len(columns) > 0 {
-			b.TextColumns(columns)
+		columns, err := materialize.GetSliceValueString("text_columns", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		b.TextColumns(columns)
 	}
 
 	// create resource

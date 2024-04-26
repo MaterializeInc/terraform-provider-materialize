@@ -148,10 +148,11 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 	}
 
 	if v, ok := d.GetOk("key"); ok && len(v.([]interface{})) > 0 {
-		keys := materialize.GetSliceValueString(v.([]interface{}))
-		if len(keys) > 0 {
-			b.Key(keys)
+		keys, err := materialize.GetSliceValueString("key", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		b.Key(keys)
 	}
 
 	if v, ok := d.GetOk("key_not_enforced"); ok {

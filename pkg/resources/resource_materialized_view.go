@@ -135,10 +135,11 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	if v, ok := d.GetOk("not_null_assertion"); ok && len(v.([]interface{})) > 0 {
-		nas := materialize.GetSliceValueString(v.([]interface{}))
-		if len(nas) > 0 {
-			b.NotNullAssertions(nas)
+		nas, err := materialize.GetSliceValueString("not_null_assertion", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		b.NotNullAssertions(nas)
 	}
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
