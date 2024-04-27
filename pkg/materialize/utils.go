@@ -1,6 +1,7 @@
 package materialize
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -23,12 +24,16 @@ func QualifiedName(fields ...string) string {
 	return q
 }
 
-func GetSliceValueString(v []interface{}) []string {
+func GetSliceValueString(attrName string, v []interface{}) ([]string, error) {
 	var o []string
-	for _, i := range v {
-		o = append(o, i.(string))
+	for _, item := range v {
+		str, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("value %v of attribute %s cannot be converted to string", item, attrName)
+		}
+		o = append(o, str)
 	}
-	return o
+	return o, nil
 }
 
 func GetSliceValueInt(v []interface{}) []int {

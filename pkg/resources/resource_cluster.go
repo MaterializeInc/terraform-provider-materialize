@@ -165,8 +165,11 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			}
 		}
 
-		if v, ok := d.GetOk("availability_zones"); ok {
-			f := materialize.GetSliceValueString(v.([]interface{}))
+		if v, ok := d.GetOk("availability_zones"); ok && len(v.([]interface{})) > 0 {
+			f, err := materialize.GetSliceValueString("availability_zones", v.([]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			b.AvailabilityZones(f)
 		}
 
@@ -270,7 +273,10 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if d.HasChange("availability_zones") {
 			_, n := d.GetChange("availability_zones")
-			azs := materialize.GetSliceValueString(n.([]interface{}))
+			azs, err := materialize.GetSliceValueString("availability_zones", n.([]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			b := materialize.NewClusterBuilder(metaDb, o)
 			if err := b.SetAvailabilityZones(azs); err != nil {
 				return diag.FromErr(err)

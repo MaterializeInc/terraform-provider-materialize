@@ -108,13 +108,19 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		b.Tables(t)
 	}
 
-	if v, ok := d.GetOk("ignore_columns"); ok {
-		columns := materialize.GetSliceValueString(v.([]interface{}))
+	if v, ok := d.GetOk("ignore_columns"); ok && len(v.([]interface{})) > 0 {
+		columns, err := materialize.GetSliceValueString("ignore_columns", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		b.IgnoreColumns(columns)
 	}
 
-	if v, ok := d.GetOk("text_columns"); ok {
-		columns := materialize.GetSliceValueString(v.([]interface{}))
+	if v, ok := d.GetOk("text_columns"); ok && len(v.([]interface{})) > 0 {
+		columns, err := materialize.GetSliceValueString("text_columns", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		b.TextColumns(columns)
 	}
 

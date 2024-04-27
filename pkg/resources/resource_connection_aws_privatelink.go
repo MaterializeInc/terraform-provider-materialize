@@ -124,8 +124,11 @@ func connectionAwsPrivatelinkCreate(ctx context.Context, d *schema.ResourceData,
 		b.PrivateLinkServiceName(v.(string))
 	}
 
-	if v, ok := d.GetOk("availability_zones"); ok {
-		azs := materialize.GetSliceValueString(v.([]interface{}))
+	if v, ok := d.GetOk("availability_zones"); ok && len(v.([]interface{})) > 0 {
+		azs, err := materialize.GetSliceValueString("availability_zones", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		b.PrivateLinkAvailabilityZones(azs)
 	}
 
@@ -206,8 +209,12 @@ func connectionAwsPrivatelinkUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChange("availability_zones") {
 		oldAzs, newAzs := d.GetChange("availability_zones")
 		b := materialize.NewConnection(metaDb, o)
+		newAzsSlice, err := materialize.GetSliceValueString("availability_zones", newAzs.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		options := map[string]interface{}{
-			"AVAILABILITY ZONES": materialize.GetSliceValueString(newAzs.([]interface{})),
+			"AVAILABILITY ZONES": newAzsSlice,
 		}
 		if err := b.Alter(options, nil, false, validate); err != nil {
 			d.Set("availability_zones", oldAzs)

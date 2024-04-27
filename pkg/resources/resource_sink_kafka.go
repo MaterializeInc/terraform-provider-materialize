@@ -147,8 +147,11 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		b.CompressionType(v.(string))
 	}
 
-	if v, ok := d.GetOk("key"); ok {
-		keys := materialize.GetSliceValueString(v.([]interface{}))
+	if v, ok := d.GetOk("key"); ok && len(v.([]interface{})) > 0 {
+		keys, err := materialize.GetSliceValueString("key", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		b.Key(keys)
 	}
 

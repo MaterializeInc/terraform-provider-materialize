@@ -134,8 +134,11 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 		b.ClusterName(v.(string))
 	}
 
-	if v, ok := d.GetOk("not_null_assertion"); ok {
-		nas := materialize.GetSliceValueString(v.([]interface{}))
+	if v, ok := d.GetOk("not_null_assertion"); ok && len(v.([]interface{})) > 0 {
+		nas, err := materialize.GetSliceValueString("not_null_assertion", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		b.NotNullAssertions(nas)
 	}
 
