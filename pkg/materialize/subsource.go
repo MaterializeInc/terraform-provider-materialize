@@ -2,7 +2,6 @@ package materialize
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -19,7 +18,7 @@ type SubsourceDetail struct {
 }
 
 var subsourceQuery = NewBaseQuery(`
-	SELECT
+	SELECT DISTINCT
 		mz_sources.id AS object_id,
 		subsources.id AS referenced_object_id,
 		mz_sources.name AS object_name,
@@ -51,8 +50,7 @@ func ListPostgresSubsources(conn *sqlx.DB, sourceId string, objectType string) (
 	}
 
 	q := subsourceQuery.QueryPredicate(p)
-	// debug log the query
-	log.Printf("[DEBUG] Query: %s", q)
+
 	var subsources []SubsourceDetail
 	if err := conn.Select(&subsources, q); err != nil {
 		return nil, err

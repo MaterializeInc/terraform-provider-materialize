@@ -54,6 +54,10 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
 
+		// Query Tables
+		pt := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
+		testhelpers.MockPosgresSubsourceScan(mock, pt)
+
 		// Query Subsources
 		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
@@ -93,6 +97,10 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Tables
+		pt := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
+		testhelpers.MockPosgresSubsourceScan(mock, pt)
 
 		// Query Subsources
 		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`

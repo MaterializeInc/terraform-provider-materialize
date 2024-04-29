@@ -94,6 +94,11 @@ func (b *Source) Drop() error {
 	return b.ddl.drop(qn)
 }
 
+func (b *Source) DropCascade() error {
+	qn := b.QualifiedName()
+	return b.ddl.dropCascade(qn)
+}
+
 type SourceParams struct {
 	SourceId       sql.NullString `db:"id"`
 	SourceName     sql.NullString `db:"name"`

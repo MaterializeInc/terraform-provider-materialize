@@ -592,6 +592,36 @@ func MockSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+// MockPosgresSubsourceScan mocks the scan of a postgres source
+func MockPosgresSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT DISTINCT
+		mz_sources.id AS object_id,
+		subsources.id AS referenced_object_id,
+		mz_sources.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_sources.type,
+		mz_postgres_source_tables.table_name,
+		mz_postgres_source_tables.schema_name AS table_schema_name
+	FROM mz_sources AS subsources
+	JOIN mz_internal.mz_object_dependencies
+		ON subsources.id = mz_object_dependencies.referenced_object_id
+	JOIN mz_sources
+		ON mz_sources.id = mz_object_dependencies.object_id
+	JOIN mz_schemas
+		ON mz_sources.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_internal.mz_postgres_source_tables
+		ON mz_sources.id = mz_postgres_source_tables.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type", "table_name", "table_schema_name"}).
+		AddRow("u1", "u2", "object", "schema", "database", "source", "table", "table_schema")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
 func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT

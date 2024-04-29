@@ -77,7 +77,7 @@ func SourcePostgres() *schema.Resource {
 		CreateContext: sourcePostgresCreate,
 		ReadContext:   sourcePostgresRead,
 		UpdateContext: sourcePostgresUpdate,
-		DeleteContext: sourceDelete,
+		DeleteContext: sourcePostgresDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -206,15 +206,6 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		b.Table(t)
 	}
 
-	if v, ok := d.GetOk("schema"); ok && len(v.([]interface{})) > 0 {
-		schemas, err := materialize.GetSliceValueString("schema", v.([]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		b.Schema(schemas)
-
-	}
-
 	if v, ok := d.GetOk("expose_progress"); ok {
 		e := materialize.GetIdentifierSchemaStruct(v)
 		b.ExposeProgress(e)
@@ -327,6 +318,24 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	return sourcePostgresRead(ctx, d, meta)
+}
+
+func sourcePostgresDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	o := materialize.MaterializeObject{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSource(metaDb, o)
+
+	if err := b.DropCascade(); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func diffTextColumns(arr1, arr2 []interface{}) []string {
