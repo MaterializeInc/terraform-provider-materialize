@@ -65,6 +65,10 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 		region = providerMeta.DefaultRegion
 	}
 
+	if d != nil {
+		d.Set("region", string(region))
+	}
+
 	// Check if the region is enabled using the stored information
 	enabled, exists := providerMeta.RegionsEnabled[region]
 	if !exists {

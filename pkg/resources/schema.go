@@ -538,5 +538,6 @@ func RegionSchema() *schema.Schema {
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
+		Computed:    true,
 	}
 }
