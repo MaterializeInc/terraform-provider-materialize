@@ -137,27 +137,31 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	deps, err := materialize.ListDependencies(metaDb, utils.ExtractId(i), "source")
+	deps, err := materialize.ListPostgresSubsources(metaDb, utils.ExtractId(i), "subsource")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// TODO: We need to use a query that retrieves name and alias
 	// Tables
-	// tMaps := []interface{}{}
-	// for _, dep := range deps {
-	// 	tMap := map[string]interface{}{}
-	// 	tMap["name"] = dep.ObjectName.String
-	// 	tMap["alias"] = dep.ObjectName.String
-	// 	tMaps = append(tMaps, tMap)
-	// }
-	// if err := d.Set("table", tMaps); err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	tMaps := []interface{}{}
+	for _, dep := range deps {
+		tMap := map[string]interface{}{}
+		tMap["name"] = dep.TableName.String
+		tMap["alias"] = dep.ObjectName.String
+		tMaps = append(tMaps, tMap)
+	}
+	if err := d.Set("table", tMaps); err != nil {
+		return diag.FromErr(err)
+	}
+
+	subs, err := materialize.ListDependencies(metaDb, utils.ExtractId(i), "source")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	// Subsources
 	sMaps := []interface{}{}
-	for _, dep := range deps {
+	for _, dep := range subs {
 		sMap := map[string]interface{}{}
 		sMap["name"] = dep.ObjectName.String
 		sMap["schema_name"] = dep.SchemaName.String
