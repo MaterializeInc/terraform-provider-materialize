@@ -15,6 +15,7 @@ type SourceMySQLBuilder struct {
 	ignoreColumns   []string
 	textColumns     []string
 	tables          []TableStruct
+	exposeProgress  IdentifierSchemaStruct
 }
 
 func NewSourceMySQLBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceMySQLBuilder {
@@ -51,6 +52,11 @@ func (b *SourceMySQLBuilder) TextColumns(t []string) *SourceMySQLBuilder {
 
 func (b *SourceMySQLBuilder) Tables(tables []TableStruct) *SourceMySQLBuilder {
 	b.tables = tables
+	return b
+}
+
+func (b *SourceMySQLBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourceMySQLBuilder {
+	b.exposeProgress = e
 	return b
 }
 
@@ -103,6 +109,10 @@ func (b *SourceMySQLBuilder) Create() error {
 		q.WriteString(`)`)
 	} else {
 		q.WriteString(` FOR ALL TABLES`)
+	}
+
+	if b.exposeProgress.Name != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
 	}
 
 	q.WriteString(`;`)

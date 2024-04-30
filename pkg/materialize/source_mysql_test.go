@@ -32,7 +32,7 @@ func TestSourceMySQLAllTablesCreate(t *testing.T) {
 func TestSourceMySQLSpecificTablesCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" FROM MYSQL CONNECTION "database"."schema"."mysql_connection" FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1", "schema2"."table_2" AS "database"."schema"."table_alias"\);`,
+			`CREATE SOURCE "database"."schema"."source" FROM MYSQL CONNECTION "database"."schema"."mysql_connection" FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1", "schema2"."table_2" AS "database"."schema"."table_alias"\) EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceMySQLBuilder(db, sourceMySQL)
@@ -49,6 +49,7 @@ func TestSourceMySQLSpecificTablesCreate(t *testing.T) {
 				Alias:      "table_alias",
 			},
 		})
+		b.ExposeProgress(IdentifierSchemaStruct{Name: "progress", DatabaseName: "database", SchemaName: "schema"})
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

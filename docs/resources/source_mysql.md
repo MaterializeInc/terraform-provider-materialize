@@ -52,6 +52,7 @@ resource "materialize_source_mysql" "test" {
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `ignore_columns` (List of String) Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
@@ -77,6 +78,19 @@ Optional:
 
 - `database_name` (String) The mysql_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The mysql_connection schema name. Defaults to `public`.
+
+
+<a id="nestedblock--expose_progress"></a>
+### Nested Schema for `expose_progress`
+
+Required:
+
+- `name` (String) The expose_progress name.
+
+Optional:
+
+- `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The expose_progress schema name. Defaults to `public`.
 
 
 <a id="nestedblock--table"></a>
