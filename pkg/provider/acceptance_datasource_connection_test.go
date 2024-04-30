@@ -30,6 +30,11 @@ func TestAccDatasourceConnection_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_connection.test_database_2", "connections.#", "2"),
 					resource.TestCheckNoResourceAttr("data.materialize_connection.test_all", "database_name"),
 					resource.TestCheckNoResourceAttr("data.materialize_connection.test_all", "schema_name"),
+					// Test the specific connection
+					resource.TestCheckResourceAttr("data.materialize_connection.specific", "connection_id", "u1"),
+					resource.TestCheckResourceAttr("data.materialize_connection.specific", "connections.#", "1"),
+					resource.TestCheckResourceAttr("data.materialize_connection.specific", "connections.0.id", "u1"),
+					resource.TestCheckResourceAttr("data.materialize_connection.specific", "connections.0.name", "privatelink_conn"),
 					// Cannot ensure the exact number of objects with parallel tests
 					// Ensuring minimum
 					resource.TestMatchResourceAttr("data.materialize_connection.test_all", "connections.#", regexp.MustCompile("([5-9]|\\d{2,})")),
@@ -62,6 +67,10 @@ func testAccDatasourceConnection(nameSpace string) string {
 	resource "materialize_schema" "test" {
 		name          = "%[1]s"
 		database_name = materialize_database.test.name
+	}
+
+	data "materialize_connection" "specific" {
+		connection_id = "u1"
 	}
 
 	resource "materialize_connection_kafka" "a" {
