@@ -85,11 +85,17 @@ func (b *SourceMySQLBuilder) Create() error {
 
 	if len(b.tables) > 0 {
 		q.WriteString(` FOR TABLES (`)
-		for i, table := range b.tables {
-			if table.Alias == "" {
-				table.Alias = table.Name
+		for i, t := range b.tables {
+			if t.SchemaName == "" {
+				t.SchemaName = b.SchemaName
 			}
-			q.WriteString(fmt.Sprintf(`%s AS %s`, table.Name, table.Alias))
+			if t.Alias == "" {
+				t.Alias = t.Name
+			}
+			if t.AliasSchemaName == "" {
+				t.AliasSchemaName = b.SchemaName
+			}
+			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias)))
 			if i < len(b.tables)-1 {
 				q.WriteString(`, `)
 			}

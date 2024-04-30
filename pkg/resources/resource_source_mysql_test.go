@@ -38,7 +38,7 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM MYSQL CONNECTION "materialize"."public"."mysql_connection" \(IGNORE COLUMNS \(column1, column2\), TEXT COLUMNS \(column3, column4\)\) FOR TABLES \(name2 AS name2, name1 AS alias\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM MYSQL CONNECTION "materialize"."public"."mysql_connection" \(IGNORE COLUMNS \(column1, column2\), TEXT COLUMNS \(column3, column4\)\) FOR TABLES \("schema"."name1" AS "database"."schema"."alias", "schema"."name2" AS "database"."schema"."name2"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

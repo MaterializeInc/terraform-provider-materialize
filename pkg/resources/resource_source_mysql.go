@@ -50,10 +50,22 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 				},
+				"schema_name": {
+					Description: "The schema of the table.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
 				"alias": {
 					Description: "An alias for the table, used in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
+				},
+				"alias_schema_name": {
+					Description: "The schema of the alias table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
 				},
 			},
 		},

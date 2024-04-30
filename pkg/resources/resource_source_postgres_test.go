@@ -43,7 +43,7 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 			FROM POSTGRES CONNECTION "materialize"."public"."pg_connection"
 			\(PUBLICATION 'mz_source',
 			TEXT COLUMNS \(table.unsupported_type_1\)\)
-			FOR TABLES \(name1 AS alias\)`,
+			FOR TABLES \("schema"."name1" AS "database"."schema"."alias"\)`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -92,7 +92,7 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source"`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "name1" AS "alias"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "schema"."name1" AS "database"."schema"."alias"`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
