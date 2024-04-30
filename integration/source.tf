@@ -216,16 +216,19 @@ resource "materialize_source_mysql" "test" {
   # text_columns   = ["table1.id"]
 
   table {
-    name  = "shop.mysql_table1"
-    alias = "mysql_table1_alias"
+    name        = "mysql_table1"
+    schema_name = "shop"
+    alias       = "mysql_table1_alias"
   }
   table {
-    name  = "shop.mysql_table2"
-    alias = "mysql_table2_alias"
+    name        = "mysql_table2"
+    schema_name = "shop"
+    alias       = "mysql_table2_alias"
   }
   table {
-    name  = "shop.mysql_table3"
-    alias = "mysql_table3_alias"
+    name        = "mysql_table3"
+    schema_name = "shop"
+    alias       = "mysql_table3_alias"
   }
 }
 
