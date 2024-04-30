@@ -93,7 +93,7 @@ Required:
 Optional:
 
 - `alias` (String) The alias of the table in Materialize.
-- `alias_schema` (String) The schema of the alias table in Materialize.
+- `alias_schema_name` (String) The schema of the alias table in Materialize.
 - `schema_name` (String) The schema of the table.
 
 

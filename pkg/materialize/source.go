@@ -9,10 +9,10 @@ import (
 )
 
 type TableStruct struct {
-	Name        string
-	SchemaName  string
-	Alias       string
-	AliasSchema string
+	Name            string
+	SchemaName      string
+	Alias           string
+	AliasSchemaName string
 }
 
 func GetTableStruct(v []interface{}) []TableStruct {
@@ -20,10 +20,10 @@ func GetTableStruct(v []interface{}) []TableStruct {
 	for _, table := range v {
 		t := table.(map[string]interface{})
 		tables = append(tables, TableStruct{
-			Name:        t["name"].(string),
-			SchemaName:  t["schema_name"].(string),
-			Alias:       t["alias"].(string),
-			AliasSchema: t["alias_schema"].(string),
+			Name:            t["name"].(string),
+			SchemaName:      t["schema_name"].(string),
+			Alias:           t["alias"].(string),
+			AliasSchemaName: t["alias_schema_name"].(string),
 		})
 	}
 	return tables
@@ -43,10 +43,10 @@ func DiffTableStructs(arr1, arr2 []interface{}) []TableStruct {
 		if !found {
 			if diffItem, ok := item1.(map[string]interface{}); ok {
 				difference = append(difference, TableStruct{
-					Name:        diffItem["name"].(string),
-					SchemaName:  diffItem["schema_name"].(string),
-					Alias:       diffItem["alias"].(string),
-					AliasSchema: diffItem["alias_schema"].(string),
+					Name:            diffItem["name"].(string),
+					SchemaName:      diffItem["schema_name"].(string),
+					Alias:           diffItem["alias"].(string),
+					AliasSchemaName: diffItem["alias_schema_name"].(string),
 				})
 			}
 		}
@@ -62,7 +62,7 @@ func areEqual(a, b interface{}) bool {
 
 	if aItem, ok := a.(map[string]interface{}); ok {
 		if bItem, ok := b.(map[string]interface{}); ok {
-			return aItem["name"].(string) == bItem["name"].(string) && aItem["alias"].(string) == bItem["alias"].(string) && aItem["alias_schema"].(string) == bItem["alias_schema"].(string) && aItem["schema_name"].(string) == bItem["schema_name"].(string)
+			return aItem["name"].(string) == bItem["name"].(string) && aItem["alias"].(string) == bItem["alias"].(string) && aItem["alias_schema_name"].(string) == bItem["alias_schema_name"].(string) && aItem["schema_name"].(string) == bItem["schema_name"].(string)
 		}
 	}
 

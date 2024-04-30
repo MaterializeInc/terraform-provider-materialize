@@ -24,18 +24,18 @@ func TestAreUnequal(t *testing.T) {
 
 func TestDiffTableStructs(t *testing.T) {
 	arr1 := []interface{}{
-		map[string]interface{}{"name": "old", "alias": "old"},
-		map[string]interface{}{"name": "old_1", "alias": "old_2"},
-		map[string]interface{}{"name": "shared", "alias": "shared"},
+		map[string]interface{}{"name": "old", "schema_name": "public", "alias": "old", "alias_schema_name": "public"},
+		map[string]interface{}{"name": "old_1", "schema_name": "public", "alias": "old_2", "alias_schema_name": "public"},
+		map[string]interface{}{"name": "shared", "schema_name": "public", "alias": "shared", "alias_schema_name": "public"},
 	}
 	arr2 := []interface{}{
-		map[string]interface{}{"name": "shared", "alias": "shared"},
-		map[string]interface{}{"name": "new", "alias": "new"},
+		map[string]interface{}{"name": "shared", "schema_name": "public", "alias": "shared", "alias_schema_name": "public"},
+		map[string]interface{}{"name": "new", "schema_name": "public", "alias": "new", "alias_schema_name": "public"},
 	}
 	o := DiffTableStructs(arr1, arr2)
 	e := []TableStruct{
-		{Name: "old", Alias: "old"},
-		{Name: "old_1", Alias: "old_2"},
+		{Name: "old", SchemaName: "public", Alias: "old", AliasSchemaName: "public"},
+		{Name: "old_1", SchemaName: "public", Alias: "old_2", AliasSchemaName: "public"},
 	}
 	if !reflect.DeepEqual(o, e) {
 		t.Fatalf("Expect %s %s to be equal", o, e)

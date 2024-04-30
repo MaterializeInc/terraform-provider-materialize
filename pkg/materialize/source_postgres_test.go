@@ -20,7 +20,7 @@ func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			FROM POSTGRES CONNECTION "database"."schema"."pg_connection"
 			\(PUBLICATION 'mz_source', TEXT COLUMNS \(table.unsupported_type_1, table.unsupported_type_2\)\)
-			FOR TABLES \(schema1.table_1 AS s1_table_1, schema2.table_1 AS s2_table_1\)
+			FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1", "schema2"."table_1" AS "database"."schema"."s2_table_1"\)
 			EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -53,7 +53,7 @@ func TestSourceAddSubsource(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER SOURCE "database"."schema"."source"
-			ADD SUBSOURCE "table_1", "table_2" AS "table_alias";`,
+			ADD SUBSOURCE "schema"."table_1", "schema"."table_2" AS "database"."schema"."table_alias";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSource(db, sourcePostgres)
@@ -67,7 +67,7 @@ func TestSourceAddSubsourceTextColumns(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER SOURCE "database"."schema"."source"
-			ADD SUBSOURCE "table_1", "table_2" AS "table_alias"
+			ADD SUBSOURCE "schema"."table_1", "schema"."table_2" AS "database"."schema"."table_alias"
 			WITH \(TEXT COLUMNS \[table_1.column_1, table_2.column_2\]\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -81,7 +81,7 @@ func TestSourceAddSubsourceTextColumns(t *testing.T) {
 func TestSourceDropSubsource(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`DROP SOURCE "table_1", "table_alias";`,
+			`DROP SOURCE "database"."schema"."table_1", "database"."schema"."table_alias";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourcePostgresBuilder(db, sourcePostgres)

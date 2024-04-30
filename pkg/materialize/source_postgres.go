@@ -88,10 +88,10 @@ func (b *SourcePostgresBuilder) Create() error {
 		if t.Alias == "" {
 			t.Alias = t.Name
 		}
-		if t.AliasSchema == "" {
-			t.AliasSchema = t.SchemaName
+		if t.AliasSchemaName == "" {
+			t.AliasSchemaName = b.SchemaName
 		}
-		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s`, QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(t.AliasSchema), QuoteIdentifier(t.Alias)))
+		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias)))
 		if i < len(b.table)-1 {
 			q.WriteString(`, `)
 		}
@@ -112,14 +112,11 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 		if t.SchemaName == "" {
 			t.SchemaName = b.SchemaName
 		}
-		if t.Alias == "" {
-			t.Alias = t.Name
-		}
-		if t.AliasSchema == "" {
-			t.AliasSchema = t.SchemaName
+		if t.AliasSchemaName == "" {
+			t.AliasSchemaName = b.SchemaName
 		}
 		if t.Alias != "" {
-			f := fmt.Sprintf("%s.%s AS %s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(t.AliasSchema), QuoteIdentifier(t.Alias))
+			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias))
 			subsrc = append(subsrc, f)
 		} else {
 			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
@@ -142,17 +139,14 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 func (b *Source) DropSubsource(subsources []TableStruct) error {
 	var subsrc []string
 	for _, t := range subsources {
-		if t.SchemaName == "" {
-			t.SchemaName = b.SchemaName
-		}
-		if t.AliasSchema == "" {
-			t.AliasSchema = t.SchemaName
+		if t.AliasSchemaName == "" {
+			t.AliasSchemaName = b.SchemaName
 		}
 		if t.Alias != "" {
-			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.AliasSchema), QuoteIdentifier(t.Alias))
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias))
 			subsrc = append(subsrc, f)
 		} else {
-			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(b.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		}
 	}

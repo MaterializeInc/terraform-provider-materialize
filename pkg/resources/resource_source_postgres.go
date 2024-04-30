@@ -60,7 +60,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Computed:    true,
 				},
-				"alias_schema": {
+				"alias_schema_name": {
 					Description: "The schema of the alias table in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -161,7 +161,7 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		tMap["name"] = dep.TableName.String
 		tMap["schema_name"] = dep.TableSchemaName.String
 		tMap["alias"] = dep.ObjectName.String
-		tMap["alias_schema"] = dep.SchemaName.String
+		tMap["alias_schema_name"] = dep.SchemaName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {
