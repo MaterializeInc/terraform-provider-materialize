@@ -89,6 +89,8 @@ Required:
 Optional:
 
 - `alias` (String) An alias for the table, used in Materialize.
+- `alias_schema_name` (String) The schema of the alias table in Materialize.
+- `schema_name` (String) The schema of the table.
 
 
 <a id="nestedatt--subsource"></a>
