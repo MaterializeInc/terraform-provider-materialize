@@ -46,7 +46,7 @@ Read-Only:
 - `type` (String)
 
 <a id="nestedobjatt--sso_configs--domains"></a>
-### Nested Schema for ``
+### Nested Schema for `sso_configs.domains`
 
 Read-Only:
 
@@ -56,7 +56,7 @@ Read-Only:
 
 
 <a id="nestedobjatt--sso_configs--groups"></a>
-### Nested Schema for ``
+### Nested Schema for `sso_configs.groups`
 
 Read-Only:
 

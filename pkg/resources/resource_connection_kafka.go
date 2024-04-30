@@ -285,6 +285,15 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		resetOptions = append(resetOptions, option)
 	}
 
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewConnection(metaDb, o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("kafka_broker") {
 		_, newBrokers := d.GetChange("kafka_broker")
 		kafkaBrokers := materialize.GetKafkaBrokersStruct(newBrokers)
@@ -420,15 +429,6 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 				d.Set("ssh_tunnel", oldTunnel)
 				return diag.FromErr(err)
 			}
-		}
-	}
-
-	if d.HasChange("name") {
-		oldName, newName := d.GetChange("name")
-		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewConnection(metaDb, o)
-		if err := b.Rename(newName.(string)); err != nil {
-			return diag.FromErr(err)
 		}
 	}
 
