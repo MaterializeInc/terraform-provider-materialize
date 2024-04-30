@@ -82,10 +82,16 @@ func (b *SourcePostgresBuilder) Create() error {
 
 	q.WriteString(` FOR TABLES (`)
 	for i, t := range b.table {
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
 		if t.Alias == "" {
 			t.Alias = t.Name
 		}
-		q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
+		if t.AliasSchema == "" {
+			t.AliasSchema = t.SchemaName
+		}
+		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s`, QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(t.AliasSchema), QuoteIdentifier(t.Alias)))
 		if i < len(b.table)-1 {
 			q.WriteString(`, `)
 		}
@@ -103,11 +109,20 @@ func (b *SourcePostgresBuilder) Create() error {
 func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) error {
 	var subsrc []string
 	for _, t := range subsources {
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.Alias == "" {
+			t.Alias = t.Name
+		}
+		if t.AliasSchema == "" {
+			t.AliasSchema = t.SchemaName
+		}
 		if t.Alias != "" {
-			f := fmt.Sprintf("%s AS %s", QuoteIdentifier(t.Name), QuoteIdentifier(t.Alias))
+			f := fmt.Sprintf("%s.%s AS %s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(t.AliasSchema), QuoteIdentifier(t.Alias))
 			subsrc = append(subsrc, f)
 		} else {
-			f := QuoteIdentifier(t.Name)
+			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		}
 	}
@@ -127,16 +142,21 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 func (b *Source) DropSubsource(subsources []TableStruct) error {
 	var subsrc []string
 	for _, t := range subsources {
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.AliasSchema == "" {
+			t.AliasSchema = t.SchemaName
+		}
 		if t.Alias != "" {
-			f := QuoteIdentifier(t.Alias)
+			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.AliasSchema), QuoteIdentifier(t.Alias))
 			subsrc = append(subsrc, f)
 		} else {
-			f := QuoteIdentifier(t.Name)
+			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		}
 	}
 	s := strings.Join(subsrc, ", ")
-	// TODO: Extend the drop subsource to support schema_name and database_name so we can construct the qualified name safely
 	q := fmt.Sprintf(`DROP SOURCE %s;`, s)
 	return b.ddl.exec(q)
 }

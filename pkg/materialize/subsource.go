@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -13,8 +14,8 @@ type SubsourceDetail struct {
 	SchemaName        sql.NullString `db:"schema_name"`
 	DatabaseName      sql.NullString `db:"database_name"`
 	Type              sql.NullString `db:"type"`
-	TableName         sql.NullString `db:"table_name"`
-	TableSchemaName   sql.NullString `db:"table_schema_name"`
+	TableName         sql.NullString `db:"upstream_table_name"`
+	TableSchemaName   sql.NullString `db:"upstream_table_schema"`
 }
 
 var subsourceQuery = NewBaseQuery(`
@@ -25,8 +26,8 @@ var subsourceQuery = NewBaseQuery(`
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
 		mz_sources.type,
-		mz_postgres_source_tables.table_name,
-		mz_postgres_source_tables.schema_name AS table_schema_name
+		mz_postgres_source_tables.table_name AS upstream_table_name,
+		mz_postgres_source_tables.schema_name AS upstream_table_schema
 	FROM mz_sources AS subsources
 	JOIN mz_internal.mz_object_dependencies
 		ON subsources.id = mz_object_dependencies.referenced_object_id
@@ -51,6 +52,7 @@ func ListPostgresSubsources(conn *sqlx.DB, sourceId string, objectType string) (
 
 	q := subsourceQuery.QueryPredicate(p)
 
+	log.Printf("List subsoruces Query: %s", q)
 	var subsources []SubsourceDetail
 	if err := conn.Select(&subsources, q); err != nil {
 		return nil, err

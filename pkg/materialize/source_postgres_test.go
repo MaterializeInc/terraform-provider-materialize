@@ -30,12 +30,14 @@ func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 		b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})
 		b.Table([]TableStruct{
 			{
-				Name:  "schema1.table_1",
-				Alias: "s1_table_1",
+				Name:       "table_1",
+				SchemaName: "schema1",
+				Alias:      "s1_table_1",
 			},
 			{
-				Name:  "schema2.table_1",
-				Alias: "s2_table_1",
+				Name:       "table_1",
+				SchemaName: "schema2",
+				Alias:      "s2_table_1",
 			},
 		})
 		b.ExposeProgress(IdentifierSchemaStruct{Name: "progress", DatabaseName: "database", SchemaName: "schema"})

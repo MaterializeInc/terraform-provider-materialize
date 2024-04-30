@@ -93,6 +93,8 @@ Required:
 Optional:
 
 - `alias` (String) The alias of the table.
+- `alias_schema` (String) The schema of the alias table.
+- `schema_name` (String) The schema of the table.
 
 
 <a id="nestedblock--expose_progress"></a>

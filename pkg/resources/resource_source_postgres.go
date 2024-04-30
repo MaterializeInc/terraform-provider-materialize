@@ -48,8 +48,20 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 				},
+				"schema_name": {
+					Description: "The schema of the table.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
 				"alias": {
-					Description: "The alias of the table.",
+					Description: "The alias of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
+				"alias_schema": {
+					Description: "The schema of the alias table in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
@@ -147,7 +159,9 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 	for _, dep := range deps {
 		tMap := map[string]interface{}{}
 		tMap["name"] = dep.TableName.String
+		tMap["schema_name"] = dep.TableSchemaName.String
 		tMap["alias"] = dep.ObjectName.String
+		tMap["alias_schema"] = dep.SchemaName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {
@@ -290,6 +304,11 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		ot, nt := d.GetChange("table")
 		addTables := materialize.DiffTableStructs(nt.(*schema.Set).List(), ot.(*schema.Set).List())
 		dropTables := materialize.DiffTableStructs(ot.(*schema.Set).List(), nt.(*schema.Set).List())
+		if len(dropTables) > 0 {
+			if err := b.DropSubsource(dropTables); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 		if len(addTables) > 0 {
 			var colDiff []string
 			if d.HasChange("text_columns") {
@@ -298,11 +317,6 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 			}
 
 			if err := b.AddSubsource(addTables, colDiff); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-		if len(dropTables) > 0 {
-			if err := b.DropSubsource(dropTables); err != nil {
 				return diag.FromErr(err)
 			}
 		}
