@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.7.1 - 2024-04-30
+
+### Features
+* Update `region` attribute for all resources to be `computed` [#559](https://github.com/MaterializeInc/terraform-provider-materialize/pull/559)
+* Add `connection_id` attribute for `materialize_connection` data source [#553](https://github.com/MaterializeInc/terraform-provider-materialize/pull/553)
+
+### Bug Fixes
+* Check for `nil` values in `GetSliceValueString` [#552](https://github.com/MaterializeInc/terraform-provider-materialize/pull/552)
+* Fix `materialize_connection_kafka` rename race condition [#561](https://github.com/MaterializeInc/terraform-provider-materialize/pull/561)
+
+### Misc
+* Routine dependency updates: [#557](https://github.com/MaterializeInc/terraform-provider-materialize/pull/557), [#558](https://github.com/MaterializeInc/terraform-provider-materialize/pull/558)
+
 ## 0.7.0 - 2024-04-24
 
 ### Breaking Changes
