@@ -57,7 +57,7 @@ resource "materialize_source_mysql" "test" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
-- `table` (Block Set) Specifies the tables to be included in the source. If not specified, all tables are included. (see [below for nested schema](#nestedblock--table))
+- `table` (Block Set) Specifie the tables to be included in the source. If not specified, all tables are included. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
 
 ### Read-Only
