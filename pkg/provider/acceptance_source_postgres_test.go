@@ -198,12 +198,14 @@ func testAccSourcePostgresBasicResource(nameSpace string) string {
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[1]s_table1"
+			name  		= "table1"
+			schema_name = "public"
+			alias 		= "%[1]s_table1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[1]s_table2"
+			name  		= "table2"
+			schema_name = "public"
+			alias 		= "%[1]s_table2"
 		}
 		text_columns = ["table1.id"]
 	}
@@ -250,12 +252,14 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table1"
+			name  		= "table1"
+			schema_name = "public"
+			alias 		= "%[3]s_table1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[3]s_table2"
+			name  		= "table2"
+			schema_name = "public"
+			alias 		= "%[3]s_table2"
 		}
 		text_columns = ["table1.id"]
 	}
@@ -269,12 +273,14 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table_role_1"
+			name  		= "table1"
+			schema_name = "public"
+			alias 		= "%[3]s_table_role_1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[3]s_table_role_2"
+			name  		= "table2"
+			schema_name = "public"
+			alias 		= "%[3]s_table_role_2"
 		}
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
@@ -324,12 +330,14 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table1"
+			name  		= "table1"
+			schema_name = "public"
+			alias 		= "%[3]s_table1"
 		}
 		table {
-			name  = "table3"
-			alias = "%[3]s_table3"
+			name  		= "table3"
+			schema_name = "public"
+			alias 		= "%[3]s_table3"
 		}
 		text_columns = ["table1.id", "table3.id"]
 	}
@@ -343,12 +351,14 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table_role_1"
+			name  		= "table1"
+			schema_name = "public"
+			alias 		= "%[3]s_table_role_1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[3]s_table_role_2"
+			name  		= "table2"
+			schema_name = "public"
+			alias 		= "%[3]s_table_role_2"
 		}
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
@@ -394,7 +404,11 @@ func testAccSourcePostgresResourceSchema(sourceName string) string {
 			database_name = materialize_connection_postgres.test.database_name
 		}
 		publication = "mz_source"
-		schema      = ["PUBLIC"]
+		table {
+			name  		= "table1"
+			schema_name = "public"
+			alias 		= "%[1]s_table1"
+		}
 	}
 	`, sourceName)
 }

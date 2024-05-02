@@ -98,12 +98,14 @@ resource "materialize_source_postgres" "example_source_postgres" {
   }
   publication = "mz_source"
   table {
-    name  = "table1"
-    alias = "s1_table1"
+    name        = "table1"
+    schema_name = "public"
+    alias       = "s1_table1"
   }
   table {
-    name  = "table2"
-    alias = "s2_table1"
+    name        = "table2"
+    schema_name = "public"
+    alias       = "s2_table1"
   }
   expose_progress {
     name = "expose_postgres"
