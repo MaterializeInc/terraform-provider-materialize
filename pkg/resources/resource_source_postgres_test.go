@@ -59,7 +59,7 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 		testhelpers.MockPosgresSubsourceScan(mock, pt)
 
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourcePostgresCreate(context.TODO(), d, db); err != nil {
@@ -103,7 +103,7 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 		testhelpers.MockPosgresSubsourceScan(mock, pt)
 
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourcePostgresUpdate(context.TODO(), d, db); err != nil {

@@ -60,7 +60,7 @@ func TestResourceSourceWebhookCreate(t *testing.T) {
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceWebhookCreate(context.TODO(), d, db); err != nil {

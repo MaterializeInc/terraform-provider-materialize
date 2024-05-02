@@ -26,7 +26,7 @@ func TestResourceSourceReadIdMigration(t *testing.T) {
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceRead(context.TODO(), d, db); err != nil {
@@ -55,7 +55,7 @@ func TestResourceSourceUpdate(t *testing.T) {
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceUpdate(context.TODO(), d, db); err != nil {
