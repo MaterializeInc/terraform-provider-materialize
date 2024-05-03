@@ -161,7 +161,7 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		tMap["name"] = dep.TableName.String
 		tMap["schema_name"] = dep.TableSchemaName.String
 		tMap["alias"] = dep.ObjectName.String
-		tMap["alias_schema_name"] = dep.SchemaName.String
+		tMap["alias_schema_name"] = dep.ObjectSchemaName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {

@@ -10,7 +10,7 @@ type SubsourceDetail struct {
 	ObjectId          sql.NullString `db:"object_id"`
 	ReferenceObjectId sql.NullString `db:"referenced_object_id"`
 	ObjectName        sql.NullString `db:"object_name"`
-	SchemaName        sql.NullString `db:"schema_name"`
+	ObjectSchemaName  sql.NullString `db:"schema_name"`
 	DatabaseName      sql.NullString `db:"database_name"`
 	Type              sql.NullString `db:"type"`
 	TableName         sql.NullString `db:"upstream_table_name"`
