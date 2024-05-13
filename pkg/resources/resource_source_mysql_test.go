@@ -25,8 +25,8 @@ var inSourceMySQLTable = map[string]interface{}{
 	"ignore_columns": []interface{}{"column1", "column2"},
 	"text_columns":   []interface{}{"column3", "column4"},
 	"table": []interface{}{
-		map[string]interface{}{"name": "name1", "alias": "alias"},
-		map[string]interface{}{"name": "name2"},
+		map[string]interface{}{"upstream_name": "name1", "name": "alias"},
+		map[string]interface{}{"upstream_name": "name2"},
 	},
 }
 

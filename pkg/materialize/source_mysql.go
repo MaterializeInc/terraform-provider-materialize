@@ -92,16 +92,16 @@ func (b *SourceMySQLBuilder) Create() error {
 	if len(b.tables) > 0 {
 		q.WriteString(` FOR TABLES (`)
 		for i, t := range b.tables {
+			if t.UpstreamSchemaName == "" {
+				t.UpstreamSchemaName = b.SchemaName
+			}
+			if t.Name == "" {
+				t.Name = t.UpstreamName
+			}
 			if t.SchemaName == "" {
 				t.SchemaName = b.SchemaName
 			}
-			if t.Alias == "" {
-				t.Alias = t.Name
-			}
-			if t.AliasSchemaName == "" {
-				t.AliasSchemaName = b.SchemaName
-			}
-			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias)))
+			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
 			if i < len(b.tables)-1 {
 				q.WriteString(`, `)
 			}

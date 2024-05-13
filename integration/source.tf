@@ -98,14 +98,14 @@ resource "materialize_source_postgres" "example_source_postgres" {
   }
   publication = "mz_source"
   table {
-    name        = "table1"
-    schema_name = "public"
-    alias       = "s1_table1"
+    upstream_name        = "table1"
+    upstream_schema_name = "public"
+    name                 = "s1_table1"
   }
   table {
-    name        = "table2"
-    schema_name = "public"
-    alias       = "s2_table1"
+    upstream_name        = "table2"
+    upstream_schema_name = "public"
+    name                 = "s2_table1"
   }
   expose_progress {
     name = "expose_postgres"
@@ -218,19 +218,19 @@ resource "materialize_source_mysql" "test" {
   # text_columns   = ["table1.id"]
 
   table {
-    name        = "mysql_table1"
-    schema_name = "shop"
-    alias       = "mysql_table1_alias"
+    upstream_name        = "mysql_table1"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table1_local"
   }
   table {
-    name        = "mysql_table2"
-    schema_name = "shop"
-    alias       = "mysql_table2_alias"
+    upstream_name        = "mysql_table2"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table2_local"
   }
   table {
-    name        = "mysql_table3"
-    schema_name = "shop"
-    alias       = "mysql_table3_alias"
+    upstream_name        = "mysql_table3"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table3_local"
   }
 }
 

@@ -10,8 +10,8 @@ import (
 
 var sourcePostgres = MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 var tableInput = []TableStruct{
-	{Name: "table_1"},
-	{Name: "table_2", Alias: "table_alias"},
+	{UpstreamName: "table_1"},
+	{UpstreamName: "table_2", Name: "table_alias"},
 }
 
 func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
@@ -30,14 +30,14 @@ func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 		b.TextColumns([]string{"table.unsupported_type_1", "table.unsupported_type_2"})
 		b.Table([]TableStruct{
 			{
-				Name:       "table_1",
-				SchemaName: "schema1",
-				Alias:      "s1_table_1",
+				UpstreamName:       "table_1",
+				UpstreamSchemaName: "schema1",
+				Name:               "s1_table_1",
 			},
 			{
-				Name:       "table_1",
-				SchemaName: "schema2",
-				Alias:      "s2_table_1",
+				UpstreamName:       "table_1",
+				UpstreamSchemaName: "schema2",
+				Name:               "s2_table_1",
 			},
 		})
 		b.ExposeProgress(IdentifierSchemaStruct{Name: "progress", DatabaseName: "database", SchemaName: "schema"})

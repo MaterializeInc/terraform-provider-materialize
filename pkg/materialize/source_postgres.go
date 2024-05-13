@@ -82,16 +82,16 @@ func (b *SourcePostgresBuilder) Create() error {
 
 	q.WriteString(` FOR TABLES (`)
 	for i, t := range b.table {
+		if t.UpstreamSchemaName == "" {
+			t.UpstreamSchemaName = b.SchemaName
+		}
+		if t.Name == "" {
+			t.Name = t.UpstreamName
+		}
 		if t.SchemaName == "" {
 			t.SchemaName = b.SchemaName
 		}
-		if t.Alias == "" {
-			t.Alias = t.Name
-		}
-		if t.AliasSchemaName == "" {
-			t.AliasSchemaName = b.SchemaName
-		}
-		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias)))
+		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
 		if i < len(b.table)-1 {
 			q.WriteString(`, `)
 		}
@@ -109,17 +109,17 @@ func (b *SourcePostgresBuilder) Create() error {
 func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) error {
 	var subsrc []string
 	for _, t := range subsources {
+		if t.UpstreamSchemaName == "" {
+			t.UpstreamSchemaName = b.SchemaName
+		}
 		if t.SchemaName == "" {
 			t.SchemaName = b.SchemaName
 		}
-		if t.AliasSchemaName == "" {
-			t.AliasSchemaName = b.SchemaName
-		}
-		if t.Alias != "" {
-			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias))
+		if t.Name != "" {
+			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		} else {
-			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
+			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName))
 			subsrc = append(subsrc, f)
 		}
 	}
@@ -139,14 +139,14 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 func (b *Source) DropSubsource(subsources []TableStruct) error {
 	var subsrc []string
 	for _, t := range subsources {
-		if t.AliasSchemaName == "" {
-			t.AliasSchemaName = b.SchemaName
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
 		}
-		if t.Alias != "" {
-			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.AliasSchemaName), QuoteIdentifier(t.Alias))
+		if t.Name != "" {
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		} else {
-			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(b.SchemaName), QuoteIdentifier(t.Name))
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(b.SchemaName), QuoteIdentifier(t.UpstreamName))
 			subsrc = append(subsrc, f)
 		}
 	}

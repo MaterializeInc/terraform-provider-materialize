@@ -88,13 +88,13 @@ Optional:
 
 Required:
 
-- `name` (String) The name of the table.
+- `upstream_name` (String) The name of the table in the upstream Postgres database.
 
 Optional:
 
-- `alias` (String) The alias of the table in Materialize.
-- `alias_schema_name` (String) The schema of the alias table in Materialize.
-- `schema_name` (String) The schema of the table.
+- `name` (String) The name of the table in Materialize.
+- `schema_name` (String) The schema of the table in Materialize.
+- `upstream_schema_name` (String) The schema of the table in the upstream Postgres database.
 
 
 <a id="nestedblock--expose_progress"></a>

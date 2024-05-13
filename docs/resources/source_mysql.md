@@ -98,13 +98,13 @@ Optional:
 
 Required:
 
-- `name` (String) The name of the table.
+- `upstream_name` (String) The name of the table in the upstream MySQL database.
 
 Optional:
 
-- `alias` (String) An alias for the table, used in Materialize.
-- `alias_schema_name` (String) The schema of the alias table in Materialize.
-- `schema_name` (String) The schema of the table.
+- `name` (String) The name for the table, used in Materialize.
+- `schema_name` (String) The schema of the table in Materialize.
+- `upstream_schema_name` (String) The schema of the table in the upstream MySQL database.
 
 
 <a id="nestedatt--subsource"></a>

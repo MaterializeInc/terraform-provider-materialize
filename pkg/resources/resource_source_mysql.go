@@ -46,28 +46,28 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The name of the table.",
+				"upstream_name": {
+					Description: "The name of the table in the upstream MySQL database.",
 					Type:        schema.TypeString,
 					Required:    true,
 					ForceNew:    true,
 				},
+				"upstream_schema_name": {
+					Description: "The schema of the table in the upstream MySQL database.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
+				"name": {
+					Description: "The name for the table, used in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
 				"schema_name": {
-					Description: "The schema of the table.",
-					Type:        schema.TypeString,
-					Optional:    true,
-					Computed:    true,
-					ForceNew:    true,
-				},
-				"alias": {
-					Description: "An alias for the table, used in Materialize.",
-					Type:        schema.TypeString,
-					Optional:    true,
-					Computed:    true,
-					ForceNew:    true,
-				},
-				"alias_schema_name": {
-					Description: "The schema of the alias table in Materialize.",
+					Description: "The schema of the table in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
@@ -247,10 +247,10 @@ func sourceMySQLRead(ctx context.Context, d *schema.ResourceData, meta interface
 	tMaps := []interface{}{}
 	for _, dep := range deps {
 		tMap := map[string]interface{}{}
-		tMap["name"] = dep.TableName.String
-		tMap["schema_name"] = dep.TableSchemaName.String
-		tMap["alias"] = dep.ObjectName.String
-		tMap["alias_schema_name"] = dep.ObjectSchemaName.String
+		tMap["upstream_name"] = dep.UpstreamTableName.String
+		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
+		tMap["name"] = dep.ObjectName.String
+		tMap["schema_name"] = dep.ObjectSchemaName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {

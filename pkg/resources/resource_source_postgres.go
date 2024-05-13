@@ -43,25 +43,25 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Type:        schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The name of the table.",
+				"upstream_name": {
+					Description: "The name of the table in the upstream Postgres database.",
 					Type:        schema.TypeString,
 					Required:    true,
 				},
+				"upstream_schema_name": {
+					Description: "The schema of the table in the upstream Postgres database.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
+				"name": {
+					Description: "The name of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
 				"schema_name": {
-					Description: "The schema of the table.",
-					Type:        schema.TypeString,
-					Optional:    true,
-					Computed:    true,
-				},
-				"alias": {
-					Description: "The alias of the table in Materialize.",
-					Type:        schema.TypeString,
-					Optional:    true,
-					Computed:    true,
-				},
-				"alias_schema_name": {
-					Description: "The schema of the alias table in Materialize.",
+					Description: "The schema of the table in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
@@ -158,10 +158,10 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 	tMaps := []interface{}{}
 	for _, dep := range deps {
 		tMap := map[string]interface{}{}
-		tMap["name"] = dep.TableName.String
-		tMap["schema_name"] = dep.TableSchemaName.String
-		tMap["alias"] = dep.ObjectName.String
-		tMap["alias_schema_name"] = dep.ObjectSchemaName.String
+		tMap["upstream_name"] = dep.UpstreamTableName.String
+		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
+		tMap["name"] = dep.ObjectName.String
+		tMap["schema_name"] = dep.ObjectSchemaName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {
