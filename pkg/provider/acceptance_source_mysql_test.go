@@ -101,8 +101,8 @@ func TestAccSourceMySQL_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", updatedName+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", "mysql_table1"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.schema_name", "shop"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.upstream_name", "mysql_table1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.upstream_schema_name", "shop"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", fmt.Sprintf(`%s_mysql_table1`, updatedName)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.upstream_name", "mysql_table2"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.upstream_schema_name", "shop"),
