@@ -152,7 +152,6 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }

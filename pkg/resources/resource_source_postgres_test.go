@@ -58,10 +58,6 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 		pt := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
 		testhelpers.MockPosgresSubsourceScan(mock, pt)
 
-		// Query Subsources
-		ps := `WHERE filter_id = 'u1' AND type = 'source'`
-		testhelpers.MockSubsourceScan(mock, ps)
-
 		if err := sourcePostgresCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}

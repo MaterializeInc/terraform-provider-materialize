@@ -398,25 +398,6 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 	}
 }
 
-func SubsourceSchema() *schema.Schema {
-	return &schema.Schema{
-		Description: "Subsources of a source.",
-		Type:        schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The name of the subsource.",
-					Type:        schema.TypeString,
-					Required:    true,
-				},
-				"schema_name":   SchemaNameSchema("source", false),
-				"database_name": DatabaseNameSchema("source", false),
-			},
-		},
-		Computed: true,
-	}
-}
-
 func ObjectClusterNameSchema(objectType string) *schema.Schema {
 	return &schema.Schema{
 		Description: fmt.Sprintf("The cluster to maintain this %s.", objectType),

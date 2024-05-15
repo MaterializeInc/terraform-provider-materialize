@@ -45,7 +45,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `counter_options` (Block List, Max: 1) Counter Options. (see [below for nested schema](#nestedblock--counter_options))
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `expose_progress` (Block List, Max: 1) The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
+- `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `key_value_options` (Block List, Max: 1) KEY VALUE Load Generator Options. (see [below for nested schema](#nestedblock--key_value_options))
 - `marketing_options` (Block List, Max: 1) Marketing Options. (see [below for nested schema](#nestedblock--marketing_options))
 - `ownership_role` (String) The owernship role of the object.
@@ -58,7 +58,6 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
-- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--auction_options"></a>
 ### Nested Schema for `auction_options`
@@ -126,16 +125,6 @@ Optional:
 
 - `scale_factor` (Number) The scale factor for the generator. Defaults to 0.01 (~ 10MB).
 - `tick_interval` (String) The interval at which the next datum should be emitted. Defaults to one second.
-
-
-<a id="nestedatt--subsource"></a>
-### Nested Schema for `subsource`
-
-Read-Only:
-
-- `database_name` (String)
-- `name` (String)
-- `schema_name` (String)
 
 ## Import
 

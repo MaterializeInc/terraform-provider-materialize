@@ -42,7 +42,6 @@ func TestAccSourceWebhook_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.1.field.0.headers", "true"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.2.field.0.secret.0.name", secretName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_expression", "headers->'authorization' = BASIC_HOOK_AUTH"),
-					resource.TestCheckResourceAttr("materialize_source_webhook.test", "subsource.#", "0"),
 				),
 			},
 			{

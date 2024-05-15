@@ -75,7 +75,6 @@ resource "materialize_source_webhook" "example_webhook" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
-- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--check_options"></a>
 ### Nested Schema for `check_options`
@@ -134,16 +133,6 @@ Optional:
 - `all` (Boolean) Include all headers.
 - `not` (List of String) Headers that should be excluded.
 - `only` (List of String) Headers that should be included.
-
-
-<a id="nestedatt--subsource"></a>
-### Nested Schema for `subsource`
-
-Read-Only:
-
-- `database_name` (String)
-- `name` (String)
-- `schema_name` (String)
 
 ## Import
 

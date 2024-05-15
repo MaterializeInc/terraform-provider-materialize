@@ -35,12 +35,10 @@ func TestAccSourceLoadGeneratorCounter_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.max_cardinality", "8"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "ownership_role", "mz_system"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsources.#", "0"),
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "name", source2Name),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "comment", "Comment"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "subsources.#", "0"),
 				),
 			},
 			{
@@ -70,9 +68,6 @@ func TestAccSourceLoadGeneratorAuction_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "AUCTION"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "auction_options.0.tick_interval", "1000ms"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.#", "6"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.0.schema_name", "auction"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.0.database_name", "materialize"),
 				),
 			},
 			{
@@ -102,9 +97,6 @@ func TestAccSourceLoadGeneratorMarketing_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "MARKETING"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "marketing_options.0.tick_interval", "1000ms"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.#", "7"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.0.schema_name", "marketing"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.0.database_name", "materialize"),
 				),
 			},
 			{
@@ -135,9 +127,6 @@ func TestAccSourceLoadGeneratorTPCH_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "TPCH"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.tick_interval", "1000ms"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.scale_factor", "0.1"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.#", "9"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.0.schema_name", "tpch"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "subsource.0.database_name", "materialize"),
 				),
 			},
 			{
