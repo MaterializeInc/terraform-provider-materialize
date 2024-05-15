@@ -65,7 +65,6 @@ resource "materialize_source_mysql" "test" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
-- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--mysql_connection"></a>
 ### Nested Schema for `mysql_connection`
@@ -102,19 +101,10 @@ Required:
 
 Optional:
 
+- `database_name` (String) The database of the table in Materialize.
 - `name` (String) The name for the table, used in Materialize.
 - `schema_name` (String) The schema of the table in Materialize.
 - `upstream_schema_name` (String) The schema of the table in the upstream MySQL database.
-
-
-<a id="nestedatt--subsource"></a>
-### Nested Schema for `subsource`
-
-Read-Only:
-
-- `database_name` (String)
-- `name` (String)
-- `schema_name` (String)
 
 ## Import
 

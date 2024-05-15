@@ -91,7 +91,10 @@ func (b *SourcePostgresBuilder) Create() error {
 		if t.SchemaName == "" {
 			t.SchemaName = b.SchemaName
 		}
-		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
+		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
 		if i < len(b.table)-1 {
 			q.WriteString(`, `)
 		}
@@ -115,8 +118,11 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 		if t.SchemaName == "" {
 			t.SchemaName = b.SchemaName
 		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
 		if t.Name != "" {
-			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
+			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		} else {
 			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName))
@@ -142,8 +148,11 @@ func (b *Source) DropSubsource(subsources []TableStruct) error {
 		if t.SchemaName == "" {
 			t.SchemaName = b.SchemaName
 		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
 		if t.Name != "" {
-			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		} else {
 			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(b.SchemaName), QuoteIdentifier(t.UpstreamName))

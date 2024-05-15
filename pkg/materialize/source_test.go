@@ -24,18 +24,18 @@ func TestAreUnequal(t *testing.T) {
 
 func TestDiffTableStructs(t *testing.T) {
 	arr1 := []interface{}{
-		map[string]interface{}{"upstream_name": "old", "upstream_schema_name": "public", "name": "old", "schema_name": "public"},
-		map[string]interface{}{"upstream_name": "old_1", "upstream_schema_name": "public", "name": "old_2", "schema_name": "public"},
-		map[string]interface{}{"upstream_name": "shared", "upstream_schema_name": "public", "name": "shared", "schema_name": "public"},
+		map[string]interface{}{"upstream_name": "old", "upstream_schema_name": "public", "name": "old", "schema_name": "public", "database_name": "database"},
+		map[string]interface{}{"upstream_name": "old_1", "upstream_schema_name": "public", "name": "old_2", "schema_name": "public", "database_name": "database"},
+		map[string]interface{}{"upstream_name": "shared", "upstream_schema_name": "public", "name": "shared", "schema_name": "public", "database_name": "database"},
 	}
 	arr2 := []interface{}{
-		map[string]interface{}{"upstream_name": "shared", "upstream_schema_name": "public", "name": "shared", "schema_name": "public"},
-		map[string]interface{}{"upstream_name": "new", "upstream_schema_name": "public", "name": "new", "schema_name": "public"},
+		map[string]interface{}{"upstream_name": "shared", "upstream_schema_name": "public", "name": "shared", "schema_name": "public", "database_name": "database"},
+		map[string]interface{}{"upstream_name": "new", "upstream_schema_name": "public", "name": "new", "schema_name": "public", "database_name": "database"},
 	}
 	o := DiffTableStructs(arr1, arr2)
 	e := []TableStruct{
-		{UpstreamName: "old", UpstreamSchemaName: "public", Name: "old", SchemaName: "public"},
-		{UpstreamName: "old_1", UpstreamSchemaName: "public", Name: "old_2", SchemaName: "public"},
+		{UpstreamName: "old", UpstreamSchemaName: "public", Name: "old", SchemaName: "public", DatabaseName: "database"},
+		{UpstreamName: "old_1", UpstreamSchemaName: "public", Name: "old_2", SchemaName: "public", DatabaseName: "database"},
 	}
 	if !reflect.DeepEqual(o, e) {
 		t.Fatalf("Expect %s %s to be equal", o, e)

@@ -11,6 +11,7 @@ import (
 type TableStruct struct {
 	Name               string
 	SchemaName         string
+	DatabaseName       string
 	UpstreamName       string
 	UpstreamSchemaName string
 }
@@ -22,6 +23,7 @@ func GetTableStruct(v []interface{}) []TableStruct {
 		tables = append(tables, TableStruct{
 			Name:               t["name"].(string),
 			SchemaName:         t["schema_name"].(string),
+			DatabaseName:       t["database_name"].(string),
 			UpstreamName:       t["upstream_name"].(string),
 			UpstreamSchemaName: t["upstream_schema_name"].(string),
 		})
@@ -45,6 +47,7 @@ func DiffTableStructs(arr1, arr2 []interface{}) []TableStruct {
 				difference = append(difference, TableStruct{
 					Name:               diffItem["name"].(string),
 					SchemaName:         diffItem["schema_name"].(string),
+					DatabaseName:       diffItem["database_name"].(string),
 					UpstreamName:       diffItem["upstream_name"].(string),
 					UpstreamSchemaName: diffItem["upstream_schema_name"].(string),
 				})
@@ -62,7 +65,7 @@ func areEqual(a, b interface{}) bool {
 
 	if aItem, ok := a.(map[string]interface{}); ok {
 		if bItem, ok := b.(map[string]interface{}); ok {
-			return aItem["upstream_name"].(string) == bItem["upstream_name"].(string) && aItem["name"].(string) == bItem["name"].(string) && aItem["schema_name"].(string) == bItem["schema_name"].(string) && aItem["upstream_schema_name"].(string) == bItem["upstream_schema_name"].(string)
+			return aItem["upstream_name"].(string) == bItem["upstream_name"].(string) && aItem["name"].(string) == bItem["name"].(string) && aItem["schema_name"].(string) == bItem["schema_name"].(string) && aItem["database_name"].(string) == bItem["database_name"].(string) && aItem["upstream_schema_name"].(string) == bItem["upstream_schema_name"].(string)
 		}
 	}
 

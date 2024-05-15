@@ -68,7 +68,6 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
-- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--postgres_connection"></a>
 ### Nested Schema for `postgres_connection`
@@ -92,6 +91,7 @@ Required:
 
 Optional:
 
+- `database_name` (String) The database of the table in Materialize.
 - `name` (String) The name of the table in Materialize.
 - `schema_name` (String) The schema of the table in Materialize.
 - `upstream_schema_name` (String) The schema of the table in the upstream Postgres database.
@@ -108,16 +108,6 @@ Optional:
 
 - `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The expose_progress schema name. Defaults to `public`.
-
-
-<a id="nestedatt--subsource"></a>
-### Nested Schema for `subsource`
-
-Read-Only:
-
-- `database_name` (String)
-- `name` (String)
-- `schema_name` (String)
 
 ## Import
 

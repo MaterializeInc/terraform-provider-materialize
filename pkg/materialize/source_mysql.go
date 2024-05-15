@@ -101,7 +101,10 @@ func (b *SourceMySQLBuilder) Create() error {
 			if t.SchemaName == "" {
 				t.SchemaName = b.SchemaName
 			}
-			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(b.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
+			if t.DatabaseName == "" {
+				t.DatabaseName = b.DatabaseName
+			}
+			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
 			if i < len(b.tables)-1 {
 				q.WriteString(`, `)
 			}

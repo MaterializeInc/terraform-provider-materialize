@@ -38,7 +38,7 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM MYSQL CONNECTION "materialize"."public"."mysql_connection" \(IGNORE COLUMNS \(column1, column2\), TEXT COLUMNS \(column3, column4\)\) FOR TABLES \("schema"."name1" AS "database"."schema"."alias", "schema"."name2" AS "database"."schema"."name2"\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM MYSQL CONNECTION "materialize"."public"."mysql_connection" \(IGNORE COLUMNS \(column1, column2\), TEXT COLUMNS \(column3, column4\)\) FOR TABLES \("schema"."name2" AS "database"."schema"."name2", "schema"."name1" AS "database"."schema"."alias"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -52,10 +52,6 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 		// Query Tables
 		pt := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
 		testhelpers.MockMysqlSubsourceScan(mock, pt)
-
-		// Query Subsources
-		ps := `WHERE filter_id = 'u1' AND type = 'source'`
-		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceMySQLCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

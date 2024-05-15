@@ -73,6 +73,13 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 					Computed:    true,
 					ForceNew:    true,
 				},
+				"database_name": {
+					Description: "The database of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
 			},
 		},
 	},
@@ -82,7 +89,6 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -254,24 +260,6 @@ func sourceMySQLRead(ctx context.Context, d *schema.ResourceData, meta interface
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {
-		return diag.FromErr(err)
-	}
-
-	subs, err := materialize.ListDependencies(metaDb, utils.ExtractId(i), "source")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Subsources
-	sMaps := []interface{}{}
-	for _, dep := range subs {
-		sMap := map[string]interface{}{}
-		sMap["name"] = dep.ObjectName.String
-		sMap["schema_name"] = dep.SchemaName.String
-		sMap["database_name"] = dep.DatabaseName.String
-		sMaps = append(sMaps, sMap)
-	}
-	if err := d.Set("subsource", sMaps); err != nil {
 		return diag.FromErr(err)
 	}
 

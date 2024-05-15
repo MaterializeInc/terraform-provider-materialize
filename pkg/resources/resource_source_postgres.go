@@ -66,6 +66,12 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Computed:    true,
 				},
+				"database_name": {
+					Description: "The database of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
 			},
 		},
 		Required: true,
@@ -77,7 +83,6 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -162,27 +167,10 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
 		tMap["name"] = dep.ObjectName.String
 		tMap["schema_name"] = dep.ObjectSchemaName.String
+		tMap["database_name"] = dep.ObjectDatabaseName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {
-		return diag.FromErr(err)
-	}
-
-	subs, err := materialize.ListDependencies(metaDb, utils.ExtractId(i), "source")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Subsources
-	sMaps := []interface{}{}
-	for _, dep := range subs {
-		sMap := map[string]interface{}{}
-		sMap["name"] = dep.ObjectName.String
-		sMap["schema_name"] = dep.SchemaName.String
-		sMap["database_name"] = dep.DatabaseName.String
-		sMaps = append(sMaps, sMap)
-	}
-	if err := d.Set("subsource", sMaps); err != nil {
 		return diag.FromErr(err)
 	}
 
