@@ -39,7 +39,7 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"table": {
-		Description: "Specifie the tables to be included in the source. If not specified, all tables are included.",
+		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
 		Type:        schema.TypeSet,
 		Optional:    true,
 		// TODO: Disable ForceNew when Materialize supports altering subsource
