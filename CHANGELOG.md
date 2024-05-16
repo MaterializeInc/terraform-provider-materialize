@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## 0.8.0 - 2024-05-16
+
+### Breaking Changes
+* This release introduces a breaking change to the `materialize_source_postgres` resources configuration: [#487](https://github.com/MaterializeInc/terraform-provider-materialize/pull/487)
+  * **The `schema` property is removed**: The `schema` property is removed from the `materialize_source_postgres` resource configuration. Users must now explicitly define the `table` block to specify the tables to include in the source. This change is designed to ensure consistency and predictability in the Terraform provider's behavior.
+  * **The `table` block is now required**: Previously, the `table` block was optional, allowing users to specify specific tables to include in the source. Starting with version `v0.8.0`, the `table` block is now required. Users must explicitly define the tables to be included in the source. This change is designed to ensure consistency and predictability in the Terraform provider's behavior.
+  * **Changes to the `table` block**: The `tables` property schema has been updated as follows:
+
+  ```hcl
+    table {
+      upstream_name        = string # Required: The name of the table in the upstream database: Previously `name`
+      upstream_schema_name = string # The schema of the table in the upstream database
+      name                 = string # The name of the table in Materialize: Previously `alias`
+      schema_name          = string # The schema of the table in Materialize
+      datatabase_name      = string # The name of the database where the table will be created in Materialize
+    }
+  ```
+
+  * **Migration Guide**: For a detailed guide on adapting to these changes, refer to the migration guide [here](https://github.com/MaterializeInc/terraform-provider-materialize/pull/487)
+
+* The `subsource` read-only attribute is removed from all source resources as part of a change to align with Materialize's internal behavior.
+
+## Misc
+* Routine dependency updates: [#564](https://github.com/MaterializeInc/terraform-provider-materialize/pull/564)
+
 ## 0.7.1 - 2024-04-30
 
 ### Features
