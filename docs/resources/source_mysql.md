@@ -52,11 +52,12 @@ resource "materialize_source_mysql" "test" {
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `ignore_columns` (List of String) Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
-- `table` (Block Set) Specifies the tables to be included in the source. If not specified, all tables are included. (see [below for nested schema](#nestedblock--table))
+- `table` (Block Set) Specify the tables to be included in the source. If not specified, all tables are included. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
 
 ### Read-Only
@@ -64,7 +65,6 @@ resource "materialize_source_mysql" "test" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
-- `subsource` (List of Object) Subsources of a source. (see [below for nested schema](#nestedatt--subsource))
 
 <a id="nestedblock--mysql_connection"></a>
 ### Nested Schema for `mysql_connection`
@@ -79,26 +79,32 @@ Optional:
 - `schema_name` (String) The mysql_connection schema name. Defaults to `public`.
 
 
+<a id="nestedblock--expose_progress"></a>
+### Nested Schema for `expose_progress`
+
+Required:
+
+- `name` (String) The expose_progress name.
+
+Optional:
+
+- `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The expose_progress schema name. Defaults to `public`.
+
+
 <a id="nestedblock--table"></a>
 ### Nested Schema for `table`
 
 Required:
 
-- `name` (String) The name of the table.
+- `upstream_name` (String) The name of the table in the upstream MySQL database.
 
 Optional:
 
-- `alias` (String) An alias for the table, used in Materialize.
-
-
-<a id="nestedatt--subsource"></a>
-### Nested Schema for `subsource`
-
-Read-Only:
-
-- `database_name` (String)
-- `name` (String)
-- `schema_name` (String)
+- `database_name` (String) The database of the table in Materialize.
+- `name` (String) The name for the table, used in Materialize.
+- `schema_name` (String) The schema of the table in Materialize.
+- `upstream_schema_name` (String) The schema of the table in the upstream MySQL database.
 
 ## Import
 

@@ -15,6 +15,7 @@ type SourceMySQLBuilder struct {
 	ignoreColumns   []string
 	textColumns     []string
 	tables          []TableStruct
+	exposeProgress  IdentifierSchemaStruct
 }
 
 func NewSourceMySQLBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceMySQLBuilder {
@@ -54,6 +55,11 @@ func (b *SourceMySQLBuilder) Tables(tables []TableStruct) *SourceMySQLBuilder {
 	return b
 }
 
+func (b *SourceMySQLBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourceMySQLBuilder {
+	b.exposeProgress = e
+	return b
+}
+
 func (b *SourceMySQLBuilder) Create() error {
 	q := strings.Builder{}
 
@@ -85,11 +91,20 @@ func (b *SourceMySQLBuilder) Create() error {
 
 	if len(b.tables) > 0 {
 		q.WriteString(` FOR TABLES (`)
-		for i, table := range b.tables {
-			if table.Alias == "" {
-				table.Alias = table.Name
+		for i, t := range b.tables {
+			if t.UpstreamSchemaName == "" {
+				t.UpstreamSchemaName = b.SchemaName
 			}
-			q.WriteString(fmt.Sprintf(`%s AS %s`, table.Name, table.Alias))
+			if t.Name == "" {
+				t.Name = t.UpstreamName
+			}
+			if t.SchemaName == "" {
+				t.SchemaName = b.SchemaName
+			}
+			if t.DatabaseName == "" {
+				t.DatabaseName = b.DatabaseName
+			}
+			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
 			if i < len(b.tables)-1 {
 				q.WriteString(`, `)
 			}
@@ -97,6 +112,10 @@ func (b *SourceMySQLBuilder) Create() error {
 		q.WriteString(`)`)
 	} else {
 		q.WriteString(` FOR ALL TABLES`)
+	}
+
+	if b.exposeProgress.Name != "" {
+		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
 	}
 
 	q.WriteString(`;`)

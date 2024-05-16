@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -38,27 +39,56 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"table": {
-		Description: "Specifies the tables to be included in the source. If not specified, all tables are included.",
+		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
 		Type:        schema.TypeSet,
 		Optional:    true,
 		// TODO: Disable ForceNew when Materialize supports altering subsource
 		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The name of the table.",
+				"upstream_name": {
+					Description: "The name of the table in the upstream MySQL database.",
 					Type:        schema.TypeString,
 					Required:    true,
+					ForceNew:    true,
 				},
-				"alias": {
-					Description: "An alias for the table, used in Materialize.",
+				"upstream_schema_name": {
+					Description: "The schema of the table in the upstream MySQL database.",
 					Type:        schema.TypeString,
 					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
+				"name": {
+					Description: "The name for the table, used in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
+				"schema_name": {
+					Description: "The schema of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
+				"database_name": {
+					Description: "The database of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
 				},
 			},
 		},
 	},
-	"subsource":      SubsourceSchema(),
+	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "expose_progress",
+		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
+		Required:    false,
+		ForceNew:    true,
+	}),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -68,9 +98,9 @@ func SourceMySQL() *schema.Resource {
 		Description: "A MySQL source describes a MySQL instance you want Materialize to read data from.",
 
 		CreateContext: sourceMySQLCreate,
-		ReadContext:   sourceRead,
+		ReadContext:   sourceMySQLRead,
 		UpdateContext: sourceMySQLUpdate,
-		DeleteContext: sourceDelete,
+		DeleteContext: sourceMySQLDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -124,6 +154,11 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		b.TextColumns(columns)
 	}
 
+	if v, ok := d.GetOk("expose_progress"); ok {
+		e := materialize.GetIdentifierSchemaStruct(v)
+		b.ExposeProgress(e)
+	}
+
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
@@ -156,7 +191,79 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourceMySQLRead(ctx, d, meta)
+}
+
+func sourceMySQLRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	i := d.Id()
+
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanSource(metaDb, utils.ExtractId(i))
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	if err := d.Set("name", s.SourceName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", s.Size.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.Source{SourceName: s.SourceName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	deps, err := materialize.ListMysqlSubsources(metaDb, utils.ExtractId(i), "subsource")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Tables
+	tMaps := []interface{}{}
+	for _, dep := range deps {
+		tMap := map[string]interface{}{}
+		tMap["upstream_name"] = dep.UpstreamTableName.String
+		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
+		tMap["name"] = dep.ObjectName.String
+		tMap["schema_name"] = dep.ObjectSchemaName.String
+		tMaps = append(tMaps, tMap)
+	}
+	if err := d.Set("table", tMaps); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
 }
 
 func sourceMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -189,7 +296,7 @@ func sourceMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		}
 	}
 
-	// TODO: Handle subsource updates when supported by Materialize
+	// TODO: Handle subsource/table updates when supported by Materialize
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
@@ -200,5 +307,23 @@ func sourceMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		}
 	}
 
-	return sourceRead(ctx, d, meta)
+	return sourceMySQLRead(ctx, d, meta)
+}
+
+func sourceMySQLDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	o := materialize.MaterializeObject{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSource(metaDb, o)
+
+	if err := b.DropCascade(); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

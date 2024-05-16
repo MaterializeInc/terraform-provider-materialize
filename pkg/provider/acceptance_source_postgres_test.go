@@ -31,46 +31,13 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "25cc"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.upstream_name", "table1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", fmt.Sprintf(`%s_table1`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.upstream_name", "table2"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", fmt.Sprintf(`%s_table2`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "comment", ""),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "subsource.#", "3"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "subsource.0.schema_name", nameSpace+"_schema"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "subsource.0.database_name", nameSpace+"_database"),
-				),
-			},
-			{
-				ResourceName:      "materialize_source_postgres.test",
-				ImportState:       true,
-				ImportStateVerify: false,
-			},
-		},
-	})
-}
-
-func TestAccSourcePostgresSchema_basic(t *testing.T) {
-	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourcePostgresResourceSchema(sourceName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSourcePostgresExists("materialize_source_postgres.test"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "name", sourceName+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "cluster_name", sourceName+"_cluster"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "publication", "mz_source"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.#", "1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "schema.0", "PUBLIC"),
 				),
 			},
 			{
@@ -104,10 +71,10 @@ func TestAccSourcePostgres_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, connName)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.upstream_name", "table1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", fmt.Sprintf(`%s_table1`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.upstream_name", "table2"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", fmt.Sprintf(`%s_table2`, connName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "comment", "Comment"),
 				),
@@ -121,10 +88,10 @@ func TestAccSourcePostgres_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", "table1"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.alias", fmt.Sprintf(`%s_table1`, connName)),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table3"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table3`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.upstream_name", "table1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", fmt.Sprintf(`%s_table1`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.upstream_name", "table3"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", fmt.Sprintf(`%s_table3`, connName)),
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test_role", "comment", "New Comment"),
@@ -137,8 +104,8 @@ func TestAccSourcePostgres_update(t *testing.T) {
 					testAccCheckSourcePostgresExists("materialize_source_postgres.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", "table2"),
-					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.alias", fmt.Sprintf(`%s_table2`, connName)),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.upstream_name", "table2"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.1.name", fmt.Sprintf(`%s_table2`, connName)),
 				),
 			},
 		},
@@ -228,12 +195,14 @@ func testAccSourcePostgresBasicResource(nameSpace string) string {
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[1]s_table1"
+			upstream_name  		 = "table1"
+			upstream_schema_name = "public"
+			name 				 = "%[1]s_table1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[1]s_table2"
+			upstream_name		= "table2"
+			upstream_schema_name = "public"
+			name				= "%[1]s_table2"
 		}
 		text_columns = ["table1.id"]
 	}
@@ -280,12 +249,14 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table1"
+			upstream_name  		= "table1"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[3]s_table2"
+			upstream_name  		= "table2"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table2"
 		}
 		text_columns = ["table1.id"]
 	}
@@ -299,12 +270,14 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table_role_1"
+			upstream_name  		= "table1"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table_role_1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[3]s_table_role_2"
+			upstream_name  		= "table2"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table_role_2"
 		}
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
@@ -354,12 +327,14 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table1"
+			upstream_name  		= "table1"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table1"
 		}
 		table {
-			name  = "table3"
-			alias = "%[3]s_table3"
+			upstream_name  		= "table3"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table3"
 		}
 		text_columns = ["table1.id", "table3.id"]
 	}
@@ -373,12 +348,14 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 		cluster_name = materialize_cluster.test.name
 		publication = "mz_source"
 		table {
-			name  = "table1"
-			alias = "%[3]s_table_role_1"
+			upstream_name  		= "table1"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table_role_1"
 		}
 		table {
-			name  = "table2"
-			alias = "%[3]s_table_role_2"
+			upstream_name  		= "table2"
+			upstream_schema_name = "public"
+			name 		= "%[3]s_table_role_2"
 		}
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
@@ -424,7 +401,11 @@ func testAccSourcePostgresResourceSchema(sourceName string) string {
 			database_name = materialize_connection_postgres.test.database_name
 		}
 		publication = "mz_source"
-		schema      = ["PUBLIC"]
+		table {
+			upstream_name  		= "table1"
+			upstream_schema_name = "public"
+			name 		= "%[1]s_table1"
+		}
 	}
 	`, sourceName)
 }

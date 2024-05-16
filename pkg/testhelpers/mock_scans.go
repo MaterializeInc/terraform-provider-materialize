@@ -571,24 +571,105 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 
 func MockSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
+WITH dependencies AS \(
 	SELECT
 		mz_object_dependencies.object_id,
 		mz_object_dependencies.referenced_object_id,
 		mz_objects.name AS object_name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_objects.type
+		mz_objects.type,
+		mz_object_dependencies.object_id AS filter_id,
+		'object' AS source_type
 	FROM mz_internal.mz_object_dependencies
 	JOIN mz_objects
 		ON mz_object_dependencies.referenced_object_id = mz_objects.id
 	JOIN mz_schemas
 		ON mz_objects.schema_id = mz_schemas.id
 	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id`
+		ON mz_schemas.database_id = mz_databases.id
+	UNION
+	SELECT
+		mz_object_dependencies.object_id,
+		mz_object_dependencies.referenced_object_id,
+		mz_objects.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_objects.type,
+		mz_object_dependencies.referenced_object_id AS filter_id,
+		'reference' AS source_type
+	FROM mz_internal.mz_object_dependencies
+	JOIN mz_objects
+		ON mz_object_dependencies.object_id = mz_objects.id
+	JOIN mz_schemas
+		ON mz_objects.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id\)
+	SELECT \* FROM dependencies`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type"}).
-		AddRow("u1", "u2", "object", "schema", "database", "source")
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type", "filter_id", "source_type"}).
+		AddRow("u1", "u2", "object", "schema", "database", "source", "u1", "object")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+// MockPosgresSubsourceScan mocks the scan of a postgres source
+func MockPosgresSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT DISTINCT
+		mz_sources.id AS object_id,
+		subsources.id AS referenced_object_id,
+		mz_sources.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_sources.type,
+		mz_postgres_source_tables.table_name AS upstream_table_name,
+		mz_postgres_source_tables.schema_name AS upstream_table_schema
+	FROM mz_sources AS subsources
+	JOIN mz_internal.mz_object_dependencies
+		ON subsources.id = mz_object_dependencies.referenced_object_id
+	JOIN mz_sources
+		ON mz_sources.id = mz_object_dependencies.object_id
+	JOIN mz_schemas
+		ON mz_sources.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_internal.mz_postgres_source_tables
+		ON mz_sources.id = mz_postgres_source_tables.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type", "upstream_table_name", "upstream_table_schema"}).
+		AddRow("u1", "u2", "object", "schema", "database", "source", "table", "table_schema")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+// MockMysqlSubsourceScan mocks the scan of a postgres source
+func MockMysqlSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT DISTINCT
+		mz_sources.id AS object_id,
+		subsources.id AS referenced_object_id,
+		mz_sources.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_sources.type,
+		mz_mysql_source_tables.table_name AS upstream_table_name,
+		mz_mysql_source_tables.schema_name AS upstream_table_schema
+	FROM mz_sources AS subsources
+	JOIN mz_internal.mz_object_dependencies
+		ON subsources.id = mz_object_dependencies.referenced_object_id
+	JOIN mz_sources
+		ON mz_sources.id = mz_object_dependencies.object_id
+	JOIN mz_schemas
+		ON mz_sources.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_internal.mz_mysql_source_tables
+		ON mz_sources.id = mz_mysql_source_tables.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type", "upstream_table_name", "upstream_table_schema"}).
+		AddRow("u1", "u2", "object", "schema", "database", "source", "table", "table_schema")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

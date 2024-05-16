@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -38,42 +39,50 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"table": {
-		Description: "Creates subsources for specific tables. If neither table or schema is specified, will default to ALL TABLES",
-		Type:        schema.TypeList,
+		Description: "Creates subsources for specific tables in the Postgres connection.",
+		Type:        schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": {
-					Description: "The name of the table.",
+				"upstream_name": {
+					Description: "The name of the table in the upstream Postgres database.",
 					Type:        schema.TypeString,
 					Required:    true,
 				},
-				"alias": {
-					Description: "The alias of the table.",
+				"upstream_schema_name": {
+					Description: "The schema of the table in the upstream Postgres database.",
 					Type:        schema.TypeString,
 					Optional:    true,
+					Computed:    true,
+				},
+				"name": {
+					Description: "The name of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
+				"schema_name": {
+					Description: "The schema of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+				},
+				"database_name": {
+					Description: "The database of the table in Materialize.",
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
 				},
 			},
 		},
-		Optional:      true,
-		MinItems:      1,
-		ConflictsWith: []string{"schema"},
-	},
-	"schema": {
-		Description:   "Creates subsources for specific schemas. If neither table or schema is specified, will default to ALL TABLES",
-		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeString},
-		Optional:      true,
-		ForceNew:      true,
-		MinItems:      1,
-		ConflictsWith: []string{"table"},
+		Required: true,
+		MinItems: 1,
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
-		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
+		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -83,9 +92,9 @@ func SourcePostgres() *schema.Resource {
 		Description: "A Postgres source describes a PostgreSQL instance you want Materialize to read data from.",
 
 		CreateContext: sourcePostgresCreate,
-		ReadContext:   sourceRead,
+		ReadContext:   sourcePostgresRead,
 		UpdateContext: sourcePostgresUpdate,
-		DeleteContext: sourceDelete,
+		DeleteContext: sourcePostgresDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -93,6 +102,79 @@ func SourcePostgres() *schema.Resource {
 
 		Schema: sourcePostgresSchema,
 	}
+}
+
+func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	i := d.Id()
+
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	s, err := materialize.ScanSource(metaDb, utils.ExtractId(i))
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	if err := d.Set("name", s.SourceName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("size", s.Size.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	b := materialize.Source{SourceName: s.SourceName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
+	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("comment", s.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	deps, err := materialize.ListPostgresSubsources(metaDb, utils.ExtractId(i), "subsource")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Tables
+	tMaps := []interface{}{}
+	for _, dep := range deps {
+		tMap := map[string]interface{}{}
+		tMap["upstream_name"] = dep.UpstreamTableName.String
+		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
+		tMap["name"] = dep.ObjectName.String
+		tMap["schema_name"] = dep.ObjectSchemaName.String
+		tMap["database_name"] = dep.ObjectDatabaseName.String
+		tMaps = append(tMaps, tMap)
+	}
+	if err := d.Set("table", tMaps); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
 }
 
 func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -121,17 +203,9 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("table"); ok {
-		tables := materialize.GetTableStruct(v.([]interface{}))
-		b.Table(tables)
-	}
-
-	if v, ok := d.GetOk("schema"); ok && len(v.([]interface{})) > 0 {
-		schemas, err := materialize.GetSliceValueString("schema", v.([]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		b.Schema(schemas)
-
+		tables := v.(*schema.Set).List()
+		t := materialize.GetTableStruct(tables)
+		b.Table(t)
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
@@ -181,7 +255,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourcePostgresRead(ctx, d, meta)
 }
 
 func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -216,9 +290,13 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 
 	if d.HasChange("table") {
 		ot, nt := d.GetChange("table")
-		addTables := materialize.DiffTableStructs(nt.([]interface{}), ot.([]interface{}))
-		dropTables := materialize.DiffTableStructs(ot.([]interface{}), nt.([]interface{}))
-
+		addTables := materialize.DiffTableStructs(nt.(*schema.Set).List(), ot.(*schema.Set).List())
+		dropTables := materialize.DiffTableStructs(ot.(*schema.Set).List(), nt.(*schema.Set).List())
+		if len(dropTables) > 0 {
+			if err := b.DropSubsource(dropTables); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 		if len(addTables) > 0 {
 			var colDiff []string
 			if d.HasChange("text_columns") {
@@ -227,11 +305,6 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 			}
 
 			if err := b.AddSubsource(addTables, colDiff); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-		if len(dropTables) > 0 {
-			if err := b.DropSubsource(dropTables); err != nil {
 				return diag.FromErr(err)
 			}
 		}
@@ -246,7 +319,25 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 		}
 	}
 
-	return sourceRead(ctx, d, meta)
+	return sourcePostgresRead(ctx, d, meta)
+}
+
+func sourcePostgresDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	o := materialize.MaterializeObject{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSource(metaDb, o)
+
+	if err := b.DropCascade(); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func diffTextColumns(arr1, arr2 []interface{}) []string {

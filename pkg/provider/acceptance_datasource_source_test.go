@@ -21,7 +21,6 @@ func TestAccDatasourceSource_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.materialize_source.test_database", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database", "schema_name", nameSpace),
-					// Will be double the amount for subsources
 					resource.TestCheckResourceAttr("data.materialize_source.test_database", "sources.#", "6"),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "schema_name", nameSpace),

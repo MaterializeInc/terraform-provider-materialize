@@ -98,30 +98,18 @@ resource "materialize_source_postgres" "example_source_postgres" {
   }
   publication = "mz_source"
   table {
-    name  = "table1"
-    alias = "s1_table1"
+    upstream_name        = "table1"
+    upstream_schema_name = "public"
+    name                 = "s1_table1"
   }
   table {
-    name  = "table2"
-    alias = "s2_table1"
+    upstream_name        = "table2"
+    upstream_schema_name = "public"
+    name                 = "s2_table1"
   }
   expose_progress {
     name = "expose_postgres"
   }
-}
-
-resource "materialize_source_postgres" "example_source_postgres_schema" {
-  name         = "source_postgres_schema"
-  cluster_name = materialize_cluster.cluster_source.name
-  publication  = "mz_source"
-  schema       = ["PUBLIC"]
-
-  postgres_connection {
-    name          = materialize_connection_postgres.postgres_connection.name
-    schema_name   = materialize_connection_postgres.postgres_connection.schema_name
-    database_name = materialize_connection_postgres.postgres_connection.database_name
-  }
-
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
@@ -230,16 +218,19 @@ resource "materialize_source_mysql" "test" {
   # text_columns   = ["table1.id"]
 
   table {
-    name  = "shop.mysql_table1"
-    alias = "mysql_table1_alias"
+    upstream_name        = "mysql_table1"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table1_local"
   }
   table {
-    name  = "shop.mysql_table2"
-    alias = "mysql_table2_alias"
+    upstream_name        = "mysql_table2"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table2_local"
   }
   table {
-    name  = "shop.mysql_table3"
-    alias = "mysql_table3_alias"
+    upstream_name        = "mysql_table3"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table3_local"
   }
 }
 

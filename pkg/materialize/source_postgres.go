@@ -15,7 +15,6 @@ type SourcePostgresBuilder struct {
 	publication        string
 	textColumns        []string
 	table              []TableStruct
-	schema             []string
 	exposeProgress     IdentifierSchemaStruct
 }
 
@@ -56,11 +55,6 @@ func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	return b
 }
 
-func (b *SourcePostgresBuilder) Schema(t []string) *SourcePostgresBuilder {
-	b.schema = t
-	return b
-}
-
 func (b *SourcePostgresBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourcePostgresBuilder {
 	b.exposeProgress = e
 	return b
@@ -86,24 +80,26 @@ func (b *SourcePostgresBuilder) Create() error {
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
-	if len(b.table) > 0 {
-		q.WriteString(` FOR TABLES (`)
-		for i, t := range b.table {
-			if t.Alias == "" {
-				t.Alias = t.Name
-			}
-			q.WriteString(fmt.Sprintf(`%s AS %s`, t.Name, t.Alias))
-			if i < len(b.table)-1 {
-				q.WriteString(`, `)
-			}
+	q.WriteString(` FOR TABLES (`)
+	for i, t := range b.table {
+		if t.UpstreamSchemaName == "" {
+			t.UpstreamSchemaName = b.SchemaName
 		}
-		q.WriteString(`)`)
-	} else if len(b.schema) > 0 {
-		s := strings.Join(b.schema, ", ")
-		q.WriteString(fmt.Sprintf(` FOR SCHEMAS (%s)`, s))
-	} else {
-		q.WriteString(` FOR ALL TABLES`)
+		if t.Name == "" {
+			t.Name = t.UpstreamName
+		}
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
+		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
+		if i < len(b.table)-1 {
+			q.WriteString(`, `)
+		}
 	}
+	q.WriteString(`)`)
 
 	if b.exposeProgress.Name != "" {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))
@@ -116,11 +112,20 @@ func (b *SourcePostgresBuilder) Create() error {
 func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) error {
 	var subsrc []string
 	for _, t := range subsources {
-		if t.Alias != "" {
-			f := fmt.Sprintf("%s AS %s", QuoteIdentifier(t.Name), QuoteIdentifier(t.Alias))
+		if t.UpstreamSchemaName == "" {
+			t.UpstreamSchemaName = b.SchemaName
+		}
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
+		if t.Name != "" {
+			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		} else {
-			f := QuoteIdentifier(t.Name)
+			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName))
 			subsrc = append(subsrc, f)
 		}
 	}
@@ -134,22 +139,27 @@ func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) er
 		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
 	}
 
-	q.WriteString(";")
 	return b.ddl.exec(q.String())
 }
 
 func (b *Source) DropSubsource(subsources []TableStruct) error {
 	var subsrc []string
 	for _, t := range subsources {
-		if t.Alias != "" {
-			f := QuoteIdentifier(t.Alias)
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
+		if t.Name != "" {
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
 			subsrc = append(subsrc, f)
 		} else {
-			f := QuoteIdentifier(t.Name)
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(b.SchemaName), QuoteIdentifier(t.UpstreamName))
 			subsrc = append(subsrc, f)
 		}
 	}
 	s := strings.Join(subsrc, ", ")
-	q := fmt.Sprintf(`ALTER SOURCE %s DROP SUBSOURCE %s;`, b.QualifiedName(), s)
+	q := fmt.Sprintf(`DROP SOURCE %s;`, s)
 	return b.ddl.exec(q)
 }

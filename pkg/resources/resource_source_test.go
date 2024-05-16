@@ -14,7 +14,7 @@ import (
 // Confirm id is updated with region for 0.4.0
 func TestResourceSourceReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourcePostgresTable)
 	r.NotNil(d)
 
 	// Set current state
@@ -25,10 +25,6 @@ func TestResourceSourceReadIdMigration(t *testing.T) {
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
 
-		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
-		testhelpers.MockSubsourceScan(mock, ps)
-
 		if err := sourceRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
@@ -38,10 +34,9 @@ func TestResourceSourceReadIdMigration(t *testing.T) {
 		}
 	})
 }
-
 func TestResourceSourceUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourcePostgresTable)
 
 	// Set current state
 	d.SetId("u1")
@@ -53,10 +48,6 @@ func TestResourceSourceUpdate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
-
-		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
-		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

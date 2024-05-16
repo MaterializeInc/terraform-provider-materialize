@@ -176,11 +176,10 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
-		Description: "The name of the progress subsource for the source. If this is not specified, the subsource will be named `<src_name>_progress`.",
+		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"subsource":      SubsourceSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
 }
@@ -192,7 +191,7 @@ func SourceLoadgen() *schema.Resource {
 		CreateContext: sourceLoadgenCreate,
 		ReadContext:   sourceRead,
 		UpdateContext: sourceUpdate,
-		DeleteContext: sourceDelete,
+		DeleteContext: sourceLoadgenDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -287,4 +286,22 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return sourceRead(ctx, d, meta)
+}
+
+func sourceLoadgenDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	sourceName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	o := materialize.MaterializeObject{Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSource(metaDb, o)
+
+	if err := b.DropCascade(); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

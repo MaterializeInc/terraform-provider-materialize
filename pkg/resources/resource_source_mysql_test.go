@@ -25,8 +25,8 @@ var inSourceMySQLTable = map[string]interface{}{
 	"ignore_columns": []interface{}{"column1", "column2"},
 	"text_columns":   []interface{}{"column3", "column4"},
 	"table": []interface{}{
-		map[string]interface{}{"name": "name1", "alias": "alias"},
-		map[string]interface{}{"name": "name2"},
+		map[string]interface{}{"upstream_name": "name1", "name": "alias"},
+		map[string]interface{}{"upstream_name": "name2"},
 	},
 }
 
@@ -38,7 +38,7 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM MYSQL CONNECTION "materialize"."public"."mysql_connection" \(IGNORE COLUMNS \(column1, column2\), TEXT COLUMNS \(column3, column4\)\) FOR TABLES \(name2 AS name2, name1 AS alias\);`,
+			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "cluster" FROM MYSQL CONNECTION "materialize"."public"."mysql_connection" \(IGNORE COLUMNS \(column1, column2\), TEXT COLUMNS \(column3, column4\)\) FOR TABLES \("schema"."name2" AS "database"."schema"."name2", "schema"."name1" AS "database"."schema"."alias"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -49,9 +49,9 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
 
-		// Query Subsources (added this mock expectation)
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
-		testhelpers.MockSubsourceScan(mock, ps)
+		// Query Tables
+		pt := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
+		testhelpers.MockMysqlSubsourceScan(mock, pt)
 
 		if err := sourceMySQLCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -77,8 +77,12 @@ func TestResourceSourceMySQLUpdate(t *testing.T) {
 		pp := `WHERE mz_sources.id = 'u1'`
 		testhelpers.MockSourceScan(mock, pp)
 
+		// Query Tables
+		pt := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
+		testhelpers.MockMysqlSubsourceScan(mock, pt)
+
 		// Query Subsources
-		ps := `WHERE mz_object_dependencies.object_id = 'u1' AND mz_objects.type = 'source'`
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
 		testhelpers.MockSubsourceScan(mock, ps)
 
 		if err := sourceMySQLUpdate(context.TODO(), d, db); err != nil {
