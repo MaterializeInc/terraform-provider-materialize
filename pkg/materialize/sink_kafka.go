@@ -35,6 +35,7 @@ type SinkKafkaBuilder struct {
 	format          SinkFormatSpecStruct
 	envelope        KafkaSinkEnvelopeStruct
 	snapshot        bool
+	headers         string
 	keyNotEnforced  bool
 }
 
@@ -95,6 +96,11 @@ func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
 	return b
 }
 
+func (b *SinkKafkaBuilder) Headers(h string) *SinkKafkaBuilder {
+	b.headers = h
+	return b
+}
+
 func (b *SinkKafkaBuilder) KeyNotEnforced(s bool) *SinkKafkaBuilder {
 	b.keyNotEnforced = true
 	return b
@@ -130,6 +136,10 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	if b.keyNotEnforced {
 		q.WriteString(` NOT ENFORCED`)
+	}
+
+	if b.headers != "" {
+		q.WriteString(fmt.Sprintf(` HEADERS %s`, b.headers))
 	}
 
 	if b.format.Json {

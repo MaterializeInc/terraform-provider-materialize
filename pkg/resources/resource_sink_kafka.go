@@ -93,6 +93,12 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Default:     false,
 	},
+	"headers": {
+		Description: "The name of a column containing additional headers to add to each message emitted by the sink. The column must be of type map[text => text] or map[text => bytea].",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"region": RegionSchema(),
 }
 
@@ -171,6 +177,10 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	if v, ok := d.GetOk("snapshot"); ok {
 		b.Snapshot(v.(bool))
+	}
+
+	if v, ok := d.GetOk("headers"); ok {
+		b.Headers(v.(string))
 	}
 
 	// create resource
