@@ -27,6 +27,10 @@ resource "materialize_user" "example_user" {
 - `email` (String) The email address of the user. This must be unique across all users in the organization.
 - `roles` (List of String) The roles to assign to the user. Allowed values are 'Member' and 'Admin'.
 
+### Optional
+
+- `send_activation_email` (Boolean) Whether to send an email either inviting the user to activate their account, if the user is new, or inviting the user to join the organization, if the user already exists in another organization. Changing this property after the resource is created has no effect.
+
 ### Read-Only
 
 - `auth_provider` (String) The authentication provider for the user.

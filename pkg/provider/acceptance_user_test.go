@@ -20,10 +20,11 @@ func TestAccUser_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig(email, "Member"),
+				Config: testAccUserConfig(email, false, "Member"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckUserExists("materialize_user.example_user", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "send_activation_email", "false"),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "false"),
 				),
@@ -40,7 +41,7 @@ func TestAccUser_disappears(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig(email, "Member"),
+				Config: testAccUserConfig(email, true, "Member"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckUserExists("materialize_user.example_user", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
@@ -62,7 +63,7 @@ func TestAccUser_updateRole(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserConfig(email, "Member"),
+				Config: testAccUserConfig(email, true, "Member"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckUserExists("materialize_user.example_user", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
@@ -71,7 +72,7 @@ func TestAccUser_updateRole(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccUserConfig(email, "Admin"),
+				Config: testAccUserConfig(email, true, "Admin"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckUserExists("materialize_user.example_user", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Admin"),
@@ -81,13 +82,14 @@ func TestAccUser_updateRole(t *testing.T) {
 	})
 }
 
-func testAccUserConfig(email, role string) string {
+func testAccUserConfig(email string, sendActivationEmail bool, role string) string {
 	return fmt.Sprintf(`
 resource "materialize_user" "example_user" {
   email = "%s"
+  send_activation_email = %v
   roles = ["%s"]
 }
-`, email, role)
+`, email, sendActivationEmail, role)
 }
 
 func testAccCheckUserExists(resourceName, email string) resource.TestCheckFunc {

@@ -215,7 +215,8 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 func createUser(w http.ResponseWriter, r *http.Request) {
 	var newUser struct {
 		User
-		RoleIDs []string `json:"roleIds"`
+		RoleIDs         []string `json:"roleIds"`
+		SkipInviteEmail bool     `json:"skipInviteEmail"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
