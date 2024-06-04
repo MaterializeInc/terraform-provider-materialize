@@ -16,8 +16,9 @@ const (
 
 // UserRequest represents the request payload for creating or updating a user.
 type UserRequest struct {
-	Email   string   `json:"email"`
-	RoleIDs []string `json:"roleIds"`
+	Email           string   `json:"email"`
+	RoleIDs         []string `json:"roleIds"`
+	SkipInviteEmail bool     `json:"skipInviteEmail"`
 }
 
 type UserRole struct {

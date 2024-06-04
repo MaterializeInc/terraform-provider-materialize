@@ -15,7 +15,7 @@ func User() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: userCreate,
 		ReadContext:   userRead,
-		// UpdateContext: userUpdate,
+		UpdateContext: userUpdate,
 		DeleteContext: userDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -28,6 +28,15 @@ func User() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The email address of the user. This must be unique across all users in the organization.",
+			},
+			"send_activation_email": {
+				Type:     schema.TypeBool,
+				Default:  true,
+				Optional: true,
+				Description: "Whether to send an email either inviting the user to activate their account, " +
+					"if the user is new, or inviting the user to join the organization, if the user already " +
+					"exists in another organization. Changing this property after the resource is created " +
+					"has no effect.",
 			},
 			"auth_provider": {
 				Type:        schema.TypeString,
@@ -62,6 +71,7 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	client := providerMeta.Frontegg
 	email := d.Get("email").(string)
+	sendActivationEmail := d.Get("send_activation_email").(bool)
 	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
 
 	for _, roleName := range roleNames {
@@ -87,8 +97,9 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 
 	userRequest := frontegg.UserRequest{
-		Email:   email,
-		RoleIDs: roleIDs,
+		Email:           email,
+		RoleIDs:         roleIDs,
+		SkipInviteEmail: !sendActivationEmail,
 	}
 
 	userResponse, err := frontegg.CreateUser(ctx, client, userRequest)
@@ -124,6 +135,8 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	}
 
 	d.Set("email", userResponse.Email)
+	// NOTE: we intentionally don't (and can't) read `send_activation_email`
+	// back here, as the value only applies during initial creation.
 	d.Set("auth_provider", userResponse.Provider)
 	d.Set("verified", userResponse.Verified)
 	d.Set("metadata", userResponse.Metadata)
@@ -139,7 +152,11 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	return nil
 }
 
-// TODO: Add userUpdate function to change user roles
+func userUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// TODO: Handle updating roles without `ForceNew`. This function exists as a
+	// no-op so that changing `send_activation_email` is a no-op update.
+	return nil
+}
 
 // userDelete is the Terraform resource delete function for a Frontegg user.
 func userDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
