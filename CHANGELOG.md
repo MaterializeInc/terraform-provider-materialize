@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### Features
+
+* Allow creating service app passwords, which are app passwords that are
+  associated with a user without an email address.
+
+  For example, here's how you might provision an app password for a production
+  dashboard application that should have the `USAGE` privilege on the
+  `production_analytics` database:
+
+  ```hcl
+  resource "materialize_role" "production_dashboard" {
+    name = "svc_production_dashboard"
+  }
+
+  resource "materialize_app_password" "production_dashboard_app_password" {
+    name = "production_dashboard_app_password"
+    type = "service"
+    user = materialize_role.production_dashboard.name
+    roles = ["Member"]
+  }
+
+  resource "materialize_database_grant" "database_grant_usage" {
+    role_name     = materialize_role.production_dashboard.name
+    privilege     = "USAGE"
+    database_name = "production_analytics"
+  }
+  ```
+
 ## 0.8.0 - 2024-05-16
 
 ### Breaking Changes

@@ -23,14 +23,19 @@ resource "materialize_app_password" "example_app_password" {
 
 ### Required
 
-- `name` (String)
+- `name` (String) A human-readable name for the app password.
+
+### Optional
+
+- `roles` (List of String) The roles to assign to the app password. Allowed values are 'Member' and 'Admin'. Only valid with service-type app passwords.
+- `type` (String) The type of the app password: personal or service.
+- `user` (String) The user to associate with the app password. Only valid with service-type app passwords.
 
 ### Read-Only
 
-- `created_at` (String)
+- `created_at` (String) The time at which the app password was created.
 - `id` (String) The ID of this resource.
-- `owner` (String)
-- `password` (String, Sensitive)
+- `password` (String, Sensitive) The value of the app password.
 - `secret` (String, Sensitive)
 
 ## Import

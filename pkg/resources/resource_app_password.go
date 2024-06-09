@@ -2,10 +2,8 @@ package resources
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
+	"sort"
 	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -13,6 +11,7 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func AppPassword() *schema.Resource {
@@ -27,17 +26,37 @@ func AppPassword() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A human-readable name for the app password.",
 			},
-			"owner": {
-				Type:     schema.TypeString,
-				Computed: true,
+			"type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "personal",
+				ValidateFunc: validation.StringInSlice([]string{"personal", "service"}, false),
+				Description:  "The type of the app password: personal or service.",
+			},
+			"user": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The user to associate with the app password. Only valid with service-type app passwords.",
+				ValidateFunc: validation.StringDoesNotContainAny("@"),
+			},
+			"roles": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "The roles to assign to the app password. Allowed values are 'Member' and 'Admin'. Only valid with service-type app passwords.",
 			},
 			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The time at which the app password was created.",
 			},
 			"secret": {
 				Type:      schema.TypeString,
@@ -45,16 +64,13 @@ func AppPassword() *schema.Resource {
 				Sensitive: true,
 			},
 			"password": {
-				Type:      schema.TypeString,
-				Computed:  true,
-				Sensitive: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "The value of the app password.",
 			},
 		},
 	}
-}
-
-type appPasswordCreateRequest struct {
-	Description string `json:"description"`
 }
 
 func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -62,34 +78,94 @@ func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	client := providerMeta.Frontegg
 
-	// Create the app password using the helper function.
-	response, err := createAppPassword(ctx, d, providerMeta.Frontegg)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	name := d.Get("name").(string)
+	type_ := d.Get("type").(string)
+	user := d.Get("user").(string)
+	roles := convertToStringSlice(d.Get("roles").([]interface{}))
 
-	clientId := strings.ReplaceAll(response.ClientID, "-", "")
-	secret := strings.ReplaceAll(response.Secret, "-", "")
-	appPassword := fmt.Sprintf("mzp_%s%s", clientId, secret)
+	if type_ == "personal" {
+		if user != "" {
+			return diag.Errorf("user cannot be specified for a personal-type app password")
+		}
+		if len(roles) != 0 {
+			return diag.Errorf("roles cannot be specified for a personal-type app password")
+		}
 
-	// Set the Terraform resource ID and state.
-	d.SetId(response.ClientID)
-	if err := d.Set("name", response.Description); err != nil {
-		return diag.FromErr(err)
+		request := frontegg.UserApiTokenRequest{
+			Description: name,
+		}
+
+		response, err := frontegg.CreateUserApiToken(ctx, client, request)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		appPassword := clients.ConstructAppPassword(response.ClientID, response.Secret)
+
+		d.SetId(response.ClientID)
+		if err := d.Set("created_at", response.CreatedAt.Format(time.RFC3339)); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("secret", response.Secret); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("password", appPassword); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		sort.Strings(roles)
+
+		if user == "" {
+			return diag.Errorf("user is required for a service-type app password")
+		}
+		if len(roles) == 0 {
+			return diag.Errorf("at least one role is required for a service-type app password")
+		}
+
+		// TODO: only fetch the list of SSO roles once per TF provider
+		// invocation.
+		roleMap, err := frontegg.ListSSORoles(ctx, client)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
+		}
+		var roleIDs []string
+		for _, role := range roles {
+			if roleID, ok := roleMap[role]; ok {
+				roleIDs = append(roleIDs, roleID)
+			} else {
+				return diag.Errorf("role not found: %s", role)
+			}
+		}
+
+		request := frontegg.TenantApiTokenRequest{
+			Description: name,
+			RoleIDs:     roleIDs,
+			Metadata:    map[string]string{"user": user},
+		}
+
+		response, err := frontegg.CreateTenantApiToken(ctx, client, request)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		appPassword := clients.ConstructAppPassword(response.ClientID, response.Secret)
+
+		d.SetId(response.ClientID)
+		if err := d.Set("roles", roles); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("created_at", response.CreatedAt.Format(time.RFC3339)); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("secret", response.Secret); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("password", appPassword); err != nil {
+			return diag.FromErr(err)
+		}
 	}
-	if err := d.Set("created_at", response.CreatedAt.Format(time.RFC3339)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("secret", response.Secret); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("password", appPassword); err != nil {
-		return diag.FromErr(err)
-	}
-	// TODO: Get the owner from the API as it's not returned in the response.
-	// For now, we can either leave this unset or set a default value.
-	// d.Set("owner", "some-default-or-fetched-value")
 
 	return nil
 }
@@ -102,28 +178,70 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	client := providerMeta.Frontegg
-	resourceID := d.Id()
+	id := d.Id()
 
-	passwords, err := frontegg.ListAppPasswords(ctx, client)
-	if err != nil {
-		return diag.FromErr(err)
+	type_ := d.Get("type").(string)
+
+	if type_ == "personal" {
+		tokens, err := frontegg.ListUserApiTokens(ctx, client)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		token := findUserApiTokenById(tokens, id)
+		if token == nil {
+			d.SetId("")
+			return nil
+		}
+
+		// Update the Terraform state with the retrieved values.
+		d.Set("name", token.Description)
+		d.Set("created_at", token.CreatedAt.Format(time.RFC3339))
+
+		// We don't update secret and password because those fields can only be
+		// determined at creation time.
+	} else {
+		// TODO: only fetch the list of SSO roles once per TF provider
+		// invocation.
+		roleMap, err := frontegg.ListSSORoles(ctx, client)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
+		}
+		roleReverseMap := make(map[string]string)
+		for roleName, roleId := range roleMap {
+			roleReverseMap[roleId] = roleName
+		}
+
+		tokens, err := frontegg.ListTenantApiTokens(ctx, client)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		token := findTenantApiTokenById(tokens, id)
+		if token == nil {
+			d.SetId("")
+			return nil
+		}
+
+		var roles []string
+		for _, roleID := range token.RoleIDs {
+			role, ok := roleReverseMap[roleID]
+			if !ok {
+				return diag.Errorf("unknown role ID: %s", roleID)
+			}
+			roles = append(roles, role)
+		}
+		sort.Strings(roles)
+
+		// Update the Terraform state with the retrieved values.
+		d.Set("name", token.Description)
+		d.Set("user", token.Metadata["user"])
+		d.Set("roles", roles)
+		d.Set("created_at", token.CreatedAt.Format(time.RFC3339))
+
+		// We don't update secret and password because those fields can only be
+		// determined at creation time.
 	}
-
-	foundPassword := findAppPasswordById(passwords, resourceID)
-	if foundPassword == nil {
-		d.SetId("")
-		return nil
-	}
-
-	appPassword := clients.ConstructAppPassword(foundPassword.ClientID, foundPassword.Secret)
-
-	// Update the Terraform state with the retrieved values.
-	d.Set("name", foundPassword.Description)
-	d.Set("created_at", foundPassword.CreatedAt.Format(time.RFC3339))
-	d.Set("secret", foundPassword.Secret)
-	d.Set("password", appPassword)
-	// TODO: Get the owner from the API as it's not returned in the response.
-	// d.Set("owner", foundPassword.Owner)
 
 	return nil
 }
@@ -133,67 +251,42 @@ func appPasswordDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	client := providerMeta.Frontegg
-	resourceID := d.Id()
 
-	err = deleteAppPassword(ctx, client, resourceID)
-	if err != nil {
-		return diag.FromErr(err)
+	id := d.Id()
+	type_ := d.Get("type").(string)
+
+	if type_ == "personal" {
+		err := frontegg.DeleteUserApiToken(ctx, client, id)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		err := frontegg.DeleteTenantApiToken(ctx, client, id)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId("")
 	return nil
 }
 
-// Helper function to create or make app password
-func createAppPassword(ctx context.Context, d *schema.ResourceData, client *clients.FronteggClient) (frontegg.AppPasswordResponse, error) {
-	var response frontegg.AppPasswordResponse
-
-	createRequest := appPasswordCreateRequest{
-		Description: d.Get("name").(string),
-	}
-	requestBody, err := json.Marshal(createRequest)
-	if err != nil {
-		return response, err
-	}
-
-	resp, err := clients.FronteggRequest(ctx, client, "POST", frontegg.GetAppPasswordApiEndpoint(client, frontegg.ApiTokenPath), requestBody)
-	if err != nil {
-		return response, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return response, clients.HandleApiError(resp)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return response, err
-	}
-
-	return response, nil
-}
-
-// Helper function to delete an app password.
-func deleteAppPassword(ctx context.Context, client *clients.FronteggClient, resourceID string) error {
-	resp, err := clients.FronteggRequest(ctx, client, "DELETE", frontegg.GetAppPasswordApiEndpoint(client, frontegg.ApiTokenPath, resourceID), nil)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return clients.HandleApiError(resp)
+// Helper function to find a user API token by ID.
+func findUserApiTokenById(tokens []frontegg.UserApiTokenResponse, id string) *frontegg.UserApiTokenResponse {
+	for _, token := range tokens {
+		if token.ClientID == id {
+			return &token
+		}
 	}
 	return nil
 }
 
-// Helper function to find an app password by ID.
-func findAppPasswordById(passwords []frontegg.AppPasswordResponse, id string) *frontegg.AppPasswordResponse {
-	for _, password := range passwords {
-		if password.ClientID == id {
-			return &password
+// Helper function to find a user API token by ID.
+func findTenantApiTokenById(tokens []frontegg.TenantApiTokenResponse, id string) *frontegg.TenantApiTokenResponse {
+	for _, token := range tokens {
+		if token.ClientID == id {
+			return &token
 		}
 	}
 	return nil

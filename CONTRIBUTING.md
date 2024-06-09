@@ -35,7 +35,7 @@ To run the unit tests run:
 make test
 ```
 
-### Running accpetance tests
+### Running acceptance tests
 
 To run the acceptance tests which will simulate running Terraform commands you will need to set the necessary envrionment variables and start the docker compose:
 
