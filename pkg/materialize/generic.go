@@ -161,3 +161,8 @@ func (b *Builder) alterDrop(name string, options []string, validate bool) error 
 
 	return b.exec(query)
 }
+
+func (b *Builder) alterFrom(name string, from IdentifierSchemaStruct) error {
+	query := fmt.Sprintf(`ALTER %s %s SET FROM %s;`, b.entity, name, from.QualifiedName())
+	return b.exec(query)
+}

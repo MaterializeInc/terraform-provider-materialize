@@ -108,6 +108,7 @@ func TestAccSinkKafka_update(t *testing.T) {
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	tableName2 := tableName + "_2"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -120,10 +121,11 @@ func TestAccSinkKafka_update(t *testing.T) {
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "comment", "Comment"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "from.0.name", tableName),
 				),
 			},
 			{
-				Config: testAccSinkKafkaResource(roleName, connName, tableName, newSinkName, sink2Name, roleName, "New Comment"),
+				Config: testAccSinkKafkaResource(roleName, connName, tableName2, newSinkName, sink2Name, roleName, "New Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "name", newSinkName),
@@ -133,6 +135,7 @@ func TestAccSinkKafka_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "topic", "sink_topic"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "envelope.0.debezium", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.json", "true"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "from.0.name", tableName2),
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "comment", "New Comment"),
@@ -207,6 +210,18 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		}
 	}
 
+	resource "materialize_table" "test_2" {
+		name = "%[3]s_2"
+		column {
+			name = "column_1"
+			type = "text"
+		}
+		column {
+			name = "column_2"
+			type = "int"
+		}
+	}
+
 	resource "materialize_sink_kafka" "test" {
 		name = "%[4]s"
 		kafka_connection {
@@ -232,7 +247,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 			name = materialize_connection_kafka.test.name
 		}
 		from {
-			name = materialize_table.test.name
+			name = "%[3]s"
 		}
 		cluster_name = materialize_cluster.test.name
 		topic = "sink_topic"
@@ -246,7 +261,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 
-		depends_on = [materialize_role.test]
+		depends_on = [materialize_role.test, materialize_table.test, materialize_table.test_2]
 	}
 	`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner, comment)
 }

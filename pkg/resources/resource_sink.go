@@ -84,6 +84,16 @@ func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		}
 	}
 
+	if d.HasChange("from") {
+		oldFrom, newFrom := d.GetChange("from")
+		from := materialize.GetIdentifierSchemaStruct(newFrom)
+		b := materialize.NewSink(metaDb, o)
+		if err := b.AlterFrom(from); err != nil {
+			d.Set("from", oldFrom)
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
 		b := materialize.NewOwnershipBuilder(metaDb, o)
