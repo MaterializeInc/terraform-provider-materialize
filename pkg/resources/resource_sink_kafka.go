@@ -24,7 +24,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Elem:        "from",
 		Description: "The name of the source, table or materialized view you want to send to the sink.",
 		Required:    true,
-		ForceNew:    true,
+		ForceNew:    false,
 	}),
 	"kafka_connection": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "kafka_connection",

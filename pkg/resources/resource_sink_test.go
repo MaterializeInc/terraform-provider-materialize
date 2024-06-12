@@ -47,6 +47,8 @@ func TestResourceSinkUpdate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SINK "database"."schema"."" RENAME TO "sink";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
+		mock.ExpectExec(`ALTER SINK "database"."schema"."old_sink" SET FROM "database"."public"."item";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
 		// Query Params
 		pp := `WHERE mz_sinks.id = 'u1'`
 		testhelpers.MockSinkScan(mock, pp)

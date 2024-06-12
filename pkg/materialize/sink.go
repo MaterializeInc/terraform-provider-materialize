@@ -36,6 +36,11 @@ func (b *Sink) Drop() error {
 	return b.ddl.drop(qn)
 }
 
+func (b *Sink) AlterFrom(from IdentifierSchemaStruct) error {
+	qn := b.QualifiedName()
+	return b.ddl.alterFrom(qn, from)
+}
+
 type SinkParams struct {
 	SinkId         sql.NullString `db:"id"`
 	SinkName       sql.NullString `db:"name"`
