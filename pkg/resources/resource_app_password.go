@@ -44,7 +44,7 @@ func AppPassword() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Description:  "The user to associate with the app password. Only valid with service-type app passwords.",
-				ValidateFunc: validation.StringDoesNotContainAny("@"),
+				ValidateFunc: validateServiceUsername,
 			},
 			"roles": {
 				Type:        schema.TypeList,
