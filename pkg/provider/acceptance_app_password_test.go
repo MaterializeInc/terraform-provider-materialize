@@ -74,12 +74,12 @@ func testAccCheckAppPasswordExists(resourceName string) resource.TestCheckFunc {
 			return fmt.Errorf("Not found: %s", resourceName)
 		}
 
-		appPassword, err := frontegg.ListAppPasswords(context.Background(), client)
+		appPassword, err := frontegg.ListUserApiTokens(context.Background(), client)
 		if err != nil {
 			return fmt.Errorf("Error fetching app password with resource ID [%s]: %s", rs.Primary.ID, err)
 		}
 
-		if appPassword == nil {
+		if len(appPassword) == 0 {
 			return fmt.Errorf("App password with resource ID [%s] does not exist", rs.Primary.ID)
 		}
 
@@ -97,12 +97,12 @@ func testAccCheckAppPasswordDestroy(s *terraform.State) error {
 		providerMeta, _ := utils.GetProviderMeta(meta)
 		client := providerMeta.Frontegg
 
-		appPassword, err := frontegg.ListAppPasswords(context.Background(), client)
+		appPassword, err := frontegg.ListUserApiTokens(context.Background(), client)
 		if err == nil {
-			return fmt.Errorf("App password with ID [%s] still exists", rs.Primary.ID)
+			return fmt.Errorf("Error fetching app password with resource ID [%s]: %s", rs.Primary.ID, err)
 		}
 
-		if appPassword != nil {
+		if len(appPassword) != 0 {
 			return fmt.Errorf("App password with ID [%s] still exists", rs.Primary.ID)
 		}
 	}

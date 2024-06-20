@@ -36,3 +36,23 @@ func validPrivileges(objType string) schema.SchemaValidateFunc {
 		return warnings, errors
 	}
 }
+
+func validateServiceUsername(val interface{}, key string) (warns []string, errs []error) {
+	v := val.(string)
+	forbiddenPrefixes := []string{"mz_", "pg_", "external_"}
+
+	// Check for "@" character
+	if strings.Contains(v, "@") {
+		errs = append(errs, fmt.Errorf("%q must not contain '@', got: %s", key, v))
+	}
+
+	// Check for forbidden prefixes
+	for _, prefix := range forbiddenPrefixes {
+		if strings.HasPrefix(v, prefix) {
+			errs = append(errs, fmt.Errorf("%q must not start with %s, got: %s", key, prefix, v))
+			break
+		}
+	}
+
+	return warns, errs
+}

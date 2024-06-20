@@ -47,3 +47,53 @@ func TestValidPrivileges(t *testing.T) {
 		},
 	})
 }
+
+func TestValidateServiceUsername(t *testing.T) {
+	tests := []struct {
+		name     string
+		val      interface{}
+		key      string
+		wantWarn []string
+		wantErr  string
+	}{
+		{
+			name:    "Valid username",
+			val:     "username",
+			key:     "user",
+			wantErr: "",
+		},
+		{
+			name:    "Username with @",
+			val:     "user@name",
+			key:     "user",
+			wantErr: `"user" must not contain '@', got: user@name`,
+		},
+		{
+			name:    "Username with forbidden prefix mz_",
+			val:     "mz_username",
+			key:     "user",
+			wantErr: `"user" must not start with mz_, got: mz_username`,
+		},
+		{
+			name:    "Username with forbidden prefix pg_",
+			val:     "pg_username",
+			key:     "user",
+			wantErr: `"user" must not start with pg_, got: pg_username`,
+		},
+		{
+			name:    "Username with forbidden prefix external_",
+			val:     "external_username",
+			key:     "user",
+			wantErr: `"user" must not start with external_, got: external_username`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, errs := validateServiceUsername(tt.val, tt.key)
+			if (len(errs) == 0 && tt.wantErr != "") || (len(errs) > 0 && errs[0].Error() != tt.wantErr) {
+				t.Errorf("validateServiceUsername() error = %v, wantErr %v", errs, tt.wantErr)
+			}
+		})
+	}
+}

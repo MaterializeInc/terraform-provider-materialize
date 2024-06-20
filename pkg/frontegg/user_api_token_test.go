@@ -9,9 +9,9 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 )
 
-func setupMockServer() *httptest.Server {
+func setupUserApiTokenMockServer() *httptest.Server {
 	handler := http.NewServeMux()
-	handler.HandleFunc(ApiTokenPath, func(w http.ResponseWriter, r *http.Request) {
+	handler.HandleFunc(UserApiTokenPath, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		response := `[{"clientId":"test-client-id","description":"Test description","owner":"test-owner","created_at":"2020-01-01T00:00:00Z","secret":"test-secret"}]`
@@ -21,8 +21,8 @@ func setupMockServer() *httptest.Server {
 	return httptest.NewServer(handler)
 }
 
-func TestListAppPasswords(t *testing.T) {
-	mockServer := setupMockServer()
+func TestListUserApiTokens(t *testing.T) {
+	mockServer := setupUserApiTokenMockServer()
 	defer mockServer.Close()
 
 	client := &clients.FronteggClient{
@@ -31,17 +31,17 @@ func TestListAppPasswords(t *testing.T) {
 		Token:      "mock-token",
 	}
 
-	passwords, err := ListAppPasswords(context.Background(), client)
+	tokens, err := ListUserApiTokens(context.Background(), client)
 	if err != nil {
-		t.Fatalf("ListAppPasswords returned an error: %v", err)
+		t.Fatalf("ListUserApiTokens returned an error: %v", err)
 	}
 
-	if len(passwords) != 1 {
-		t.Fatalf("Expected 1 password, got %d", len(passwords))
+	if len(tokens) != 1 {
+		t.Fatalf("Expected 1 token, got %d", len(tokens))
 	}
 
 	expectedClientID := "test-client-id"
-	if passwords[0].ClientID != expectedClientID {
-		t.Errorf("Expected clientId %s, got %s", expectedClientID, passwords[0].ClientID)
+	if tokens[0].ClientID != expectedClientID {
+		t.Errorf("Expected clientId %s, got %s", expectedClientID, tokens[0].ClientID)
 	}
 }

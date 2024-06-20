@@ -13,6 +13,23 @@ description: |-
 ## Example Usage
 
 ```terraform
+# Create a service user and app password
+resource "materialize_role" "production_dashboard" {
+  name = "svc_production_dashboard"
+}
+resource "materialize_app_password" "production_dashboard_app_password" {
+  name  = "production_dashboard_app_password"
+  type  = "service"
+  user  = materialize_role.production_dashboard.name
+  roles = ["Member"]
+}
+resource "materialize_database_grant" "database_grant_usage" {
+  role_name     = materialize_role.production_dashboard.name
+  privilege     = "USAGE"
+  database_name = "production_analytics"
+}
+
+# Create a personal app password for the current user
 resource "materialize_app_password" "example_app_password" {
   name = "example_app_password_name"
 }
@@ -23,14 +40,19 @@ resource "materialize_app_password" "example_app_password" {
 
 ### Required
 
-- `name` (String)
+- `name` (String) A human-readable name for the app password.
+
+### Optional
+
+- `roles` (List of String) The roles to assign to the app password. Allowed values are 'Member' and 'Admin'. Only valid with service-type app passwords.
+- `type` (String) The type of the app password: personal or service.
+- `user` (String) The user to associate with the app password. Only valid with service-type app passwords.
 
 ### Read-Only
 
-- `created_at` (String)
+- `created_at` (String) The time at which the app password was created.
 - `id` (String) The ID of this resource.
-- `owner` (String)
-- `password` (String, Sensitive)
+- `password` (String, Sensitive) The value of the app password.
 - `secret` (String, Sensitive)
 
 ## Import

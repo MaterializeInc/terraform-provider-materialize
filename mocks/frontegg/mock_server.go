@@ -155,8 +155,27 @@ type AddRolesToGroupParams struct {
 	RoleIds []string `json:"roleIds"`
 }
 
+// TenantApiTokenRequest represents the structure of a request to create a tenant API token.
+type TenantApiTokenRequest struct {
+	Description string            `json:"description"`
+	Metadata    map[string]string `json:"metadata"`
+	RoleIDs     []string          `json:"roleIds"`
+}
+
+// TenantApiTokenResponse represents the structure of a response from creating a tenant API token.
+type TenantApiTokenResponse struct {
+	ClientID        string            `json:"clientId"`
+	Description     string            `json:"description"`
+	Secret          string            `json:"secret"`
+	CreatedByUserId string            `json:"createdByUserId"`
+	Metadata        map[string]string `json:"metadata"`
+	CreatedAt       time.Time         `json:"createdAt"`
+	RoleIDs         []string          `json:"roleIds"`
+}
+
 var (
 	appPasswords       = make(map[string]AppPassword)
+	tenantAppPasswords = make(map[string]TenantApiTokenResponse)
 	users              = make(map[string]User)
 	ssoConfigs         = make(map[string]SSOConfig)
 	scimConfigurations = make(map[string]SCIM2Configuration)
@@ -167,6 +186,9 @@ var (
 func main() {
 	http.HandleFunc("/identity/resources/auth/v1/api-token", handleTokenRequest)
 	http.HandleFunc("/identity/resources/users/api-tokens/v1", handleAppPasswords)
+	http.HandleFunc("/identity/resources/users/api-tokens/v1/", handleAppPasswordsDelete)
+	http.HandleFunc("/identity/resources/tenants/api-tokens/v1", handleTenantAppPasswords)
+	http.HandleFunc("/identity/resources/tenants/api-tokens/v1/", handleTenantAppPasswordsDelete)
 	http.HandleFunc("/identity/resources/users/v1/", handleUserRequest)
 	http.HandleFunc("/identity/resources/users/v2", handleUserRequest)
 	http.HandleFunc("/identity/resources/roles/v2", handleRolesRequest)
@@ -333,6 +355,16 @@ func handleAppPasswords(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleAppPasswordsDelete(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	switch r.Method {
+	case http.MethodDelete:
+		deleteAppPassword(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func handleRolesRequest(w http.ResponseWriter, r *http.Request) {
 	logRequest(r)
 	roles := []FronteggRole{
@@ -396,7 +428,7 @@ func listAppPasswords(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteAppPassword(w http.ResponseWriter, r *http.Request) {
-	clientID := r.URL.Query().Get("clientId")
+	clientID := strings.TrimPrefix(r.URL.Path, "/identity/resources/users/api-tokens/v1/")
 	if clientID == "" {
 		http.Error(w, "Client ID is required", http.StatusBadRequest)
 		return
@@ -404,6 +436,84 @@ func deleteAppPassword(w http.ResponseWriter, r *http.Request) {
 
 	mutex.Lock()
 	delete(appPasswords, clientID)
+	mutex.Unlock()
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleTenantAppPasswords provides a single entry point for POST and GET methods.
+func handleTenantAppPasswords(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	switch r.Method {
+	case http.MethodPost:
+		createTenantAppPassword(w, r)
+	case http.MethodGet:
+		listTenantAppPasswords(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// HandleTenantAppPasswordsDelete handles the DELETE method.
+func handleTenantAppPasswordsDelete(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	if r.Method == http.MethodDelete {
+		deleteTenantAppPassword(w, r)
+	} else {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// Create a new tenant app password
+func createTenantAppPassword(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	var req TenantApiTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Simulate token creation logic
+	newToken := TenantApiTokenResponse{
+		ClientID:        generateClientID(),
+		Secret:          generateSecret(),
+		Description:     req.Description,
+		CreatedByUserId: "mockUser",
+		CreatedAt:       time.Now(),
+		Metadata:        req.Metadata,
+		RoleIDs:         req.RoleIDs,
+	}
+
+	mutex.Lock()
+	tenantAppPasswords[newToken.ClientID] = newToken
+	mutex.Unlock()
+
+	sendResponse(w, http.StatusCreated, newToken)
+}
+
+// List all tenant app passwords
+func listTenantAppPasswords(w http.ResponseWriter, r *http.Request) {
+	mutex.Lock()
+	passwords := make([]TenantApiTokenResponse, 0, len(tenantAppPasswords))
+	for _, password := range tenantAppPasswords {
+		passwords = append(passwords, password)
+	}
+	mutex.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(passwords)
+}
+
+// Delete a tenant app password
+func deleteTenantAppPassword(w http.ResponseWriter, r *http.Request) {
+	clientID := strings.TrimPrefix(r.URL.Path, "/identity/resources/tenants/api-tokens/v1"+"/")
+	if clientID == "" {
+		http.Error(w, "Client ID is required", http.StatusBadRequest)
+		return
+	}
+
+	mutex.Lock()
+	delete(tenantAppPasswords, clientID)
 	mutex.Unlock()
 
 	w.WriteHeader(http.StatusOK)
