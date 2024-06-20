@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.1 - 2024-06-20
 
 ### Features
 
@@ -29,6 +29,13 @@
     database_name = "production_analytics"
   }
   ```
+
+* Allow skipping activation emails when creating users [#573](https://github.com/MaterializeInc/terraform-provider-materialize/pull/573)
+* Allow `resource_sink_kafka` `FROM` attribute updates [#578](https://github.com/MaterializeInc/terraform-provider-materialize/pull/578)
+
+### Misc
+
+* Routine dependency updates: [#577](https://github.com/MaterializeInc/terraform-provider-materialize/pull/577), [#568](https://github.com/MaterializeInc/terraform-provider-materialize/pull/568), [#567](https://github.com/MaterializeInc/terraform-provider-materialize/pull/567)
 
 ## 0.8.0 - 2024-05-16
 
