@@ -1,4 +1,6 @@
 # Visit https://goreleaser.com for documentation on how to customize this
+version: 2
+
 # behavior.
 before:
   hooks:
