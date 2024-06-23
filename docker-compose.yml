@@ -10,11 +10,14 @@ services:
       - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
-      - --bootstrap-builtin-introspection-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
       - --bootstrap-builtin-support-cluster-replica-size=3xsmall
       - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
+      - --system-parameter-default=max_clusters=100
+      - --system-parameter-default=max_sources=100
+      - --system-parameter-default=max_aws_privatelink_connections=10
       - --all-features
     ports:
       - 6875:6875
@@ -31,9 +34,6 @@ services:
       sh -c '
       echo "Waiting for materialized to start..." &&
       sleep 15 &&
-      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_clusters = 100;" &&
-      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_sources = 100;" &&
-      psql -h materialized -U mz_system -d materialize -p 6877 -c "ALTER SYSTEM SET max_aws_privatelink_connections = 10;" &&
       psql -h materialized -U mz_system -d materialize -p 6877 -c "CREATE CONNECTION \"materialize\".\"public\".\"privatelink_conn\" TO AWS PRIVATELINK (AVAILABILITY ZONES = ('\''use1-az2'\'', '\''use1-az6'\''), SERVICE NAME = '\''com.amazonaws.us-east-1.materialize.example'\'');"
       '
 
