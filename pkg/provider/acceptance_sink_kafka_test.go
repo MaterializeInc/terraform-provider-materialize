@@ -40,6 +40,14 @@ func TestAccSinkKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "name", sink2Name),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test_role", "comment", "Comment"),
+					testAccCheckSinkKafkaExists("materialize_sink_kafka.sink_kafka_headers"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "name", sinkName+"_sink_headers"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "topic", "topic1"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "key.0", "column_1"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "key_not_enforced", "true"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "snapshot", "true"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "headers", "column_1"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "envelope.0.upsert", "true"),
 				),
 			},
 			{
@@ -185,6 +193,18 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		size = "3xsmall"
 	}
 
+	resource "materialize_table" "simple_table" {
+		name          = "%[4]s_simple_table"
+
+		column {
+		  name = "column_1"
+		  type = "map[text => text]"
+		}
+		lifecycle {
+			ignore_changes = [column]
+		}
+	}
+
 	resource "materialize_connection_kafka" "test" {
 		name = "%[2]s"
 		kafka_broker {
@@ -262,6 +282,32 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		comment = "%[7]s"
 
 		depends_on = [materialize_role.test, materialize_table.test, materialize_table.test_2]
+	}
+
+	resource "materialize_sink_kafka" "sink_kafka_headers" {
+		name             = "%[4]s_sink_headers"
+		cluster_name     = materialize_cluster.test.name
+		topic            = "topic1"
+		key              = ["column_1"]
+		key_not_enforced = true
+		snapshot         = true
+		headers          = "column_1"
+		from {
+			name          = materialize_table.simple_table.name
+			database_name = materialize_table.simple_table.database_name
+			schema_name   = materialize_table.simple_table.schema_name
+		}
+		kafka_connection {
+			name          = materialize_connection_kafka.test.name
+			database_name = materialize_connection_kafka.test.database_name
+			schema_name   = materialize_connection_kafka.test.schema_name
+		}
+		format {
+			json = true
+		}
+		envelope {
+			upsert = true
+		}
 	}
 	`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner, comment)
 }

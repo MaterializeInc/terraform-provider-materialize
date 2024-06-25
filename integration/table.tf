@@ -31,6 +31,25 @@ resource "materialize_table" "simple_table" {
   }
 }
 
+resource "materialize_table" "simple_table_sink" {
+  name          = "simple_table_sink"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  comment       = "table sink comment"
+
+  column {
+    name = "key_column"
+    type = "text"
+  }
+  column {
+    name = "kafka_header"
+    type = "map[text => text]"
+  }
+  lifecycle {
+    ignore_changes = [column]
+  }
+}
+
 resource "materialize_table_grant" "table_grant_select" {
   role_name     = materialize_role.role_1.name
   privilege     = "SELECT"
