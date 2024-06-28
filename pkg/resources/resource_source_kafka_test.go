@@ -46,7 +46,16 @@ var inSourceKafka = map[string]interface{}{
 			},
 		},
 	},
-	"envelope":        []interface{}{map[string]interface{}{"upsert": true}},
+	"envelope": []interface{}{
+		map[string]interface{}{
+			"upsert": true,
+			"upsert_options": []interface{}{
+				map[string]interface{}{
+					"value_decoding_errors": "INLINE",
+				},
+			},
+		},
+	},
 	"start_offset":    []interface{}{1, 2, 3},
 	"start_timestamp": -1000,
 }
@@ -67,7 +76,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 			PARTITION AS partition,
 			OFFSET AS offset,
 			TIMESTAMP AS timestamp
-			ENVELOPE UPSERT;`,
+			ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -102,6 +111,12 @@ func TestResourceSourceKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 	delete(testInSourceKafka, "include_offset_alias")
 	testInSourceKafka["include_timestamp"] = true
 	delete(testInSourceKafka, "include_timestamp_alias")
+
+	testInSourceKafka["envelope"] = []interface{}{
+		map[string]interface{}{
+			"upsert": true,
+		},
+	}
 
 	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, testInSourceKafka)
 	r.NotNil(d)
@@ -148,6 +163,12 @@ func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 	testInSourceKafka["include_offset"] = false
 	testInSourceKafka["include_timestamp"] = false
 
+	testInSourceKafka["envelope"] = []interface{}{
+		map[string]interface{}{
+			"debezium": true,
+		},
+	}
+
 	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, testInSourceKafka)
 	r.NotNil(d)
 
@@ -157,7 +178,7 @@ func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 			`CREATE SOURCE "database"."schema"."source"
 			IN CLUSTER "cluster" FROM KAFKA CONNECTION "materialize"."public"."kafka_conn" \(TOPIC 'topic', START TIMESTAMP -1000, START OFFSET \(1,2,3\)\)
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn" VALUE STRATEGY avro_key_fullname
-			ENVELOPE UPSERT;`,
+			ENVELOPE DEBEZIUM;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

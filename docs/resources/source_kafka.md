@@ -104,6 +104,15 @@ Optional:
 - `debezium` (Boolean) Use the Debezium envelope, which uses a diff envelope to handle CRUD operations.
 - `none` (Boolean) Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.
 - `upsert` (Boolean) Use the upsert envelope, which uses message keys to handle CRUD operations.
+- `upsert_options` (Block List, Max: 1) Options for the upsert envelope. (see [below for nested schema](#nestedblock--envelope--upsert_options))
+
+<a id="nestedblock--envelope--upsert_options"></a>
+### Nested Schema for `envelope.upsert_options`
+
+Optional:
+
+- `value_decoding_errors` (String) Specify how to handle value decoding errors in the upsert envelope.
+
 
 
 <a id="nestedblock--expose_progress"></a>

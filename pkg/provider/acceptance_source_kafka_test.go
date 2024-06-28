@@ -111,6 +111,48 @@ func TestAccSourceKafkaAvro_basic(t *testing.T) {
 	})
 }
 
+func TestAccSourceKafka_withUpsertOptions(t *testing.T) {
+	addTestTopic()
+	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	connName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceKafkaResourceWithUpsertOptions(connName, sourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
+					resource.TestMatchResourceAttr("materialize_source_kafka.test", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "name", sourceName),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "terraform"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert", "true"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert_options.0.value_decoding_errors", "INLINE"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", connName),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "start_offset.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_timestamp_alias", "timestamp_alias"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset", "true"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_offset_alias", "offset_alias"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_partition", "true"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_partition_alias", "partition_alias"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "include_key_alias", "key_alias"),
+				),
+			},
+			{
+				ResourceName:      "materialize_source_kafka.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
 func TestAccSourceKafka_update(t *testing.T) {
 	addTestTopic()
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
@@ -326,6 +368,48 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 		depends_on = [materialize_sink_kafka.test]
 	}
 `, sourceName)
+}
+
+func testAccSourceKafkaResourceWithUpsertOptions(connName, sourceName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "test" {
+		name = "%[1]s"
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		security_protocol = "PLAINTEXT"
+	}
+
+	resource "materialize_source_kafka" "test" {
+		name = "%[2]s"
+		kafka_connection {
+			name = materialize_connection_kafka.test.name
+		}
+
+		cluster_name = "quickstart"
+		topic = "terraform"
+		key_format {
+			text = true
+		}
+		value_format {
+			text = true
+		}
+		envelope {
+			upsert = true
+			upsert_options {
+				value_decoding_errors = "INLINE"
+			}
+		}
+
+		start_offset = [0]
+		include_timestamp_alias = "timestamp_alias"
+		include_offset = true
+		include_offset_alias = "offset_alias"
+		include_partition = true
+		include_partition_alias = "partition_alias"
+		include_key_alias = "key_alias"
+	}
+`, connName, sourceName)
 }
 
 func testAccCheckSourceKafkaExists(name string) resource.TestCheckFunc {

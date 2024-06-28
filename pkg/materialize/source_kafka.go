@@ -9,22 +9,40 @@ import (
 )
 
 type KafkaSourceEnvelopeStruct struct {
-	Debezium bool
-	None     bool
-	Upsert   bool
+	Debezium      bool
+	None          bool
+	Upsert        bool
+	UpsertOptions *UpsertOptionsStruct
 }
 
-func GetSourceKafkaEnelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
+type UpsertOptionsStruct struct {
+	ValueDecodingErrors string
+}
+
+func GetSourceKafkaEnvelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
 	var envelope KafkaSourceEnvelopeStruct
-	if v, ok := v.([]interface{})[0].(map[string]interface{})["upsert"]; ok {
-		envelope.Upsert = v.(bool)
+
+	data := v.([]interface{})[0].(map[string]interface{})
+
+	if upsert, ok := data["upsert"].(bool); ok {
+		envelope.Upsert = upsert
+		if options, ok := data["upsert_options"].([]interface{}); ok && len(options) > 0 {
+			optionsData := options[0].(map[string]interface{})
+			envelope.UpsertOptions = &UpsertOptionsStruct{}
+			if valueDecodingErrors, ok := optionsData["value_decoding_errors"].(string); ok {
+				envelope.UpsertOptions.ValueDecodingErrors = valueDecodingErrors
+			}
+		}
 	}
-	if v, ok := v.([]interface{})[0].(map[string]interface{})["debezium"]; ok {
-		envelope.Debezium = v.(bool)
+
+	if debezium, ok := data["debezium"].(bool); ok {
+		envelope.Debezium = debezium
 	}
-	if v, ok := v.([]interface{})[0].(map[string]interface{})["none"]; ok {
-		envelope.None = v.(bool)
+
+	if none, ok := data["none"].(bool); ok {
+		envelope.None = none
 	}
+
 	return envelope
 }
 
@@ -409,6 +427,11 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.envelope.Upsert {
 		q.WriteString(` ENVELOPE UPSERT`)
+		if b.envelope.UpsertOptions != nil {
+			if b.envelope.UpsertOptions.ValueDecodingErrors != "" {
+				q.WriteString(fmt.Sprintf(` (VALUE DECODING ERRORS = (%s))`, b.envelope.UpsertOptions.ValueDecodingErrors))
+			}
+		}
 	}
 
 	if b.envelope.None {

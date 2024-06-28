@@ -108,3 +108,7 @@ var mysqlSSLMode = []string{
 	"verify-ca",
 	"verify-identity",
 }
+
+var upsertValueDecodingErrors = []string{
+	"INLINE",
+}
