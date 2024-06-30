@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var sourceKafkaSchema = map[string]*schema.Schema{
@@ -113,14 +114,32 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 					Type:          schema.TypeBool,
 					Optional:      true,
 					ForceNew:      true,
-					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.none"},
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.none", "envelope.0.upsert_options"},
 				},
 				"none": {
 					Description:   "Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.",
 					Type:          schema.TypeBool,
 					Optional:      true,
 					ForceNew:      true,
-					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.debezium"},
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.debezium", "envelope.0.upsert_options"},
+				},
+				"upsert_options": {
+					Description: "Options for the upsert envelope.",
+					Type:        schema.TypeList,
+					MaxItems:    1,
+					Optional:    true,
+					ForceNew:    true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"value_decoding_errors": {
+								Description:  "Specify how to handle value decoding errors in the upsert envelope.",
+								Type:         schema.TypeString,
+								Optional:     true,
+								ForceNew:     true,
+								ValidateFunc: validation.StringInSlice(upsertValueDecodingErrors, true),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -250,7 +269,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
-		envelope := materialize.GetSourceKafkaEnelopeStruct(v)
+		envelope := materialize.GetSourceKafkaEnvelopeStruct(v)
 		b.Envelope(envelope)
 	}
 
