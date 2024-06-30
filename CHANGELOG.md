@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 - 2024-07-01
+
+### Features
+
+* Resource Kafka Sink: Add `headers` attribute [#569](https://github.com/MaterializeInc/terraform-provider-materialize/pull/569)
+* Resource Kafka Source: Add upsert options `value_decoding_errors` attribute [#586](https://github.com/MaterializeInc/terraform-provider-materialize/pull/586)
+
+### Misc
+
+* Rename `BOOTSTRAP_BUILTIN_INTROSPECTION_CLUSTER_REPLICA_SIZE` [#584](https://github.com/MaterializeInc/terraform-provider-materialize/pull/584)
+
 ## 0.8.1 - 2024-06-20
 
 ### Features
