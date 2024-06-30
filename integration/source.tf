@@ -242,6 +242,36 @@ resource "materialize_source_grant" "source_grant_select" {
   database_name = materialize_source_load_generator.load_generator.database_name
 }
 
+resource "materialize_source_kafka" "kafka_upsert_options_source" {
+  name = "kafka_upsert_options_source"
+  kafka_connection {
+    name = materialize_connection_kafka.kafka_connection.name
+  }
+
+  cluster_name = materialize_cluster.cluster_source.name
+  topic        = "topic1"
+  key_format {
+    text = true
+  }
+  value_format {
+    text = true
+  }
+  envelope {
+    upsert = true
+    upsert_options {
+      value_decoding_errors = "INLINE"
+    }
+  }
+
+  start_offset            = [0]
+  include_timestamp_alias = "timestamp_alias"
+  include_offset          = true
+  include_offset_alias    = "offset_alias"
+  include_partition       = true
+  include_partition_alias = "partition_alias"
+  include_key_alias       = "key_alias"
+}
+
 output "qualified_load_generator" {
   value = materialize_source_load_generator.load_generator.qualified_sql_name
 }
