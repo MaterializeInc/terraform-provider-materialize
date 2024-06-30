@@ -248,6 +248,9 @@ resource "materialize_source_kafka" "kafka_upsert_options_source" {
     name = materialize_connection_kafka.kafka_connection.name
   }
 
+  # depends on sink_kafka_cluster to ensure that the topic exists
+  depends_on = [materialize_sink_kafka.sink_kafka_cluster]
+
   cluster_name = materialize_cluster.cluster_source.name
   topic        = "topic1"
   key_format {
