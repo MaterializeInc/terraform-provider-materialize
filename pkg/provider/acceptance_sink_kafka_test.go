@@ -231,7 +231,7 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 	}
 
 	resource "materialize_table" "test_2" {
-		name = "%[3]s_2"
+		name = "%[3]s__2"
 		column {
 			name = "column_1"
 			type = "text"
