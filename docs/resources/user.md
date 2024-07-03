@@ -3,12 +3,12 @@
 page_title: "materialize_user Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The user resource allows you to invite and delete users in your Frontegg organization.
 ---
 
 # materialize_user (Resource)
 
-
+The user resource allows you to invite and delete users in your Frontegg organization.
 
 ## Example Usage
 
@@ -43,6 +43,6 @@ resource "materialize_user" "example_user" {
 Import is supported using the following syntax:
 
 ```shell
-# Users can be imported using the user id:
+# Users can be imported using the user id. The user id can be retrieved by using the `materialize_user` data source.
 terraform import materialize_user.example_user <user_id>
 ```

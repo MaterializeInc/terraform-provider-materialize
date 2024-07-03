@@ -1,10 +1,13 @@
 package frontegg
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 )
@@ -12,6 +15,7 @@ import (
 const (
 	UsersApiPathV1 = "/identity/resources/users/v1"
 	UsersApiPathV2 = "/identity/resources/users/v2"
+	UsersApiPathV3 = "/identity/resources/users/v3"
 )
 
 // UserRequest represents the request payload for creating or updating a user.
@@ -25,6 +29,17 @@ type UserRole struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type QueryUsersParams struct {
+	IncludeSubTenants bool   `url:"_includeSubTenants,omitempty"`
+	Limit             int    `url:"_limit,omitempty"`
+	Offset            int    `url:"_offset,omitempty"`
+	Email             string `url:"_email,omitempty"`
+	TenantID          string `url:"_tenantId,omitempty"`
+	IDs               string `url:"ids,omitempty"`
+	SortBy            string `url:"_sortBy,omitempty"`
+	Order             string `url:"_order,omitempty"`
 }
 
 // UserResponse represents the structure of a user response from Frontegg APIs.
@@ -85,6 +100,71 @@ func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string
 	}
 
 	return userResponse, nil
+}
+
+func GetUsers(ctx context.Context, client *clients.FronteggClient, params QueryUsersParams) ([]UserResponse, error) {
+	var response struct {
+		Items    []UserResponse `json:"items"`
+		Metadata struct {
+			TotalItems int `json:"totalItems"`
+		} `json:"_metadata"`
+	}
+
+	// Construct the query string
+	values := url.Values{}
+	if params.IncludeSubTenants {
+		values.Set("_includeSubTenants", "true")
+	}
+	if params.Limit > 0 {
+		values.Set("_limit", fmt.Sprintf("%d", params.Limit))
+	}
+	if params.Offset > 0 {
+		values.Set("_offset", fmt.Sprintf("%d", params.Offset))
+	}
+	if params.Email != "" {
+		values.Set("_email", params.Email)
+	}
+	if params.IDs != "" {
+		values.Set("ids", params.IDs)
+	}
+	if params.SortBy != "" {
+		values.Set("_sortBy", params.SortBy)
+	}
+	if params.Order != "" {
+		values.Set("_order", params.Order)
+	}
+
+	endpoint := fmt.Sprintf("%s%s?%s", client.Endpoint, UsersApiPathV3, values.Encode())
+
+	fmt.Printf("Request URL: %s\n", endpoint)
+	fmt.Printf("Request Method: GET\n")
+
+	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response body failed: %w", err)
+	}
+
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, clients.HandleApiError(resp)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("decoding response failed: %w", err)
+	}
+
+	if len(response.Items) == 0 {
+		return nil, fmt.Errorf("no user found with email: %s", params.Email)
+	}
+
+	return response.Items, nil
 }
 
 // DeleteUser deletes a user from Frontegg.

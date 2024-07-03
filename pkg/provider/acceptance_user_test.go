@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -27,6 +28,10 @@ func TestAccUser_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_user.example_user", "send_activation_email", "false"),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "false"),
+					// Data source tests
+					resource.TestCheckResourceAttrPair("data.materialize_user.user_data", "id", "materialize_user.example_user", "id"),
+					resource.TestCheckResourceAttr("data.materialize_user.user_data", "email", email),
+					resource.TestCheckResourceAttr("data.materialize_user.user_data", "verified", "false"),
 				),
 			},
 		},
@@ -82,6 +87,20 @@ func TestAccUser_updateRole(t *testing.T) {
 	})
 }
 
+func TestAccUserDataSource_nonExistent(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccUserDataSourceConfigNonExistent(),
+				ExpectError: regexp.MustCompile(`No user found with email:`),
+			},
+		},
+	})
+}
+
 func testAccUserConfig(email string, sendActivationEmail bool, role string) string {
 	return fmt.Sprintf(`
 resource "materialize_user" "example_user" {
@@ -89,7 +108,18 @@ resource "materialize_user" "example_user" {
   send_activation_email = %v
   roles = ["%s"]
 }
+data "materialize_user" "user_data" {
+  email = materialize_user.example_user.email
+}
 `, email, sendActivationEmail, role)
+}
+
+func testAccUserDataSourceConfigNonExistent() string {
+	return `
+data "materialize_user" "nonexistent" {
+  email = "nonexistent@example.com"
+}
+`
 }
 
 func testAccCheckUserExists(resourceName, email string) resource.TestCheckFunc {

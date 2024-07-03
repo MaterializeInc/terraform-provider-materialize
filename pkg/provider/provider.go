@@ -143,6 +143,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_system_parameter":  datasources.SystemParameter(),
 			"materialize_table":             datasources.Table(),
 			"materialize_type":              datasources.Type(),
+			"materialize_user":              datasources.User(),
 			"materialize_view":              datasources.View(),
 		},
 		ConfigureContextFunc: func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
