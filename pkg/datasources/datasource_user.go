@@ -24,7 +24,7 @@ func User() *schema.Resource {
 			"id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The unique identifier of the user.",
+				Description: "The unique (UUID) identifier of the user.",
 			},
 			"verified": {
 				Type:        schema.TypeBool,
