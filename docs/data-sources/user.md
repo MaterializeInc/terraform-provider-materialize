@@ -3,12 +3,12 @@
 page_title: "materialize_user Data Source - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The user data source allows you to retrieve information about a user in your Frontegg organization.
+  The user data source allows you to retrieve information about a user in your Materialize organization.
 ---
 
 # materialize_user (Data Source)
 
-The user data source allows you to retrieve information about a user in your Frontegg organization.
+The user data source allows you to retrieve information about a user in your Materialize organization.
 
 ## Example Usage
 
@@ -28,6 +28,6 @@ data "materialize_user" "example_user" {
 ### Read-Only
 
 - `auth_provider` (String) The authentication provider for the user.
-- `id` (String) The unique identifier of the user.
+- `id` (String) The unique (UUID) identifier of the user.
 - `metadata` (String) Additional metadata associated with the user.
 - `verified` (Boolean) Whether the user's email address has been verified.

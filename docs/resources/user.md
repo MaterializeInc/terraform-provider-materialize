@@ -3,12 +3,12 @@
 page_title: "materialize_user Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The user resource allows you to invite and delete users in your Frontegg organization.
+  The user resource allows you to invite and delete users in your Materialize organization.
 ---
 
 # materialize_user (Resource)
 
-The user resource allows you to invite and delete users in your Frontegg organization.
+The user resource allows you to invite and delete users in your Materialize organization.
 
 ## Example Usage
 
