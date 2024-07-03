@@ -109,6 +109,7 @@ resource "materialize_user" "example_user" {
   roles = ["%s"]
 }
 data "materialize_user" "user_data" {
+  depends_on = [materialize_user.example_user]
   email = materialize_user.example_user.email
 }
 `, email, sendActivationEmail, role)
