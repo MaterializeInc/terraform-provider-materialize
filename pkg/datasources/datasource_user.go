@@ -13,7 +13,7 @@ func User() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: userDataSourceRead,
 
-		Description: `The user data source allows you to retrieve information about a user in your Frontegg organization.`,
+		Description: `The user data source allows you to retrieve information about a user in your Materialize organization.`,
 
 		Schema: map[string]*schema.Schema{
 			"email": {
