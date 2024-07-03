@@ -95,7 +95,7 @@ func TestAccUserDataSource_nonExistent(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccUserDataSourceConfigNonExistent(),
-				ExpectError: regexp.MustCompile(`No user found with email:`),
+				ExpectError: regexp.MustCompile(`no user found with email:`),
 			},
 		},
 	})
