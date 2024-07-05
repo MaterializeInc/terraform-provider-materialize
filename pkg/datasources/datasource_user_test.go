@@ -38,7 +38,6 @@ func TestUserDataSourceRead(t *testing.T) {
 		r.Equal("new-mock-user-id", d.Id())
 		r.Equal("test@example.com", d.Get("email"))
 		r.Equal(false, d.Get("verified"))
-		r.Equal("{}", d.Get("metadata"))
 	})
 }
 

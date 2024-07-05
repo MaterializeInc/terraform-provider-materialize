@@ -27,7 +27,5 @@ data "materialize_user" "example_user" {
 
 ### Read-Only
 
-- `auth_provider` (String) The authentication provider for the user.
 - `id` (String) The unique (UUID) identifier of the user.
-- `metadata` (String) Additional metadata associated with the user.
 - `verified` (Boolean) Whether the user's email address has been verified.

@@ -31,16 +31,6 @@ func User() *schema.Resource {
 				Computed:    true,
 				Description: "Whether the user's email address has been verified.",
 			},
-			"metadata": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Additional metadata associated with the user.",
-			},
-			"auth_provider": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The authentication provider for the user.",
-			},
 		},
 	}
 }
@@ -69,8 +59,6 @@ func userDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 	d.SetId(user.ID)
 	d.Set("email", user.Email)
 	d.Set("verified", user.Verified)
-	d.Set("metadata", user.Metadata)
-	d.Set("auth_provider", user.Provider)
 
 	return nil
 }
