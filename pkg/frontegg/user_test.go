@@ -57,6 +57,54 @@ func setupUserMockServer() *httptest.Server {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	})
 
+	handler.HandleFunc("/identity/resources/users/v3", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			email := r.URL.Query().Get("_email")
+			if email == "test@example.com" {
+				response := struct {
+					Items    []UserResponse `json:"items"`
+					Metadata struct {
+						TotalItems int `json:"totalItems"`
+					} `json:"_metadata"`
+				}{
+					Items: []UserResponse{
+						{
+							ID:       "test-user-id",
+							Email:    "test@example.com",
+							Verified: true,
+							Provider: "email",
+						},
+					},
+					Metadata: struct {
+						TotalItems int `json:"totalItems"`
+					}{
+						TotalItems: 1,
+					},
+				}
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(response)
+				return
+			}
+			// No user found
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(struct {
+				Items    []UserResponse `json:"items"`
+				Metadata struct {
+					TotalItems int `json:"totalItems"`
+				} `json:"_metadata"`
+			}{
+				Items: []UserResponse{},
+				Metadata: struct {
+					TotalItems int `json:"totalItems"`
+				}{
+					TotalItems: 0,
+				},
+			})
+			return
+		}
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	})
+
 	return httptest.NewServer(handler)
 }
 
@@ -119,5 +167,42 @@ func TestDeleteUser(t *testing.T) {
 	err := DeleteUser(context.Background(), client, userID)
 	if err != nil {
 		t.Fatalf("DeleteUser returned an error: %v", err)
+	}
+}
+
+func TestGetUsers(t *testing.T) {
+	mockServer := setupUserMockServer()
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		HTTPClient: &http.Client{},
+		Endpoint:   mockServer.URL,
+		Token:      "mock-token",
+	}
+
+	// Test case 1: User found
+	params := QueryUsersParams{
+		Email: "test@example.com",
+		Limit: 1,
+	}
+	users, err := GetUsers(context.Background(), client, params)
+	if err != nil {
+		t.Fatalf("GetUsers returned an error: %v", err)
+	}
+	if len(users) != 1 {
+		t.Fatalf("Expected 1 user, got %d", len(users))
+	}
+	if users[0].Email != "test@example.com" {
+		t.Errorf("Expected email test@example.com, got %s", users[0].Email)
+	}
+
+	// Test case 2: User not found
+	params.Email = "nonexistent@example.com"
+	_, err = GetUsers(context.Background(), client, params)
+	if err == nil {
+		t.Fatalf("Expected an error for non-existent user, got nil")
+	}
+	if !strings.Contains(err.Error(), "no user found with email") {
+		t.Errorf("Expected 'no user found' error, got: %v", err)
 	}
 }

@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -192,6 +194,7 @@ func main() {
 	http.HandleFunc("/identity/resources/users/v1/", handleUserRequest)
 	http.HandleFunc("/identity/resources/users/v2", handleUserRequest)
 	http.HandleFunc("/identity/resources/roles/v2", handleRolesRequest)
+	http.HandleFunc("/identity/resources/users/v3", handleUserV3Request)
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations", handleSSOConfigRequest)
 	http.HandleFunc("/frontegg/team/resources/sso/v1/configurations/", handleSSOConfigAndDomainRequest)
 	http.HandleFunc("/frontegg/identity/resources/groups/v1", handleSCIMGroupsRequest)
@@ -217,6 +220,17 @@ func handleUserRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Add this function to handle the new endpoint
+func handleUserV3Request(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+	switch r.Method {
+	case http.MethodGet:
+		getUsersV3(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func getUser(w http.ResponseWriter, r *http.Request) {
 	userID := strings.TrimPrefix(r.URL.Path, "/identity/resources/users/v1/")
 	if userID == "" {
@@ -232,6 +246,86 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func getUsersV3(w http.ResponseWriter, r *http.Request) {
+	logRequest(r)
+
+	// Parse query parameters
+	query := r.URL.Query()
+	email := query.Get("_email")
+	limit := query.Get("_limit")
+	offset := query.Get("_offset")
+	ids := query.Get("ids")
+	sortBy := query.Get("_sortBy")
+	order := query.Get("_order")
+
+	// Convert limit and offset to integers
+	limitInt, _ := strconv.Atoi(limit)
+	offsetInt, _ := strconv.Atoi(offset)
+
+	// Filter and collect users
+	var filteredUsers []User
+	mutex.Lock()
+	for _, user := range users {
+		if (email == "" || user.Email == email) &&
+			(ids == "" || strings.Contains(ids, user.ID)) {
+			filteredUsers = append(filteredUsers, user)
+		}
+	}
+	mutex.Unlock()
+
+	// Sort users if sortBy is provided
+	if sortBy != "" {
+		sort.Slice(filteredUsers, func(i, j int) bool {
+			var less bool
+			switch sortBy {
+			case "email":
+				less = filteredUsers[i].Email < filteredUsers[j].Email
+			case "id":
+				less = filteredUsers[i].ID < filteredUsers[j].ID
+			// Add more cases for other sortable fields
+			default:
+				return false
+			}
+
+			if order == "desc" {
+				return !less
+			}
+			return less
+		})
+	}
+
+	// Apply pagination
+	totalItems := len(filteredUsers)
+	if offsetInt >= totalItems {
+		filteredUsers = []User{}
+	} else {
+		end := offsetInt + limitInt
+		if end > totalItems {
+			end = totalItems
+		}
+		filteredUsers = filteredUsers[offsetInt:end]
+	}
+
+	// Prepare response
+	response := struct {
+		Items    []User `json:"items"`
+		Metadata struct {
+			TotalItems int `json:"totalItems"`
+		} `json:"_metadata"`
+	}{
+		Items: filteredUsers,
+		Metadata: struct {
+			TotalItems int `json:"totalItems"`
+		}{
+			TotalItems: totalItems,
+		},
+	}
+
+	// Send response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {

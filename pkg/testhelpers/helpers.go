@@ -138,6 +138,8 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 			handleAppPasswords(w, req, r)
 		case strings.HasPrefix(req.URL.Path, "/identity/resources/users/v1/"):
 			handleUserRequests(w, req, r)
+		case req.URL.Path == "/identity/resources/users/v3":
+			handleUsersV3Request(w, req, r)
 		case strings.HasPrefix(req.URL.Path, "/identity/resources/roles/v2"):
 			handleRolesRequests(w, req, r)
 		case req.URL.Path == "/frontegg/team/resources/sso/v1/configurations":
@@ -314,6 +316,58 @@ func handleUserRequests(w http.ResponseWriter, req *http.Request, r *require.Ass
 
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func handleUsersV3Request(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	email := req.URL.Query().Get("_email")
+
+	if email == "test@example.com" {
+		user := struct {
+			ID       string `json:"id"`
+			Email    string `json:"email"`
+			Verified bool   `json:"verified"`
+			Metadata string `json:"metadata"`
+		}{
+			ID:       "new-mock-user-id",
+			Email:    "test@example.com",
+			Verified: false,
+			Metadata: "{}",
+		}
+
+		response := struct {
+			Items    []interface{} `json:"items"`
+			Metadata struct {
+				TotalItems int `json:"totalItems"`
+			} `json:"_metadata"`
+		}{
+			Items: []interface{}{user},
+			Metadata: struct {
+				TotalItems int `json:"totalItems"`
+			}{
+				TotalItems: 1,
+			},
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	} else {
+		response := struct {
+			Items    []interface{} `json:"items"`
+			Metadata struct {
+				TotalItems int `json:"totalItems"`
+			} `json:"_metadata"`
+		}{
+			Items: []interface{}{},
+			Metadata: struct {
+				TotalItems int `json:"totalItems"`
+			}{
+				TotalItems: 0,
+			},
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 	}
 }
 

@@ -18,6 +18,8 @@ func User() *schema.Resource {
 		UpdateContext: userUpdate,
 		DeleteContext: userDelete,
 
+		Description: `The user resource allows you to invite and delete users in your Materialize organization.`,
+
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
