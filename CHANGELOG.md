@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.8.3 - 2024-07-08
+
+### Features
+
+* New data source: `materialize_user` [#592](https://github.com/MaterializeInc/terraform-provider-materialize/pull/592).
+  This data source allows retrieving information about existing users in an organization by email.
+  It can be used together with the `materialize_user` resource for importing existing users:
+
+  ```hcl
+  # Retrieve an existing user by email
+  data "materialize_user" "example" {
+    email = "existing-user@example.com"
+  }
+  output "user_id" {
+    value = data.materialize_user.example.id
+  }
+  ```
+
+  Define the `materialize_user` resource and import the existing user:
+  ```hcl
+  resource "materialize_user" "example" {
+    email = "existing-user@example.com"
+  }
+  ```
+
+  Import command:
+  ```sh
+  # terraform import materialize_user.example ${data.materialize_user.example.id}
+  ```
+
+### Misc
+
+* Refactor to only fetch the list of Frontegg roles once per Terraform provider invocation [#595](https://github.com/MaterializeInc/terraform-provider-materialize/pull/595).
+* Improve Frontegg HTTP mock server to improve maintainability [#593](https://github.com/MaterializeInc/terraform-provider-materialize/pull/593).
+
 ## 0.8.2 - 2024-07-01
 
 ### Features
