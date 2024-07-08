@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -54,7 +53,7 @@ func scimGroupRoleCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
-	roleIDs, err := getRoleIDsByName(ctx, client, roleNames)
+	roleIDs, err := getRoleIDsByName(ctx, providerMeta, roleNames)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
 	}
@@ -141,7 +140,7 @@ func scimGroupRoleUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	// Add the new roles to the group
 	newRoleNames := expandStringSet(d.Get("roles").(*schema.Set))
-	newRoleIDs, err := getRoleIDsByName(ctx, client, newRoleNames)
+	newRoleIDs, err := getRoleIDsByName(ctx, providerMeta, newRoleNames)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
 	}
@@ -169,7 +168,7 @@ func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
-	roleIDs, err := getRoleIDsByName(ctx, client, roleNames)
+	roleIDs, err := getRoleIDsByName(ctx, providerMeta, roleNames)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
 	}
@@ -186,11 +185,8 @@ func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 // Helper function to expand a set of role names to a list of role IDs
-func getRoleIDsByName(ctx context.Context, client *clients.FronteggClient, roleNames []string) ([]string, error) {
-	roleMap, err := frontegg.ListSSORoles(ctx, client)
-	if err != nil {
-		return nil, err
-	}
+func getRoleIDsByName(ctx context.Context, providerMeta *utils.ProviderMeta, roleNames []string) ([]string, error) {
+	roleMap := providerMeta.FronteggRoles
 
 	var roleIDs []string
 	for _, roleName := range roleNames {

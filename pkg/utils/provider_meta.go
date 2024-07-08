@@ -32,6 +32,10 @@ type ProviderMeta struct {
 	// RegionsEnabled is a map indicating which regions are currently enabled
 	// for use. This can be used to quickly check the availability in different regions.
 	RegionsEnabled map[clients.Region]bool
+
+	// Frontegg Roles is a map that associates each Frontegg role with its corresponding ID.
+	// This is used to map role names to role IDs when creating/updating users.
+	FronteggRoles map[string]string
 }
 
 var DefaultRegion string

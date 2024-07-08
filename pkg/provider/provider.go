@@ -7,6 +7,7 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
@@ -229,6 +230,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 
 	log.Printf("[DEBUG] Initialized DB clients for regions: %v\n", dbClients)
 
+	// Fetch Frontegg roles and store them in the provider meta
+	fronteggRoles, err := frontegg.ListFronteggRoles(ctx, fronteggClient)
+	if err != nil {
+		return nil, diag.Errorf("Unable to fetch Frontegg roles: %s", err)
+	}
+
 	// Construct and return the provider meta with all clients initialized.
 	providerMeta := &utils.ProviderMeta{
 		DB:             dbClients,
@@ -236,6 +243,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		CloudAPI:       cloudAPIClient,
 		DefaultRegion:  clients.Region(defaultRegion),
 		RegionsEnabled: regionsEnabled,
+		FronteggRoles:  fronteggRoles,
 	}
 
 	return providerMeta, nil

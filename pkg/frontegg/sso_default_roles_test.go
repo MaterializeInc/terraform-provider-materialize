@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListSSORolesSuccess(t *testing.T) {
+func TestListFronteggRolesSuccess(t *testing.T) {
 	assert := assert.New(t)
 
 	rolesResponse := FronteggRolesResponse{
@@ -33,7 +33,7 @@ func TestListSSORolesSuccess(t *testing.T) {
 		HTTPClient: mockServer.Client(),
 	}
 
-	roles, err := ListSSORoles(context.Background(), client)
+	roles, err := ListFronteggRoles(context.Background(), client)
 	assert.NoError(err)
 	assert.Equal(2, len(roles))
 	assert.Equal("role-id-1", roles["Admin"])

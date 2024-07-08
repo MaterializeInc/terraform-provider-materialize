@@ -131,7 +131,7 @@ func DeleteSCIMGroup(ctx context.Context, client *clients.FronteggClient, groupI
 
 // GetSCIMGroupByID fetches a single SCIM group by its ID.
 func GetSCIMGroupByID(ctx context.Context, client *clients.FronteggClient, groupID string) (*ScimGroup, error) {
-	endpoint := fmt.Sprintf("%s%s/%s?_groupsRelations=rolesAndUsers", client.Endpoint, SCIMGroupsApiPathV1, groupID)
+	endpoint := fmt.Sprintf("%s%s/%s/?_groupsRelations=rolesAndUsers", client.Endpoint, SCIMGroupsApiPathV1, groupID)
 	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
 		return nil, err
