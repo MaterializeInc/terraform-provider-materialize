@@ -136,9 +136,6 @@ func GetUsers(ctx context.Context, client *clients.FronteggClient, params QueryU
 
 	endpoint := fmt.Sprintf("%s%s?%s", client.Endpoint, UsersApiPathV3, values.Encode())
 
-	fmt.Printf("Request URL: %s\n", endpoint)
-	fmt.Printf("Request Method: GET\n")
-
 	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
 		return nil, err
