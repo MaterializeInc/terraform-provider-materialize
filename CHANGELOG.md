@@ -4,7 +4,7 @@
 
 ### Features
 
-* New data source: `materialize_user` [#592](https://github.com/MaterializeInc/terraform-provider-materialize/pull/592)
+* New data source: `materialize_user` [#592](https://github.com/MaterializeInc/terraform-provider-materialize/pull/592). This source allows retrieving information about existing users in an organization by email.
 
 ### Misc
 
