@@ -4,7 +4,31 @@
 
 ### Features
 
-* New data source: `materialize_user` [#592](https://github.com/MaterializeInc/terraform-provider-materialize/pull/592). This source allows retrieving information about existing users in an organization by email.
+* New data source: `materialize_user` [#592](https://github.com/MaterializeInc/terraform-provider-materialize/pull/592).
+  This data source allows retrieving information about existing users in an organization by email.
+  It can be used together with the `materialize_user` resource for importing existing users:
+
+  ```hcl
+  # Retrieve an existing user by email
+  data "materialize_user" "example" {
+    email = "existing-user@example.com"
+  }
+  output "user_id" {
+    value = data.materialize_user.example.id
+  }
+  ```
+
+  Define the `materialize_user` resource and import the existing user:
+  ```hcl
+  resource "materialize_user" "example" {
+    email = "existing-user@example.com"
+  }
+  ```
+
+  Import command:
+  ```sh
+  # terraform import materialize_user.example ${data.materialize_user.example.id}
+  ```
 
 ### Misc
 
