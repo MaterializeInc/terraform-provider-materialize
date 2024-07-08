@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"time"
 
@@ -124,12 +123,8 @@ func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			return diag.Errorf("at least one role is required for a service-type app password")
 		}
 
-		// TODO: only fetch the list of SSO roles once per TF provider
-		// invocation.
-		roleMap, err := frontegg.ListSSORoles(ctx, client)
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
-		}
+		roleMap := providerMeta.FronteggRoles
+
 		var roleIDs []string
 		for _, role := range roles {
 			if roleID, ok := roleMap[role]; ok {
@@ -201,12 +196,8 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 		// We don't update secret and password because those fields can only be
 		// determined at creation time.
 	} else {
-		// TODO: only fetch the list of SSO roles once per TF provider
-		// invocation.
-		roleMap, err := frontegg.ListSSORoles(ctx, client)
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
-		}
+		roleMap := providerMeta.FronteggRoles
+
 		roleReverseMap := make(map[string]string)
 		for roleName, roleId := range roleMap {
 			roleReverseMap[roleId] = roleName

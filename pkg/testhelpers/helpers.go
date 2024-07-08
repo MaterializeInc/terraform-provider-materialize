@@ -121,6 +121,10 @@ func WithMockProviderMeta(t *testing.T, f func(*utils.ProviderMeta, sqlmock.Sqlm
 			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		CloudAPI: nil,
+		FronteggRoles: map[string]string{
+			"Admin":  "1",
+			"Member": "2",
+		},
 	}
 
 	mock.MatchExpectationsInOrder(true)

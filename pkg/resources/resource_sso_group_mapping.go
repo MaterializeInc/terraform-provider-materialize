@@ -63,11 +63,7 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 	group := d.Get("group").(string)
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	// Fetch role IDs based on role names.
-	roleMap, err := frontegg.ListSSORoles(ctx, client)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
-	}
+	roleMap := providerMeta.FronteggRoles
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
@@ -106,11 +102,7 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	// Fetch role mappings from the API.
-	roleMap, err := frontegg.ListSSORoles(ctx, client)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
-	}
+	roleMap := providerMeta.FronteggRoles
 
 	for _, group := range *groups {
 		if group.ID == groupID {
@@ -153,10 +145,7 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	groupID := d.Id()
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	roleMap, err := frontegg.ListSSORoles(ctx, client)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
-	}
+	roleMap := providerMeta.FronteggRoles
 
 	var roleIDs []string
 	for _, roleName := range roleNames {

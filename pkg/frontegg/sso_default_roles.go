@@ -33,7 +33,7 @@ type FronteggRole struct {
 }
 
 // ListRoles fetches roles from the Frontegg API and returns a map of role names to their IDs.
-func ListSSORoles(ctx context.Context, client *clients.FronteggClient) (map[string]string, error) {
+func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map[string]string, error) {
 	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSORolesApiPathV2)
 	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {

@@ -26,6 +26,10 @@ func TestSSODefaultRolesCreateOrUpdate(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
+			FronteggRoles: map[string]string{
+				"Admin":  "1",
+				"Member": "2",
+			},
 		}
 
 		// Create a new ResourceData object
@@ -70,6 +74,10 @@ func TestSSODefaultRolesRead(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
+			FronteggRoles: map[string]string{
+				"Admin":  "1",
+				"Member": "2",
+			},
 		}
 
 		// Set the initial state with "sso_config_id" and "roles" as a list of strings
@@ -110,6 +118,10 @@ func TestSSODefaultRolesDelete(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
+			FronteggRoles: map[string]string{
+				"Admin":  "1",
+				"Member": "2",
+			},
 		}
 
 		// Set the initial state with "sso_config_id" and "roles" as a list of strings

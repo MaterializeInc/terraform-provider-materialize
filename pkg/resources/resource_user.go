@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
@@ -82,11 +81,7 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		}
 	}
 
-	// Fetch role IDs based on role names.
-	roleMap, err := frontegg.ListSSORoles(ctx, client)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error fetching roles: %s", err))
-	}
+	roleMap := providerMeta.FronteggRoles
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
