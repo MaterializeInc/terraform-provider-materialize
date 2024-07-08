@@ -8,8 +8,8 @@
 
 ### Misc
 
-* Refactor to only fetch the list of Frontegg roles once per Terraform provider invocation [#595](https://github.com/MaterializeInc/terraform-provider-materialize/pull/595)
-* Improve Frontegg HTTP mock server to improve maintainability [#593](https://github.com/MaterializeInc/terraform-provider-materialize/pull/593)
+* Refactor to only fetch the list of Frontegg roles once per Terraform provider invocation [#595](https://github.com/MaterializeInc/terraform-provider-materialize/pull/595).
+* Improve Frontegg HTTP mock server to improve maintainability [#593](https://github.com/MaterializeInc/terraform-provider-materialize/pull/593).
 
 ## 0.8.2 - 2024-07-01
 
