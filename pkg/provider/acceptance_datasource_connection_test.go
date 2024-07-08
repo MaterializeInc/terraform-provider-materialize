@@ -71,6 +71,15 @@ func testAccDatasourceConnection(nameSpace string) string {
 
 	data "materialize_connection" "specific" {
 		connection_id = "u1"
+		depends_on    = [
+			materialize_database.test,
+			materialize_schema.test,
+			materialize_connection_kafka.a,
+			materialize_connection_kafka.b,
+			materialize_connection_kafka.c,
+			materialize_connection_kafka.d,
+			materialize_connection_kafka.e,
+		]
 	}
 
 	resource "materialize_connection_kafka" "a" {
@@ -78,7 +87,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 		database_name     = materialize_database.test.name
 		schema_name       = materialize_schema.test.name
 		security_protocol = "PLAINTEXT"
-	  
+
 		kafka_broker {
 		  broker = "redpanda:9092"
 		}
@@ -90,7 +99,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 		database_name     = materialize_database.test.name
 		schema_name       = materialize_schema.test.name
 		security_protocol = "PLAINTEXT"
-	  
+
 		kafka_broker {
 		  broker = "redpanda:9092"
 		}
@@ -102,7 +111,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 		database_name     = materialize_database.test.name
 		schema_name       = materialize_schema.test.name
 		security_protocol = "PLAINTEXT"
-	  
+
 		kafka_broker {
 		  broker = "redpanda:9092"
 		}
@@ -114,7 +123,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 		database_name     = materialize_database.test_2.name
 		schema_name       = materialize_schema.public_schema2.name
 		security_protocol = "PLAINTEXT"
-	  
+
 		kafka_broker {
 		  broker = "redpanda:9092"
 		}
@@ -126,7 +135,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 		database_name     = materialize_database.test_2.name
 		schema_name       = materialize_schema.public_schema2.name
 		security_protocol = "PLAINTEXT"
-	  
+
 		kafka_broker {
 		  broker = "redpanda:9092"
 		}
@@ -153,7 +162,7 @@ func testAccDatasourceConnection(nameSpace string) string {
 			materialize_connection_kafka.e,
 		]
 	}
-	
+
 	data "materialize_connection" "test_database_schema" {
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
