@@ -102,6 +102,12 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"progress_topic_replication_factor": {
+		Description: "The replication factor to use when creating the Kafka progress topic (if the Kafka topic does not already exist).",
+		Type:        schema.TypeInt,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the Kafka broker.", false, false),
 	"ssl_certificate":           ValueSecretSchema("ssl_certificate", "The client certificate for the Kafka broker.", false, false),
 	"ssl_key": IdentifierSchema(IdentifierSchemaParams{
@@ -184,6 +190,10 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	if v, ok := d.GetOk("progress_topic"); ok {
 		b.KafkaProgressTopic(v.(string))
+	}
+
+	if v, ok := d.GetOk("progress_topic_replication_factor"); ok {
+		b.KafkaProgressTopicReplicationFactor(v.(int))
 	}
 
 	if v, ok := d.GetOk("ssl_certificate_authority"); ok {

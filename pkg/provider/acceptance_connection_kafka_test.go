@@ -34,6 +34,8 @@ func TestAccConnKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "kafka_broker.0.broker", "redpanda:9092"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "comment", "object comment"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "progress_topic", "progress_topic"),
+					resource.TestCheckResourceAttr("materialize_connection_kafka.test", "progress_topic_replication_factor", "1"),
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test_role"),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "name", connection2Name),
 					resource.TestCheckResourceAttr("materialize_connection_kafka.test_role", "ownership_role", roleName),
@@ -383,29 +385,31 @@ func TestAccConnKafka_disappears(t *testing.T) {
 func testAccConnKafkaResource(roleName, connectionName, connection2Name, connectionOwner string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
-	name = "%[1]s"
+    name = "%[1]s"
 }
 
 resource "materialize_connection_kafka" "test" {
-	name = "%[2]s"
-	kafka_broker {
-		broker = "redpanda:9092"
-	}
-	security_protocol = "PLAINTEXT"
-	comment = "object comment"
+    name = "%[2]s"
+    kafka_broker {
+        broker = "redpanda:9092"
+    }
+    security_protocol = "PLAINTEXT"
+    comment = "object comment"
+    progress_topic = "progress_topic"
+    progress_topic_replication_factor = 1
 }
 
 resource "materialize_connection_kafka" "test_role" {
-	name = "%[3]s"
-	kafka_broker {
-		broker = "redpanda:9092"
-	}
-	security_protocol = "PLAINTEXT"
-	ownership_role = "%[4]s"
+    name = "%[3]s"
+    kafka_broker {
+        broker = "redpanda:9092"
+    }
+    security_protocol = "PLAINTEXT"
+    ownership_role = "%[4]s"
 
-	depends_on = [materialize_role.test]
+    depends_on = [materialize_role.test]
 
-	validate = false
+    validate = false
 }
 `, roleName, connectionName, connection2Name, connectionOwner)
 }

@@ -86,6 +86,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `kafka_broker` (Block List) The Kafka broker's configuration. (see [below for nested schema](#nestedblock--kafka_broker))
 - `ownership_role` (String) The owernship role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
+- `progress_topic_replication_factor` (Number) The replication factor to use when creating the Kafka progress topic (if the Kafka topic does not already exist).
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `sasl_mechanisms` (String) The SASL mechanism for the Kafka broker.
 - `sasl_password` (Block List, Max: 1) The SASL password for the Kafka broker. (see [below for nested schema](#nestedblock--sasl_password))
