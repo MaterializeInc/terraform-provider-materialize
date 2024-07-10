@@ -25,18 +25,21 @@ func GetSinkKafkaEnelopeStruct(v interface{}) KafkaSinkEnvelopeStruct {
 
 type SinkKafkaBuilder struct {
 	Sink
-	clusterName     string
-	size            string
-	from            IdentifierSchemaStruct
-	kafkaConnection IdentifierSchemaStruct
-	topic           string
-	compressionType string
-	key             []string
-	format          SinkFormatSpecStruct
-	envelope        KafkaSinkEnvelopeStruct
-	snapshot        bool
-	headers         string
-	keyNotEnforced  bool
+	clusterName            string
+	size                   string
+	from                   IdentifierSchemaStruct
+	kafkaConnection        IdentifierSchemaStruct
+	topic                  string
+	topicReplicationFactor int
+	topicPartitionCount    int
+	topicConfig            map[string]string
+	compressionType        string
+	key                    []string
+	format                 SinkFormatSpecStruct
+	envelope               KafkaSinkEnvelopeStruct
+	snapshot               bool
+	headers                string
+	keyNotEnforced         bool
 }
 
 func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder {
@@ -68,6 +71,21 @@ func (b *SinkKafkaBuilder) KafkaConnection(k IdentifierSchemaStruct) *SinkKafkaB
 
 func (b *SinkKafkaBuilder) Topic(t string) *SinkKafkaBuilder {
 	b.topic = t
+	return b
+}
+
+func (b *SinkKafkaBuilder) TopicReplicationFactor(factor int) *SinkKafkaBuilder {
+	b.topicReplicationFactor = factor
+	return b
+}
+
+func (b *SinkKafkaBuilder) TopicPartitionCount(count int) *SinkKafkaBuilder {
+	b.topicPartitionCount = count
+	return b
+}
+
+func (b *SinkKafkaBuilder) TopicConfig(config map[string]string) *SinkKafkaBuilder {
+	b.topicConfig = config
 	return b
 }
 
@@ -125,6 +143,19 @@ func (b *SinkKafkaBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` (TOPIC %s`, QuoteString(b.topic)))
 		if b.compressionType != "" {
 			q.WriteString(fmt.Sprintf(`, COMPRESSION TYPE = %s`, b.compressionType))
+		}
+		if b.topicReplicationFactor > 0 {
+			q.WriteString(fmt.Sprintf(`, TOPIC REPLICATION FACTOR = %d`, b.topicReplicationFactor))
+		}
+		if b.topicPartitionCount > 0 {
+			q.WriteString(fmt.Sprintf(`, TOPIC PARTITION COUNT = %d`, b.topicPartitionCount))
+		}
+		if len(b.topicConfig) > 0 {
+			configItems := make([]string, 0, len(b.topicConfig))
+			for k, v := range b.topicConfig {
+				configItems = append(configItems, fmt.Sprintf("%s => %s", QuoteString(k), QuoteString(v)))
+			}
+			q.WriteString(fmt.Sprintf(`, TOPIC CONFIG MAP[%s]`, strings.Join(configItems, ", ")))
 		}
 		q.WriteString(")")
 	}

@@ -88,11 +88,17 @@ resource "materialize_sink_kafka" "sink_kafka_cluster" {
 
 
 resource "materialize_sink_kafka" "sink_kafka_headers" {
-  name             = "sink_kafka_headers"
-  schema_name      = materialize_schema.schema.name
-  database_name    = materialize_database.database.name
-  cluster_name     = materialize_cluster.cluster_sink.name
-  topic            = "topic1"
+  name                     = "sink_kafka_headers"
+  schema_name              = materialize_schema.schema.name
+  database_name            = materialize_database.database.name
+  cluster_name             = materialize_cluster.cluster_sink.name
+  topic                    = "topic1"
+  topic_replication_factor = 1
+  topic_partition_count    = 6
+  topic_config = {
+    "cleanup.policy" = "compact"
+    "retention.ms"   = "86400000"
+  }
   key              = ["key_column"]
   key_not_enforced = true
   snapshot         = true

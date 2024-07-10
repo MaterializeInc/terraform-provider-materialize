@@ -227,6 +227,7 @@ func (app *App) routes() {
 	app.Router.HandleFunc("/frontegg/team/resources/sso/v1/configurations/{id}/groups/{groupId}", app.handleGroupMappingRequests).Methods("GET", "PATCH", "DELETE")
 	app.Router.HandleFunc("/frontegg/team/resources/sso/v1/configurations/{id}/roles", app.handleDefaultRolesRequests).Methods("GET", "PUT", "DELETE")
 	app.Router.HandleFunc("/frontegg/identity/resources/groups/v1", app.handleSCIMGroupsRequest).Methods("GET", "POST")
+	app.Router.HandleFunc("/frontegg/identity/resources/groups/v1/{id}/", app.handleSCIMGroupsParamRequest).Methods("GET")
 	app.Router.HandleFunc("/frontegg/identity/resources/groups/v1/{id}", app.handleSCIMGroupsParamRequest).Methods("GET", "PATCH", "DELETE")
 	app.Router.HandleFunc("/frontegg/identity/resources/groups/v1/{id}/roles", app.handleAddRolesToGroup).Methods("POST", "DELETE")
 	app.Router.HandleFunc("/frontegg/identity/resources/groups/v1/{id}/users", app.handleAddUsersToGroup).Methods("POST", "DELETE")

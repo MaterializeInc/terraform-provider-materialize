@@ -38,6 +38,28 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"topic_replication_factor": {
+		Description: "The replication factor to use when creating the Kafka topic (if the Kafka topic does not already exist).",
+		Type:        schema.TypeInt,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"topic_partition_count": {
+		Description: "The partition count to use when creating the Kafka topic (if the Kafka topic does not already exist).",
+		Type:        schema.TypeInt,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"topic_config": {
+		Description: "Any topic-level configs to use when creating the Kafka topic (if the Kafka topic does not already exist).",
+		Type:        schema.TypeMap,
+		Elem: &schema.Schema{
+			Type: schema.TypeString,
+		},
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validateKafkaTopicConfigStringMap,
+	},
 	"compression_type": {
 		Description:  "The type of compression to apply to messages before they are sent to Kafka.",
 		Type:         schema.TypeString,
@@ -147,6 +169,22 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	if v, ok := d.GetOk("topic"); ok {
 		b.Topic(v.(string))
+	}
+
+	if v, ok := d.GetOk("topic_replication_factor"); ok {
+		b.TopicReplicationFactor(v.(int))
+	}
+
+	if v, ok := d.GetOk("topic_partition_count"); ok {
+		b.TopicPartitionCount(v.(int))
+	}
+
+	if v, ok := d.GetOk("topic_config"); ok {
+		config := make(map[string]string)
+		for k, v := range v.(map[string]interface{}) {
+			config[k] = v.(string)
+		}
+		b.TopicConfig(config)
 	}
 
 	if v, ok := d.GetOk("compression_type"); ok {
