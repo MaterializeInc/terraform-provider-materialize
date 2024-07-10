@@ -56,3 +56,25 @@ func validateServiceUsername(val interface{}, key string) (warns []string, errs 
 
 	return warns, errs
 }
+
+// validateKafkaTopicConfigStringMap validates a map of string to string for Kafka topic configs
+// It checks that the keys are not empty and that the values are not empty strings
+func validateKafkaTopicConfigStringMap(val interface{}, key string) (warns []string, errs []error) {
+	v, ok := val.(map[string]interface{})
+	if !ok {
+		errs = append(errs, fmt.Errorf("%q must be a map of string to string", key))
+		return
+	}
+	for k, vv := range v {
+		if k == "" {
+			errs = append(errs, fmt.Errorf("%q contains an empty key", key))
+		}
+		s, ok := vv.(string)
+		if !ok {
+			errs = append(errs, fmt.Errorf("%q.%s must be a string", key, k))
+		} else if s == "" {
+			errs = append(errs, fmt.Errorf("%q.%s cannot be an empty string", key, k))
+		}
+	}
+	return
+}

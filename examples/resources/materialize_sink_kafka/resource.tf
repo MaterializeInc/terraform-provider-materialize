@@ -6,6 +6,13 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
     name = "table"
   }
   topic = "test_avro_topic"
+  # Optional topic configuration parameters:
+  # topic_replication_factor = 1
+  # topic_partition_count    = 6
+  # topic_config = {
+  #   "cleanup.policy" = "compact"
+  #   "retention.ms"   = "86400000"
+  # }
   format {
     avro {
       schema_registry_connection {

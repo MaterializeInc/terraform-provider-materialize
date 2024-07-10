@@ -21,6 +21,13 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
     name = "table"
   }
   topic = "test_avro_topic"
+  # Optional topic configuration parameters:
+  # topic_replication_factor = 1
+  # topic_partition_count    = 6
+  # topic_config = {
+  #   "cleanup.policy" = "compact"
+  #   "retention.ms"   = "86400000"
+  # }
   format {
     avro {
       schema_registry_connection {
@@ -70,6 +77,9 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the sink schema in Materialize. Defaults to `public`.
 - `snapshot` (Boolean) Whether to emit the consolidated results of the query before the sink was created at the start of the sink.
+- `topic_config` (Map of String) Any topic-level configs to use when creating the Kafka topic (if the Kafka topic does not already exist).
+- `topic_partition_count` (Number) The partition count to use when creating the Kafka topic (if the Kafka topic does not already exist).
+- `topic_replication_factor` (Number) The replication factor to use when creating the Kafka topic (if the Kafka topic does not already exist).
 
 ### Read-Only
 
