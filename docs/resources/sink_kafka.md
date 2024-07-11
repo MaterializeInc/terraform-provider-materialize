@@ -143,6 +143,8 @@ Optional:
 - `avro_doc_type` (Block List, Max: 1) **Private Preview** Add top level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_type))
 - `avro_key_fullname` (String) The full name of the Avro key schema.
 - `avro_value_fullname` (String) The full name of the Avro value schema.
+- `key_compatibility_level` (String) If specified, set the Compatibility Level for the generated key schema.
+- `value_compatibility_level` (String) If specified, set the Compatibility Level for the generated value schema.
 
 <a id="nestedblock--format--avro--schema_registry_connection"></a>
 ### Nested Schema for `format.avro.schema_registry_connection`

@@ -467,3 +467,48 @@ func TestSinkKafkaTopicOptionsWithCompressionCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestSinkKafkaAvroCompatibilityLevelsCreate(t *testing.T) {
+	from := IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."sink"
+            FROM "database"."schema"."table"
+            INTO KAFKA CONNECTION "database"."schema"."kafka_connection"
+            \(TOPIC 'testdrive-snk1-seed'\)
+            FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."public"."csr_connection"
+            \(AVRO KEY FULLNAME 'com.example.KeySchema' AVRO VALUE FULLNAME 'com.example.ValueSchema',
+            KEY COMPATIBILITY LEVEL 'BACKWARD',
+            VALUE COMPATIBILITY LEVEL 'FORWARD'\)
+            ENVELOPE UPSERT;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkKafkaBuilder(db, o)
+		b.From(from)
+		b.KafkaConnection(IdentifierSchemaStruct{
+			Name:         "kafka_connection",
+			SchemaName:   "schema",
+			DatabaseName: "database",
+		})
+		b.Topic("testdrive-snk1-seed")
+		b.Format(SinkFormatSpecStruct{
+			Avro: &SinkAvroFormatSpec{
+				SchemaRegistryConnection: IdentifierSchemaStruct{
+					Name:         "csr_connection",
+					DatabaseName: "database",
+					SchemaName:   "public",
+				},
+				AvroKeyFullname:         "com.example.KeySchema",
+				AvroValueFullname:       "com.example.ValueSchema",
+				KeyCompatibilityLevel:   "BACKWARD",
+				ValueCompatibilityLevel: "FORWARD",
+			},
+		})
+		b.Envelope(KafkaSinkEnvelopeStruct{Upsert: true})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

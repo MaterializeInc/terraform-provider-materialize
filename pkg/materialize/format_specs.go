@@ -47,6 +47,8 @@ type SinkAvroFormatSpec struct {
 	AvroValueFullname        string
 	DocType                  AvroDocType
 	DocColumn                []AvroDocColumn
+	KeyCompatibilityLevel    string
+	ValueCompatibilityLevel  string
 }
 
 type SinkFormatSpecStruct struct {
@@ -103,12 +105,13 @@ func GetSinkFormatSpecStruc(v interface{}) SinkFormatSpecStruct {
 
 	u := v.([]interface{})[0].(map[string]interface{})
 	if avro, ok := u["avro"]; ok && avro != nil && len(avro.([]interface{})) > 0 {
-		if csr, ok := avro.([]interface{})[0].(map[string]interface{})["schema_registry_connection"]; ok {
-			key := avro.([]interface{})[0].(map[string]interface{})["avro_key_fullname"].(string)
-			value := avro.([]interface{})[0].(map[string]interface{})["avro_value_fullname"].(string)
+		avroMap := avro.([]interface{})[0].(map[string]interface{})
+		if csr, ok := avroMap["schema_registry_connection"]; ok {
+			key := avroMap["avro_key_fullname"].(string)
+			value := avroMap["avro_value_fullname"].(string)
 
 			var docType AvroDocType
-			if adt, ok := avro.([]interface{})[0].(map[string]interface{})["avro_doc_type"].([]interface{}); ok && len(adt) > 0 {
+			if adt, ok := avroMap["avro_doc_type"].([]interface{}); ok && len(adt) > 0 {
 				if v, ok := adt[0].(map[string]interface{})["object"]; ok {
 					docType.Object = GetIdentifierSchemaStruct(v)
 				}
@@ -124,7 +127,7 @@ func GetSinkFormatSpecStruc(v interface{}) SinkFormatSpecStruct {
 			}
 
 			var docColumn []AvroDocColumn
-			if adc, ok := avro.([]interface{})[0].(map[string]interface{})["avro_doc_column"]; ok {
+			if adc, ok := avroMap["avro_doc_column"]; ok {
 				for _, column := range adc.([]interface{}) {
 					docColumn = append(docColumn, AvroDocColumn{
 						Object: GetIdentifierSchemaStruct(column.(map[string]interface{})["object"]),
@@ -142,6 +145,13 @@ func GetSinkFormatSpecStruc(v interface{}) SinkFormatSpecStruct {
 				AvroValueFullname:        value,
 				DocType:                  docType,
 				DocColumn:                docColumn,
+			}
+
+			if v, ok := avroMap["key_compatibility_level"]; ok {
+				format.Avro.KeyCompatibilityLevel = v.(string)
+			}
+			if v, ok := avroMap["value_compatibility_level"]; ok {
+				format.Avro.ValueCompatibilityLevel = v.(string)
 			}
 		}
 	}

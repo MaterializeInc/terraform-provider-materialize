@@ -101,6 +101,8 @@ func TestAccSinkKafkaAvro_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.column", "counter"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.doc", "comment value"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.value", "true"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.key_compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.value_compatibility_level", "FORWARD"),
 				),
 			},
 			{
@@ -271,6 +273,8 @@ func testAccSinkKafkaAvroResourceWithTopicOptions(sinkName string) string {
 					doc    = "comment value"
 					value  = true
 				}
+				key_compatibility_level   = "BACKWARD"
+                value_compatibility_level = "FORWARD"
 			}
 		}
 		envelope {
