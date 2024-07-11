@@ -66,18 +66,19 @@ func GetAwsPrivateLinkConnectionStruct(v interface{}) awsPrivateLinkConnection {
 
 type ConnectionKafkaBuilder struct {
 	Connection
-	kafkaBrokers             []KafkaBroker
-	kafkaSecurityProtocol    string
-	kafkaProgressTopic       string
-	kafkaSSLCa               ValueSecretStruct
-	kafkaSSLCert             ValueSecretStruct
-	kafkaSSLKey              IdentifierSchemaStruct
-	kafkaSASLMechanisms      string
-	kafkaSASLUsername        ValueSecretStruct
-	kafkaSASLPassword        IdentifierSchemaStruct
-	kafkaSSHTunnel           IdentifierSchemaStruct
-	validate                 bool
-	awsPrivateLinkConnection awsPrivateLinkConnection
+	kafkaBrokers                        []KafkaBroker
+	kafkaSecurityProtocol               string
+	kafkaProgressTopic                  string
+	kafkaProgressTopicReplicationFactor int
+	kafkaSSLCa                          ValueSecretStruct
+	kafkaSSLCert                        ValueSecretStruct
+	kafkaSSLKey                         IdentifierSchemaStruct
+	kafkaSASLMechanisms                 string
+	kafkaSASLUsername                   ValueSecretStruct
+	kafkaSASLPassword                   IdentifierSchemaStruct
+	kafkaSSHTunnel                      IdentifierSchemaStruct
+	validate                            bool
+	awsPrivateLinkConnection            awsPrivateLinkConnection
 }
 
 func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionKafkaBuilder {
@@ -104,6 +105,11 @@ func (b *ConnectionKafkaBuilder) KafkaSecurityProtocol(kafkaSecurityProtocol str
 
 func (b *ConnectionKafkaBuilder) KafkaProgressTopic(kafkaProgressTopic string) *ConnectionKafkaBuilder {
 	b.kafkaProgressTopic = kafkaProgressTopic
+	return b
+}
+
+func (b *ConnectionKafkaBuilder) KafkaProgressTopicReplicationFactor(factor int) *ConnectionKafkaBuilder {
+	b.kafkaProgressTopicReplicationFactor = factor
 	return b
 }
 
@@ -176,6 +182,9 @@ func (b *ConnectionKafkaBuilder) Create() error {
 	}
 	if b.kafkaProgressTopic != "" {
 		q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC %s`, QuoteString(b.kafkaProgressTopic)))
+		if b.kafkaProgressTopicReplicationFactor > 0 {
+			q.WriteString(fmt.Sprintf(`, PROGRESS TOPIC REPLICATION FACTOR %d`, b.kafkaProgressTopicReplicationFactor))
+		}
 	}
 	if b.kafkaSSLCa.Text != "" {
 		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY = %s`, QuoteString(b.kafkaSSLCa.Text)))

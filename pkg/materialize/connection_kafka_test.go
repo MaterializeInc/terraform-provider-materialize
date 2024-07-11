@@ -251,3 +251,29 @@ func TestConnectionKafkaAwsPrivateLinkCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestConnectionKafkaProgressTopicReplicationFactorCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SECURITY PROTOCOL = 'PLAIN', PROGRESS TOPIC 'topic', PROGRESS TOPIC REPLICATION FACTOR 3, SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewConnectionKafkaBuilder(db, connKafka)
+		b.KafkaBrokers([]KafkaBroker{
+			{
+				Broker: "localhost:9092",
+			},
+		})
+		b.KafkaProgressTopic("topic")
+		b.KafkaProgressTopicReplicationFactor(3)
+		b.KafkaSecurityProtocol("PLAIN")
+		b.KafkaSASLMechanisms("PLAIN")
+		b.KafkaSASLUsername(ValueSecretStruct{Text: "user"})
+		b.KafkaSASLPassword(IdentifierSchemaStruct{Name: "password", DatabaseName: "database", SchemaName: "schema"})
+		b.Validate(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
