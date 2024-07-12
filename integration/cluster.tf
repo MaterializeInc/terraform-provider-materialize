@@ -18,8 +18,8 @@ resource "materialize_cluster" "scheduling_cluster" {
   size = "25cc"
   scheduling {
     on_refresh {
-      enabled                   = true
-      rehydration_time_estimate = "1 hour"
+      enabled                 = true
+      hydration_time_estimate = "1 hour"
     }
   }
 }

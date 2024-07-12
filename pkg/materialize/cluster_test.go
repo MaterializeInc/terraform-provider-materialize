@@ -101,7 +101,7 @@ func TestClusterDrop(t *testing.T) {
 
 func TestClusterWithSchedulingCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		expectedSQL := `CREATE CLUSTER "cluster" SIZE 'xsmall', SCHEDULE = ON REFRESH \(REHYDRATION TIME ESTIMATE = '2 hours'\);`
+		expectedSQL := `CREATE CLUSTER "cluster" SIZE 'xsmall', SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -112,8 +112,8 @@ func TestClusterWithSchedulingCreate(t *testing.T) {
 			map[string]interface{}{
 				"on_refresh": []interface{}{
 					map[string]interface{}{
-						"enabled":                   true,
-						"rehydration_time_estimate": "2 hours",
+						"enabled":                 true,
+						"hydration_time_estimate": "2 hours",
 					},
 				},
 			},

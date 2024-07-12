@@ -23,8 +23,8 @@ var inCluster = map[string]interface{}{
 		map[string]interface{}{
 			"on_refresh": []interface{}{
 				map[string]interface{}{
-					"enabled":                   true,
-					"rehydration_time_estimate": "2 hours",
+					"enabled":                 true,
+					"hydration_time_estimate": "2 hours",
 				},
 			},
 		},
@@ -47,7 +47,7 @@ func TestResourceClusterCreate(t *testing.T) {
 			AVAILABILITY ZONES = \['use1-az1','use1-az2'\],
 			INTROSPECTION INTERVAL = '10s',
 			INTROSPECTION DEBUGGING = TRUE,
-			SCHEDULE = ON REFRESH \(REHYDRATION TIME ESTIMATE = '2 hours'\);
+			SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\);
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership

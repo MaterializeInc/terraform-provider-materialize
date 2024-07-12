@@ -35,6 +35,7 @@ type SchedulingConfig struct {
 
 type OnRefreshConfig struct {
 	Enabled                 bool
+	HydrationTimeEstimate   string
 	RehydrationTimeEstimate string
 }
 
@@ -66,6 +67,7 @@ func GetSchedulingConfig(v interface{}) SchedulingConfig {
 	return SchedulingConfig{
 		OnRefresh: OnRefreshConfig{
 			Enabled:                 onRefreshMap["enabled"].(bool),
+			HydrationTimeEstimate:   onRefreshMap["hydration_time_estimate"].(string),
 			RehydrationTimeEstimate: onRefreshMap["rehydration_time_estimate"].(string),
 		},
 	}
@@ -151,7 +153,9 @@ func (b *ClusterBuilder) Create() error {
 
 		if b.schedulingConfig.OnRefresh.Enabled {
 			scheduleStatement := " SCHEDULE = ON REFRESH"
-			if b.schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
+			if b.schedulingConfig.OnRefresh.HydrationTimeEstimate != "" {
+				scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.HydrationTimeEstimate))
+			} else if b.schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
 				scheduleStatement += fmt.Sprintf(" (REHYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.RehydrationTimeEstimate))
 			}
 			p = append(p, scheduleStatement)
@@ -214,7 +218,9 @@ func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) error {
 	// Check if the scheduling is enabled and set the appropriate SQL command.
 	if schedulingConfig.OnRefresh.Enabled {
 		scheduleStatement = "SCHEDULE = ON REFRESH"
-		if schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
+		if schedulingConfig.OnRefresh.HydrationTimeEstimate != "" {
+			scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.HydrationTimeEstimate))
+		} else if schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
 			scheduleStatement += fmt.Sprintf(" (REHYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.RehydrationTimeEstimate))
 		}
 		q = fmt.Sprintf("ALTER CLUSTER %s SET (%s);", b.QualifiedName(), scheduleStatement)
