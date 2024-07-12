@@ -112,3 +112,13 @@ var mysqlSSLMode = []string{
 var upsertValueDecodingErrors = []string{
 	"INLINE",
 }
+
+var sinkFormatCompatibilityLevels = []string{
+	"BACKWARD",
+	"BACKWARD_TRANSITIVE",
+	"FORWARD",
+	"FORWARD_TRANSITIVE",
+	"FULL",
+	"FULL_TRANSITIVE",
+	"NONE",
+}

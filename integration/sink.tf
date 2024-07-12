@@ -52,6 +52,8 @@ resource "materialize_sink_kafka" "sink_kafka" {
         doc    = "comment value"
         value  = true
       }
+      key_compatibility_level   = "BACKWARD"
+      value_compatibility_level = "FORWARD"
     }
   }
   envelope {

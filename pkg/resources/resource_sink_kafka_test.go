@@ -87,6 +87,8 @@ var inSinkKafka = map[string]interface{}{
 							"value":  true,
 						},
 					},
+					"key_compatibility_level":   "BACKWARD",
+					"value_compatibility_level": "FORWARD",
 				},
 			},
 		},
@@ -113,7 +115,9 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
             \(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname',
             DOC ON TYPE "database"."public"."item" = 'top-level comment',
             KEY DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in key schema',
-            VALUE DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in value schema'\)
+            VALUE DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in value schema',
+            KEY COMPATIBILITY LEVEL 'BACKWARD',
+            VALUE COMPATIBILITY LEVEL 'FORWARD'\)
             ENVELOPE UPSERT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 

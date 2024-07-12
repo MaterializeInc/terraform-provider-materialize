@@ -218,6 +218,14 @@ func (b *SinkKafkaBuilder) Create() error {
 			c.WriteString(fmt.Sprintf(" DOC ON COLUMN %[1]s = %[2]s", f, QuoteString(ac.Doc)))
 			v = append(v, c.String())
 		}
+
+		if b.format.Avro.KeyCompatibilityLevel != "" {
+			v = append(v, fmt.Sprintf("KEY COMPATIBILITY LEVEL %s", QuoteString(b.format.Avro.KeyCompatibilityLevel)))
+		}
+		if b.format.Avro.ValueCompatibilityLevel != "" {
+			v = append(v, fmt.Sprintf("VALUE COMPATIBILITY LEVEL %s", QuoteString(b.format.Avro.ValueCompatibilityLevel)))
+		}
+
 		if len(v) > 0 {
 			q.WriteString(fmt.Sprintf(` (%s)`, strings.Join(v[:], ", ")))
 		}
