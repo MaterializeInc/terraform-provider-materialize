@@ -64,13 +64,25 @@ func GetSchedulingConfig(v interface{}) SchedulingConfig {
 		return SchedulingConfig{}
 	}
 
-	return SchedulingConfig{
+	config := SchedulingConfig{
 		OnRefresh: OnRefreshConfig{
-			Enabled:                 onRefreshMap["enabled"].(bool),
-			HydrationTimeEstimate:   onRefreshMap["hydration_time_estimate"].(string),
-			RehydrationTimeEstimate: onRefreshMap["rehydration_time_estimate"].(string),
+			Enabled: false,
 		},
 	}
+
+	if enabled, ok := onRefreshMap["enabled"].(bool); ok {
+		config.OnRefresh.Enabled = enabled
+	}
+
+	if hydrationTimeEstimate, ok := onRefreshMap["hydration_time_estimate"].(string); ok {
+		config.OnRefresh.HydrationTimeEstimate = hydrationTimeEstimate
+	}
+
+	if rehydrationTimeEstimate, ok := onRefreshMap["rehydration_time_estimate"].(string); ok {
+		config.OnRefresh.RehydrationTimeEstimate = rehydrationTimeEstimate
+	}
+
+	return config
 }
 
 func (b *ClusterBuilder) QualifiedName() string {
