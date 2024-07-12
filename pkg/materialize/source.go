@@ -2,7 +2,9 @@ package materialize
 
 import (
 	"database/sql"
+	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -195,4 +197,59 @@ func ListSources(conn *sqlx.DB, schemaName, databaseName string) ([]SourceParams
 	}
 
 	return c, nil
+}
+
+func (b *Source) AddSubsource(subsources []TableStruct, textColumns []string) error {
+	var subsrc []string
+	for _, t := range subsources {
+		if t.UpstreamSchemaName == "" {
+			t.UpstreamSchemaName = b.SchemaName
+		}
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
+		if t.Name != "" {
+			f := fmt.Sprintf("%s.%s AS %s.%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
+			subsrc = append(subsrc, f)
+		} else {
+			f := fmt.Sprintf("%s.%s", QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName))
+			subsrc = append(subsrc, f)
+		}
+	}
+	s := strings.Join(subsrc, ", ")
+
+	q := strings.Builder{}
+	q.WriteString(fmt.Sprintf(`ALTER SOURCE %s ADD SUBSOURCE %s`, b.QualifiedName(), s))
+
+	if len(textColumns) > 0 {
+		c := strings.Join(textColumns, ", ")
+		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
+	}
+
+	return b.ddl.exec(q.String())
+}
+
+func (b *Source) DropSubsource(subsources []TableStruct) error {
+	var subsrc []string
+	for _, t := range subsources {
+		if t.SchemaName == "" {
+			t.SchemaName = b.SchemaName
+		}
+		if t.DatabaseName == "" {
+			t.DatabaseName = b.DatabaseName
+		}
+		if t.Name != "" {
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name))
+			subsrc = append(subsrc, f)
+		} else {
+			f := fmt.Sprintf("%s.%s.%s", QuoteIdentifier(b.DatabaseName), QuoteIdentifier(b.SchemaName), QuoteIdentifier(t.UpstreamName))
+			subsrc = append(subsrc, f)
+		}
+	}
+	s := strings.Join(subsrc, ", ")
+	q := fmt.Sprintf(`DROP SOURCE %s;`, s)
+	return b.ddl.exec(q)
 }

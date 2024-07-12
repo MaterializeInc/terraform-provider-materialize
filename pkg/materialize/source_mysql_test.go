@@ -57,29 +57,28 @@ func TestSourceMySQLSpecificTablesCreate(t *testing.T) {
 	})
 }
 
-// TODO: Add sub source tests if needed
-// func TestSourceMySQLAddSubsource(t *testing.T) {
-// 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-// 		mock.ExpectExec(
-// 			`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "table_1", "table_2" AS "table_alias";`,
-// 		).WillReturnResult(sqlmock.NewResult(1, 1))
+func TestSourceMySQLAddSubsource(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "schema"."table_1", "schema"."table_2" AS "database"."schema"."table_alias";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-// 		b := NewSource(db, sourceMySQL)
-// 		if err := b.AddSubsource(tableInputMySQL, []string{}); err != nil {
-// 			t.Fatal(err)
-// 		}
-// 	})
-// }
+		b := NewSource(db, sourceMySQL)
+		if err := b.AddSubsource(tableInputMySQL, []string{}); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
 
-// func TestSourceMySQLDropSubsource(t *testing.T) {
-// 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-// 		mock.ExpectExec(
-// 			`ALTER SOURCE "database"."schema"."source" DROP SUBSOURCE "table_1", "table_alias";`,
-// 		).WillReturnResult(sqlmock.NewResult(1, 1))
+func TestSourceMySQLDropSubsource(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`DROP SOURCE "database"."schema"."table_1", "database"."schema"."table_alias"`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-// 		b := NewSourceMySQLBuilder(db, sourceMySQL)
-// 		if err := b.DropSubsource(tableInputMySQL); err != nil {
-// 			t.Fatal(err)
-// 		}
-// 	})
-// }
+		b := NewSourceMySQLBuilder(db, sourceMySQL)
+		if err := b.DropSubsource(tableInputMySQL); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
