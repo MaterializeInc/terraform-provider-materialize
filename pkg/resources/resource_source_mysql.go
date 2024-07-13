@@ -341,20 +341,3 @@ func sourceMySQLDelete(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 	return nil
 }
-
-func diffColumns(arr1, arr2 []interface{}) []string {
-	arr2Map := make(map[string]bool)
-	for _, item := range arr2 {
-		i := item.(string)
-		arr2Map[i] = true
-	}
-
-	var difference []string
-	for _, item := range arr1 {
-		i := item.(string)
-		if !arr2Map[i] {
-			difference = append(difference, i)
-		}
-	}
-	return difference
-}
