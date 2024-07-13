@@ -309,6 +309,10 @@ func (b *SourceKafkaBuilder) Create() error {
 		q.WriteString(` KEY FORMAT TEXT`)
 	}
 
+	if b.keyFormat.Json {
+		q.WriteString(` KEY FORMAT JSON`)
+	}
+
 	if b.valueFormat.Avro != nil {
 		if b.valueFormat.Avro.SchemaRegistryConnection.Name != "" {
 			q.WriteString(fmt.Sprintf(` VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.valueFormat.Avro.SchemaRegistryConnection.DatabaseName, b.valueFormat.Avro.SchemaRegistryConnection.SchemaName, b.valueFormat.Avro.SchemaRegistryConnection.Name)))
@@ -351,6 +355,10 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.valueFormat.Text {
 		q.WriteString(` VALUE FORMAT TEXT`)
+	}
+
+	if b.valueFormat.Json {
+		q.WriteString(` VALUE FORMAT JSON`)
 	}
 
 	// Metadata

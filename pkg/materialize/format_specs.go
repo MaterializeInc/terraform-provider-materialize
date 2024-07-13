@@ -83,9 +83,16 @@ func GetFormatSpecStruc(v interface{}) SourceFormatSpecStruct {
 	if v, ok := u["csv"]; ok && v != nil && len(v.([]interface{})) > 0 {
 		csv := v.([]interface{})[0].(map[string]interface{})
 		format.Csv = &CsvFormatSpec{
-			Columns:     csv["columns"].(int),
 			DelimitedBy: csv["delimited_by"].(string),
-			Header:      csv["header"].([]string),
+		}
+		if columns, ok := csv["columns"]; ok && columns != nil {
+			format.Csv.Columns = columns.(int)
+		}
+		if header, ok := csv["header"]; ok && header != nil {
+			format.Csv.Header = make([]string, len(header.([]interface{})))
+			for i, h := range header.([]interface{}) {
+				format.Csv.Header[i] = h.(string)
+			}
 		}
 	}
 	if v, ok := u["bytes"]; ok {
