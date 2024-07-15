@@ -106,7 +106,7 @@ func TestResourceConnectionPostgresUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSL CERTIFICATE AUTHORITY = SECRET "ssl_database"."public"."root"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// SSL Certificate and Key
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSL CERTIFICATE = SECRET "materialize"."public"."cert"\), SET \(SSL KEY = SECRET "materialize"."public"."key"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \((SSL CERTIFICATE = SECRET "materialize"."public"."cert"\), SET \(SSL KEY = SECRET "materialize"."public"."key"|SSL KEY = SECRET "materialize"."public"."key"\), SET \(SSL CERTIFICATE = SECRET "materialize"."public"."cert")\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// SSL Mode
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."conn" SET \(SSL MODE = 'verify-full'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
