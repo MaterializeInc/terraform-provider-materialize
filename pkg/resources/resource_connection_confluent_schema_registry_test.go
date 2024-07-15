@@ -86,7 +86,7 @@ func TestResourceConnectionConfluentSchemaRegistryUpdate(t *testing.T) {
 
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SSL CERTIFICATE AUTHORITY = SECRET "materialize"."public"."ssl"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(SSL CERTIFICATE = SECRET "materialize"."public"."ssl"\), SET \(SSL KEY = SECRET "ssl_key"."public"."ssl"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \((SSL CERTIFICATE = SECRET "materialize"."public"."ssl"\), SET \(SSL KEY = SECRET "ssl_key"."public"."ssl"|SSL KEY = SECRET "ssl_key"."public"."ssl"\), SET \(SSL CERTIFICATE = SECRET "materialize"."public"."ssl")\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Comment
 		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."old_conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))

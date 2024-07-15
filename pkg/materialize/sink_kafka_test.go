@@ -429,12 +429,12 @@ func TestSinkKafkaTopicOptionsWithCompressionCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
-            FROM "database"."schema"."src"
-            INTO KAFKA CONNECTION "database"."schema"."kafka_conn"
-            \(TOPIC 'testdrive-snk1-seed', COMPRESSION TYPE = gzip, TOPIC REPLICATION FACTOR = 3, TOPIC PARTITION COUNT = 6,
-            TOPIC CONFIG MAP\['cleanup.policy' => 'compact', 'retention.ms' => '86400000'\]\)
-            FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."csr_conn"
-            ENVELOPE DEBEZIUM;`,
+			FROM "database"."schema"."src"
+			INTO KAFKA CONNECTION "database"."schema"."kafka_conn"
+			\(TOPIC 'testdrive-snk1-seed', COMPRESSION TYPE = gzip, TOPIC REPLICATION FACTOR = 3, TOPIC PARTITION COUNT = 6,
+			TOPIC CONFIG MAP\[.*?'cleanup\.policy' => 'compact'.*?'retention\.ms' => '86400000'.*?\]\)
+			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."csr_conn"
+			ENVELOPE DEBEZIUM;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
