@@ -105,6 +105,33 @@ func setupUserMockServer() *httptest.Server {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	})
 
+	// Endpoint for updating a user roles
+	handler.HandleFunc("/frontegg/team/resources/members/v1", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "PUT" {
+			var updateRequest struct {
+				ID      string   `json:"id"`
+				Email   string   `json:"email"`
+				RoleIDs []string `json:"roleIds"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			updatedUser := UserResponse{
+				ID:    updateRequest.ID,
+				Email: updateRequest.Email,
+				Roles: make([]UserRole, len(updateRequest.RoleIDs)),
+			}
+			for i, roleID := range updateRequest.RoleIDs {
+				updatedUser.Roles[i] = UserRole{ID: roleID, Name: "Role " + roleID}
+			}
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(updatedUser)
+			return
+		}
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	})
+
 	return httptest.NewServer(handler)
 }
 
@@ -204,5 +231,25 @@ func TestGetUsers(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "no user found with email") {
 		t.Errorf("Expected 'no user found' error, got: %v", err)
+	}
+}
+
+func TestUpdateUserRoles(t *testing.T) {
+	mockServer := setupUserMockServer()
+	defer mockServer.Close()
+
+	client := &clients.FronteggClient{
+		HTTPClient: &http.Client{},
+		Endpoint:   mockServer.URL,
+		Token:      "mock-token",
+	}
+
+	userID := "test-user-id"
+	email := "test@example.com"
+	newRoleIDs := []string{"role1", "role2"}
+
+	err := UpdateUserRoles(context.Background(), client, userID, email, newRoleIDs)
+	if err != nil {
+		t.Fatalf("UpdateUserRoles returned an error: %v", err)
 	}
 }
