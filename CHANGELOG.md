@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.8.4 - 2024-07-15
+
+### Features
+
+* Add support for adding and removing subsources for the `materialize_source_mysql` resource [#604](https://github.com/MaterializeInc/terraform-provider-materialize/pull/604)
+* Allow the `roles` attribute for the `materialize_user` resource to be updated without `forceNew` [#610](https://github.com/MaterializeInc/terraform-provider-materialize/pull/610)
+* Add `key_compatibility_level` and `value_compatibility_level` attributes to the
+  `materialize_sink_kafka` resource [#600](https://github.com/MaterializeInc/terraform-provider-materialize/pull/600)
+* Add `progress_topic_replication_factor` attribute to the `materialize_connection_kafka` resource [#598](https://github.com/MaterializeInc/terraform-provider-materialize/pull/598)
+* Add topics options to the `materialize_sink_kafka` resource [#597](https://github.com/MaterializeInc/terraform-provider-materialize/pull/597).
+  See the [Kafka documentation](https://kafka.apache.org/documentation/#topicconfigs) for available configs. For example:
+  ```hcl
+  topic_replication_factor = 1
+  topic_partition_count    = 6
+  topic_config = {
+    "cleanup.policy" = "compact"
+    "retention.ms"   = "86400000"
+  }
+  ```
+
+### Bug Fixes
+
+* Fix a bug in the `materialize_source_kafka` resource where the value format JSON was not processed correctly [#607](https://github.com/MaterializeInc/terraform-provider-materialize/pull/607)
+
+### Misc
+
+* Fix CI intermittent failing tests [#609](https://github.com/MaterializeInc/terraform-provider-materialize/pull/609)
+* Fix connections data source tests [#594](https://github.com/MaterializeInc/terraform-provider-materialize/pull/594)
+* Routine dependency updates: [#608](https://github.com/MaterializeInc/terraform-provider-materialize/pull/608)
+
 ## 0.8.3 - 2024-07-08
 
 ### Features
