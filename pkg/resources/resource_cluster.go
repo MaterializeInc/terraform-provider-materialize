@@ -65,8 +65,8 @@ var clusterSchema = map[string]*schema.Schema{
 							"rehydration_time_estimate": {
 								Type:        schema.TypeString,
 								Optional:    true,
-								Description: "Estimated time to rehydrate the cluster during refresh.",
-								Deprecated:  "This field is deprecated and will be removed in a future release. Use `hydration_time_estimate` instead.",
+								Description: "Estimated time to rehydrate the cluster during refresh. This field is deprecated and will be removed in a future release. Use `hydration_time_estimate` instead.",
+								Deprecated:  "Use `hydration_time_estimate` instead.",
 							},
 						},
 					},

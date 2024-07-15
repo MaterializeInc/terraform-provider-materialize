@@ -56,7 +56,7 @@ Optional:
 
 - `enabled` (Boolean) Enable scheduling to refresh the cluster.
 - `hydration_time_estimate` (String) Estimated time to hydrate the cluster during refresh.
-- `rehydration_time_estimate` (String, Deprecated) Estimated time to rehydrate the cluster during refresh.
+- `rehydration_time_estimate` (String, Deprecated) Estimated time to rehydrate the cluster during refresh. This field is deprecated and will be removed in a future release. Use `hydration_time_estimate` instead.
 
 ## Import
 

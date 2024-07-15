@@ -168,7 +168,7 @@ func (b *ClusterBuilder) Create() error {
 			if b.schedulingConfig.OnRefresh.HydrationTimeEstimate != "" {
 				scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.HydrationTimeEstimate))
 			} else if b.schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
-				scheduleStatement += fmt.Sprintf(" (REHYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.RehydrationTimeEstimate))
+				scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.RehydrationTimeEstimate))
 			}
 			p = append(p, scheduleStatement)
 		}
@@ -233,7 +233,7 @@ func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) error {
 		if schedulingConfig.OnRefresh.HydrationTimeEstimate != "" {
 			scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.HydrationTimeEstimate))
 		} else if schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
-			scheduleStatement += fmt.Sprintf(" (REHYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.RehydrationTimeEstimate))
+			scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.RehydrationTimeEstimate))
 		}
 		q = fmt.Sprintf("ALTER CLUSTER %s SET (%s);", b.QualifiedName(), scheduleStatement)
 	} else {
