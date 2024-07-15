@@ -63,3 +63,44 @@ func TestUserResourceDelete(t *testing.T) {
 		r.Empty(d.Id())
 	})
 }
+
+func TestUserResourceUpdate(t *testing.T) {
+	r := require.New(t)
+
+	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
+		client := &clients.FronteggClient{
+			Endpoint:    serverURL,
+			HTTPClient:  &http.Client{},
+			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
+		}
+
+		providerMeta := &utils.ProviderMeta{
+			Frontegg: client,
+			FronteggRoles: map[string]string{
+				"Admin":  "1",
+				"Member": "2",
+			},
+		}
+
+		d := schema.TestResourceDataRaw(t, User().Schema, map[string]interface{}{
+			"email": "test@example.com",
+			"roles": []interface{}{"Member"},
+		})
+		d.SetId("mock-user-id")
+
+		d.Set("roles", []interface{}{"Admin", "Member"})
+
+		if err := userUpdate(context.TODO(), d, providerMeta); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := userRead(context.TODO(), d, providerMeta); err != nil {
+			t.Fatal(err)
+		}
+
+		roles := d.Get("roles").([]interface{})
+		r.Equal(2, len(roles), "Expected 2 roles after update")
+		r.Contains(roles, "Admin", "Expected 'Admin' role after update")
+		r.Contains(roles, "Member", "Expected 'Member' role after update")
+	})
+}

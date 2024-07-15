@@ -219,6 +219,7 @@ func (app *App) routes() {
 	app.Router.HandleFunc("/identity/resources/users/v2", app.handleUserRequest).Methods("POST")
 	app.Router.HandleFunc("/identity/resources/roles/v2", app.handleRolesRequest).Methods("GET")
 	app.Router.HandleFunc("/identity/resources/users/v3", app.handleUserV3Request).Methods("GET")
+	app.Router.HandleFunc("/frontegg/team/resources/members/v1", app.handleUpdateUserRoles).Methods("PUT")
 	app.Router.HandleFunc("/frontegg/team/resources/sso/v1/configurations", app.handleSSOConfigRequest).Methods("GET", "POST")
 	app.Router.HandleFunc("/frontegg/team/resources/sso/v1/configurations/{id}", app.handleSSOConfigAndDomainRequest).Methods("GET", "PATCH", "DELETE")
 	app.Router.HandleFunc("/frontegg/team/resources/sso/v1/configurations/{id}/domains", app.handleDomainRequests).Methods("GET", "POST")
@@ -317,6 +318,10 @@ func (app *App) handleUserRequest(w http.ResponseWriter, r *http.Request) {
 
 func (app *App) handleUserV3Request(w http.ResponseWriter, r *http.Request) {
 	app.getUsersV3(w, r)
+}
+
+func (app *App) handleUpdateUserRoles(w http.ResponseWriter, r *http.Request) {
+	app.updateUserRoles(w, r)
 }
 
 func (app *App) handleRolesRequest(w http.ResponseWriter, r *http.Request) {
@@ -698,6 +703,46 @@ func (app *App) getUsersV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, http.StatusOK, response)
+}
+
+func (app *App) updateUserRoles(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ID      string   `json:"id"`
+		Email   string   `json:"email"`
+		RoleIDs []string `json:"roleIds"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	app.Store.Mu.Lock()
+	defer app.Store.Mu.Unlock()
+
+	user, exists := app.Store.Users[req.ID]
+	if !exists {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	user.Roles = []FronteggRole{}
+	for _, roleID := range req.RoleIDs {
+		roleName := ""
+		switch roleID {
+		case "1":
+			roleName = "Organization Admin"
+		case "2":
+			roleName = "Organization Member"
+		default:
+			roleName = "Unknown Role"
+		}
+		user.Roles = append(user.Roles, FronteggRole{ID: roleID, Name: roleName})
+	}
+
+	app.Store.Users[req.ID] = user
+
+	sendJSONResponse(w, http.StatusOK, user)
 }
 
 func (app *App) createSSOConfig(w http.ResponseWriter, r *http.Request) {

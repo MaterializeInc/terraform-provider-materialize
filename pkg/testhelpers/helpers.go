@@ -146,6 +146,8 @@ func WithMockFronteggServer(t *testing.T, f func(url string)) {
 			handleUsersV3Request(w, req, r)
 		case strings.HasPrefix(req.URL.Path, "/identity/resources/roles/v2"):
 			handleRolesRequests(w, req, r)
+		case req.URL.Path == "/frontegg/team/resources/members/v1":
+			handleUpdateUserRoles(w, req, r)
 		case req.URL.Path == "/frontegg/team/resources/sso/v1/configurations":
 			switch req.Method {
 			case http.MethodPost:
@@ -264,18 +266,16 @@ func handleUserRequests(w http.ResponseWriter, req *http.Request, r *require.Ass
 	case http.MethodGet:
 		if userID != "" {
 			// Mock response for a specific user
-			mockUser := struct {
-				ID                string `json:"id"`
-				Email             string `json:"email"`
-				ProfilePictureURL string `json:"profilePictureUrl"`
-				Verified          bool   `json:"verified"`
-				Metadata          string `json:"metadata"`
-			}{
+			mockUser := frontegg.UserResponse{
 				ID:                userID,
 				Email:             "test@example.com",
 				ProfilePictureURL: "http://example.com/picture.jpg",
 				Verified:          true,
 				Metadata:          "{}",
+				Roles: []frontegg.UserRole{
+					{ID: "1", Name: "Organization Admin"},
+					{ID: "2", Name: "Organization Member"},
+				},
 			}
 			json.NewEncoder(w).Encode(mockUser)
 		} else {
@@ -373,6 +373,41 @@ func handleUsersV3Request(w http.ResponseWriter, req *http.Request, r *require.A
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
 	}
+}
+
+func handleUpdateUserRoles(w http.ResponseWriter, req *http.Request, r *require.Assertions) {
+	if req.Method != http.MethodPut {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var updateRequest struct {
+		ID      string   `json:"id"`
+		Email   string   `json:"email"`
+		RoleIDs []string `json:"roleIds"`
+	}
+
+	err := json.NewDecoder(req.Body).Decode(&updateRequest)
+	r.NoError(err)
+
+	updatedUser := frontegg.UserResponse{
+		ID:    updateRequest.ID,
+		Email: updateRequest.Email,
+		Roles: make([]frontegg.UserRole, len(updateRequest.RoleIDs)),
+	}
+
+	for i, roleID := range updateRequest.RoleIDs {
+		roleName := "Unknown Role"
+		if roleID == "1" {
+			roleName = "Organization Admin"
+		} else if roleID == "2" {
+			roleName = "Organization Member"
+		}
+		updatedUser.Roles[i] = frontegg.UserRole{ID: roleID, Name: roleName}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(updatedUser)
 }
 
 func handleRolesRequests(w http.ResponseWriter, req *http.Request, r *require.Assertions) {

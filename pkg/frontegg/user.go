@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	UsersApiPathV1 = "/identity/resources/users/v1"
-	UsersApiPathV2 = "/identity/resources/users/v2"
-	UsersApiPathV3 = "/identity/resources/users/v3"
+	UsersApiPathV1       = "/identity/resources/users/v1"
+	UsersApiPathV2       = "/identity/resources/users/v2"
+	UsersApiPathV3       = "/identity/resources/users/v3"
+	TeamMembersApiPathV1 = "/frontegg/team/resources/members/v1"
 )
 
 // UserRequest represents the request payload for creating or updating a user.
@@ -162,6 +163,36 @@ func GetUsers(ctx context.Context, client *clients.FronteggClient, params QueryU
 	}
 
 	return response.Items, nil
+}
+
+func UpdateUserRoles(ctx context.Context, client *clients.FronteggClient, userID string, email string, roleIDs []string) error {
+	payload := struct {
+		ID      string   `json:"id"`
+		Email   string   `json:"email"`
+		RoleIDs []string `json:"roleIds"`
+	}{
+		ID:      userID,
+		Email:   email,
+		RoleIDs: roleIDs,
+	}
+
+	requestBody, err := jsonEncode(payload)
+	if err != nil {
+		return err
+	}
+
+	endpoint := fmt.Sprintf("%s%s", client.Endpoint, TeamMembersApiPathV1)
+	resp, err := doRequest(ctx, client, "PUT", endpoint, requestBody)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return clients.HandleApiError(resp)
+	}
+
+	return nil
 }
 
 // DeleteUser deletes a user from Frontegg.

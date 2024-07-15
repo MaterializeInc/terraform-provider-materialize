@@ -48,7 +48,6 @@ func User() *schema.Resource {
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Required:    true,
-				ForceNew:    true,
 				Description: "The roles to assign to the user. Allowed values are 'Member' and 'Admin'.",
 			},
 			"verified": {
@@ -150,9 +149,35 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 }
 
 func userUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// TODO: Handle updating roles without `ForceNew`. This function exists as a
-	// no-op so that changing `send_activation_email` is a no-op update.
-	return nil
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	client := providerMeta.Frontegg
+	userID := d.Id()
+	email := d.Get("email").(string)
+
+	if d.HasChange("roles") {
+		roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
+		roleMap := providerMeta.FronteggRoles
+
+		var roleIDs []string
+		for _, roleName := range roleNames {
+			if roleID, ok := roleMap[roleName]; ok {
+				roleIDs = append(roleIDs, roleID)
+			} else {
+				return diag.Errorf("role not found: %s", roleName)
+			}
+		}
+
+		err := frontegg.UpdateUserRoles(ctx, client, userID, email, roleIDs)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return userRead(ctx, d, meta)
 }
 
 // userDelete is the Terraform resource delete function for a Frontegg user.
