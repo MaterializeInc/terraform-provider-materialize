@@ -42,43 +42,36 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
 		Type:        schema.TypeSet,
 		Optional:    true,
-		// TODO: Disable ForceNew when Materialize supports altering subsource
-		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"upstream_name": {
 					Description: "The name of the table in the upstream MySQL database.",
 					Type:        schema.TypeString,
 					Required:    true,
-					ForceNew:    true,
 				},
 				"upstream_schema_name": {
 					Description: "The schema of the table in the upstream MySQL database.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
-					ForceNew:    true,
 				},
 				"name": {
 					Description: "The name for the table, used in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
-					ForceNew:    true,
 				},
 				"schema_name": {
 					Description: "The schema of the table in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
-					ForceNew:    true,
 				},
 				"database_name": {
 					Description: "The database of the table in Materialize.",
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
-					ForceNew:    true,
 				},
 			},
 		},
@@ -257,6 +250,7 @@ func sourceMySQLRead(ctx context.Context, d *schema.ResourceData, meta interface
 		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
 		tMap["name"] = dep.ObjectName.String
 		tMap["schema_name"] = dep.ObjectSchemaName.String
+		tMap["database_name"] = dep.ObjectDatabaseName.String
 		tMaps = append(tMaps, tMap)
 	}
 	if err := d.Set("table", tMaps); err != nil {
@@ -276,7 +270,7 @@ func sourceMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	// b := materialize.NewSource(metaDb, o)
+	b := materialize.NewSource(metaDb, o)
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
@@ -296,7 +290,27 @@ func sourceMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		}
 	}
 
-	// TODO: Handle subsource/table updates when supported by Materialize
+	if d.HasChange("table") {
+		ot, nt := d.GetChange("table")
+		addTables := materialize.DiffTableStructs(nt.(*schema.Set).List(), ot.(*schema.Set).List())
+		dropTables := materialize.DiffTableStructs(ot.(*schema.Set).List(), nt.(*schema.Set).List())
+		if len(dropTables) > 0 {
+			if err := b.DropSubsource(dropTables); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		if len(addTables) > 0 {
+			var colDiff []string
+			if d.HasChange("text_columns") {
+				oc, nc := d.GetChange("text_columns")
+				colDiff = diffTextColumns(nc.([]interface{}), oc.([]interface{}))
+			}
+
+			if err := b.AddSubsource(addTables, colDiff); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
