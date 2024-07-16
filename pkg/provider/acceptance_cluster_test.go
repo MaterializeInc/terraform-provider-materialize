@@ -286,7 +286,7 @@ func TestAccClusterWithScheduling(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "name", clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "size", size),
 					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "scheduling.0.on_refresh.0.enabled", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "scheduling.0.on_refresh.0.rehydration_time_estimate", rehydrationTimeEstimate),
+					resource.TestCheckResourceAttr("materialize_cluster.test_scheduling", "scheduling.0.on_refresh.0.hydration_time_estimate", rehydrationTimeEstimate),
 				),
 			},
 		},
@@ -429,7 +429,7 @@ resource "materialize_cluster" "test_scheduling" {
     scheduling {
         on_refresh {
 			enabled = %s
-			rehydration_time_estimate = "%s"
+			hydration_time_estimate = "%s"
 		}
     }
 }
