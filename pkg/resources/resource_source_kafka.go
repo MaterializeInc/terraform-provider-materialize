@@ -132,6 +132,190 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"value_decoding_errors": {
+								Description: "Specify how to handle value decoding errors in the upsert envelope.",
+								Type:        schema.TypeList,
+								MaxItems:    1,
+								Optional:    true,
+								ForceNew:    true,
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"inline": {
+											Description: "Configuration for inline value decoding errors.",
+											Type:        schema.TypeList,
+											MaxItems:    1,
+											Optional:    true,
+											Elem: &schema.Resource{
+												Schema: map[string]*schema.Schema{
+													"enabled": {
+														Description: "Enable inline value decoding errors.",
+														Type:        schema.TypeBool,
+														Optional:    true,
+														Default:     false,
+													},
+													"alias": {
+														Description: "Specify an alias for the value decoding errors column, to use an alternative name for the error column.",
+														Type:        schema.TypeString,
+														Optional:    true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Optional: true,
+		ForceNew: true,
+	},
+	"start_offset": {
+		Description:   "Read partitions from the specified offset.",
+		Type:          schema.TypeList,
+		Elem:          &schema.Schema{Type: schema.TypeInt},
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"start_timestamp"},
+	},
+	"start_timestamp": {
+		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp.",
+		Type:          schema.TypeInt,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"start_offset"},
+	},
+	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "expose_progress",
+		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
+		Required:    false,
+		ForceNew:    true,
+	}),
+	"ownership_role": OwnershipRoleSchema(),
+	"region":         RegionSchema(),
+}
+
+var sourceKafkaSchemaV0 = map[string]*schema.Schema{
+	"name":               ObjectNameSchema("source", true, false),
+	"schema_name":        SchemaNameSchema("source", false),
+	"database_name":      DatabaseNameSchema("source", false),
+	"qualified_sql_name": QualifiedNameSchema("source"),
+	"comment":            CommentSchema(false),
+	"cluster_name":       ObjectClusterNameSchema("source"),
+	"size":               ObjectSizeSchema("source"),
+	"kafka_connection": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "kafka_connection",
+		Description: "The Kafka connection to use in the source.",
+		Required:    true,
+		ForceNew:    true,
+	}),
+	"topic": {
+		Description: "The Kafka topic you want to subscribe to.",
+		Type:        schema.TypeString,
+		Required:    true,
+		ForceNew:    true,
+	},
+	"include_key": {
+		Description: "Include a column containing the Kafka message key.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_key_alias": {
+		Description: "Provide an alias for the key column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_headers": {
+		Description: "Include message headers.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Default:     false,
+	},
+	"include_headers_alias": {
+		Description: "Provide an alias for the headers column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_partition": {
+		Description: "Include a partition column containing the Kafka message partition",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_partition_alias": {
+		Description: "Provide an alias for the partition column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_offset": {
+		Description: "Include an offset column containing the Kafka message offset.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_offset_alias": {
+		Description: "Provide an alias for the offset column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_timestamp": {
+		Description: "Include a timestamp column containing the Kafka message timestamp.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"include_timestamp_alias": {
+		Description: "Provide an alias for the timestamp column.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
+	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
+	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
+	"envelope": {
+		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"upsert": {
+					Description:   "Use the upsert envelope, which uses message keys to handle CRUD operations.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.debezium", "envelope.0.none"},
+				},
+				"debezium": {
+					Description:   "Use the Debezium envelope, which uses a diff envelope to handle CRUD operations.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.none", "envelope.0.upsert_options"},
+				},
+				"none": {
+					Description:   "Use an append-only envelope. This means that records will only be appended and cannot be updated or deleted.",
+					Type:          schema.TypeBool,
+					Optional:      true,
+					ForceNew:      true,
+					ConflictsWith: []string{"envelope.0.upsert", "envelope.0.debezium", "envelope.0.upsert_options"},
+				},
+				"upsert_options": {
+					Description: "Options for the upsert envelope.",
+					Type:        schema.TypeList,
+					MaxItems:    1,
+					Optional:    true,
+					ForceNew:    true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"value_decoding_errors": {
 								Description:  "Specify how to handle value decoding errors in the upsert envelope.",
 								Type:         schema.TypeString,
 								Optional:     true,
@@ -171,6 +355,38 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"region":         RegionSchema(),
 }
 
+func resourceSourceKafkaStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	if v, ok := rawState["envelope"].([]interface{}); ok && len(v) > 0 {
+		envelope := v[0].(map[string]interface{})
+		if upsertOptions, ok := envelope["upsert_options"].([]interface{}); ok && len(upsertOptions) > 0 {
+			options := upsertOptions[0].(map[string]interface{})
+			if oldValue, ok := options["value_decoding_errors"].(string); ok {
+				newValue := []interface{}{
+					map[string]interface{}{
+						"inline": []interface{}{
+							map[string]interface{}{
+								"enabled": oldValue == "INLINE",
+								"alias":   "",
+							},
+						},
+					},
+				}
+				options["value_decoding_errors"] = newValue
+				upsertOptions[0] = options
+				envelope["upsert_options"] = upsertOptions
+				rawState["envelope"] = []interface{}{envelope}
+			}
+		}
+	}
+	return rawState, nil
+}
+
+func resourceSourceKafkaV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: sourceKafkaSchemaV0,
+	}
+}
+
 func SourceKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Kafka source describes a Kafka cluster you want Materialize to read data from.",
@@ -185,6 +401,15 @@ func SourceKafka() *schema.Resource {
 		},
 
 		Schema: sourceKafkaSchema,
+
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceSourceKafkaV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceSourceKafkaStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 

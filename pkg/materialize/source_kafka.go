@@ -16,7 +16,12 @@ type KafkaSourceEnvelopeStruct struct {
 }
 
 type UpsertOptionsStruct struct {
-	ValueDecodingErrors string
+	ValueDecodingErrors struct {
+		Inline struct {
+			Enabled bool
+			Alias   string
+		}
+	}
 }
 
 func GetSourceKafkaEnvelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
@@ -29,8 +34,17 @@ func GetSourceKafkaEnvelopeStruct(v interface{}) KafkaSourceEnvelopeStruct {
 		if options, ok := data["upsert_options"].([]interface{}); ok && len(options) > 0 {
 			optionsData := options[0].(map[string]interface{})
 			envelope.UpsertOptions = &UpsertOptionsStruct{}
-			if valueDecodingErrors, ok := optionsData["value_decoding_errors"].(string); ok {
-				envelope.UpsertOptions.ValueDecodingErrors = valueDecodingErrors
+			if valueDecodingErrors, ok := optionsData["value_decoding_errors"].([]interface{}); ok && len(valueDecodingErrors) > 0 {
+				vdeData := valueDecodingErrors[0].(map[string]interface{})
+				if inline, ok := vdeData["inline"].([]interface{}); ok && len(inline) > 0 {
+					inlineData := inline[0].(map[string]interface{})
+					if enabled, ok := inlineData["enabled"].(bool); ok {
+						envelope.UpsertOptions.ValueDecodingErrors.Inline.Enabled = enabled
+					}
+					if alias, ok := inlineData["alias"].(string); ok {
+						envelope.UpsertOptions.ValueDecodingErrors.Inline.Alias = alias
+					}
+				}
 			}
 		}
 	}
@@ -434,10 +448,16 @@ func (b *SourceKafkaBuilder) Create() error {
 	}
 
 	if b.envelope.Upsert {
-		q.WriteString(` ENVELOPE UPSERT`)
+		q.WriteString(" ENVELOPE UPSERT")
 		if b.envelope.UpsertOptions != nil {
-			if b.envelope.UpsertOptions.ValueDecodingErrors != "" {
-				q.WriteString(fmt.Sprintf(` (VALUE DECODING ERRORS = (%s))`, b.envelope.UpsertOptions.ValueDecodingErrors))
+			inlineOptions := b.envelope.UpsertOptions.ValueDecodingErrors.Inline
+			if inlineOptions.Enabled {
+				q.WriteString(" (VALUE DECODING ERRORS = (INLINE")
+				if inlineOptions.Alias != "" {
+					q.WriteString(" AS ")
+					q.WriteString(inlineOptions.Alias)
+				}
+				q.WriteString("))")
 			}
 		}
 	}

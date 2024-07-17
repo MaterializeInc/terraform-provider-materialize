@@ -131,7 +131,8 @@ func TestAccSourceKafka_withUpsertOptions(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert", "true"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert_options.0.value_decoding_errors", "INLINE"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert_options.0.value_decoding_errors.0.inline.0.enabled", "true"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.upsert_options.0.value_decoding_errors.0.inline.0.alias", "my_error_col"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", connName),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", "public"),
@@ -397,7 +398,12 @@ func testAccSourceKafkaResourceWithUpsertOptions(connName, sourceName string) st
 		envelope {
 			upsert = true
 			upsert_options {
-				value_decoding_errors = "INLINE"
+				value_decoding_errors {
+					inline {
+						enabled = true
+						alias = "my_error_col"
+					}
+				}
 			}
 		}
 
