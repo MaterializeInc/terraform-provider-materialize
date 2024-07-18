@@ -12,16 +12,18 @@ resource "materialize_source_postgres" "example_source_postgres" {
   }
 
   table {
-    name  = "schema1.table_1"
-    alias = "s1_table_1"
+    upstream_name        = "table1"
+    upstream_schema_name = "schema1"
+    name                 = "s1_table1"
   }
 
   table {
-    name  = "schema2.table_1"
-    alias = "s2_table_1"
+    upstream_name        = "table2"
+    upstream_schema_name = "schema2"
+    name                 = "s2_table2"
   }
 }
 
 # CREATE SOURCE schema.source_postgres
 #   FROM POSTGRES CONNECTION "database"."schema"."pg_connection" (PUBLICATION 'mz_source')
-#   FOR TABLES (schema1.table_1 AS s1_table_1, schema2_table_1 AS s2_table_1);
+#   FOR TABLES (schema1.table1 AS s1_table1, schema2.table2 AS s2_table2);
