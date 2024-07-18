@@ -152,7 +152,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 														Default:     false,
 													},
 													"alias": {
-														Description: "Specify an alias for the value decoding errors column, to use an alternative name for the error column.",
+														Description: "Specify an alias for the value decoding errors column, to use an alternative name for the error column. If not specified, the column name will be `error`.",
 														Type:        schema.TypeString,
 														Optional:    true,
 													},

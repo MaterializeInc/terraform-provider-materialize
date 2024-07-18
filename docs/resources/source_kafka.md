@@ -125,7 +125,7 @@ Optional:
 
 Optional:
 
-- `alias` (String) Specify an alias for the value decoding errors column, to use an alternative name for the error column.
+- `alias` (String) Specify an alias for the value decoding errors column, to use an alternative name for the error column. If not specified, the column name will be `error`.
 - `enabled` (Boolean) Enable inline value decoding errors.
 
 
