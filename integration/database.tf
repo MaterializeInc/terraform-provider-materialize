@@ -32,9 +32,9 @@ resource "materialize_database_grant" "database_grant_create" {
 
 # Create in separate region
 resource "materialize_database_grant" "database_grant_create_us_west" {
-  role_name     = materialize_role.role_2.name
+  role_name     = materialize_role.role_2_us_west.name
   privilege     = "CREATE"
-  database_name = materialize_database.database.name
+  database_name = materialize_database.database_us_west.name
   region        = "aws/us-west-2"
 }
 
