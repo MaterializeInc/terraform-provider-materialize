@@ -42,10 +42,10 @@ services:
       - --system-parameter-default=max_aws_privatelink_connections=10
       - --all-features
     environment:
-      MZ_SQL_LISTEN_ADDR: 7875
-      MZ_HTTP_LISTEN_ADDR: 7876
-      MZ_INTERNAL_SQL_LISTEN_ADDR: 7877
-      MZ_INTERNAL_HTTP_LISTEN_ADDR: 7878
+      MZ_SQL_LISTEN_ADDR: 0.0.0.0:7875
+      MZ_HTTP_LISTEN_ADDR: 0.0.0.0:7876
+      MZ_INTERNAL_SQL_LISTEN_ADDR: 0.0.0.0:7877
+      MZ_INTERNAL_HTTP_LISTEN_ADDR: 0.0.0.0:7878
     ports:
       - 7875:7875
       - 7877:7877
