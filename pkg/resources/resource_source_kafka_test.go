@@ -51,7 +51,16 @@ var inSourceKafka = map[string]interface{}{
 			"upsert": true,
 			"upsert_options": []interface{}{
 				map[string]interface{}{
-					"value_decoding_errors": "INLINE",
+					"value_decoding_errors": []interface{}{
+						map[string]interface{}{
+							"inline": []interface{}{
+								map[string]interface{}{
+									"enabled": true,
+									"alias":   "my_error_col",
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -157,7 +166,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 			PARTITION AS partition,
 			OFFSET AS offset,
 			TIMESTAMP AS timestamp
-			ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE\)\);`,
+			ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS my_error_col\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

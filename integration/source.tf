@@ -262,7 +262,12 @@ resource "materialize_source_kafka" "kafka_upsert_options_source" {
   envelope {
     upsert = true
     upsert_options {
-      value_decoding_errors = "INLINE"
+      value_decoding_errors {
+        inline {
+          enabled = true
+          alias   = "my_error_col"
+        }
+      }
     }
   }
 

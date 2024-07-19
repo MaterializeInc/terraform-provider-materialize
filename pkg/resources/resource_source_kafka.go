@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var sourceKafkaSchema = map[string]*schema.Schema{
@@ -132,11 +131,36 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"value_decoding_errors": {
-								Description:  "Specify how to handle value decoding errors in the upsert envelope.",
-								Type:         schema.TypeString,
-								Optional:     true,
-								ForceNew:     true,
-								ValidateFunc: validation.StringInSlice(upsertValueDecodingErrors, true),
+								Description: "Specify how to handle value decoding errors in the upsert envelope.",
+								Type:        schema.TypeList,
+								MaxItems:    1,
+								Optional:    true,
+								ForceNew:    true,
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"inline": {
+											Description: "Configuration for inline value decoding errors.",
+											Type:        schema.TypeList,
+											MaxItems:    1,
+											Optional:    true,
+											Elem: &schema.Resource{
+												Schema: map[string]*schema.Schema{
+													"enabled": {
+														Description: "Enable inline value decoding errors.",
+														Type:        schema.TypeBool,
+														Optional:    true,
+														Default:     false,
+													},
+													"alias": {
+														Description: "Specify an alias for the value decoding errors column, to use an alternative name for the error column. If not specified, the column name will be `error`.",
+														Type:        schema.TypeString,
+														Optional:    true,
+													},
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
