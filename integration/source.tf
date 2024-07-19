@@ -43,6 +43,18 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   }
 }
 
+resource "materialize_source_load_generator" "load_generator_cluster_us_west" {
+  name                = "load_gen_cluster"
+  schema_name         = materialize_schema.schema_us_west.name
+  database_name       = materialize_database.database_us_west.name
+  cluster_name        = materialize_cluster.cluster_source_us_west.name
+  load_generator_type = "COUNTER"
+
+  counter_options {
+    tick_interval = "500ms"
+  }
+}
+
 resource "materialize_source_load_generator" "load_generator_auction" {
   name                = "load_gen_auction"
   schema_name         = materialize_schema.schema.name
