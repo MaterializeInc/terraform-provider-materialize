@@ -44,6 +44,7 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   }
 }
 
+# Create in a separate region
 resource "materialize_source_load_generator" "load_generator_cluster_us_west" {
   name                = "load_gen_cluster"
   schema_name         = materialize_schema.schema_us_west.name
