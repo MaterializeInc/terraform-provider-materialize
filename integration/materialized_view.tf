@@ -11,6 +11,21 @@ SELECT
 SQL
 }
 
+# Create in separate region
+resource "materialize_materialized_view" "simple_materialized_view_us_west" {
+  name          = "simple_materialized_view"
+  schema_name   = materialize_schema.schema_us_west.name
+  database_name = materialize_database.database_us_west.name
+  comment       = "materialize view comment"
+  cluster_name  = "quickstart"
+  region        = "aws/us-west-2"
+
+  statement = <<SQL
+SELECT
+    1 AS id
+SQL
+}
+
 resource "materialize_materialized_view" "materialized_view_assertions" {
   name               = "materialized_view_assertions"
   schema_name        = materialize_schema.schema.name

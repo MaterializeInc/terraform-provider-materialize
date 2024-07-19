@@ -25,6 +25,28 @@ services:
       - 6878:6878
     healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
 
+  materialized2:
+    image: materialize/materialized:latest
+    container_name: materialized2
+    command:
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - --bootstrap-default-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-system-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-support-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --availability-zone=test1
+      - --availability-zone=test2
+      - --system-parameter-default=max_clusters=100
+      - --system-parameter-default=max_sources=100
+      - --system-parameter-default=max_aws_privatelink_connections=10
+      - --all-features
+    ports:
+      - 7875:6875
+      - 7877:6877
+      - 7878:6878
+    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
+
   materialized_init:
     image: postgres
     container_name: materialized_init

@@ -37,7 +37,7 @@ var regions = []Region{
 		ID:            "aws/us-east-1",
 		Name:          "us-east-1",
 		CloudProvider: "aws",
-		URL:           "http://cloud:3001",
+		URL:           "http://cloud:3001/us-east-1",
 		RegionInfo: &RegionInfo{
 			SqlAddress:  "materialized:6877",
 			HttpAddress: "materialized:6875",
@@ -45,38 +45,75 @@ var regions = []Region{
 			EnabledAt:   "2023-01-01T00:00:00Z",
 		},
 	},
-	// Add more mock regions if needed later
+	{
+		ID:            "aws/us-west-2",
+		Name:          "us-west-2",
+		CloudProvider: "aws",
+		URL:           "http://cloud:3001/us-west-2",
+		RegionInfo: &RegionInfo{
+			SqlAddress:  "materialized2:7877",
+			HttpAddress: "materialized2:7875",
+			Resolvable:  true,
+			EnabledAt:   "2023-01-01T00:00:00Z",
+		},
+	},
 }
 
 func main() {
-	http.HandleFunc("/api/region", regionHandler)
+	// Cloud Global API endpoint
 	http.HandleFunc("/api/cloud-regions", cloudRegionsHandler)
+
+	// Cloud Region API endpoints
+	http.HandleFunc("/us-east-1/api/region", regionHandler("aws/us-east-1"))
+	http.HandleFunc("/us-west-2/api/region", regionHandler("aws/us-west-2"))
 
 	fmt.Println("Mock Cloud API server is running at http://localhost:3001")
 	log.Fatal(http.ListenAndServe(":3001", nil))
 }
 
-func regionHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		mockRegion := CloudRegion{
-			RegionInfo: &RegionInfo{
-				SqlAddress:  "materialized:6877",
-				HttpAddress: "materialized:6875",
-				Resolvable:  true,
-				EnabledAt:   "2023-01-01T00:00:00Z",
-			},
+func regionHandler(regionID string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received %s request to %s", r.Method, r.URL.Path)
+
+		var selectedRegion *Region
+		for _, region := range regions {
+			if region.ID == regionID {
+				selectedRegion = &region
+				break
+			}
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(mockRegion)
-	case http.MethodPatch:
-		enabledRegion := CloudRegion{RegionInfo: nil}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(enabledRegion)
-	case http.MethodDelete:
-		w.WriteHeader(http.StatusAccepted)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+		if selectedRegion == nil {
+			http.Error(w, "Region not found", http.StatusNotFound)
+			return
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			mockRegion := CloudRegion{
+				RegionInfo: selectedRegion.RegionInfo,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(mockRegion); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+
+		case http.MethodPatch:
+			var updatedRegion RegionInfo
+			if err := json.NewDecoder(r.Body).Decode(&updatedRegion); err != nil {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+			selectedRegion.RegionInfo = &updatedRegion
+			w.WriteHeader(http.StatusOK)
+
+		case http.MethodDelete:
+			selectedRegion.RegionInfo = nil
+			w.WriteHeader(http.StatusAccepted)
+
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
 	}
 }
 
@@ -88,5 +125,8 @@ func cloudRegionsHandler(w http.ResponseWriter, r *http.Request) {
 	response := CloudProviderResponse{
 		Data: regions,
 	}
-	json.NewEncoder(w).Encode(response)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }

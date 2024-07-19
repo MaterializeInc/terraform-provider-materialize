@@ -9,6 +9,19 @@ resource "materialize_connection_kafka" "kafka_connection" {
   validate = true
 }
 
+# Create in separate region
+resource "materialize_connection_kafka" "kafka_connection_us_west" {
+  name              = "kafka_connection"
+  comment           = "connection kafka comment"
+  security_protocol = "PLAINTEXT"
+
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+  region    = "aws/us-west-2"
+  validate  = true
+}
+
 resource "materialize_connection_kafka" "kafka_conn_ssl_auth" {
   name              = "kafka_conn_ssl_auth"
   security_protocol = "SSL"
@@ -32,6 +45,33 @@ resource "materialize_connection_kafka" "kafka_conn_ssl_auth" {
   }
 
   validate = false
+}
+
+# Create in separate region
+resource "materialize_connection_kafka" "kafka_conn_ssl_auth_us_west" {
+  name              = "kafka_conn_ssl_auth"
+  security_protocol = "SSL"
+
+  kafka_broker {
+    broker = "redpanda:9092"
+  }
+
+  ssl_certificate {
+    text = "certificate-content"
+  }
+
+  ssl_key {
+    name          = materialize_secret.kafka_password_us_west.name
+    database_name = materialize_secret.kafka_password_us_west.database_name
+    schema_name   = materialize_secret.kafka_password_us_west.schema_name
+  }
+
+  ssl_certificate_authority {
+    text = "ca-content"
+  }
+
+  region    = "aws/us-west-2"
+  validate  = false
 }
 
 resource "materialize_connection_kafka" "kafka_ssh_tunnel_connection" {

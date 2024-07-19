@@ -2,13 +2,32 @@ resource "materialize_database" "db1" {
   name = "db1"
 }
 
+# Create in separate region
+resource "materialize_database" "db1_us_west" {
+  name   = "db1"
+  region = "aws/us-west-2"
+}
+
 resource "materialize_database" "db2" {
   name = "db2"
+}
+
+# Create in separate region
+resource "materialize_database" "db2_us_west" {
+  name   = "db2"
+  region = "aws/us-west-2"
 }
 
 resource "materialize_schema" "schema1" {
   name          = "schema1"
   database_name = materialize_database.db1.name
+}
+
+# Create in separate region
+resource "materialize_schema" "schema1_us_west" {
+  name          = "schema1"
+  database_name = materialize_database.db1_us_west.name
+  region        = "aws/us-west-2"
 }
 
 resource "materialize_schema" "schema2" {
