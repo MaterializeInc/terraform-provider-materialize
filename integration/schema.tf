@@ -35,7 +35,7 @@ resource "materialize_schema" "db2_public" {
 # Create in separate region
 resource "materialize_schema" "db2_public_us_west" {
   name          = "public"
-  database_name = materialize_database.db2.name
+  database_name = materialize_database.db2_us_west.name
   comment       = "public schema comment"
   region        = "aws/us-west-2"
 }
@@ -49,7 +49,7 @@ resource "materialize_schema" "schema" {
 # Create in separate region
 resource "materialize_schema" "schema_us_west" {
   name          = "example_schema"
-  database_name = materialize_database.database.name
+  database_name = materialize_database.database_us_west.name
   comment       = "schema comment"
   region        = "aws/us-west-2"
 }
@@ -63,10 +63,10 @@ resource "materialize_schema_grant" "schema_grant_usage" {
 
 # Create in separate region
 resource "materialize_schema_grant" "schema_grant_usage_us_west" {
-  role_name     = materialize_role.role_1.name
+  role_name     = materialize_role.role_1_us_west.name
   privilege     = "USAGE"
-  database_name = materialize_schema.schema.database_name
-  schema_name   = materialize_schema.schema.name
+  database_name = materialize_schema.schema_us_west.database_name
+  schema_name   = materialize_schema.schema_us_west.name
   region        = "aws/us-west-2"
 }
 
@@ -79,10 +79,10 @@ resource "materialize_schema_grant" "schema_grant_create" {
 
 # Create in separate region
 resource "materialize_schema_grant" "schema_grant_create_us_west" {
-  role_name     = materialize_role.role_2.name
+  role_name     = materialize_role.role_2_us_west.name
   privilege     = "CREATE"
-  database_name = materialize_schema.schema.database_name
-  schema_name   = materialize_schema.schema.name
+  database_name = materialize_schema.schema_us_west.database_name
+  schema_name   = materialize_schema.schema_us_west.name
   region        = "aws/us-west-2"
 }
 
@@ -95,10 +95,10 @@ resource "materialize_schema_grant_default_privilege" "example" {
 
 # Create in separate region
 resource "materialize_schema_grant_default_privilege" "example_us_west" {
-  grantee_name     = materialize_role.grantee.name
+  grantee_name     = materialize_role.grantee_us_west.name
   privilege        = "USAGE"
-  target_role_name = materialize_role.target.name
-  database_name    = materialize_database.database.name
+  target_role_name = materialize_role.target_us_west.name
+  database_name    = materialize_database.database_us_west.name
   region           = "aws/us-west-2"
 }
 
