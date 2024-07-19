@@ -22,6 +22,7 @@ resource "materialize_source_load_generator" "load_generator_us_west" {
   comment             = "source load generator comment"
   cluster_name        = materialize_cluster.cluster_source_us_west.name
   load_generator_type = "COUNTER"
+  region              = "aws/us-west-2"
 
   counter_options {
     tick_interval = "500ms"
@@ -49,6 +50,7 @@ resource "materialize_source_load_generator" "load_generator_cluster_us_west" {
   database_name       = materialize_database.database_us_west.name
   cluster_name        = materialize_cluster.cluster_source_us_west.name
   load_generator_type = "COUNTER"
+  region              = "aws/us-west-2"
 
   counter_options {
     tick_interval = "500ms"
