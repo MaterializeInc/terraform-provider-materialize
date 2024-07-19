@@ -41,11 +41,16 @@ services:
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
       - --all-features
+    environment:
+      MZ_SQL_LISTEN_ADDR: 7875
+      MZ_HTTP_LISTEN_ADDR: 7876
+      MZ_INTERNAL_SQL_LISTEN_ADDR: 7877
+      MZ_INTERNAL_HTTP_LISTEN_ADDR: 7878
     ports:
-      - 7875:6875
-      - 7877:6877
-      - 7878:6878
-    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
+      - 7875:7875
+      - 7877:7877
+      - 7878:7878
+    healthcheck: {test: curl -f localhost:7878/api/readyz, interval: 1s, start_period: 35s}
 
   materialized_init:
     image: postgres
