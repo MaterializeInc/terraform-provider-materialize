@@ -45,8 +45,8 @@ resource "materialize_cluster" "scheduling_cluster" {
 
 # Create in separate region
 resource "materialize_cluster" "scheduling_cluster_us_west" {
-  name = "scheduling_cluster"
-  size = "25cc"
+  name   = "scheduling_cluster"
+  size   = "25cc"
   region = "aws/us-west-2"
   scheduling {
     on_refresh {

@@ -18,8 +18,8 @@ resource "materialize_connection_kafka" "kafka_connection_us_west" {
   kafka_broker {
     broker = "redpanda:9092"
   }
-  region    = "aws/us-west-2"
-  validate  = true
+  region   = "aws/us-west-2"
+  validate = true
 }
 
 resource "materialize_connection_kafka" "kafka_conn_ssl_auth" {
@@ -70,8 +70,8 @@ resource "materialize_connection_kafka" "kafka_conn_ssl_auth_us_west" {
     text = "ca-content"
   }
 
-  region    = "aws/us-west-2"
-  validate  = false
+  region   = "aws/us-west-2"
+  validate = false
 }
 
 resource "materialize_connection_kafka" "kafka_ssh_tunnel_connection" {
