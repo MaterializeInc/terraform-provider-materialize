@@ -109,10 +109,6 @@ var mysqlSSLMode = []string{
 	"verify-identity",
 }
 
-var upsertValueDecodingErrors = []string{
-	"INLINE",
-}
-
 var sinkFormatCompatibilityLevels = []string{
 	"BACKWARD",
 	"BACKWARD_TRANSITIVE",
