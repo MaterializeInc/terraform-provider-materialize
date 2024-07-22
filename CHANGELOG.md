@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.5 - 2024-07-22
+
+### Features
+
+* Change cluster option from `REHYDRATION TIME ESTIMATE` to `HYDRATION TIME ESTIMATE` [#603](https://github.com/MaterializeInc/terraform-provider-materialize/pull/603)
+* Add support for upsert options error decoding alias [#612](https://github.com/MaterializeInc/terraform-provider-materialize/pull/612):
+  ```hcl
+  envelope {
+    upsert = true
+    upsert_options {
+      value_decoding_errors {
+        inline {
+          enabled = true
+          alias   = "my_error_col"
+        }
+      }
+    }
+  }
+  ```
+
+### Misc
+
+* Update Terraform docs examples [#613](https://github.com/MaterializeInc/terraform-provider-materialize/pull/613)
+
 ## 0.8.4 - 2024-07-15
 
 ### Features
