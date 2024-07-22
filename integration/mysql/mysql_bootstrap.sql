@@ -22,9 +22,8 @@ CREATE TABLE IF NOT EXISTS mysql_table2
     id INT,
     name VARCHAR(255),
     about TEXT,
-    banned BOOLEAN
-    -- TODO: Disable until https://github.com/MaterializeInc/materialize/issues/24952 is resolved
-    -- updated_at TIMESTAMP NOT NULL
+    banned BOOLEAN,
+    updated_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS mysql_table3
@@ -32,8 +31,14 @@ CREATE TABLE IF NOT EXISTS mysql_table3
     id INT AUTO_INCREMENT PRIMARY KEY
 );
 
+CREATE TABLE IF NOT EXISTS mysql_table4
+(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    status ENUM('active', 'inactive', 'deleted') NOT NULL DEFAULT 'active'
+);
+
 -- Insert sample data
-INSERT INTO mysql_table1 (id) VALUES (NULL), (NULL), (NULL), (NULL), (NULL);
--- INSERT INTO mysql_table2 (id, updated_at) VALUES (1, NOW()), (2, NOW()), (3, NOW()), (4, NOW()), (5, NOW());
+INSERT INTO mysql_table1 (name, about, banned) VALUES ('John Doe', 'Lorem ipsum dolor sit amet', 0), ('Jane Doe', 'Lorem ipsum dolor sit amet', 1), ('Alice', 'Lorem ipsum dolor sit amet', 0), ('Bob', 'Lorem ipsum dolor sit amet', 1), ('Charlie', 'Lorem ipsum dolor sit amet', 0);
+INSERT INTO mysql_table2 (id, updated_at) VALUES (1, NOW()), (2, NOW()), (3, NOW()), (4, NOW()), (5, NOW());
 INSERT INTO mysql_table2 (id) VALUES (1), (2), (3), (4), (5);
 INSERT INTO mysql_table3 (id) VALUES (NULL), (NULL), (NULL), (NULL), (NULL);

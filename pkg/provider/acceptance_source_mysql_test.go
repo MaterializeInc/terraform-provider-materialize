@@ -27,13 +27,20 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%[1]s_source"`, nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.#", "2"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.#", "3"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.upstream_name", "mysql_table1"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.upstream_schema_name", "shop"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.0.name", fmt.Sprintf(`%s_mysql_table1`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.upstream_name", "mysql_table2"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.upstream_schema_name", "shop"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.1.name", fmt.Sprintf(`%s_mysql_table2`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.2.upstream_name", "mysql_table4"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.2.upstream_schema_name", "shop"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "table.2.name", fmt.Sprintf(`%s_mysql_table4`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ignore_columns.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ignore_columns.0", "shop.mysql_table2.id"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "text_columns.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "text_columns.0", "shop.mysql_table4.status"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "cluster_name", "quickstart"),
@@ -177,6 +184,9 @@ func testAccSourceMySQLBasicResource(nameSpace string) string {
 			name = materialize_connection_mysql.test.name
 		}
 
+		ignore_columns = ["shop.mysql_table2.id"]
+		text_columns   = ["shop.mysql_table4.status"]
+
 		table {
 			upstream_name  		= "mysql_table1"
 			upstream_schema_name = "shop"
@@ -186,6 +196,11 @@ func testAccSourceMySQLBasicResource(nameSpace string) string {
 			upstream_name  		= "mysql_table2"
 			upstream_schema_name = "shop"
 			name 		= "%[1]s_mysql_table2"
+		}
+		table {
+			upstream_name        = "mysql_table4"
+			upstream_schema_name = "shop"
+			name                 = "%[1]s_mysql_table4"
 		}
 	}
 	`, nameSpace)
