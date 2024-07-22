@@ -90,7 +90,7 @@ func TestAccSourceMySQL_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceMySQLBasicResource(initialName),
+				Config: testAccSourceMySQLUpdateResource(initialName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", initialName+"_source"),
@@ -104,7 +104,7 @@ func TestAccSourceMySQL_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSourceMySQLBasicResource(updatedName),
+				Config: testAccSourceMySQLUpdateResource(updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "name", updatedName+"_source"),
@@ -201,6 +201,54 @@ func testAccSourceMySQLBasicResource(nameSpace string) string {
 			upstream_name        = "mysql_table4"
 			upstream_schema_name = "shop"
 			name                 = "%[1]s_mysql_table4"
+		}
+	}
+	`, nameSpace)
+}
+
+func testAccSourceMySQLUpdateResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "mysql_password" {
+		name          = "%[1]s_secret"
+		value         = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_mysql" "test" {
+		name = "%[1]s_connection"
+		host = "mysql"
+		port = 3306
+		user {
+			text = "repluser"
+		}
+		password {
+			name          = materialize_secret.mysql_password.name
+			schema_name   = materialize_secret.mysql_password.schema_name
+			database_name = materialize_secret.mysql_password.database_name
+		}
+		comment  = "object comment"
+	}
+
+	resource "materialize_source_mysql" "test" {
+		name = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		comment = "%[1]s comment"
+
+		mysql_connection {
+			name = materialize_connection_mysql.test.name
+		}
+
+		ignore_columns = ["shop.mysql_table2.id"]
+
+		table {
+			upstream_name  		= "mysql_table1"
+			upstream_schema_name = "shop"
+			name 		= "%[1]s_mysql_table1"
+		}
+		table {
+			upstream_name  		= "mysql_table2"
+			upstream_schema_name = "shop"
+			name 		= "%[1]s_mysql_table2"
 		}
 	}
 	`, nameSpace)
