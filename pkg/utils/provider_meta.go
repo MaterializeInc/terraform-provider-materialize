@@ -22,6 +22,10 @@ type ProviderMeta struct {
 	// which may involve authentication, token management, etc.
 	Frontegg *clients.FronteggClient
 
+	// Authenticator is the interface used to manage authentication and token
+	// management for the Frontegg API.
+	Authenticator clients.Authenticator
+
 	// CloudAPI is the client used for interactions with the cloud API
 	CloudAPI *clients.CloudAPIClient
 

@@ -15,9 +15,31 @@ import (
 
 type MockFronteggService struct {
 	MockResponseStatus int
+	LastRequest        *http.Request
+}
+
+type MockAuthenticator struct {
+	Token              string
+	RefreshCalled      bool
+	NeedsRefreshCalled bool
+}
+
+func (m *MockAuthenticator) GetToken() string {
+	return m.Token
+}
+
+func (m *MockAuthenticator) RefreshToken() error {
+	m.RefreshCalled = true
+	return nil
+}
+
+func (m *MockAuthenticator) NeedsTokenRefresh() error {
+	m.NeedsRefreshCalled = true
+	return nil
 }
 
 func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, error) {
+	m.LastRequest = req
 	// Check the requested URL and return a response accordingly
 	if strings.HasSuffix(req.URL.Path, "/api/cloud-regions") {
 		// Mock response data
@@ -62,22 +84,20 @@ func TestCloudAPIClient_ListCloudProviders(t *testing.T) {
 		MockResponseStatus: http.StatusOK,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 
-	// Call the method to test
 	providers, err := apiClient.ListCloudProviders(context.Background())
-	if err != nil {
-		t.Fatalf("ListCloudProviders() error: %v", err)
-	}
+	require.NoError(t, err)
+	require.Len(t, providers, 2)
 
-	// Verify the results
-	wantProviderCount := 2
-	if len(providers) != wantProviderCount {
-		t.Errorf("ListCloudProviders() got %v providers, want %v", len(providers), wantProviderCount)
-	}
+	require.True(t, mockAuthenticator.NeedsRefreshCalled)
+	require.Equal(t, "Bearer mock-token", mockService.LastRequest.Header.Get("Authorization"))
 }
 
 func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
@@ -85,9 +105,12 @@ func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
 		MockResponseStatus: http.StatusOK,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 
 	provider := CloudProvider{
@@ -96,17 +119,12 @@ func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
 		Url:  "http://mockendpoint.com/api/region",
 	}
 
-	// Call the method to test
 	region, err := apiClient.GetRegionDetails(context.Background(), provider)
-	if err != nil {
-		t.Fatalf("GetRegionDetails() error: %v", err)
-	}
+	require.NoError(t, err)
+	require.Equal(t, "sql.materialize.com", region.RegionInfo.SqlAddress)
 
-	// Verify the results
-	wantSqlAddress := "sql.materialize.com"
-	if region.RegionInfo.SqlAddress != wantSqlAddress {
-		t.Errorf("GetRegionDetails() got SqlAddress = %v, want %v", region.RegionInfo.SqlAddress, wantSqlAddress)
-	}
+	require.True(t, mockAuthenticator.NeedsRefreshCalled)
+	require.Equal(t, "Bearer mock-token", mockService.LastRequest.Header.Get("Authorization"))
 }
 
 func TestCloudAPIClient_GetHost(t *testing.T) {
@@ -114,63 +132,60 @@ func TestCloudAPIClient_GetHost(t *testing.T) {
 		MockResponseStatus: http.StatusOK,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 
 	regionID := "aws/us-east-1"
 
 	sqlAddress, err := apiClient.GetHost(context.Background(), regionID)
-	if err != nil {
-		t.Fatalf("GetHost() error: %v", err)
-	}
+	require.NoError(t, err)
+	require.Equal(t, "sql.materialize.com", sqlAddress)
 
-	// Verify the results
-	wantSqlAddress := "sql.materialize.com"
-	if sqlAddress != wantSqlAddress {
-		t.Errorf("GetHost() got SqlAddress = %v, want %v", sqlAddress, wantSqlAddress)
-	}
+	require.True(t, mockAuthenticator.NeedsRefreshCalled)
 }
 
 func TestCloudAPIClient_ListCloudProviders_ErrorResponse(t *testing.T) {
 	mockService := &MockFronteggService{
-		// Mock the HTTP response to return an error status code:
 		MockResponseStatus: http.StatusInternalServerError,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 
-	// Call the method to test
 	_, err := apiClient.ListCloudProviders(context.Background())
-
-	// Verify that an error is returned when the server responds with an error status code
 	require.Error(t, err)
 }
 
 func TestCloudAPIClient_GetRegionDetails_ErrorResponse(t *testing.T) {
 	mockService := &MockFronteggService{
-		// Mock the HTTP response to return an error status code
 		MockResponseStatus: http.StatusInternalServerError,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
+
 	provider := CloudProvider{
 		ID:   "aws/us-east-1",
 		Name: "us-east-1",
 		Url:  "http://mockendpoint.com/api/region",
 	}
 
-	// Call the method to test
 	_, err := apiClient.GetRegionDetails(context.Background(), provider)
-
-	// Verify that an error is returned when the server responds with an error status code
 	require.Error(t, err)
 }
 
@@ -179,9 +194,12 @@ func TestCloudAPIClient_GetHost_RegionNotFound(t *testing.T) {
 		MockResponseStatus: http.StatusOK,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 	regionID := "non-existent-region"
 
@@ -191,32 +209,23 @@ func TestCloudAPIClient_GetHost_RegionNotFound(t *testing.T) {
 	// Verify that an error is returned when the region is not found
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "provider for region 'non-existent-region' not found")
+
+	// Verify that the authentication method was called
+	require.True(t, mockAuthenticator.NeedsRefreshCalled)
 }
 
 func TestNewCloudAPIClient(t *testing.T) {
-	// Create a FronteggClient instance for testing
-	fronteggClient := &FronteggClient{}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
 
-	// Call the NewCloudAPIClient function with a custom API endpoint
 	customEndpoint := "http://custom-endpoint.com/api"
 	baseEndpoint := "http://cloud.frontegg.com"
-	cloudAPIClient := NewCloudAPIClient(fronteggClient, customEndpoint, baseEndpoint)
+	cloudAPIClient := NewCloudAPIClient(mockAuthenticator, customEndpoint, baseEndpoint)
 
-	// Assert that the returned CloudAPIClient has the expected properties
 	require.NotNil(t, cloudAPIClient)
-	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
+	require.Equal(t, mockAuthenticator, cloudAPIClient.Authenticator)
 	require.NotNil(t, cloudAPIClient.HTTPClient)
 	require.Equal(t, customEndpoint, cloudAPIClient.Endpoint)
-
-	// Call the NewCloudAPIClient function with a different custom API endpoint
-	anotherCustomEndpoint := "http://another-custom-endpoint.com/api"
-	cloudAPIClient = NewCloudAPIClient(fronteggClient, anotherCustomEndpoint, baseEndpoint)
-
-	// Assert that the returned CloudAPIClient has the updated custom endpoint
-	require.NotNil(t, cloudAPIClient)
-	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
-	require.NotNil(t, cloudAPIClient.HTTPClient)
-	require.Equal(t, anotherCustomEndpoint, cloudAPIClient.Endpoint)
+	require.Equal(t, baseEndpoint, cloudAPIClient.BaseEndpoint)
 }
 
 func TestCloudAPIClient_EnableRegion_Success(t *testing.T) {
@@ -224,9 +233,12 @@ func TestCloudAPIClient_EnableRegion_Success(t *testing.T) {
 		MockResponseStatus: http.StatusOK,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 
 	provider := CloudProvider{
@@ -242,6 +254,9 @@ func TestCloudAPIClient_EnableRegion_Success(t *testing.T) {
 	require.Equal(t, "http.materialize.com", region.RegionInfo.HttpAddress)
 	require.True(t, region.RegionInfo.Resolvable)
 	require.Equal(t, "2021-01-01T00:00:00Z", region.RegionInfo.EnabledAt)
+
+	require.True(t, mockAuthenticator.NeedsRefreshCalled)
+	require.Equal(t, "Bearer mock-token", mockService.LastRequest.Header.Get("Authorization"))
 }
 
 func TestCloudAPIClient_EnableRegion_Error(t *testing.T) {
@@ -249,9 +264,12 @@ func TestCloudAPIClient_EnableRegion_Error(t *testing.T) {
 		MockResponseStatus: http.StatusInternalServerError,
 	}
 	mockClient := &http.Client{Transport: mockService}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient:    mockClient,
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
 	}
 
 	provider := CloudProvider{
@@ -260,7 +278,6 @@ func TestCloudAPIClient_EnableRegion_Error(t *testing.T) {
 		Url:  "http://mockendpoint.com/api/region",
 	}
 
-	// Simulate an error response for EnableRegion
 	_, err := apiClient.EnableRegion(context.Background(), provider)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "cloud API returned non-200/201 status code:")

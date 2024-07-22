@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -29,20 +28,17 @@ func TestSSOConfigResourceCreate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
-		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
 
 		mockCloudClient := &clients.CloudAPIClient{
-			FronteggClient: client,
-			Endpoint:       serverURL,
+			HTTPClient:    &http.Client{},
+			Authenticator: mockAuthenticator,
+			Endpoint:      serverURL,
 		}
 
 		providerMeta := &utils.ProviderMeta{
-			Frontegg: client,
-			CloudAPI: mockCloudClient,
+			Authenticator: mockAuthenticator,
+			CloudAPI:      mockCloudClient,
 		}
 
 		if err := ssoConfigCreate(context.TODO(), d, providerMeta); err != nil {
@@ -62,14 +58,10 @@ func TestSSOConfigResourceRead(t *testing.T) {
 	r := require.New(t)
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
-		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
 
 		providerMeta := &utils.ProviderMeta{
-			Frontegg: client,
+			Authenticator: mockAuthenticator,
 		}
 
 		d := schema.TestResourceDataRaw(t, SSOConfigSchema, nil)
@@ -84,27 +76,23 @@ func TestSSOConfigResourceRead(t *testing.T) {
 		r.Equal("https://sso.example.com", d.Get("sso_endpoint"))
 		r.Equal("mock-public-certificate\n", d.Get("public_certificate"))
 	})
-
 }
 
 func TestSSOConfigResourceUpdate(t *testing.T) {
 	r := require.New(t)
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
-		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
 
 		mockCloudClient := &clients.CloudAPIClient{
-			FronteggClient: client,
-			Endpoint:       serverURL,
+			HTTPClient:    &http.Client{},
+			Authenticator: mockAuthenticator,
+			Endpoint:      serverURL,
 		}
 
 		providerMeta := &utils.ProviderMeta{
-			Frontegg: client,
-			CloudAPI: mockCloudClient,
+			Authenticator: mockAuthenticator,
+			CloudAPI:      mockCloudClient,
 		}
 
 		d := schema.TestResourceDataRaw(t, SSOConfigSchema, nil)
@@ -121,14 +109,10 @@ func TestSSOConfigResourceDelete(t *testing.T) {
 	r := require.New(t)
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
-		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
 
 		providerMeta := &utils.ProviderMeta{
-			Frontegg: client,
+			Authenticator: mockAuthenticator,
 		}
 
 		d := schema.TestResourceDataRaw(t, SSOConfigSchema, nil)

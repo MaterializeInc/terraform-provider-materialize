@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -13,34 +12,47 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type MockAuthenticator struct {
+	Token              string
+	RefreshCalled      bool
+	NeedsRefreshCalled bool
+}
+
+func (m *MockAuthenticator) GetToken() string {
+	return m.Token
+}
+
+func (m *MockAuthenticator) RefreshToken() error {
+	m.RefreshCalled = true
+	return nil
+}
+
+func (m *MockAuthenticator) NeedsTokenRefresh() error {
+	m.NeedsRefreshCalled = true
+	return nil
+}
+
 func TestResourceCloudRegionCreate(t *testing.T) {
 	r := require.New(t)
 
-	// Set up the mock cloud server
 	testhelpers.WithMockCloudServer(t, func(serverURL string) {
-		// Create an http.Client that uses the mock transport
 		mockClient := &http.Client{
 			Transport: &testhelpers.MockCloudService{},
 		}
 
-		fronteggClient := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  mockClient,
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
-		// Create a mock cloud client
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 		mockCloudClient := &clients.CloudAPIClient{
-			FronteggClient: fronteggClient,
-			Endpoint:       serverURL,
+			HTTPClient:    mockClient,
+			Authenticator: mockAuthenticator,
+			Endpoint:      serverURL,
 		}
 
-		// Create a provider meta with the mock cloud client
 		providerMeta := &utils.ProviderMeta{
-			CloudAPI: mockCloudClient,
-			Frontegg: fronteggClient,
+			CloudAPI:      mockCloudClient,
+			Authenticator: mockAuthenticator,
 		}
 
-		// Create a test resource data with the Region schema
 		d := schema.TestResourceDataRaw(t, regionSchema, map[string]interface{}{"region_id": "aws/us-east-1"})
 
 		diags := resourceCloudRegionCreate(context.Background(), d, providerMeta)
@@ -56,6 +68,7 @@ func TestResourceCloudRegionCreate(t *testing.T) {
 		r.Equal("sql.materialize.com", d.Get("sql_address"))
 		r.True(d.Get("resolvable").(bool))
 		r.True(d.Get("region_state").(bool))
+		r.True(mockAuthenticator.NeedsRefreshCalled)
 	})
 }
 
@@ -67,20 +80,17 @@ func TestResourceCloudRegionRead(t *testing.T) {
 			Transport: &testhelpers.MockCloudService{},
 		}
 
-		fronteggClient := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  mockClient,
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
 
 		mockCloudClient := &clients.CloudAPIClient{
-			FronteggClient: fronteggClient,
-			Endpoint:       serverURL,
+			HTTPClient:    mockClient,
+			Authenticator: mockAuthenticator,
+			Endpoint:      serverURL,
 		}
 
 		providerMeta := &utils.ProviderMeta{
-			CloudAPI: mockCloudClient,
-			Frontegg: fronteggClient,
+			CloudAPI:      mockCloudClient,
+			Authenticator: mockAuthenticator,
 		}
 
 		d := schema.TestResourceDataRaw(t, regionSchema, map[string]interface{}{"region_id": "aws/us-east-1"})
@@ -99,6 +109,7 @@ func TestResourceCloudRegionRead(t *testing.T) {
 		r.Equal("sql.materialize.com", d.Get("sql_address"))
 		r.True(d.Get("resolvable").(bool))
 		r.True(d.Get("region_state").(bool))
+		r.True(mockAuthenticator.NeedsRefreshCalled)
 	})
 }
 
@@ -106,7 +117,16 @@ func TestResourceCloudRegionDelete(t *testing.T) {
 	r := require.New(t)
 
 	ctx := context.Background()
-	providerMeta := &utils.ProviderMeta{}
+	mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+	mockCloudClient := &clients.CloudAPIClient{
+		HTTPClient:    &http.Client{},
+		Authenticator: mockAuthenticator,
+		Endpoint:      "http://mockendpoint.com",
+	}
+	providerMeta := &utils.ProviderMeta{
+		CloudAPI:      mockCloudClient,
+		Authenticator: mockAuthenticator,
+	}
 
 	d := schema.TestResourceDataRaw(t, regionSchema, map[string]interface{}{"region_id": "aws/us-east-1"})
 	d.SetId("aws/us-east-1")

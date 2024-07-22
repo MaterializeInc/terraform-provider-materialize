@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,19 +40,19 @@ type CloudProviderResponse struct {
 
 // CloudAPIClient is a client for interacting with the Materialize Cloud API
 type CloudAPIClient struct {
-	HTTPClient     *http.Client
-	FronteggClient *FronteggClient
-	Endpoint       string
-	BaseEndpoint   string
+	HTTPClient    *http.Client
+	Authenticator Authenticator
+	Endpoint      string
+	BaseEndpoint  string
 }
 
 // NewCloudAPIClient creates a new Cloud API client
-func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint, baseEndpoint string) *CloudAPIClient {
+func NewCloudAPIClient(authenticator Authenticator, cloudAPIEndpoint, baseEndpoint string) *CloudAPIClient {
 	return &CloudAPIClient{
-		HTTPClient:     &http.Client{},
-		FronteggClient: fronteggClient,
-		Endpoint:       cloudAPIEndpoint,
-		BaseEndpoint:   baseEndpoint,
+		HTTPClient:    &http.Client{},
+		Authenticator: authenticator,
+		Endpoint:      cloudAPIEndpoint,
+		BaseEndpoint:  baseEndpoint,
 	}
 }
 
@@ -61,27 +60,16 @@ func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint, baseEnd
 func (c *CloudAPIClient) ListCloudProviders(ctx context.Context) ([]CloudProvider, error) {
 	providersEndpoint := fmt.Sprintf("%s/api/cloud-regions", c.Endpoint)
 
-	// Reuse the FronteggClient's HTTPClient which already includes the Authorization token.
-	resp, err := c.FronteggClient.HTTPClient.Get(providersEndpoint)
+	resp, err := c.doRequest(ctx, http.MethodGet, providersEndpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error listing cloud providers: %v", err)
+		return nil, fmt.Errorf("error listing cloud providers: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read response body: %v", err)
-		}
-		return nil, fmt.Errorf("cloud API returned non-200 status code: %d, body: %s", resp.StatusCode, string(body))
-	}
-
 	var response CloudProviderResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
-
-	log.Printf("[DEBUG] Cloud providers response body: %+v\n", response)
 
 	return response.Data, nil
 }
@@ -90,28 +78,16 @@ func (c *CloudAPIClient) ListCloudProviders(ctx context.Context) ([]CloudProvide
 func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
 	regionEndpoint := fmt.Sprintf("%s/api/region", provider.Url)
 
-	resp, err := c.FronteggClient.HTTPClient.Get(regionEndpoint)
+	resp, err := c.doRequest(ctx, http.MethodGet, regionEndpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving region details: %v", err)
+		return nil, fmt.Errorf("error retrieving region details: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read response body: %v", err)
-		}
-		return nil, fmt.Errorf("cloud API returned non-200 status code: %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	log.Printf("[DEBUG] Region details response body: %+v\n", resp.Body)
-
 	var region CloudRegion
 	if err := json.NewDecoder(resp.Body).Decode(&region); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding region details: %w", err)
 	}
-
-	log.Printf("[DEBUG] Region details response body: %+v\n", region)
 
 	return &region, nil
 }
@@ -120,30 +96,16 @@ func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudPro
 func (c *CloudAPIClient) EnableRegion(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
 	endpoint := fmt.Sprintf("%s/api/region", provider.Url)
 	emptyJSONPayload := bytes.NewBuffer([]byte("{}"))
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, endpoint, emptyJSONPayload)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request to enable region: %v", err)
-	}
 
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := c.FronteggClient.HTTPClient.Do(req)
+	resp, err := c.doRequest(ctx, http.MethodPatch, endpoint, emptyJSONPayload)
 	if err != nil {
-		return nil, fmt.Errorf("error sending request to enable region: %v", err)
+		return nil, fmt.Errorf("error enabling region: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read response body: %v", err)
-		}
-		return nil, fmt.Errorf("cloud API returned non-200/201 status code: %d, body: %s", resp.StatusCode, string(body))
-	}
-
 	var region CloudRegion
 	if err := json.NewDecoder(resp.Body).Decode(&region); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding enabled region details: %w", err)
 	}
 
 	return &region, nil
@@ -197,4 +159,45 @@ func SplitHostPort(hostPortStr string) (host string, port int, err error) {
 		// Invalid format
 		return "", 0, fmt.Errorf("invalid host:port format")
 	}
+}
+
+func (c *CloudAPIClient) doRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	if err := c.Authenticator.NeedsTokenRefresh(); err != nil {
+		if err := c.Authenticator.RefreshToken(); err != nil {
+			return nil, fmt.Errorf("error refreshing token: %w", err)
+		}
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.Authenticator.GetToken())
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error sending request: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, &APIError{
+			StatusCode: resp.StatusCode,
+			Message:    string(body),
+		}
+	}
+
+	return resp, nil
+}
+
+type APIError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("API error: %d - %s", e.StatusCode, e.Message)
 }

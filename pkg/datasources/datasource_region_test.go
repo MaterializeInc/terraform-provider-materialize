@@ -13,6 +13,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type MockAuthenticator struct {
+	Token              string
+	RefreshCalled      bool
+	NeedsRefreshCalled bool
+}
+
+func (m *MockAuthenticator) GetToken() string {
+	return m.Token
+}
+
+func (m *MockAuthenticator) RefreshToken() error {
+	m.RefreshCalled = true
+	return nil
+}
+
+func (m *MockAuthenticator) NeedsTokenRefresh() error {
+	m.NeedsRefreshCalled = true
+	return nil
+}
+
 func TestRegionRead(t *testing.T) {
 	r := require.New(t)
 
@@ -23,6 +43,8 @@ func TestRegionRead(t *testing.T) {
 			Transport: &testhelpers.MockCloudService{},
 		}
 
+		mockAuthenticator := &MockAuthenticator{Token: "mock-token"}
+
 		fronteggClient := &clients.FronteggClient{
 			Endpoint:    serverURL,
 			HTTPClient:  mockClient,
@@ -30,8 +52,8 @@ func TestRegionRead(t *testing.T) {
 		}
 		// Create a mock cloud client
 		mockCloudClient := &clients.CloudAPIClient{
-			FronteggClient: fronteggClient,
-			Endpoint:       serverURL,
+			Authenticator: mockAuthenticator,
+			Endpoint:      serverURL,
 		}
 
 		// Create a provider meta with the mock cloud client
