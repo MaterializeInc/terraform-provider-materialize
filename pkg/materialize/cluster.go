@@ -291,8 +291,17 @@ func ClusterId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	return c.ClusterId.String, nil
 }
 
-func ScanCluster(conn *sqlx.DB, id string) (ClusterParams, error) {
-	q := clusterQuery.QueryPredicate(map[string]string{"mz_clusters.id": id})
+func ScanCluster(conn *sqlx.DB, identifier string, byName bool) (ClusterParams, error) {
+	var predicate map[string]string
+	if byName {
+		predicate = map[string]string{"mz_clusters.name": identifier}
+	} else {
+		predicate = map[string]string{"mz_clusters.id": identifier}
+	}
+	q := clusterQuery.QueryPredicate(predicate)
+
+	// Log the identifier used to query the cluster
+	fmt.Printf("Querying cluster with identifier: %s\n", identifier)
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {

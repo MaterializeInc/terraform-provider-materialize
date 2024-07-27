@@ -49,7 +49,7 @@ func TestAccCluster_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
 			},
 		},
 	})
@@ -81,7 +81,7 @@ func TestAccClusterCCSize_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
 			},
 		},
 	})
@@ -107,7 +107,7 @@ func TestAccClusterManagedNoReplication_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
 			},
 		},
 	})
@@ -133,7 +133,7 @@ func TestAccClusterManagedZeroReplication_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
 			},
 		},
 	})
@@ -293,6 +293,38 @@ func TestAccClusterWithScheduling(t *testing.T) {
 	})
 }
 
+func TestAccCluster_useNameAsId(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllClusterDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterResourceWithNameAsId(clusterName, "3xsmall", "1"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists("materialize_cluster.test_name_as_id"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "use_name_as_id", "true"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "id", "aws/us-east-1:"+clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "size", "3xsmall"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "replication_factor", "1"),
+				),
+			},
+			{
+				ResourceName:      "materialize_cluster.test_name_as_id",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"use_name_as_id",
+					"introspection_debugging",
+					"introspection_interval",
+				},
+			},
+		},
+	})
+}
+
 func TestAccCluster_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	cluster2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -436,6 +468,20 @@ resource "materialize_cluster" "test_scheduling" {
 `, clusterName, size, onRefreshStr, rehydrationTimeEstimate)
 }
 
+func testAccClusterResourceWithNameAsId(clusterName, clusterSize, clusterReplicationFactor string) string {
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test_name_as_id" {
+		name                = "%[1]s"
+		size                = "%[2]s"
+		replication_factor  = %[3]s
+		use_name_as_id      = true
+	}
+	`,
+		clusterName,
+		clusterSize,
+		clusterReplicationFactor)
+}
+
 func testAccCheckClusterExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
@@ -447,7 +493,13 @@ func testAccCheckClusterExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("cluster not found: %s", name)
 		}
-		_, err = materialize.ScanCluster(db, utils.ExtractId(r.Primary.ID))
+		useNameAsId := false
+		if r.Primary.Attributes["use_name_as_id"] == "true" {
+			useNameAsId = true
+		}
+		// log the useNameAsId value
+		fmt.Printf("useNameAsId value: %v\n", useNameAsId)
+		_, err = materialize.ScanCluster(db, utils.ExtractId(r.Primary.ID), useNameAsId)
 		return err
 	}
 }
@@ -464,7 +516,7 @@ func testAccCheckAllClusterDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err := materialize.ScanCluster(db, utils.ExtractId(r.Primary.ID))
+		_, err := materialize.ScanCluster(db, utils.ExtractId(r.Primary.ID), false)
 		if err == nil {
 			return fmt.Errorf("Cluster %v still exists", utils.ExtractId(r.Primary.ID))
 		} else if err != sql.ErrNoRows {

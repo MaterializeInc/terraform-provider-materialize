@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"strings"
 
@@ -74,6 +75,13 @@ var clusterSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"use_name_as_id": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "Use the cluster name as the Terraform resource ID instead of the internal cluster ID.",
+		ForceNew:    true,
+	},
 	"region": RegionSchema(),
 }
 
@@ -87,7 +95,7 @@ func Cluster() *schema.Resource {
 		DeleteContext: clusterDelete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: clusterImport,
 		},
 
 		Schema: clusterSchema,
@@ -96,12 +104,14 @@ func Cluster() *schema.Resource {
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
+	useNameAsId := d.Get("use_name_as_id").(bool)
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	s, err := materialize.ScanCluster(metaDb, utils.ExtractId(i))
+
+	s, err := materialize.ScanCluster(metaDb, utils.ExtractId(i), useNameAsId)
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -109,7 +119,11 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
+	if useNameAsId {
+		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterName.String))
+	} else {
+		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterId.String))
+	}
 
 	if err := d.Set("name", s.ClusterName.String); err != nil {
 		return diag.FromErr(err)
@@ -220,11 +234,18 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	// set id
-	i, err := materialize.ClusterId(metaDb, o)
-	if err != nil {
-		return diag.FromErr(err)
+	useNameAsId := d.Get("use_name_as_id").(bool)
+	var id string
+	if useNameAsId {
+		id = clusterName
+	} else {
+		var err error
+		id, err = materialize.ClusterId(metaDb, o)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
+	d.SetId(utils.TransformIdWithRegion(string(region), id))
 
 	return clusterRead(ctx, d, meta)
 }
@@ -338,4 +359,44 @@ func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.FromErr(err)
 	}
 	return nil
+}
+
+func clusterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return nil, err
+	}
+
+	importId := utils.ExtractId(d.Id())
+
+	// Try to fetch by ID first
+	d.Set("use_name_as_id", false)
+	s, err := materialize.ScanCluster(metaDb, importId, false)
+	if err == sql.ErrNoRows {
+		// If not found by ID, try by name
+		s, err = materialize.ScanCluster(metaDb, importId, true)
+		if err != nil {
+			return nil, fmt.Errorf("error importing cluster %s: %s", importId, err)
+		}
+		// If found by name, set use_name_as_id to true
+		d.Set("use_name_as_id", true)
+	} else if err != nil {
+		return nil, fmt.Errorf("error importing cluster %s: %s", importId, err)
+	}
+
+	if d.Get("use_name_as_id").(bool) {
+		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterName.String))
+	} else {
+		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterId.String))
+	}
+
+	d.Set("name", s.ClusterName.String)
+	d.Set("ownership_role", s.OwnerName.String)
+	d.Set("replication_factor", s.ReplicationFactor.Int64)
+	d.Set("size", s.Size.String)
+	d.Set("disk", s.Disk.Bool)
+	d.Set("availability_zones", s.AvailabilityZones)
+	d.Set("comment", s.Comment.String)
+
+	return []*schema.ResourceData{d}, nil
 }

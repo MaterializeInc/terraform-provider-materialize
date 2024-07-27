@@ -37,6 +37,7 @@ resource "materialize_cluster" "example_cluster" {
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
 - `scheduling` (Block List, Max: 1) Defines the scheduling parameters for the cluster. (see [below for nested schema](#nestedblock--scheduling))
 - `size` (String) The size of the managed cluster.
+- `use_name_as_id` (Boolean) Use the cluster name as the Terraform resource ID instead of the internal cluster ID.
 
 ### Read-Only
 

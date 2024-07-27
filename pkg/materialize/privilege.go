@@ -233,7 +233,7 @@ func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) ([]string, error
 		e = err
 
 	case "CLUSTER":
-		params, err := ScanCluster(conn, objectId)
+		params, err := ScanCluster(conn, objectId, false)
 		p = params.Privileges
 		e = err
 	}
