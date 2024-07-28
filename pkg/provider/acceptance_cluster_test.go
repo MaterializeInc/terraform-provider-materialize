@@ -49,7 +49,7 @@ func TestAccCluster_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "identify_by_name"},
 			},
 		},
 	})
@@ -81,7 +81,7 @@ func TestAccClusterCCSize_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "identify_by_name"},
 			},
 		},
 	})
@@ -107,7 +107,7 @@ func TestAccClusterManagedNoReplication_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "identify_by_name"},
 			},
 		},
 	})
@@ -133,7 +133,7 @@ func TestAccClusterManagedZeroReplication_basic(t *testing.T) {
 				ResourceName:            "materialize_cluster.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "use_name_as_id"},
+				ImportStateVerifyIgnore: []string{"introspection_debugging", "introspection_interval", "identify_by_name"},
 			},
 		},
 	})
@@ -293,7 +293,7 @@ func TestAccClusterWithScheduling(t *testing.T) {
 	})
 }
 
-func TestAccCluster_useNameAsId(t *testing.T) {
+func TestAccCluster_identifyByName(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -305,7 +305,7 @@ func TestAccCluster_useNameAsId(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test_name_as_id"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "name", clusterName),
-					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "use_name_as_id", "true"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "identify_by_name", "true"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "id", "aws/us-east-1:"+clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "replication_factor", "1"),
@@ -316,7 +316,7 @@ func TestAccCluster_useNameAsId(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"use_name_as_id",
+					"identify_by_name",
 					"introspection_debugging",
 					"introspection_interval",
 				},
@@ -474,7 +474,7 @@ func testAccClusterResourceWithNameAsId(clusterName, clusterSize, clusterReplica
 		name                = "%[1]s"
 		size                = "%[2]s"
 		replication_factor  = %[3]s
-		use_name_as_id      = true
+		identify_by_name      = true
 	}
 	`,
 		clusterName,
@@ -493,13 +493,11 @@ func testAccCheckClusterExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("cluster not found: %s", name)
 		}
-		useNameAsId := false
-		if r.Primary.Attributes["use_name_as_id"] == "true" {
-			useNameAsId = true
+		identifyByName := false
+		if r.Primary.Attributes["identify_by_name"] == "true" {
+			identifyByName = true
 		}
-		// log the useNameAsId value
-		fmt.Printf("useNameAsId value: %v\n", useNameAsId)
-		_, err = materialize.ScanCluster(db, utils.ExtractId(r.Primary.ID), useNameAsId)
+		_, err = materialize.ScanCluster(db, utils.ExtractId(r.Primary.ID), identifyByName)
 		return err
 	}
 }

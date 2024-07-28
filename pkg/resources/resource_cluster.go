@@ -75,7 +75,7 @@ var clusterSchema = map[string]*schema.Schema{
 			},
 		},
 	},
-	"use_name_as_id": {
+	"identify_by_name": {
 		Type:        schema.TypeBool,
 		Optional:    true,
 		Default:     false,
@@ -104,7 +104,7 @@ func Cluster() *schema.Resource {
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
-	useNameAsId := d.Get("use_name_as_id").(bool)
+	useNameAsId := d.Get("identify_by_name").(bool)
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -234,7 +234,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	// set id
-	useNameAsId := d.Get("use_name_as_id").(bool)
+	useNameAsId := d.Get("identify_by_name").(bool)
 	var id string
 	if useNameAsId {
 		id = clusterName
@@ -370,7 +370,7 @@ func clusterImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 	importId := utils.ExtractId(d.Id())
 
 	// Try to fetch by ID first
-	d.Set("use_name_as_id", false)
+	d.Set("identify_by_name", false)
 	s, err := materialize.ScanCluster(metaDb, importId, false)
 	if err == sql.ErrNoRows {
 		// If not found by ID, try by name
@@ -378,13 +378,13 @@ func clusterImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 		if err != nil {
 			return nil, fmt.Errorf("error importing cluster %s: %s", importId, err)
 		}
-		// If found by name, set use_name_as_id to true
-		d.Set("use_name_as_id", true)
+		// If found by name, set identify_by_name to true
+		d.Set("identify_by_name", true)
 	} else if err != nil {
 		return nil, fmt.Errorf("error importing cluster %s: %s", importId, err)
 	}
 
-	if d.Get("use_name_as_id").(bool) {
+	if d.Get("identify_by_name").(bool) {
 		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterName.String))
 	} else {
 		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterId.String))

@@ -130,3 +130,23 @@ func ExtractRegion(oldID string) string {
 	}
 	return parts[0]
 }
+
+// Function to extract the prefix and value from a prefixed ID
+func ExtractPrefixedId(id string) (string, string, bool, error) {
+	parts := strings.SplitN(id, ":", 2)
+	if len(parts) != 2 {
+		return "", "", false, fmt.Errorf("invalid ID format: %s", id)
+	}
+
+	prefix := strings.ToUpper(parts[0])
+	value := parts[1]
+
+	switch prefix {
+	case "ID":
+		return prefix, value, false, nil
+	case "NAME":
+		return prefix, value, true, nil
+	default:
+		return "", "", false, fmt.Errorf("invalid ID prefix: %s, allowed prefixes: ID, NAME", prefix)
+	}
+}

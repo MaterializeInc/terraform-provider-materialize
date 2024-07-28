@@ -30,6 +30,7 @@ resource "materialize_cluster" "example_cluster" {
 - `availability_zones` (List of String) The specific availability zones of the cluster.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
+- `identify_by_name` (Boolean) Use the cluster name as the Terraform resource ID instead of the internal cluster ID.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.
@@ -37,7 +38,6 @@ resource "materialize_cluster" "example_cluster" {
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
 - `scheduling` (Block List, Max: 1) Defines the scheduling parameters for the cluster. (see [below for nested schema](#nestedblock--scheduling))
 - `size` (String) The size of the managed cluster.
-- `use_name_as_id` (Boolean) Use the cluster name as the Terraform resource ID instead of the internal cluster ID.
 
 ### Read-Only
 
