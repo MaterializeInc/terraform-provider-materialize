@@ -111,14 +111,23 @@ func TransformIdWithRegion(region string, oldID string) string {
 	return fmt.Sprintf("%s:%s", region, oldID)
 }
 
+// Helper function to prepend region and type to the ID
+func TransformIdWithTypeAndRegion(region string, idType string, value string) string {
+	return fmt.Sprintf("%s:%s:%s", region, idType, value)
+}
+
 // Function to get the ID from the region + ID string
-func ExtractId(oldID string) string {
-	parts := strings.Split(oldID, ":")
-	if len(parts) < 2 {
-		// Return the original ID if it doesn't have a region
-		return oldID
+func ExtractId(fullId string) string {
+	parts := strings.Split(fullId, ":")
+	if len(parts) == 3 {
+		// Format: region:idType:value
+		return parts[2]
+	} else if len(parts) == 2 {
+		// Format: region:id
+		return parts[1]
 	}
-	return parts[1]
+	// Return original if not in expected format
+	return fullId
 }
 
 // Function to get the region from the region + ID string
@@ -129,6 +138,14 @@ func ExtractRegion(oldID string) string {
 		return ""
 	}
 	return parts[0]
+}
+
+func ExtractIdType(fullId string) string {
+	parts := strings.Split(fullId, ":")
+	if len(parts) == 3 {
+		return parts[1]
+	}
+	return "id"
 }
 
 // Function to extract the prefix and value from a prefixed ID

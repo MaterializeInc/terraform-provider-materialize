@@ -25,7 +25,7 @@ func TestAccCluster_basic(t *testing.T) {
 				Config: testAccClusterResource(roleName, clusterName, cluster2Name, roleName, "3xsmall", "1", "1s", "true", "true", "Comment"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test"),
-					resource.TestMatchResourceAttr("materialize_cluster.test", "id", terraformObjectIdRegex),
+					resource.TestMatchResourceAttr("materialize_cluster.test", "id", terraformObjectTypeIdRegex),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_cluster.test", "size", ""),
@@ -306,7 +306,7 @@ func TestAccCluster_identifyByName(t *testing.T) {
 					testAccCheckClusterExists("materialize_cluster.test_name_as_id"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "name", clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "identify_by_name", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "id", "aws/us-east-1:"+clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "id", "aws/us-east-1:name:"+clusterName),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "size", "3xsmall"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_name_as_id", "replication_factor", "1"),
 				),

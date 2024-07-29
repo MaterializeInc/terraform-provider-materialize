@@ -67,33 +67,69 @@ func TestResourceClusterCreate(t *testing.T) {
 	})
 }
 
-// Confirm id is updated with region for 0.4.0
+// Confirm id is updated with region and type prefix
 func TestResourceClusterReadIdMigration(t *testing.T) {
 	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
-	in := map[string]interface{}{
-		"name": "cluster",
+	testCases := []struct {
+		name           string
+		identifyByName bool
+		initialId      string
+		expectedId     string
+		mockId         string
+		mockName       string
+	}{
+		{
+			name:           "Migrate to ID-based identifier",
+			identifyByName: false,
+			initialId:      "u1",
+			expectedId:     "aws/us-east-1:id:u1",
+			mockId:         "u1",
+			mockName:       "cluster",
+		},
+		{
+			name:           "Migrate to name-based identifier",
+			identifyByName: true,
+			initialId:      "u1",
+			expectedId:     "aws/us-east-1:name:cluster",
+			mockId:         "u1",
+			mockName:       "cluster",
+		},
 	}
-	d := schema.TestResourceDataRaw(t, Cluster().Schema, in)
-	r.NotNil(d)
 
-	// Set id before migration
-	d.SetId("u1")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := map[string]interface{}{
+				"name":             "cluster",
+				"identify_by_name": tc.identifyByName,
+			}
+			d := schema.TestResourceDataRaw(t, Cluster().Schema, in)
+			r.NotNil(d)
 
-	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-		// Query Params
-		pp := `WHERE mz_clusters.id = 'u1'`
-		testhelpers.MockClusterScan(mock, pp)
+			// Set id before migration
+			d.SetId(tc.initialId)
 
-		if err := clusterRead(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
+			testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+				// Query Params
+				pp := `WHERE mz_clusters.id = '` + tc.mockId + `'`
+				testhelpers.MockClusterScan(mock, pp)
 
-		if d.Id() != "aws/us-east-1:u1" {
-			t.Fatalf("unexpected id of %s", d.Id())
-		}
-	})
+				if err := clusterRead(context.TODO(), d, db); err != nil {
+					t.Fatal(err)
+				}
+
+				if d.Id() != tc.expectedId {
+					t.Fatalf("unexpected id of %s, expected %s", d.Id(), tc.expectedId)
+				}
+
+				// Verify that the name is set correctly
+				if name := d.Get("name").(string); name != tc.mockName {
+					t.Fatalf("unexpected name of %s, expected %s", name, tc.mockName)
+				}
+			})
+		})
+	}
 }
 
 func TestResourceClusterZeroReplicationCreate(t *testing.T) {

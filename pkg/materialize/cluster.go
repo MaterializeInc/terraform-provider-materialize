@@ -300,9 +300,6 @@ func ScanCluster(conn *sqlx.DB, identifier string, byName bool) (ClusterParams, 
 	}
 	q := clusterQuery.QueryPredicate(predicate)
 
-	// Log the identifier used to query the cluster
-	fmt.Printf("Querying cluster with identifier: %s\n", identifier)
-
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
 		return c, err

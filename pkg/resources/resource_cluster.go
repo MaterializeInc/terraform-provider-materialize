@@ -80,7 +80,6 @@ var clusterSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     false,
 		Description: "Use the cluster name as the Terraform resource ID instead of the internal cluster ID.",
-		ForceNew:    true,
 	},
 	"region": RegionSchema(),
 }
@@ -103,15 +102,17 @@ func Cluster() *schema.Resource {
 }
 
 func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	i := d.Id()
-	useNameAsId := d.Get("identify_by_name").(bool)
-
+	fullId := d.Id()
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	s, err := materialize.ScanCluster(metaDb, utils.ExtractId(i), useNameAsId)
+	idType := utils.ExtractIdType(fullId)
+	value := utils.ExtractId(fullId)
+	useNameAsId := d.Get("identify_by_name").(bool)
+
+	s, err := materialize.ScanCluster(metaDb, value, idType == "name")
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -120,9 +121,9 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 
 	if useNameAsId {
-		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterName.String))
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", s.ClusterName.String))
 	} else {
-		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterId.String))
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "id", s.ClusterId.String))
 	}
 
 	if err := d.Set("name", s.ClusterName.String); err != nil {
@@ -234,18 +235,20 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	// set id
-	useNameAsId := d.Get("identify_by_name").(bool)
-	var id string
-	if useNameAsId {
-		id = clusterName
+	identifyByName := d.Get("identify_by_name").(bool)
+	var idType, value string
+	if identifyByName {
+		idType = "name"
+		value = clusterName
 	} else {
-		var err error
-		id, err = materialize.ClusterId(metaDb, o)
+		idType = "id"
+		clusterId, err := materialize.ClusterId(metaDb, o)
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		value = clusterId
 	}
-	d.SetId(utils.TransformIdWithRegion(string(region), id))
+	d.SetId(utils.TransformIdWithTypeAndRegion(string(region), idType, value))
 
 	return clusterRead(ctx, d, meta)
 }
@@ -253,11 +256,38 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
-	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
+
+	if d.HasChange("identify_by_name") {
+		_, newIdentifyByName := d.GetChange("identify_by_name")
+		identifyByName := newIdentifyByName.(bool)
+
+		// Get the current ID and extract the value
+		fullId := d.Id()
+		currentValue := utils.ExtractId(fullId)
+
+		var newIdType, newValue string
+		if identifyByName {
+			newIdType = "name"
+			newValue = clusterName
+		} else {
+			newIdType = "id"
+			clusterId, err := materialize.ClusterId(metaDb, o)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			newValue = clusterId
+		}
+
+		if currentValue != newValue {
+			newId := utils.TransformIdWithTypeAndRegion(string(region), newIdType, newValue)
+			d.SetId(newId)
+		}
+	}
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
@@ -367,27 +397,22 @@ func clusterImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return nil, err
 	}
 
-	importId := utils.ExtractId(d.Id())
+	fullId := d.Id()
+	idType := utils.ExtractIdType(fullId)
+	value := utils.ExtractId(fullId)
+	identifyByName := idType == "name"
 
-	// Try to fetch by ID first
-	d.Set("identify_by_name", false)
-	s, err := materialize.ScanCluster(metaDb, importId, false)
-	if err == sql.ErrNoRows {
-		// If not found by ID, try by name
-		s, err = materialize.ScanCluster(metaDb, importId, true)
-		if err != nil {
-			return nil, fmt.Errorf("error importing cluster %s: %s", importId, err)
-		}
-		// If found by name, set identify_by_name to true
-		d.Set("identify_by_name", true)
-	} else if err != nil {
-		return nil, fmt.Errorf("error importing cluster %s: %s", importId, err)
+	s, err := materialize.ScanCluster(metaDb, value, identifyByName)
+	if err != nil {
+		return nil, fmt.Errorf("error importing cluster %s: %s", fullId, err)
 	}
 
-	if d.Get("identify_by_name").(bool) {
-		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterName.String))
+	d.Set("identify_by_name", identifyByName)
+
+	if identifyByName {
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", s.ClusterName.String))
 	} else {
-		d.SetId(utils.TransformIdWithRegion(string(region), s.ClusterId.String))
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "id", s.ClusterId.String))
 	}
 
 	d.Set("name", s.ClusterName.String)
