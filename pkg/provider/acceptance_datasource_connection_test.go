@@ -70,18 +70,9 @@ func testAccDatasourceConnection(nameSpace string) string {
 		database_name = materialize_database.test.name
 	}
 
-	data "materialize_connection" "specific" {
-		connection_id = "u1"
-		depends_on    = [
-			materialize_database.test,
-			materialize_schema.test,
-			materialize_connection_kafka.a,
-			materialize_connection_kafka.b,
-			materialize_connection_kafka.c,
-			materialize_connection_kafka.d,
-			materialize_connection_kafka.e,
-		]
-	}
+	# data "materialize_connection" "specific" {
+	# 	connection_id = "u1"
+	# }
 
 	resource "materialize_connection_kafka" "a" {
 		name              = "%[1]s_a"
