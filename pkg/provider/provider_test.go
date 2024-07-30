@@ -16,6 +16,7 @@ import (
 
 var (
 	terraformObjectIdRegex       = regexp.MustCompile("^aws/us-east-1:")
+	terraformObjectTypeIdRegex   = regexp.MustCompile("^aws/us-east-1:id:")
 	terraformGrantIdRegex        = regexp.MustCompile("^aws/us-east-1:GRANT|")
 	terraformGrantDefaultIdRegex = regexp.MustCompile("^aws/us-east-1:GRANT DEFAULT|")
 	terraformGrantSystemIdRegex  = regexp.MustCompile("^aws/us-east-1:GRANT ROLE|")

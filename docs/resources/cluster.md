@@ -30,6 +30,7 @@ resource "materialize_cluster" "example_cluster" {
 - `availability_zones` (List of String) The specific availability zones of the cluster.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
+- `identify_by_name` (Boolean) Use the cluster name as the Terraform resource ID instead of the internal cluster ID.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.
@@ -63,8 +64,11 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
-# Clusters can be imported using the cluster id:
-terraform import materialize_cluster.example_cluster <region>:<cluster_id>
+# Clusters can be imported using the cluster id or name
+terraform import materialize_cluster.example_cluster <region>:id:<cluster_id>
+
+# To import using the cluster name, you need to set the `identify_by_name` attribute to true
+terraform import materialize_cluster.example_cluster <region>:name:<cluster_name>
 
 # Cluster id and information be found in the `mz_catalog.mz_clusters` table
 # The region is the region where the database is located (e.g. aws/us-east-1)
