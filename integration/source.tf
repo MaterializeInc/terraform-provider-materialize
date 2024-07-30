@@ -245,9 +245,9 @@ resource "materialize_source_mysql" "test" {
   mysql_connection {
     name = materialize_connection_mysql.mysql_connection.name
   }
-  # TODO: uncomment when the feature is implemented on the Materialize side
-  # ignore_columns = ["table3.id"]
-  # text_columns   = ["table1.id"]
+
+  ignore_columns = ["shop.mysql_table2.id"]
+  text_columns   = ["shop.mysql_table4.status"]
 
   table {
     upstream_name        = "mysql_table1"
@@ -263,6 +263,11 @@ resource "materialize_source_mysql" "test" {
     upstream_name        = "mysql_table3"
     upstream_schema_name = "shop"
     name                 = "mysql_table3_local"
+  }
+  table {
+    upstream_name        = "mysql_table4"
+    upstream_schema_name = "shop"
+    name                 = "mysql_table4_local"
   }
 }
 
@@ -294,7 +299,12 @@ resource "materialize_source_kafka" "kafka_upsert_options_source" {
   envelope {
     upsert = true
     upsert_options {
-      value_decoding_errors = "INLINE"
+      value_decoding_errors {
+        inline {
+          enabled = true
+          alias   = "my_error_col"
+        }
+      }
     }
   }
 

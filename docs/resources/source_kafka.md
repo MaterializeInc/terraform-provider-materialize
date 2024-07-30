@@ -111,7 +111,24 @@ Optional:
 
 Optional:
 
-- `value_decoding_errors` (String) Specify how to handle value decoding errors in the upsert envelope.
+- `value_decoding_errors` (Block List, Max: 1) Specify how to handle value decoding errors in the upsert envelope. (see [below for nested schema](#nestedblock--envelope--upsert_options--value_decoding_errors))
+
+<a id="nestedblock--envelope--upsert_options--value_decoding_errors"></a>
+### Nested Schema for `envelope.upsert_options.value_decoding_errors`
+
+Optional:
+
+- `inline` (Block List, Max: 1) Configuration for inline value decoding errors. (see [below for nested schema](#nestedblock--envelope--upsert_options--value_decoding_errors--inline))
+
+<a id="nestedblock--envelope--upsert_options--value_decoding_errors--inline"></a>
+### Nested Schema for `envelope.upsert_options.value_decoding_errors.inline`
+
+Optional:
+
+- `alias` (String) Specify an alias for the value decoding errors column, to use an alternative name for the error column. If not specified, the column name will be `error`.
+- `enabled` (Boolean) Enable inline value decoding errors.
+
+
 
 
 

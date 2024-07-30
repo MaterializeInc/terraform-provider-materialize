@@ -32,6 +32,12 @@ resource "materialize_cluster" "cluster_sink_us_west" {
   region = "aws/us-west-2"
 }
 
+resource "materialize_cluster" "cluster_by_name" {
+  name             = "cluster_by_name"
+  size             = "25cc"
+  identify_by_name = true
+}
+
 resource "materialize_cluster" "scheduling_cluster" {
   name = "scheduling_cluster"
   size = "25cc"

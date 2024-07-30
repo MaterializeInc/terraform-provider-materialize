@@ -61,6 +61,33 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	if v, ok := d.GetOk("envelope"); ok {
+		envelope := v.([]interface{})[0].(map[string]interface{})
+		if upsertOptions, ok := envelope["upsert_options"].([]interface{}); ok && len(upsertOptions) > 0 {
+			options := upsertOptions[0].(map[string]interface{})
+
+			// Check for old format
+			if oldValue, ok := options["value_decoding_errors"].(string); ok {
+				// Convert old format to new format
+				newValue := []interface{}{
+					map[string]interface{}{
+						"inline": []interface{}{
+							map[string]interface{}{
+								"enabled": oldValue == "INLINE",
+								"alias":   "", // No way to know the old alias, so leave it empty
+							},
+						},
+					},
+				}
+				options["value_decoding_errors"] = newValue
+			}
+
+			// Set the potentially updated options back into the state
+			envelope["upsert_options"] = upsertOptions
+		}
+		d.Set("envelope", []interface{}{envelope})
+	}
+
 	return nil
 }
 
