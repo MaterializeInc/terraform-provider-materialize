@@ -25,6 +25,33 @@ services:
       - 6878:6878
     healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
 
+  materialized2:
+    image: materialize/materialized:latest
+    container_name: materialized2
+    command:
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - --bootstrap-default-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-system-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-support-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --availability-zone=test1
+      - --availability-zone=test2
+      - --system-parameter-default=max_clusters=100
+      - --system-parameter-default=max_sources=100
+      - --system-parameter-default=max_aws_privatelink_connections=10
+      - --all-features
+    environment:
+      MZ_SQL_LISTEN_ADDR: 0.0.0.0:7875
+      MZ_HTTP_LISTEN_ADDR: 0.0.0.0:7876
+      MZ_INTERNAL_SQL_LISTEN_ADDR: 0.0.0.0:7877
+      MZ_INTERNAL_HTTP_LISTEN_ADDR: 0.0.0.0:7878
+    ports:
+      - 7875:7875
+      - 7877:7877
+      - 7878:7878
+    healthcheck: {test: curl -f localhost:7878/api/readyz, interval: 1s, start_period: 35s}
+
   materialized_init:
     image: postgres
     container_name: materialized_init

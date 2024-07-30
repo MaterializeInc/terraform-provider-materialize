@@ -3,9 +3,23 @@ resource "materialize_role" "role_1" {
   comment = "role 1 comment"
 }
 
+# Create in separate region
+resource "materialize_role" "role_1_us_west" {
+  name    = "role-1"
+  comment = "role 1 comment"
+  region  = "aws/us-west-2"
+}
+
 resource "materialize_role" "role_2" {
   name    = "role-2"
   comment = "role 2 comment"
+}
+
+# Create in separate region
+resource "materialize_role" "role_2_us_west" {
+  name    = "role-2"
+  comment = "role 2 comment"
+  region  = "aws/us-west-2"
 }
 
 resource "materialize_role" "grantee" {
@@ -13,8 +27,20 @@ resource "materialize_role" "grantee" {
   comment = "role grantee comment"
 }
 
+# Create in separate region
+resource "materialize_role" "grantee_us_west" {
+  name    = "grantee"
+  comment = "role grantee comment"
+  region  = "aws/us-west-2"
+}
+
 resource "materialize_role" "target" {
   name = "target"
+}
+
+resource "materialize_role" "target_us_west" {
+  name   = "target"
+  region = "aws/us-west-2"
 }
 
 resource "materialize_grant_system_privilege" "role_1_system_createrole" {

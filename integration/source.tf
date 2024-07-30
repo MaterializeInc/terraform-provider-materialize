@@ -14,12 +14,44 @@ resource "materialize_source_load_generator" "load_generator" {
   }
 }
 
+# Create in a separate region
+resource "materialize_source_load_generator" "load_generator_us_west" {
+  name                = "load_gen"
+  schema_name         = materialize_schema.schema_us_west.name
+  database_name       = materialize_database.database_us_west.name
+  comment             = "source load generator comment"
+  cluster_name        = materialize_cluster.cluster_source_us_west.name
+  load_generator_type = "COUNTER"
+  region              = "aws/us-west-2"
+
+  counter_options {
+    tick_interval = "500ms"
+  }
+  expose_progress {
+    name = "expose_load_gen"
+  }
+}
+
 resource "materialize_source_load_generator" "load_generator_cluster" {
   name                = "load_gen_cluster"
   schema_name         = materialize_schema.schema.name
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
   load_generator_type = "COUNTER"
+
+  counter_options {
+    tick_interval = "500ms"
+  }
+}
+
+# Create in a separate region
+resource "materialize_source_load_generator" "load_generator_cluster_us_west" {
+  name                = "load_gen_cluster"
+  schema_name         = materialize_schema.schema_us_west.name
+  database_name       = materialize_database.database_us_west.name
+  cluster_name        = materialize_cluster.cluster_source_us_west.name
+  load_generator_type = "COUNTER"
+  region              = "aws/us-west-2"
 
   counter_options {
     tick_interval = "500ms"

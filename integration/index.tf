@@ -15,6 +15,25 @@ resource "materialize_index" "loadgen_index" {
   }
 }
 
+# Create in separate region
+resource "materialize_index" "loadgen_index_us_west" {
+  name    = "loadgen_index"
+  comment = "index comment"
+  region  = "aws/us-west-2"
+
+  cluster_name = materialize_cluster.cluster_source_us_west.name
+
+  obj_name {
+    name          = materialize_source_load_generator.load_generator_cluster_us_west.name
+    schema_name   = materialize_source_load_generator.load_generator_cluster_us_west.schema_name
+    database_name = materialize_source_load_generator.load_generator_cluster_us_west.database_name
+  }
+
+  col_expr {
+    field = "counter"
+  }
+}
+
 resource "materialize_index" "materialized_view_index" {
   name         = "simple"
   cluster_name = "quickstart"
