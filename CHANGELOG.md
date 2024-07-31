@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.8.6 - 2024-07-31
+
+### Features
+
+* Add new `identify_by_name` option for `materialize_cluster` resource [#618](https://github.com/MaterializeInc/terraform-provider-materialize/pull/618)
+  * When set to `true`, the cluster name is used as the Terraform resource ID instead of the internal cluster ID
+  * This eliminates the need to update the Terraform state file if a cluster is recreated with the same name but a different ID outside of Terraform (e.g., via the Materialize UI or dbt)
+  * The resource now uses the format `region:type:value` for IDs, where type is either "name" or "id"
+
+  Example usage:
+  ```hcl
+  resource "materialize_cluster" "test_name_as_id" {
+    name               = "test_name_as_id"
+    size               = "25cc"
+    replication_factor = "1"
+    identify_by_name   = true # Set to true to use the cluster name as the resource ID
+  }
+  ```
+
+  Existing `materialize_cluster` resources will be automatically migrated to the new ID format. To use this new feature:
+
+  1. Update your Terraform configuration to `v0.8.6` or later of the Materialize provider.
+  1. Run `terraform init` to download the new provider version.
+  1. Run `terraform plan` and `terraform refresh` to verify the changes.
+
+  No manual intervention is required for existing resources, but reviewing the plan is recommended to ensure the expected updates are made.
+
+### Misc
+
+* Add `materialize_source_mysql` tests for the `ignore_columns` attribute [#616](https://github.com/MaterializeInc/terraform-provider-materialize/pull/616)
+* Extend integration tests to run create resources in two regions different [#614](https://github.com/MaterializeInc/terraform-provider-materialize/pull/614)
+
 ## 0.8.5 - 2024-07-22
 
 ### Features
