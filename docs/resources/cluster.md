@@ -30,7 +30,7 @@ resource "materialize_cluster" "example_cluster" {
 - `availability_zones` (List of String) The specific availability zones of the cluster.
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
-- `identify_by_name` (Boolean) Use the cluster name as the Terraform resource ID instead of the internal cluster ID.
+- `identify_by_name` (Boolean) Use the cluster name as the resource identifier in your state file, rather than the internal cluster ID.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
 - `introspection_interval` (String) The interval at which to collect introspection data.
 - `ownership_role` (String) The owernship role of the object.

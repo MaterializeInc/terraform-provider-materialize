@@ -47,6 +47,9 @@ resource "materialize_view_grant" "view_grant_select" {
 Import is supported using the following syntax:
 
 ```shell
-#Grants can be imported using the concatenation of GRANT, the object type, the id of the object, the id of the role and the privilege 
-terraform import materialize_view_grant.example GRANT|VIEW|<view_id>|<role_id>|<privilege>
+# Grants can be imported using the concatenation of:
+# GRANT, the object type, the id of the object, the id of the role and the privilege
+terraform import materialize_view_grant.example <region>:GRANT|VIEW|<view_id>|<role_id>|<privilege>
+
+# The region is the region where the database is located (e.g. aws/us-east-1)
 ```

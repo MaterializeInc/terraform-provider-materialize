@@ -58,7 +58,7 @@ resource "materialize_connection_aws_privatelink" "example_privatelink_connectio
 Import is supported using the following syntax:
 
 ```shell
-#Connections can be imported using the connection id:
+# Connections can be imported using the connection id:
 terraform import materialize_connection_aws_privatelink.example <region>:<connection_id>
 
 # Connection id and information be found in the `mz_catalog.mz_connections` table

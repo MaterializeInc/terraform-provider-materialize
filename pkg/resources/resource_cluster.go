@@ -79,7 +79,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Type:        schema.TypeBool,
 		Optional:    true,
 		Default:     false,
-		Description: "Use the cluster name as the Terraform resource ID instead of the internal cluster ID.",
+		Description: "Use the cluster name as the resource identifier in your state file, rather than the internal cluster ID.",
 	},
 	"region": RegionSchema(),
 }
