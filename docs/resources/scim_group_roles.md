@@ -60,6 +60,6 @@ Import is supported using the following syntax:
 # Import command:
 terraform import materialize_scim_group_roles.example_scim_group_roles <scim_group_id>
 
-# Note: Replace <scim_group_id> with the actual ID of the SCIM group
-# whose roles you want to import
+# Note: Replace <scim_group_id> with the SCIM Group ID retrieved
+# using the materialize_scim_groups data source.
 ```
