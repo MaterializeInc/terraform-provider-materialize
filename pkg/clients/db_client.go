@@ -15,9 +15,11 @@ type DBClient struct {
 func NewDBClient(host, user, password string, port int, database, application_name_suffix, version, sslmode string) (*DBClient, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
+	var application_name string
 	if application_name_suffix != "" {
-		application_name += " " + application_name_suffix
+		application_name = application_name_suffix
+	} else {
+		application_name = fmt.Sprintf("terraform-provider-materialize v%s", version)
 	}
 
 	connStr := buildConnectionString(host, user, password, port, database, sslmode, application_name)
