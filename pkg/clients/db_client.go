@@ -12,13 +12,10 @@ type DBClient struct {
 	*sqlx.DB
 }
 
-func NewDBClient(host, user, password string, port int, database, application_name_suffix, version, sslmode string) (*DBClient, diag.Diagnostics) {
+func NewDBClient(host, user, password string, port int, database, application_name, version, sslmode string) (*DBClient, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var application_name string
-	if application_name_suffix != "" {
-		application_name = application_name_suffix
-	} else {
+	if application_name == "" {
 		application_name = fmt.Sprintf("terraform-provider-materialize v%s", version)
 	}
 
