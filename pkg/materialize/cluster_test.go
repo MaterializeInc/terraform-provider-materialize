@@ -13,7 +13,7 @@ import (
 
 func TestClusterCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" REPLICAS \(\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" \(REPLICAS \(\)\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
 		if err := NewClusterBuilder(db, o).Create(); err != nil {
@@ -24,7 +24,7 @@ func TestClusterCreate(t *testing.T) {
 
 func TestClusterManagedCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall';`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" \(SIZE 'xsmall'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
@@ -37,7 +37,7 @@ func TestClusterManagedCreate(t *testing.T) {
 
 func TestClusterManagedReplicationFactorCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', REPLICATION FACTOR 3;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" \(SIZE 'xsmall', REPLICATION FACTOR 3\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
 		b.Size("xsmall")
@@ -51,7 +51,7 @@ func TestClusterManagedReplicationFactorCreate(t *testing.T) {
 
 func TestClusterManagedSizeDiskCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(`CREATE CLUSTER "cluster" SIZE 'xsmall', DISK;`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`CREATE CLUSTER "cluster" \(SIZE 'xsmall', DISK\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
@@ -67,11 +67,11 @@ func TestClusterManagedAllCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			CREATE CLUSTER "cluster"
-			SIZE 'xsmall',
+			\(SIZE 'xsmall',
 			REPLICATION FACTOR 2,
 			AVAILABILITY ZONES = \['us-east-1'\],
 			INTROSPECTION INTERVAL = '1s',
-			INTROSPECTION DEBUGGING = TRUE;
+			INTROSPECTION DEBUGGING = TRUE\);
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -101,7 +101,7 @@ func TestClusterDrop(t *testing.T) {
 
 func TestClusterWithSchedulingCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		expectedSQL := `CREATE CLUSTER "cluster" SIZE 'xsmall', SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\);`
+		expectedSQL := `CREATE CLUSTER "cluster" \(SIZE 'xsmall', SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\)\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -120,6 +120,22 @@ func TestClusterWithSchedulingCreate(t *testing.T) {
 		})
 
 		if err := b.Create(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestClusterUpdate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `ALTER CLUSTER "cluster" SET \(SIZE 'xsmall', REPLICATION FACTOR 2\);`
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.SetSize("xsmall")
+		b.SetReplicationFactor(2)
+
+		if err := b.AlterCluster(); err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
 	})
