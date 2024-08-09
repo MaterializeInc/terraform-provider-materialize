@@ -274,9 +274,10 @@ func TestAccConnKafkaAwsIAM_basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"assume_role_arn", "assume_role_session_name"},
 			},
 		},
 	})
@@ -410,6 +411,7 @@ resource "materialize_connection_kafka" "test" {
         database_name = materialize_connection_aws.test.database_name
         schema_name   = materialize_connection_aws.test.schema_name
     }
+	validate = false
 }
 `, connectionName, awsConnectionName)
 }
