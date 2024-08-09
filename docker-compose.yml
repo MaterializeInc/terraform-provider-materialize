@@ -17,6 +17,7 @@ services:
       - --availability-zone=test2
       - --aws-account-id=123456789000
       - --aws-external-id-prefix=eb5cb59b-e2fe-41f3-87ca-d2176a495345
+      - --aws-connection-role-arn=arn:aws:iam::123456789000:role/MaterializeConnection
       - --system-parameter-default=max_clusters=100
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
@@ -41,6 +42,7 @@ services:
       - --availability-zone=test2
       - --aws-account-id=123456789000
       - --aws-external-id-prefix=eb5cb59b-e2fe-41f3-87ca-d2176a495345
+      - --aws-connection-role-arn=arn:aws:iam::123456789000:role/MaterializeConnection
       - --system-parameter-default=max_clusters=100
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
