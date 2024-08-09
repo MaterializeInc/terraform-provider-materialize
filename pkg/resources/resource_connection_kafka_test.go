@@ -161,7 +161,7 @@ func TestResourceConnectionKafkaCreateWithAwsConnection(t *testing.T) {
 			`CREATE CONNECTION "database"."schema"."conn"
             TO KAFKA \(BROKERS \('b-1.hostname-1:9096'\),
             SECURITY PROTOCOL = 'SASL_SSL',
-            AWS CONNECTION = "materialize"."pu1blic"."aws_conn"\);`,
+            AWS CONNECTION = "materialize"."public"."aws_conn"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Comment
