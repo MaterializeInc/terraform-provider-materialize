@@ -80,6 +80,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 ### Optional
 
+- `aws_connection` (Block List, Max: 1) The AWS connection to use for IAM authentication. (see [below for nested schema](#nestedblock--aws_connection))
 - `aws_privatelink` (Block List, Max: 1) AWS PrivateLink configuration. Conflicts with `kafka_broker`. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
@@ -103,6 +104,19 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the connection.
+
+<a id="nestedblock--aws_connection"></a>
+### Nested Schema for `aws_connection`
+
+Required:
+
+- `name` (String) The aws_connection name.
+
+Optional:
+
+- `database_name` (String) The aws_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The aws_connection schema name. Defaults to `public`.
+
 
 <a id="nestedblock--aws_privatelink"></a>
 ### Nested Schema for `aws_privatelink`

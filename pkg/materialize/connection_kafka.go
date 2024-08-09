@@ -79,6 +79,7 @@ type ConnectionKafkaBuilder struct {
 	kafkaSSHTunnel                      IdentifierSchemaStruct
 	validate                            bool
 	awsPrivateLinkConnection            awsPrivateLinkConnection
+	awsConnection                       IdentifierSchemaStruct
 }
 
 func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionKafkaBuilder {
@@ -95,6 +96,11 @@ func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *Conne
 
 func (b *ConnectionKafkaBuilder) KafkaAwsPrivateLink(privatelink awsPrivateLinkConnection) *ConnectionKafkaBuilder {
 	b.awsPrivateLinkConnection = privatelink
+	return b
+}
+
+func (b *ConnectionKafkaBuilder) AwsConnection(awsConnection IdentifierSchemaStruct) *ConnectionKafkaBuilder {
+	b.awsConnection = awsConnection
 	return b
 }
 
@@ -212,6 +218,10 @@ func (b *ConnectionKafkaBuilder) Create() error {
 	}
 	if b.kafkaSASLPassword.Name != "" {
 		q.WriteString(fmt.Sprintf(`, SASL PASSWORD = SECRET %s`, b.kafkaSASLPassword.QualifiedName()))
+	}
+
+	if b.awsConnection.Name != "" {
+		q.WriteString(fmt.Sprintf(`, AWS CONNECTION = %s`, b.awsConnection.QualifiedName()))
 	}
 
 	q.WriteString(`)`)

@@ -86,6 +86,12 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"aws_connection": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "aws_connection",
+		Description: "The AWS connection to use for IAM authentication.",
+		Required:    false,
+		ForceNew:    false,
+	}),
 	"security_protocol": {
 		Description:  "The security protocol to use: `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.",
 		Type:         schema.TypeString,
@@ -182,6 +188,11 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if v, ok := d.GetOk("aws_privatelink"); ok {
 		privatelink := materialize.GetAwsPrivateLinkConnectionStruct(v)
 		b.KafkaAwsPrivateLink(privatelink)
+	}
+
+	if v, ok := d.GetOk("aws_connection"); ok {
+		awsConn := materialize.GetIdentifierSchemaStruct(v)
+		b.AwsConnection(awsConn)
 	}
 
 	if v, ok := d.GetOk("security_protocol"); ok {
@@ -383,6 +394,15 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		} else {
 			addResetOption("SASL USERNAME")
 			addResetOption("SASL PASSWORD")
+		}
+	}
+
+	if d.HasChange("aws_connection") {
+		_, newAwsConn := d.GetChange("aws_connection")
+		if newAwsConn == nil || len(newAwsConn.([]interface{})) == 0 {
+			addResetOption("AWS CONNECTION")
+		} else {
+			options["AWS CONNECTION"] = materialize.GetIdentifierSchemaStruct(newAwsConn)
 		}
 	}
 

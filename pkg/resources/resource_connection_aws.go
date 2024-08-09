@@ -132,13 +132,13 @@ func connectionAwsRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	// 	return diag.FromErr(err)
 	// }
 
-	if err := d.Set("assume_role_arn", s.AssumeRoleArn.String); err != nil {
-		return diag.FromErr(err)
-	}
+	// if err := d.Set("assume_role_arn", s.AssumeRoleArn.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
 
-	if err := d.Set("assume_role_session_name", s.AssumeRoleSessionName.String); err != nil {
-		return diag.FromErr(err)
-	}
+	// if err := d.Set("assume_role_session_name", s.AssumeRoleSessionName.String); err != nil {
+	// 	return diag.FromErr(err)
+	// }
 
 	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
 		return diag.FromErr(err)

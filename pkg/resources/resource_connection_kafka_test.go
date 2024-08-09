@@ -136,3 +136,102 @@ func TestResourceConnectionKafkaCreateWithoutReplicationFactor(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceConnectionKafkaCreateWithAwsConnection(t *testing.T) {
+	r := require.New(t)
+
+	inKafkaWithAwsConnection := map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"kafka_broker": []interface{}{map[string]interface{}{
+			"broker": "b-1.hostname-1:9096",
+		}},
+		"security_protocol": "SASL_SSL",
+		"aws_connection":    []interface{}{map[string]interface{}{"name": "aws_conn"}},
+		"comment":           "object comment",
+	}
+
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inKafkaWithAwsConnection)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."conn"
+            TO KAFKA \(BROKERS \('b-1.hostname-1:9096'\),
+            SECURITY PROTOCOL = 'SASL_SSL',
+            AWS CONNECTION = "materialize"."public"."aws_conn"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_connections.name = 'conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
+		testhelpers.MockConnectionScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionScan(mock, pp)
+
+		if err := connectionKafkaCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceConnectionKafkaCreateWithAwsConnectionAndPrivateLink(t *testing.T) {
+	r := require.New(t)
+
+	inKafkaWithAwsConnectionAndPrivateLink := map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"kafka_broker": []interface{}{map[string]interface{}{
+			"broker":                 "b-1.hostname-1:9096",
+			"target_group_port":      9001,
+			"availability_zone":      "use1-az1",
+			"privatelink_connection": []interface{}{map[string]interface{}{"name": "pl_conn"}},
+		}},
+		"aws_privatelink": []interface{}{map[string]interface{}{
+			"privatelink_connection":      []interface{}{map[string]interface{}{"name": "pl_conn"}},
+			"privatelink_connection_port": 9001,
+		}},
+		"security_protocol": "SASL_SSL",
+		"aws_connection":    []interface{}{map[string]interface{}{"name": "aws_conn"}},
+		"comment":           "object comment",
+	}
+
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inKafkaWithAwsConnectionAndPrivateLink)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."conn"
+            TO KAFKA \(BROKERS
+                \('b-1.hostname-1:9096'
+                USING AWS PRIVATELINK "materialize"."public"."pl_conn"
+                \(PORT 9001, AVAILABILITY ZONE 'use1-az1'\)\)
+            AWS PRIVATELINK "materialize"."public"."pl_conn" \(PORT 9001\),
+            SECURITY PROTOCOL = 'SASL_SSL',
+            AWS CONNECTION = "materialize"."public"."aws_conn"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Comment
+		mock.ExpectExec(`COMMENT ON CONNECTION "database"."schema"."conn" IS 'object comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_connections.name = 'conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
+		testhelpers.MockConnectionScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionScan(mock, pp)
+
+		if err := connectionKafkaCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

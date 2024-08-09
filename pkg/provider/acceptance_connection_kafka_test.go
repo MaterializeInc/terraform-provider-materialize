@@ -246,6 +246,37 @@ func TestAccConnKafka_updateBrokersToPrivatelink(t *testing.T) {
 	})
 }
 
+func TestAccConnKafkaAwsIAM_basic(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	awsConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resourceName := "materialize_connection_kafka.test"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllConnKafkaDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaAwsIAMResource(connectionName, awsConnectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestMatchResourceAttr(resourceName, "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr(resourceName, "name", connectionName),
+					resource.TestCheckResourceAttr(resourceName, "database_name", "materialize"),
+					resource.TestCheckResourceAttr(resourceName, "schema_name", "public"),
+					resource.TestCheckResourceAttr(resourceName, "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
+					resource.TestCheckResourceAttr(resourceName, "kafka_broker.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "kafka_broker.0.broker", "msk.mycorp.com:9092"),
+					resource.TestCheckResourceAttr(resourceName, "security_protocol", "SASL_SSL"),
+					resource.TestCheckResourceAttr(resourceName, "aws_connection.0.name", awsConnectionName),
+					resource.TestCheckResourceAttr(resourceName, "aws_connection.0.database_name", "materialize"),
+					resource.TestCheckResourceAttr(resourceName, "aws_connection.0.schema_name", "public"),
+				),
+			},
+		},
+	})
+}
+
 func testAccConnKafkaBrokerResource(connectionName string) string {
 	return fmt.Sprintf(`
 resource "materialize_connection_kafka" "kafka_broker_conn" {
@@ -353,6 +384,30 @@ resource "materialize_connection_kafka" "kafka_connection2" {
   validate = false
 }
 `, connectionName)
+}
+
+func testAccConnKafkaAwsIAMResource(connectionName, awsConnectionName string) string {
+	return fmt.Sprintf(`
+resource "materialize_connection_aws" "test" {
+    name                    = "%[2]s"
+    assume_role_arn         = "arn:aws:iam::400121260767:role/MaterializeMSK"
+    assume_role_session_name = "materialize-session"
+}
+
+resource "materialize_connection_kafka" "test" {
+    name = "%[1]s"
+    kafka_broker {
+        broker = "msk.mycorp.com:9092"
+    }
+    security_protocol = "SASL_SSL"
+    aws_connection {
+        name          = materialize_connection_aws.test.name
+        database_name = materialize_connection_aws.test.database_name
+        schema_name   = materialize_connection_aws.test.schema_name
+    }
+	validate = false
+}
+`, connectionName, awsConnectionName)
 }
 
 func TestAccConnKafka_disappears(t *testing.T) {

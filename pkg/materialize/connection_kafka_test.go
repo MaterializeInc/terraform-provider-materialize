@@ -277,3 +277,32 @@ func TestConnectionKafkaProgressTopicReplicationFactorCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestConnectionKafkaAwsIAMAuthCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('broker1:9092', 'broker2:9092'\), SECURITY PROTOCOL = 'SASL_SSL', AWS CONNECTION = "database"."schema"."aws_conn"\);`
+
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewConnectionKafkaBuilder(db, connKafka)
+		b.KafkaBrokers([]KafkaBroker{
+			{Broker: "broker1:9092"},
+			{Broker: "broker2:9092"},
+		})
+		b.KafkaSecurityProtocol("SASL_SSL")
+		b.AwsConnection(IdentifierSchemaStruct{
+			Name:         "aws_conn",
+			SchemaName:   "schema",
+			DatabaseName: "database",
+		})
+		b.Validate(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatalf("Failed to create Kafka connection with AWS IAM authentication: %v", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("Not all expectations were met: %v", err)
+		}
+	})
+}
