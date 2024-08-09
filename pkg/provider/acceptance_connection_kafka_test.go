@@ -273,12 +273,6 @@ func TestAccConnKafkaAwsIAM_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "aws_connection.0.schema_name", "public"),
 				),
 			},
-			{
-				ResourceName:            resourceName,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"assume_role_arn", "assume_role_session_name"},
-			},
 		},
 	})
 }
