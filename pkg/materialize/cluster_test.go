@@ -135,7 +135,23 @@ func TestClusterUpdate(t *testing.T) {
 		b.SetSize("xsmall")
 		b.SetReplicationFactor(2)
 
-		if err := b.AlterCluster(); err != nil {
+		if err := b.AlterCluster(ReconfigurationOptions{}); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestClusterUpdateWithWaitUntilReady(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `ALTER CLUSTER "cluster" SET \(SIZE 'xsmall', REPLICATION FACTOR 2\) WITH \( WAIT UNTIL READY \( TIMEOUT '10s', ON TIMEOUT 'COMMIT' \) \);`
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.SetSize("xsmall")
+		b.SetReplicationFactor(2)
+
+		if err := b.AlterCluster(ReconfigurationOptions{enabled: true, timeout: "10s", on_timeout: "COMMIT"}); err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
 	})

@@ -9,6 +9,12 @@ import (
 	"github.com/lib/pq"
 )
 
+type ReconfigurationOptions struct {
+	enabled    bool
+	timeout    string
+	on_timeout string
+}
+
 // DDL
 type ClusterBuilder struct {
 	ddl                    Builder
@@ -85,6 +91,34 @@ func GetSchedulingConfig(v interface{}) SchedulingConfig {
 	}
 
 	return config
+}
+
+func (b *ClusterBuilder) GetReconfigOpts(v interface{}) ReconfigurationOptions {
+	if v == nil {
+		return ReconfigurationOptions{}
+	}
+	configSlice, ok := v.([]interface{})
+	if !ok || len(configSlice) == 0 {
+		return ReconfigurationOptions{}
+	}
+
+	configMap, ok := configSlice[0].(map[string]interface{})
+	if !ok {
+		return ReconfigurationOptions{}
+	}
+
+	reconfigOpts := ReconfigurationOptions{}
+
+	if o, ok := configMap["enabled"]; ok {
+		reconfigOpts.enabled = o.(bool)
+	}
+	if o, ok := configMap["timeout"]; ok {
+		reconfigOpts.timeout = o.(string)
+	}
+	if o, ok := configMap["on_timeout"]; ok {
+		reconfigOpts.on_timeout = o.(string)
+	}
+	return reconfigOpts
 }
 
 func (b *ClusterBuilder) QualifiedName() string {
@@ -199,14 +233,22 @@ func (b *ClusterBuilder) AlterClusterScheduling(s SchedulingConfig) error {
 	return b.ddl.exec(q.String())
 }
 
-func (b *ClusterBuilder) AlterCluster() error {
+func (b *ClusterBuilder) AlterCluster(reconfig_opts ReconfigurationOptions) error {
 	q := strings.Builder{}
+	graceful_reconfig_statement := fmt.Sprintf(
+		" WITH ( WAIT UNTIL READY ( TIMEOUT %s, ON TIMEOUT %s ) )",
+		QuoteString(reconfig_opts.timeout),
+		QuoteString(reconfig_opts.on_timeout),
+	)
 
 	q.WriteString(fmt.Sprintf(`ALTER CLUSTER %s`, b.QualifiedName()))
 	// The only alterations to unmanaged clusters should be to
 	// move them to maanged clusters, we will assume here that we are only
 	// dealing with managed clusters
 	q.WriteString(fmt.Sprintf(` SET (%s)`, b.GenerateClusterOptions()))
+	if reconfig_opts.enabled {
+		q.WriteString(graceful_reconfig_statement)
+	}
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
