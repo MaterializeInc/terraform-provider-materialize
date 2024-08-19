@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.8.7 - 2024-08-15
+
+### Features
+
+* Add support for AWS IAM authentication in `materialize_connection_kafka` [#627](https://github.com/MaterializeInc/terraform-provider-materialize/pull/627)
+  * Example usage:
+  ```hcl
+  # Create an AWS connection for IAM authentication
+  resource "materialize_connection_aws" "msk_auth" {
+    name                    = "aws_msk"
+    assume_role_arn         = "arn:aws:iam::123456789012:role/MaterializeMSK"
+  }
+
+  # Create a Kafka connection using AWS IAM authentication
+  resource "materialize_connection_kafka" "kafka_msk" {
+    name              = "kafka_msk"
+    kafka_broker {
+      broker = "b-1.your-cluster-name.abcdef.c1.kafka.us-east-1.amazonaws.com:9098"
+    }
+    security_protocol = "SASL_SSL"
+    aws_connection {
+      name          = materialize_connection_aws.msk_auth.name
+      database_name = materialize_connection_aws.msk_auth.database_name
+      schema_name   = materialize_connection_aws.msk_auth.schema_name
+    }
+  }
+  ```
+
+### Bug Fixes
+
+* Fix `materialize_connection_aws` read function issues caused by empty internal table [#630](https://github.com/MaterializeInc/terraform-provider-materialize/pull/630)
+* Fix duplicate application name in the provider configuration [#626](https://github.com/MaterializeInc/terraform-provider-materialize/pull/626)
+
+### Misc
+
+* Add more information to import docs for all resources [#623](https://github.com/MaterializeInc/terraform-provider-materialize/pull/623)
+* Routine dependency updates: [#631](https://github.com/MaterializeInc/terraform-provider-materialize/pull/631)
+
 ## 0.8.6 - 2024-07-31
 
 ### Features
