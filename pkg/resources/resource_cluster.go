@@ -298,68 +298,73 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	b := materialize.NewClusterBuilder(metaDb, o)
-	if _, ok := d.GetOk("size"); ok {
-		if d.HasChange("size") {
-			_, newSize := d.GetChange("size")
-			if err := b.Resize(newSize.(string)); err != nil {
-				return diag.FromErr(err)
-			}
+	changed := false
+	if d.HasChange("size") {
+		_, newSize := d.GetChange("size")
+		b.SetSize(newSize.(string))
+		changed = true
+	}
 
+	if d.HasChange("disk") {
+		// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
+		size := d.Get("size").(string)
+		if strings.HasSuffix(size, "cc") || strings.HasSuffix(size, "C") {
+			log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
+			d.Set("disk", true)
+		} else {
+			_, newDisk := d.GetChange("disk")
+			b.SetDisk(newDisk.(bool))
 		}
+		changed = true
+	}
 
-		if d.HasChange("disk") {
-			// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
-			size := d.Get("size").(string)
-			if strings.HasSuffix(size, "cc") || strings.HasSuffix(size, "C") {
-				log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
-				d.Set("disk", true)
-			} else {
-				_, newDisk := d.GetChange("disk")
-				if err := b.SetDisk(newDisk.(bool)); err != nil {
-					return diag.FromErr(err)
-				}
-			}
+	if d.HasChange("replication_factor") {
+		_, n := d.GetChange("replication_factor")
+		b.SetReplicationFactor(n.(int))
+		changed = true
+	}
+
+	if d.HasChange("availability_zones") {
+		_, n := d.GetChange("availability_zones")
+		azs, err := materialize.GetSliceValueString("availability_zones", n.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		b.SetAvailabilityZones(azs)
+		changed = true
+	}
 
-		if d.HasChange("replication_factor") {
-			_, n := d.GetChange("replication_factor")
-			if err := b.SetReplicationFactor(n.(int)); err != nil {
-				return diag.FromErr(err)
-			}
+	if d.HasChange("introspection_interval") {
+		_, n := d.GetChange("introspection_interval")
+		b.SetIntrospectionInterval(n.(string))
+		changed = true
+	}
+
+	if d.HasChange("introspection_debugging") {
+		_, n := d.GetChange("introspection_debugging")
+		b.SetIntrospectionDebugging(n.(bool))
+		changed = true
+	}
+
+	if d.HasChange("scheduling") {
+		_, n := d.GetChange("scheduling")
+		// If the scheduling has changed we need to set that now.
+		// There are some conflicting options that require scheduling
+		// options to always be adjusted first, enabling a schedule
+		// on a cluster with a replication factor will remove it, and
+		// you must first set the cluster schedule to manual in order to
+		// add a replication factor.
+		// Note we don't set this in the `b` ClusterBuilder
+		// and we do not set changed here.
+		config := materialize.GetSchedulingConfig(n)
+		if err := b.AlterClusterScheduling(config); err != nil {
+			return diag.FromErr(err)
 		}
+	}
 
-		if d.HasChange("availability_zones") {
-			_, n := d.GetChange("availability_zones")
-			azs, err := materialize.GetSliceValueString("availability_zones", n.([]interface{}))
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			b := materialize.NewClusterBuilder(metaDb, o)
-			if err := b.SetAvailabilityZones(azs); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-
-		if d.HasChange("introspection_interval") {
-			_, n := d.GetChange("introspection_interval")
-			if err := b.SetIntrospectionInterval(n.(string)); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-
-		if d.HasChange("introspection_debugging") {
-			_, n := d.GetChange("introspection_debugging")
-			if err := b.SetIntrospectionDebugging(n.(bool)); err != nil {
-				return diag.FromErr(err)
-			}
-		}
-
-		if d.HasChange("scheduling") {
-			o, n := d.GetChange("scheduling")
-			if err := b.SetSchedulingConfig(n); err != nil {
-				d.Set("scheduling", o)
-				return diag.FromErr(err)
-			}
+	if changed {
+		if err := b.AlterCluster(); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 

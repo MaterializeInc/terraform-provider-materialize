@@ -41,13 +41,12 @@ func TestResourceClusterCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`
-			CREATE CLUSTER "cluster"
-			SIZE '3xsmall',
+			CREATE CLUSTER "cluster" \(SIZE '3xsmall',
 			REPLICATION FACTOR 2,
 			AVAILABILITY ZONES = \['use1-az1','use1-az2'\],
 			INTROSPECTION INTERVAL = '10s',
 			INTROSPECTION DEBUGGING = TRUE,
-			SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\);
+			SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\)\);
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership
@@ -146,10 +145,9 @@ func TestResourceClusterZeroReplicationCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`
-			CREATE CLUSTER "cluster"
-			SIZE '3xsmall',
+			CREATE CLUSTER "cluster" \(SIZE '3xsmall',
 			REPLICATION FACTOR 0,
-			INTROSPECTION INTERVAL = '1s';
+			INTROSPECTION INTERVAL = '1s'\);
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
