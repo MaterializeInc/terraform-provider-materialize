@@ -159,7 +159,7 @@ services:
     volumes:
       - certs:/secrets
 
-  frontegg-mock:
+  frontegg:
     image: materialize/frontegg-mock:devel-2c24529ee25dfcc19c57ac4f8fdb4a8c938fdfba
     depends_on:
       - test-certs
