@@ -154,14 +154,32 @@ services:
     command: >
       sh -c "tail -F /dev/null"
 
+  test-certs:
+    image: materialize/test-certs:devel-67251c0eb77e76eb6ef81bb78e2fb128dea2b1fb
+    volumes:
+      - certs:/secrets
+
   frontegg:
-    container_name: frontegg
-    build: mocks/frontegg
+    image: materialize/frontegg-mock:devel-67251c0eb77e76eb6ef81bb78e2fb128dea2b1fb
+    depends_on:
+      - test-certs
     ports:
       - "3000:3000"
+    volumes:
+      - certs:/secrets
+    command: >
+      --listen-addr 0.0.0.0:3000
+      --users '[{"id": "1b2a3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "email": "mz_system", "password": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b", "tenant_id": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b", "initial_api_tokens": [{"client_id": "1b2a3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "secret": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b"}], "roles": ["Organization Admin", "Organization Member"]}]'
+      --roles '[{"id":"1", "name": "Organization Admin", "key": "MaterializePlatformAdmin"}, {"id":"2", "name": "Organization Member", "key": "MaterializePlatform"}]'
+      --issuer "http://frontegg-mock:6880"
+      --encoding-key-file /secrets/frontegg-mock.key
+      --decoding-key-file /secrets/frontegg-mock.crt
 
   cloud:
     container_name: cloud
     build: mocks/cloud
     ports:
       - "3001:3001"
+
+volumes:
+  certs:
