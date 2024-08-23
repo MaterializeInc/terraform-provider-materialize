@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var clusterSchema = map[string]*schema.Schema{
@@ -82,6 +84,36 @@ var clusterSchema = map[string]*schema.Schema{
 		Description: "Use the cluster name as the resource identifier in your state file, rather than the internal cluster ID. This is particularly useful in scenarios like dbt-materialize blue/green deployments, where clusters are swapped but the ID changes. By identifying by name, the resource can be managed consistently even when the underlying cluster ID is updated.",
 	},
 	"region": RegionSchema(),
+	"wait_until_ready": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: "Defines the parameters for the WAIT UNTIL READY options",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"enabled": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "Enable wait_until_ready.",
+				},
+				"timeout": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      "0s",
+					Description:  "Max duration to wait for the new replicas to be ready.",
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^\\d+[smh]{1}$"), "Must be a valid duration in the form of <int><unit> ex: 1s, 10m"),
+				},
+				"on_timeout": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Description:  "Action to take on timeout: COMMIT|ROLLBACK",
+					Default:      "COMMIT",
+					ValidateFunc: validation.StringInSlice([]string{"COMMIT", "ROLLBACK"}, true),
+				},
+			},
+		},
+	},
 }
 
 func Cluster() *schema.Resource {
@@ -363,7 +395,9 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	if changed {
-		if err := b.AlterCluster(); err != nil {
+		_, reconfigOptsRaw := d.GetChange("wait_until_ready")
+		reconfigOpts := b.GetReconfigOpts(reconfigOptsRaw)
+		if err := b.AlterCluster(reconfigOpts); err != nil {
 			return diag.FromErr(err)
 		}
 	}
