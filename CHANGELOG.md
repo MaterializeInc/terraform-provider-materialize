@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.8 - 2024-08-26
+
+### Features
+
+* Add `wait_until_ready` option to `cluster` resources, which will help reduce downtime when terraform updates a cluster. [#632](https://github.com/MaterializeInc/terraform-provider-materialize/pull/632)
+  * Example usage:
+  ```hcl
+  resource "materialize_cluster" "cluster" {
+    name = var.mz_cluster
+    size = "25cc"
+    wait_until_ready {
+      enabled = true
+      timeout = "10m"
+      on_timeout = "COMMIT"
+    }
+  }
+  ```
+
+### Misc
+
+* Unify the cluster alter commands [#628](https://github.com/MaterializeInc/terraform-provider-materialize/pull/628)
+* Switched tests to use the Rust Frontegg mock service [#634](https://github.com/MaterializeInc/terraform-provider-materialize/pull/634)
+
+
 ## 0.8.7 - 2024-08-15
 
 ### Features
