@@ -41,7 +41,7 @@ To run the acceptance tests which will simulate running Terraform commands you w
 
 ```bash
 # Start all containers
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 Add the following to your `hosts` file so that the provider can connect to the mock services:
