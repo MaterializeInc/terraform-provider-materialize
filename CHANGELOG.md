@@ -4,7 +4,7 @@
 
 ### Features
 
-* Add `wait_until_ready` option to `cluster` resources, which will help reduce downtime when terraform updates a cluster. [#632](https://github.com/MaterializeInc/terraform-provider-materialize/pull/632)
+* Add `wait_until_ready` option to `cluster` resources, which allows graceful cluster reconfiguration (i.e., with no downtime) for clusters with no sources or sinks. [#632](https://github.com/MaterializeInc/terraform-provider-materialize/pull/632)
   * Example usage:
   ```hcl
   resource "materialize_cluster" "cluster" {
