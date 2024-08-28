@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature! Please provide the information below to help us understand your request.
+        Thanks for suggesting a new feature! Please provide additional information below to help us understand your request.
   - type: textarea
     id: feature-request
     attributes:
