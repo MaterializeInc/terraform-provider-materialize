@@ -22,6 +22,8 @@ services:
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
       - --all-features
+    environment:
+      MZ_NO_TELEMETRY: 1
     ports:
       - 6875:6875
       - 6877:6877
@@ -48,6 +50,7 @@ services:
       - --system-parameter-default=max_aws_privatelink_connections=10
       - --all-features
     environment:
+      MZ_NO_TELEMETRY: 1
       MZ_SQL_LISTEN_ADDR: 0.0.0.0:7875
       MZ_HTTP_LISTEN_ADDR: 0.0.0.0:7876
       MZ_INTERNAL_SQL_LISTEN_ADDR: 0.0.0.0:7877
