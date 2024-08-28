@@ -123,7 +123,8 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 
 	userResponse, err := frontegg.ReadUser(ctx, client, userID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if strings.Contains(err.Error(), "404") || strings.Contains(strings.ToLower(err.Error()), "not found") {
+			// User doesn't exist, remove from state
 			d.SetId("")
 			return nil
 		}
