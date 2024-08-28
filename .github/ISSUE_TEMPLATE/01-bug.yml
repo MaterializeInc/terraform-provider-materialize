@@ -1,6 +1,6 @@
 name: Bug
 description: >
-  A defect in an existing feature. For example, "The `materialize_connection_kafka` resource throws an error when the `topic` attribute is set to an empty string."
+  A bug in an existing feature. For example, "The `materialize_connection_kafka` resource throws an error when the `topic` attribute is set to an empty string."
 labels: [bug]
 body:
   - type: markdown
