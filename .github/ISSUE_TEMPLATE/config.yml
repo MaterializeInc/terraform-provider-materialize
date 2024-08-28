@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Community Slack
+    url: https://materialize.com/s/chat
+    about: Meet the Materialize community on Slack.
+  - name: Security reports
+    url: https://materialize.com/security-disclosure/
+    about: >
+      If you've discovered a security issue, please review our responsible
+      disclosure policy.
