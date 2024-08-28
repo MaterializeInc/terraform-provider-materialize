@@ -28,7 +28,7 @@ body:
     attributes:
       label: What version of Materialize are you using?
       description: |
-        From the SQL console, run: `SELECT mz_version();`
+        From a SQL client connected to Materialize, run: `SELECT mz_version();`
       placeholder: v0.100.0
     validations:
       required: true
