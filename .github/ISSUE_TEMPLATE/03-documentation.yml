@@ -13,9 +13,9 @@ body:
       description: Please describe the documentation you'd like to see added or updated for the Materialize Terraform provider.
       placeholder: |
         For example:
-        - Add examples for using the `materialize_connection_kafka` resource with different configurations
-        - Update the documentation for the `materialize_view` resource to include information about comments
-        - Create a troubleshooting guide for common issues when using the provider
+        - Add examples for using the `materialize_connection_kafka` resource with different configurations.
+        - Update the documentation for the `materialize_view` resource to include information about comments.
+        - Create a troubleshooting guide for common issues when using the provider.
     validations:
       required: true
   - type: textarea
