@@ -1,0 +1,12 @@
+name: Feature
+description: Suggest a new feature or improvement for the Materialize Terraform provider
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide the information below to help us understand your request.
+  - type: textarea
+    id: feature-request
+    attributes:
+      label: Feature request

@@ -1,0 +1,44 @@
+name: Bug
+description: >
+  A defect in an existing feature. For example, "The `materialize_connection_kafka` resource throws an error when the `topic` attribute is set to an empty string."
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report against the Materialize Terraform provider! Please fill out the sections below to help us understand and reproduce the issue.
+  - type: input
+    id: tf_version
+    attributes:
+      label: What version of the Materialize Terraform provider are you using?
+      description: |
+        From the command line, run: `terraform version`
+      placeholder: v0.8.0
+    validations:
+      required: true
+  - type: input
+    id: tf_cli_version
+    attributes:
+      label: What version of the Terraform CLI are you using?
+      description: |
+        From the command line, run: `terraform --version`
+      placeholder: v0.15.0
+  - type: input
+    id: mz_version
+    attributes:
+      label: What version of Materialize are you using?
+      description: |
+        From the SQL console, run: `SELECT mz_version();`
+      placeholder: v0.100.0
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is the issue?
+      description: |
+        Describe what you expect to happen vs. what actually happens.
+
+        If the issue is reproducible, **please provide reproduction instructions.** A precise set of instructions that demonstrates the issue vastly increases the likelihood that we will be able to find and fix it quickly.
+    validations:
+      required: true
