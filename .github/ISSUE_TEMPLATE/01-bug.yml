@@ -39,6 +39,6 @@ body:
       description: |
         Describe what you expect to happen vs. what actually happens.
 
-        If the issue is reproducible, **please provide reproduction instructions.** A precise set of instructions that demonstrates the issue vastly increases the likelihood that we will be able to find and fix it quickly.
+        If the issue is reproducible, **please share any helpful steps to reproduce it**. A precise set of instructions that trigger the issue greatly increases the likelihood that we will be able to find and fix it quickly!
     validations:
       required: true
