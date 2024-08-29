@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -123,7 +124,7 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 
 	userResponse, err := frontegg.ReadUser(ctx, client, userID)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") || strings.Contains(strings.ToLower(err.Error()), "not found") {
+		if clients.IsNotFoundError(err) {
 			// User doesn't exist, remove from state
 			d.SetId("")
 			return nil
