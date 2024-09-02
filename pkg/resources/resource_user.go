@@ -31,6 +31,12 @@ func User() *schema.Resource {
 				ForceNew:    true,
 				Description: "The email address of the user. This must be unique across all users in the organization.",
 			},
+			"password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				Description: "The password for the user. If not provided, an activation email will be sent.",
+			},
 			"send_activation_email": {
 				Type:     schema.TypeBool,
 				Default:  true,
@@ -72,6 +78,7 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	client := providerMeta.Frontegg
 	email := d.Get("email").(string)
+	password := d.Get("password").(string)
 	sendActivationEmail := d.Get("send_activation_email").(bool)
 	roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
 
@@ -88,7 +95,6 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		if roleID, ok := roleMap[roleName]; ok {
 			roleIDs = append(roleIDs, roleID)
 		} else {
-			// Consider failing the process if the role is not found
 			return diag.Errorf("role not found: %s", roleName)
 		}
 	}
@@ -96,7 +102,12 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	userRequest := frontegg.UserRequest{
 		Email:           email,
 		RoleIDs:         roleIDs,
-		SkipInviteEmail: !sendActivationEmail,
+		SkipInviteEmail: !sendActivationEmail || password != "",
+	}
+
+	// If a password is provided, add it to the request
+	if password != "" {
+		userRequest.Password = password
 	}
 
 	userResponse, err := frontegg.CreateUser(ctx, client, userRequest)

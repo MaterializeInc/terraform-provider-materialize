@@ -29,6 +29,7 @@ resource "materialize_user" "example_user" {
 
 ### Optional
 
+- `password` (String, Sensitive) The password for the user. If not provided, an activation email will be sent.
 - `send_activation_email` (Boolean) Whether to send an email either inviting the user to activate their account, if the user is new, or inviting the user to join the organization, if the user already exists in another organization. Changing this property after the resource is created has no effect.
 
 ### Read-Only
