@@ -43,6 +43,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Description: "Creates subsources for specific tables in the Postgres connection.",
 		Deprecated:  "Use the new materialize_source_table resource instead.",
 		Type:        schema.TypeSet,
+		Optional:    true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"upstream_name": {
@@ -76,8 +77,6 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Required: true,
-		MinItems: 1,
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
