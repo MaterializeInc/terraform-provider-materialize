@@ -37,7 +37,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
         Description: "Tables to be ingested from the source. This field is deprecated and will be removed in a future version.",
         Type:        schema.TypeSet,
         Optional:    true,
-        Deprecated:  "Use the new `materialize_table_from_source` resource instead.",
+        Deprecated:  "Use the new `materialize_source_table` resource instead.",
         Elem: &schema.Resource{
             Schema: map[string]*schema.Schema{
                 // ... existing table schema ...
@@ -49,10 +49,10 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 
 #### 4.1.2 New Table From Source Resource
 
-Introduce a new `materialize_table_from_source` resource:
+Introduce a new `materialize_source_table` resource:
 
 ```go
-var tableFromSourceSchema = map[string]*schema.Schema{
+var sourceTableSchema = map[string]*schema.Schema{
     "name":               ObjectNameSchema("table", true, false),
     "schema_name":        SchemaNameSchema("table", false),
     "database_name":      DatabaseNameSchema("table", false),
@@ -87,21 +87,21 @@ var tableFromSourceSchema = map[string]*schema.Schema{
 
 ### 4.2 Resource Implementation
 
-#### 4.2.1 Table From Source Resource
+#### 4.2.1 Table Source Table Resource
 
-Implement CRUD operations for the new `materialize_table_from_source` resource:
+Implement CRUD operations for the new `materialize_source_table` resource:
 
 ```go
-func TableFromSource() *schema.Resource {
+func SourceTable() *schema.Resource {
     return &schema.Resource{
-        CreateContext: tableFromSourceCreate,
-        ReadContext:   tableFromSourceRead,
-        UpdateContext: tableFromSourceUpdate,
-        DeleteContext: tableFromSourceDelete,
+        CreateContext: sourceTableCreate,
+        ReadContext:   sourceTableRead,
+        UpdateContext: sourceTableUpdate,
+        DeleteContext: sourceTableDelete,
         Importer: &schema.ResourceImporter{
             StateContext: schema.ImportStatePassthroughContext,
         },
-        Schema: tableFromSourceSchema,
+        Schema: sourceTableSchema,
     }
 }
 ```
@@ -116,7 +116,7 @@ CREATE TABLE <database_name>.<schema_name>.<name> FROM SOURCE <source_name> (REF
 
 Modify the CRUD operations for existing source resources to handle the deprecation of subsource-related fields:
 
-- In `Create` and `Update` operations, if the deprecated `table` field is used, log a warning message advising users to migrate to the new `materialize_table_from_source` resource.
+- In `Create` and `Update` operations, if the deprecated `table` field is used, log a warning message advising users to migrate to the new `materialize_source_table` resource.
 - In `Read` operations, continue to populate the `table` field if it exists in the state, but also log a deprecation warning.
 
 ### 4.3 Migration Strategy
@@ -124,20 +124,20 @@ Modify the CRUD operations for existing source resources to handle the deprecati
 We will not create separate resources with a v2 suffix for sources. Instead, we'll use a gradual migration approach:
 
 1. Deprecate the `table` field in existing source resources.
-2. Introduce the new `materialize_table_from_source` resource.
+2. Introduce the new `materialize_source_table` resource.
 3. Allow both old and new configurations to coexist during a transition period.
 
 This approach allows users to migrate their configurations gradually:
 
 - Existing sources can still be created and managed.
-- New tables (formerly subsources) will be created as separate `materialize_table_from_source` resources.
-- Users can migrate their configurations at their own pace by replacing `table` blocks with `materialize_table_from_source` resources.
+- New tables (formerly subsources) will be created as separate `materialize_source_table` resources.
+- Users can migrate their configurations at their own pace by replacing `table` blocks with `materialize_source_table` resources.
 
 ### 4.4 Import Logic
 
-The import logic should work out of the box for the new `materialize_table_from_source` resource as long we have the required information (e.g., source name, upstream table name) stored in a system catalog table.
+The import logic should work out of the box for the new `materialize_source_table` resource as long we have the required information (e.g., source name, upstream table name) stored in a system catalog table.
 
-The read operation for the `materialize_table_from_source` resource should be able to fetch the necessary details from the Materialize system catalog to populate the state. If not all information is available, some fields may need to be ignored or set to defaults during import.
+The read operation for the `materialize_source_table` resource should be able to fetch the necessary details from the Materialize system catalog to populate the state. If not all information is available, some fields may need to be ignored or set to defaults during import.
 
 ### 4.5 Versioning and Compatibility
 
@@ -148,7 +148,7 @@ The read operation for the `materialize_table_from_source` resource should be ab
 ### 4.6 Testing
 
 - Update existing tests for source resources to cover the deprecation warnings and backwards compatibility.
-- Add all required tests for the new `materialize_table_from_source` resource.
+- Add all required tests for the new `materialize_source_table` resource.
 - Implement integration tests to ensure compatibility with both old and new Materialize versions.
 
 ## 5. Migration Guide for Users
@@ -158,7 +158,7 @@ Provide a migration guide for users to update their Terraform configurations:
 1. Update the provider version to v0.9.0 or later.
 2. For each source with subsources:
    a. Keep the existing source resource as-is.
-   b. Create a new `materialize_table_from_source` resource for each former subsource.
+   b. Create a new `materialize_source_table` resource for each former subsource.
    c. Set the `source` in the new resource to the fully qualified name of the source.
 3. Run `terraform import` to import the state of the new resources.
 4. Gradually remove the deprecated `table` blocks from source resources as you migrate to the new structure.
