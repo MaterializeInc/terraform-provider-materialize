@@ -15,6 +15,7 @@ type SourceMySQLBuilder struct {
 	ignoreColumns   []string
 	textColumns     []string
 	tables          []TableStruct
+	allTables       bool
 	exposeProgress  IdentifierSchemaStruct
 }
 
@@ -52,6 +53,11 @@ func (b *SourceMySQLBuilder) TextColumns(t []string) *SourceMySQLBuilder {
 
 func (b *SourceMySQLBuilder) Tables(tables []TableStruct) *SourceMySQLBuilder {
 	b.tables = tables
+	return b
+}
+
+func (b *SourceMySQLBuilder) AllTables() *SourceMySQLBuilder {
+	b.allTables = true
 	return b
 }
 
@@ -111,7 +117,9 @@ func (b *SourceMySQLBuilder) Create() error {
 		}
 		q.WriteString(`)`)
 	} else {
-		q.WriteString(` FOR ALL TABLES`)
+		if b.allTables {
+			q.WriteString(` FOR ALL TABLES`)
+		}
 	}
 
 	if b.exposeProgress.Name != "" {

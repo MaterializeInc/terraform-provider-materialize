@@ -52,7 +52,6 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `name` (String) The identifier for the source.
 - `postgres_connection` (Block List, Min: 1, Max: 1) The PostgreSQL connection to use in the source. (see [below for nested schema](#nestedblock--postgres_connection))
 - `publication` (String) The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).
-- `table` (Block Set, Min: 1, Deprecated) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
 
 ### Optional
 
@@ -63,6 +62,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
+- `table` (Block Set, Deprecated) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String, Deprecated) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
 
 ### Read-Only
@@ -84,6 +84,19 @@ Optional:
 - `schema_name` (String) The postgres_connection schema name. Defaults to `public`.
 
 
+<a id="nestedblock--expose_progress"></a>
+### Nested Schema for `expose_progress`
+
+Required:
+
+- `name` (String) The expose_progress name.
+
+Optional:
+
+- `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The expose_progress schema name. Defaults to `public`.
+
+
 <a id="nestedblock--table"></a>
 ### Nested Schema for `table`
 
@@ -97,19 +110,6 @@ Optional:
 - `name` (String) The name of the table in Materialize.
 - `schema_name` (String) The schema of the table in Materialize.
 - `upstream_schema_name` (String) The schema of the table in the upstream Postgres database.
-
-
-<a id="nestedblock--expose_progress"></a>
-### Nested Schema for `expose_progress`
-
-Required:
-
-- `name` (String) The expose_progress name.
-
-Optional:
-
-- `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The expose_progress schema name. Defaults to `public`.
 
 ## Import
 
