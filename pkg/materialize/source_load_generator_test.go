@@ -44,6 +44,7 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
 		b.LoadGeneratorType("AUCTION")
+		b.AllTables()
 		b.AuctionOptions(AuctionOptions{
 			TickInterval: "1s",
 		})
@@ -65,6 +66,7 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
 		b.LoadGeneratorType("MARKETING")
+		b.AllTables()
 		b.MarketingOptions(MarketingOptions{
 			TickInterval: "1s",
 		})
@@ -86,6 +88,7 @@ func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 
 		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
 		b.LoadGeneratorType("TPCH")
+		b.AllTables()
 		b.TPCHOptions(TPCHOptions{
 			TickInterval: "1s",
 			ScaleFactor:  0.01,

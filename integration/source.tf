@@ -70,6 +70,23 @@ resource "materialize_source_load_generator" "load_generator_auction" {
   }
 }
 
+# Create source table from Auction load generator source
+resource "materialize_source_table_load_generator" "load_generator_auction_table" {
+  name          = "load_gen_auction_table"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_load_generator.load_generator_auction.name
+    schema_name   = materialize_source_load_generator.load_generator_auction.schema_name
+    database_name = materialize_source_load_generator.load_generator_auction.database_name
+  }
+
+  comment = "source table load generator comment"
+
+  upstream_name = "bids"
+}
+
 resource "materialize_source_load_generator" "load_generator_marketing" {
   name                = "load_gen_marketing"
   schema_name         = materialize_schema.schema.name
@@ -80,6 +97,23 @@ resource "materialize_source_load_generator" "load_generator_marketing" {
   marketing_options {
     tick_interval = "500ms"
   }
+}
+
+# Create source table from Marketing load generator source
+resource "materialize_source_table_load_generator" "load_generator_marketing_table" {
+  name          = "load_gen_marketing_table"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_load_generator.load_generator_marketing.name
+    schema_name   = materialize_source_load_generator.load_generator_marketing.schema_name
+    database_name = materialize_source_load_generator.load_generator_marketing.database_name
+  }
+
+  comment = "source table load generator comment"
+
+  upstream_name = "leads"
 }
 
 resource "materialize_source_load_generator" "load_generator_tpch" {
@@ -144,6 +178,26 @@ resource "materialize_source_postgres" "example_source_postgres" {
   }
 }
 
+# Create source table from Postgres source
+resource "materialize_source_table_postgres" "source_table_postgres" {
+  name          = "source_table2_postgres"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_postgres.example_source_postgres.name
+    schema_name   = materialize_source_postgres.example_source_postgres.schema_name
+    database_name = materialize_source_postgres.example_source_postgres.database_name
+  }
+
+  upstream_name        = "table2"
+  upstream_schema_name = "public"
+
+  text_columns = [
+    "updated_at"
+  ]
+}
+
 resource "materialize_source_kafka" "example_source_kafka_format_text" {
   name         = "source_kafka_text"
   comment      = "source kafka comment"
@@ -168,6 +222,60 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
+# Create source table from Kafka source
+resource "materialize_source_table_kafka" "source_table_kafka" {
+  name          = "source_table_kafka"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_kafka.example_source_kafka_format_text.name
+    schema_name   = materialize_source_kafka.example_source_kafka_format_text.schema_name
+    database_name = materialize_source_kafka.example_source_kafka_format_text.database_name
+  }
+
+  topic = "topic1"
+
+  key_format {
+    text = true
+  }
+  value_format {
+    json = true
+  }
+
+  include_key             = true
+  include_key_alias       = "message_key"
+  include_headers         = true
+  include_headers_alias   = "message_headers"
+  include_partition       = true
+  include_partition_alias = "message_partition"
+  include_offset          = true
+  include_offset_alias    = "message_offset"
+  include_timestamp       = true
+  include_timestamp_alias = "message_timestamp"
+
+}
+
+resource "materialize_source_table_kafka" "source_table_kafka_no_topic" {
+  name          = "source_table_kafka_no_topic"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_kafka.example_source_kafka_format_text.name
+    schema_name   = materialize_source_kafka.example_source_kafka_format_text.schema_name
+    database_name = materialize_source_kafka.example_source_kafka_format_text.database_name
+  }
+
+  key_format {
+    text = true
+  }
+  value_format {
+    json = true
+  }
+
+}
+
 resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
   name         = "source_kafka_bytes"
   cluster_name = materialize_cluster.cluster_source.name
@@ -178,6 +286,27 @@ resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
     schema_name   = materialize_connection_kafka.kafka_connection.schema_name
     database_name = materialize_connection_kafka.kafka_connection.database_name
   }
+  format {
+    bytes = true
+  }
+
+  depends_on = [materialize_sink_kafka.sink_kafka]
+}
+
+# Create source table from Kafka source with bytes format
+resource "materialize_source_table_kafka" "source_table_kafka_bytes" {
+  name          = "source_table_kafka_bytes"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_kafka.example_source_kafka_format_bytes.name
+    schema_name   = materialize_source_kafka.example_source_kafka_format_bytes.schema_name
+    database_name = materialize_source_kafka.example_source_kafka_format_bytes.database_name
+  }
+
+  topic = "topic1"
+
   format {
     bytes = true
   }
@@ -206,6 +335,33 @@ resource "materialize_source_kafka" "example_source_kafka_format_avro" {
   }
   envelope {
     none = true
+  }
+
+  depends_on = [materialize_sink_kafka.sink_kafka]
+}
+
+# Source table from Kafka source with Avro format
+resource "materialize_source_table_kafka" "source_table_kafka_avro" {
+  name          = "source_table_kafka_avro"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_kafka.example_source_kafka_format_avro.name
+    schema_name   = materialize_source_kafka.example_source_kafka_format_avro.schema_name
+    database_name = materialize_source_kafka.example_source_kafka_format_avro.database_name
+  }
+
+  topic = "topic1"
+
+  format {
+    avro {
+      schema_registry_connection {
+        name          = materialize_connection_confluent_schema_registry.schema_registry.name
+        schema_name   = materialize_connection_confluent_schema_registry.schema_registry.schema_name
+        database_name = materialize_connection_confluent_schema_registry.schema_registry.database_name
+      }
+    }
   }
 
   depends_on = [materialize_sink_kafka.sink_kafka]
@@ -271,6 +427,22 @@ resource "materialize_source_mysql" "test" {
   }
 }
 
+# Create source table from MySQL source
+resource "materialize_source_table_mysql" "source_table_mysql" {
+  name          = "source_table1_mysql"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_mysql.test.name
+    schema_name   = materialize_source_mysql.test.schema_name
+    database_name = materialize_source_mysql.test.database_name
+  }
+
+  upstream_name        = "mysql_table1"
+  upstream_schema_name = "shop"
+}
+
 resource "materialize_source_grant" "source_grant_select" {
   role_name     = materialize_role.role_1.name
   privilege     = "SELECT"
@@ -309,6 +481,48 @@ resource "materialize_source_kafka" "kafka_upsert_options_source" {
   }
 
   start_offset            = [0]
+  include_timestamp_alias = "timestamp_alias"
+  include_offset          = true
+  include_offset_alias    = "offset_alias"
+  include_partition       = true
+  include_partition_alias = "partition_alias"
+  include_key_alias       = "key_alias"
+}
+
+# Create source table from Kafka source with upsert options
+resource "materialize_source_table_kafka" "source_table_kafka_upsert_options" {
+  name          = "source_table_kafka_upsert_options"
+  schema_name   = "public"
+  database_name = "materialize"
+
+  source {
+    name          = materialize_source_kafka.kafka_upsert_options_source.name
+    schema_name   = materialize_source_kafka.kafka_upsert_options_source.schema_name
+    database_name = materialize_source_kafka.kafka_upsert_options_source.database_name
+  }
+
+  topic = "topic1"
+
+  key_format {
+    text = true
+  }
+  value_format {
+    text = true
+  }
+
+
+  envelope {
+    upsert = true
+    upsert_options {
+      value_decoding_errors {
+        inline {
+          enabled = true
+          alias   = "decoding_error"
+        }
+      }
+    }
+  }
+
   include_timestamp_alias = "timestamp_alias"
   include_offset          = true
   include_offset_alias    = "offset_alias"

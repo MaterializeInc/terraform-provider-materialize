@@ -22,6 +22,7 @@ func TestSourceMySQLAllTablesCreate(t *testing.T) {
 
 		b := NewSourceMySQLBuilder(db, sourceMySQL)
 		b.MySQLConnection(IdentifierSchemaStruct{Name: "mysql_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.AllTables()
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)

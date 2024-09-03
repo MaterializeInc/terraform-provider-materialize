@@ -19,6 +19,7 @@ var inSourceLoadgen = map[string]interface{}{
 	"cluster_name":        "cluster",
 	"expose_progress":     []interface{}{map[string]interface{}{"name": "progress"}},
 	"load_generator_type": "TPCH",
+	"all_tables":          true,
 	"tpch_options": []interface{}{map[string]interface{}{
 		"tick_interval": "1s",
 		"scale_factor":  0.5,
