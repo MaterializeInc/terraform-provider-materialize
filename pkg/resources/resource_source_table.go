@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var tableFromSourceSchema = map[string]*schema.Schema{
+var sourceTableSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("table", true, false),
 	"schema_name":        SchemaNameSchema("table", false),
 	"database_name":      DatabaseNameSchema("table", false),
@@ -47,22 +47,22 @@ var tableFromSourceSchema = map[string]*schema.Schema{
 	"region":         RegionSchema(),
 }
 
-func TableFromSource() *schema.Resource {
+func SourceTable() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: tableFromSourceCreate,
-		ReadContext:   tableFromSourceRead,
-		UpdateContext: tableFromSourceUpdate,
-		DeleteContext: tableFromSourceDelete,
+		CreateContext: sourceTableCreate,
+		ReadContext:   sourceTableRead,
+		UpdateContext: sourceTableUpdate,
+		DeleteContext: sourceTableDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: tableFromSourceSchema,
+		Schema: sourceTableSchema,
 	}
 }
 
-func tableFromSourceCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -73,7 +73,7 @@ func tableFromSourceCreate(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewTableFromSourceBuilder(metaDb, o)
+	b := materialize.NewSourceTableBuilder(metaDb, o)
 
 	source := materialize.GetIdentifierSchemaStruct(d.Get("source"))
 	b.Source(source)
@@ -116,16 +116,16 @@ func tableFromSourceCreate(ctx context.Context, d *schema.ResourceData, meta any
 		}
 	}
 
-	i, err := materialize.TableFromSourceId(metaDb, o)
+	i, err := materialize.SourceTableId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return tableFromSourceRead(ctx, d, meta)
+	return sourceTableRead(ctx, d, meta)
 }
 
-func tableFromSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func sourceTableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	i := d.Id()
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
@@ -133,7 +133,7 @@ func tableFromSourceRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	t, err := materialize.ScanTableFromSource(metaDb, utils.ExtractId(i))
+	t, err := materialize.ScanSourceTable(metaDb, utils.ExtractId(i))
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -176,7 +176,7 @@ func tableFromSourceRead(ctx context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-func tableFromSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sourceTableUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -191,7 +191,7 @@ func tableFromSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
 		o := materialize.MaterializeObject{ObjectType: "TABLE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
-		b := materialize.NewTableFromSourceBuilder(metaDb, o)
+		b := materialize.NewSourceTableBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
@@ -218,10 +218,10 @@ func tableFromSourceUpdate(ctx context.Context, d *schema.ResourceData, meta any
 		}
 	}
 
-	return tableFromSourceRead(ctx, d, meta)
+	return sourceTableRead(ctx, d, meta)
 }
 
-func tableFromSourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sourceTableDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -232,7 +232,7 @@ func tableFromSourceDelete(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewTableFromSourceBuilder(metaDb, o)
+	b := materialize.NewSourceTableBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {
 		return diag.FromErr(err)
