@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 )
 
-type TableFromSourceParams struct {
+type SourceTableParams struct {
 	TableId            sql.NullString `db:"id"`
 	TableName          sql.NullString `db:"name"`
 	SchemaName         sql.NullString `db:"schema_name"`
@@ -26,7 +26,7 @@ type TableFromSourceParams struct {
 }
 
 // TODO: Extend this query to include the upstream table name and schema name and the source
-var tableFromSourceQuery = NewBaseQuery(`
+var sourceTableQuery = NewBaseQuery(`
 	SELECT
 		mz_tables.id,
 		mz_tables.name,
@@ -51,15 +51,15 @@ var tableFromSourceQuery = NewBaseQuery(`
 		ON mz_tables.id = comments.id
 `)
 
-func TableFromSourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
+func SourceTableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"mz_tables.name":    obj.Name,
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := tableFromSourceQuery.QueryPredicate(p)
+	q := sourceTableQuery.QueryPredicate(p)
 
-	var t TableFromSourceParams
+	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
 		return "", err
 	}
@@ -67,10 +67,10 @@ func TableFromSourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	return t.TableId.String, nil
 }
 
-func ScanTableFromSource(conn *sqlx.DB, id string) (TableFromSourceParams, error) {
-	q := tableFromSourceQuery.QueryPredicate(map[string]string{"mz_tables.id": id})
+func ScanSourceTable(conn *sqlx.DB, id string) (SourceTableParams, error) {
+	q := sourceTableQuery.QueryPredicate(map[string]string{"mz_tables.id": id})
 
-	var t TableFromSourceParams
+	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
 		return t, err
 	}
@@ -78,7 +78,7 @@ func ScanTableFromSource(conn *sqlx.DB, id string) (TableFromSourceParams, error
 	return t, nil
 }
 
-type TableFromSourceBuilder struct {
+type SourceTableBuilder struct {
 	ddl                Builder
 	tableName          string
 	schemaName         string
@@ -89,8 +89,8 @@ type TableFromSourceBuilder struct {
 	textColumns        []string
 }
 
-func NewTableFromSourceBuilder(conn *sqlx.DB, obj MaterializeObject) *TableFromSourceBuilder {
-	return &TableFromSourceBuilder{
+func NewSourceTableBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTableBuilder {
+	return &SourceTableBuilder{
 		ddl:          Builder{conn, Table},
 		tableName:    obj.Name,
 		schemaName:   obj.SchemaName,
@@ -98,31 +98,31 @@ func NewTableFromSourceBuilder(conn *sqlx.DB, obj MaterializeObject) *TableFromS
 	}
 }
 
-func (b *TableFromSourceBuilder) QualifiedName() string {
+func (b *SourceTableBuilder) QualifiedName() string {
 	return QualifiedName(b.databaseName, b.schemaName, b.tableName)
 }
 
-func (b *TableFromSourceBuilder) Source(s IdentifierSchemaStruct) *TableFromSourceBuilder {
+func (b *SourceTableBuilder) Source(s IdentifierSchemaStruct) *SourceTableBuilder {
 	b.source = s
 	return b
 }
 
-func (b *TableFromSourceBuilder) UpstreamName(n string) *TableFromSourceBuilder {
+func (b *SourceTableBuilder) UpstreamName(n string) *SourceTableBuilder {
 	b.upstreamName = n
 	return b
 }
 
-func (b *TableFromSourceBuilder) UpstreamSchemaName(n string) *TableFromSourceBuilder {
+func (b *SourceTableBuilder) UpstreamSchemaName(n string) *SourceTableBuilder {
 	b.upstreamSchemaName = n
 	return b
 }
 
-func (b *TableFromSourceBuilder) TextColumns(c []string) *TableFromSourceBuilder {
+func (b *SourceTableBuilder) TextColumns(c []string) *SourceTableBuilder {
 	b.textColumns = c
 	return b
 }
 
-func (b *TableFromSourceBuilder) Create() error {
+func (b *SourceTableBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE TABLE %s`, b.QualifiedName()))
 	q.WriteString(fmt.Sprintf(` FROM SOURCE %s`, b.source.QualifiedName()))
@@ -143,14 +143,14 @@ func (b *TableFromSourceBuilder) Create() error {
 	return b.ddl.exec(q.String())
 }
 
-func (b *TableFromSourceBuilder) Rename(newName string) error {
+func (b *SourceTableBuilder) Rename(newName string) error {
 	oldName := b.QualifiedName()
 	b.tableName = newName
 	newName = b.QualifiedName()
 	return b.ddl.rename(oldName, newName)
 }
 
-func (b *TableFromSourceBuilder) Drop() error {
+func (b *SourceTableBuilder) Drop() error {
 	qn := b.QualifiedName()
 	return b.ddl.drop(qn)
 }
