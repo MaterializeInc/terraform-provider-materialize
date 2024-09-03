@@ -52,7 +52,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `name` (String) The identifier for the source.
 - `postgres_connection` (Block List, Min: 1, Max: 1) The PostgreSQL connection to use in the source. (see [below for nested schema](#nestedblock--postgres_connection))
 - `publication` (String) The PostgreSQL publication (the replication data set containing the tables to be streamed to Materialize).
-- `table` (Block Set, Min: 1) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
+- `table` (Block Set, Min: 1, Deprecated) Creates subsources for specific tables in the Postgres connection. (see [below for nested schema](#nestedblock--table))
 
 ### Optional
 
@@ -63,7 +63,7 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
-- `text_columns` (List of String) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
+- `text_columns` (List of String, Deprecated) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
 
 ### Read-Only
 

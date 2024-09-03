@@ -133,7 +133,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_source_grant":                         resources.GrantSource(),
 			"materialize_system_parameter":                     resources.SystemParameter(),
 			"materialize_table":                                resources.Table(),
-			"materialize_table_from_source":                    resources.TableFromSource(),
+			"materialize_source_table":                         resources.SourceTable(),
 			"materialize_table_grant":                          resources.GrantTable(),
 			"materialize_table_grant_default_privilege":        resources.GrantTableDefaultPrivilege(),
 			"materialize_type":                                 resources.Type(),
