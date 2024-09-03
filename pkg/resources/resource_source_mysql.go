@@ -34,12 +34,14 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 	},
 	"text_columns": {
 		Description: "Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Deprecated:  "Use the new materialize_source_table resource instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"table": {
 		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
+		Deprecated:  "Use the new materialize_source_table resource instead.",
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Elem: &schema.Resource{
@@ -75,6 +77,13 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 				},
 			},
 		},
+	},
+	"all_tables": {
+		Description: "Include all tables in the source. If `table` is specified, this will be ignored.",
+		Deprecated:  "Use the new materialize_source_table resource instead.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
@@ -129,6 +138,10 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		tables := v.(*schema.Set).List()
 		t := materialize.GetTableStruct(tables)
 		b.Tables(t)
+	}
+
+	if v, ok := d.GetOk("all_tables"); ok && v.(bool) {
+		b.AllTables()
 	}
 
 	if v, ok := d.GetOk("ignore_columns"); ok && len(v.([]interface{})) > 0 {
