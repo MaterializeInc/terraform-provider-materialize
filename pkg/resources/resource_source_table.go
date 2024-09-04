@@ -42,6 +42,12 @@ var sourceTableSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"ignore_columns": {
+		Description: "Ignore specific columns when reading data from MySQL. Only compatible with MySQL sources, if the source is not MySQL, the attribute will be ignored.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+	},
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -90,6 +96,14 @@ func sourceTableCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 			return diag.FromErr(err)
 		}
 		b.TextColumns(textColumns)
+	}
+
+	if v, ok := d.GetOk("ignore_columns"); ok && len(v.([]interface{})) > 0 {
+		columns, err := materialize.GetSliceValueString("ignore_columns", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		b.IgnoreColumns(columns)
 	}
 
 	if err := b.Create(); err != nil {

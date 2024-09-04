@@ -26,6 +26,7 @@ var inSourceTable = map[string]interface{}{
 	"upstream_name":        "upstream_table",
 	"upstream_schema_name": "upstream_schema",
 	"text_columns":         []interface{}{"column1", "column2"},
+	"ignore_columns":       []interface{}{"column3", "column4"},
 }
 
 func TestResourceSourceTableCreate(t *testing.T) {
@@ -39,7 +40,7 @@ func TestResourceSourceTableCreate(t *testing.T) {
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
 			\(REFERENCE "upstream_schema"."upstream_table"\)
-			WITH \(TEXT COLUMNS \(column1, column2\)\)`,
+			WITH \(TEXT COLUMNS \(column1, column2\), IGNORE COLUMNS \(column3, column4\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

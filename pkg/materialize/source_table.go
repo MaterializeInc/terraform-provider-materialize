@@ -87,6 +87,7 @@ type SourceTableBuilder struct {
 	upstreamName       string
 	upstreamSchemaName string
 	textColumns        []string
+	ignoreColumns      []string
 }
 
 func NewSourceTableBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTableBuilder {
@@ -122,6 +123,11 @@ func (b *SourceTableBuilder) TextColumns(c []string) *SourceTableBuilder {
 	return b
 }
 
+func (b *SourceTableBuilder) IgnoreColumns(c []string) *SourceTableBuilder {
+	b.ignoreColumns = c
+	return b
+}
+
 func (b *SourceTableBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE TABLE %s`, b.QualifiedName()))
@@ -135,9 +141,23 @@ func (b *SourceTableBuilder) Create() error {
 
 	q.WriteString(")")
 
+	var options []string
+
 	if len(b.textColumns) > 0 {
-		c := strings.Join(b.textColumns, ", ")
-		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
+		s := strings.Join(b.textColumns, ", ")
+		options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
+	}
+
+	// TODO: Implement logic to only use IGNORE COLUMNS if the source is a MySQL source
+	if len(b.ignoreColumns) > 0 {
+		s := strings.Join(b.ignoreColumns, ", ")
+		options = append(options, fmt.Sprintf(`IGNORE COLUMNS (%s)`, s))
+	}
+
+	if len(options) > 0 {
+		q.WriteString(" WITH (")
+		q.WriteString(strings.Join(options, ", "))
+		q.WriteString(")")
 	}
 
 	q.WriteString(`;`)

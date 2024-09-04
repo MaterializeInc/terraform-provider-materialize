@@ -57,7 +57,7 @@ resource "materialize_source_mysql" "test" {
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
-- `ignore_columns` (List of String) Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.
+- `ignore_columns` (List of String, Deprecated) Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
