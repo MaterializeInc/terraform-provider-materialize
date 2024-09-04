@@ -25,6 +25,7 @@ description: |-
 
 - `comment` (String) **Public Preview** Comment on an object in the database.
 - `database_name` (String) The identifier for the table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `ignore_columns` (List of String) Ignore specific columns when reading data from MySQL. Only compatible with MySQL sources, if the source is not MySQL, the attribute will be ignored.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the table schema in Materialize. Defaults to `public`.

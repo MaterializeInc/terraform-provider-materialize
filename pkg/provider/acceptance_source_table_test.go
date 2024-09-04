@@ -54,6 +54,10 @@ func TestAccSourceTableMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "upstream_name", "mysql_table1"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "upstream_schema_name", "shop"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "ignore_columns.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "ignore_columns.0", "banned"),
+					// resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "text_columns.#", "1"),
+					// resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "text_columns.0", "about"),
 				),
 			},
 		},
@@ -221,7 +225,7 @@ func testAccSourceTableMySQLBasicResource(nameSpace string) string {
 		mysql_connection {
 			name = materialize_connection_mysql.mysql_connection.name
 		}
-		
+
 		table {
 			upstream_name        = "mysql_table1"
 			upstream_schema_name = "shop"
@@ -240,6 +244,7 @@ func testAccSourceTableMySQLBasicResource(nameSpace string) string {
 
 		upstream_name         = "mysql_table1"
 		upstream_schema_name  = "shop"
+		ignore_columns        = ["banned"]
 	}
 	`, nameSpace)
 }
