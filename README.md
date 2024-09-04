@@ -8,7 +8,7 @@ This repository contains a Terraform provider for managing resources in a [Mater
 
 * Materialize >= 0.27
 * [Terraform](https://www.terraform.io/downloads.html) >= 1.0.3
-* (Development) [Go](https://golang.org/doc/install) >= 1.20
+* (Development) [Go](https://golang.org/doc/install) >= 1.21
 
 ## Installation
 
