@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccSourceTable_basic(t *testing.T) {
+func TestAccSourceTablePostgres_basic(t *testing.T) {
 	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -20,26 +20,63 @@ func TestAccSourceTable_basic(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTableBasicResource(nameSpace),
+				Config: testAccSourceTablePostgresBasicResource(nameSpace),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSourceTableExists("materialize_source_table.test"),
-					resource.TestMatchResourceAttr("materialize_source_table.test", "id", terraformObjectIdRegex),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "name", nameSpace+"_table"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "schema_name", "public"),
-					// resource.TestCheckResourceAttr("materialize_source_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s_table"`, nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "text_columns.#", "1"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "text_columns.0", "updated_at"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "upstream_name", "table2"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "upstream_schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "ownership_role", "mz_system"),
-					resource.TestCheckResourceAttr("materialize_source_table.test", "comment", ""),
+					testAccCheckSourceTableExists("materialize_source_table.test_postgres"),
+					resource.TestMatchResourceAttr("materialize_source_table.test_postgres", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "name", nameSpace+"_table_postgres"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "text_columns.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "text_columns.0", "updated_at"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "upstream_name", "table2"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "upstream_schema_name", "public"),
 				),
 			},
+		},
+	})
+}
+
+func TestAccSourceTableMySQL_basic(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
 			{
-				ResourceName:      "materialize_source_table.test",
-				ImportState:       true,
-				ImportStateVerify: false,
+				Config: testAccSourceTableMySQLBasicResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableExists("materialize_source_table.test_mysql"),
+					resource.TestMatchResourceAttr("materialize_source_table.test_mysql", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "name", nameSpace+"_table_mysql"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "upstream_name", "mysql_table1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "upstream_schema_name", "shop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceTableLoadGen_basic(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTableLoadGenBasicResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableExists("materialize_source_table.test_loadgen"),
+					resource.TestMatchResourceAttr("materialize_source_table.test_loadgen", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "name", nameSpace+"_table_loadgen"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "upstream_name", "bids"),
+				),
 			},
 		},
 	})
@@ -103,6 +140,135 @@ func TestAccSourceTable_disappears(t *testing.T) {
 	})
 }
 
+func testAccSourceTablePostgresBasicResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "postgres_password" {
+		name  = "%[1]s_secret_postgres"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_postgres" "postgres_connection" {
+		name    = "%[1]s_connection_postgres"
+		// TODO: Change with container name once new image is available
+		host    = "localhost"
+		port    = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name = materialize_secret.postgres_password.name
+		}
+		database = "postgres"
+	}
+
+	resource "materialize_source_postgres" "test_source_postgres" {
+		name         = "%[1]s_source_postgres"
+		cluster_name = "quickstart"
+
+		postgres_connection {
+			name = materialize_connection_postgres.postgres_connection.name
+		}
+		publication = "mz_source"
+		table {
+			upstream_name  = "table2"
+			upstream_schema_name = "public"
+		}
+	}
+
+	resource "materialize_source_table" "test_postgres" {
+		name           = "%[1]s_table_postgres"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_postgres.test_source_postgres.name
+		}
+
+		upstream_name         = "table2"
+		upstream_schema_name  = "public"
+
+		text_columns = [
+			"updated_at"
+		]
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTableMySQLBasicResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "mysql_password" {
+		name  = "%[1]s_secret_mysql"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_mysql" "mysql_connection" {
+		name    = "%[1]s_connection_mysql"
+		// TODO: Change with container name once new image is available
+		host    = "localhost"
+		port    = 3306
+		user {
+			text = "repluser"
+		}
+		password {
+			name = materialize_secret.mysql_password.name
+		}
+	}
+
+	resource "materialize_source_mysql" "test_source_mysql" {
+		name         = "%[1]s_source_mysql"
+		cluster_name = "quickstart"
+
+		mysql_connection {
+			name = materialize_connection_mysql.mysql_connection.name
+		}
+		
+		table {
+			upstream_name        = "mysql_table1"
+			upstream_schema_name = "shop"
+			name                 = "mysql_table1_local"
+		}
+	}
+
+	resource "materialize_source_table" "test_mysql" {
+		name           = "%[1]s_table_mysql"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_mysql.test_source_mysql.name
+		}
+
+		upstream_name         = "mysql_table1"
+		upstream_schema_name  = "shop"
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTableLoadGenBasicResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_source_load_generator" "test_loadgen" {
+		name                = "%[1]s_loadgen"
+		load_generator_type = "AUCTION"
+
+		auction_options {
+			tick_interval = "500ms"
+		}
+	}
+
+	resource "materialize_source_table" "test_loadgen" {
+		name           = "%[1]s_table_loadgen"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_load_generator.test_loadgen.name
+		}
+
+		upstream_name = "bids"
+	}
+	`, nameSpace)
+}
+
 func testAccSourceTableBasicResource(nameSpace string) string {
 	return fmt.Sprintf(`
 	resource "materialize_secret" "postgres_password" {
@@ -112,6 +278,7 @@ func testAccSourceTableBasicResource(nameSpace string) string {
 
 	resource "materialize_connection_postgres" "postgres_connection" {
 		name    = "%[1]s_connection"
+		// TODO: Change with container name once new image is available
 		host    = "localhost"
 		port    = 5432
 		user {
@@ -171,6 +338,7 @@ func testAccSourceTableResource(nameSpace, upstreamName, ownershipRole, comment 
 
 	resource "materialize_connection_postgres" "postgres_connection" {
 		name    = "%[1]s_connection"
+		// TODO: Change with container name once new image is available
 		host    = "localhost"
 		port    = 5432
 		user {
