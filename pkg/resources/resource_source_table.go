@@ -197,8 +197,7 @@ func sourceTableUpdate(ctx context.Context, d *schema.ResourceData, meta any) di
 		}
 	}
 
-	// TODO: Handle source changes
-	// TODO: Handle text_columns changes
+	// TODO: Handle source and text_columns changes once supported on the Materialize side
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
