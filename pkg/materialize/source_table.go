@@ -136,7 +136,8 @@ func (b *SourceTableBuilder) Create() error {
 	q.WriteString(")")
 
 	if len(b.textColumns) > 0 {
-		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS (%s))`, strings.Join(b.textColumns, ", ")))
+		c := strings.Join(b.textColumns, ", ")
+		q.WriteString(fmt.Sprintf(` WITH (TEXT COLUMNS [%s])`, c))
 	}
 
 	q.WriteString(`;`)
