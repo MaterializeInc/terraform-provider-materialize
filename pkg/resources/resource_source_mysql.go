@@ -28,6 +28,7 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 	}),
 	"ignore_columns": {
 		Description: "Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Deprecated:  "Use the new materialize_source_table resource instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
