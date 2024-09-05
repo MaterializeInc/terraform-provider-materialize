@@ -168,7 +168,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		return nil, diag.FromErr(err)
 	}
 
-	// Initialize the Frontegg client.
+	// Initialize the Frontegg client
 	fronteggClient, err := clients.NewFronteggClient(ctx, password, endpoint)
 	if err != nil {
 		return nil, diag.Errorf("Unable to create Frontegg client: %s", err)
