@@ -183,6 +183,9 @@ services:
     build: mocks/cloud
     ports:
       - "3001:3001"
+    environment:
+      - CLOUD_HOSTNAME=cloud
+      - CLOUD_PORT=3001
 
 volumes:
   certs:
