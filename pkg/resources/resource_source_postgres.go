@@ -33,14 +33,14 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new materialize_source_table resource instead.",
 		Deprecated:  "Use the new materialize_source_table resource instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"table": {
-		Description: "Creates subsources for specific tables in the Postgres connection.",
+		Description: "Creates subsources for specific tables in the Postgres connection. Deprecated: Use the new materialize_source_table resource instead.",
 		Deprecated:  "Use the new materialize_source_table resource instead.",
 		Type:        schema.TypeSet,
 		Optional:    true,
