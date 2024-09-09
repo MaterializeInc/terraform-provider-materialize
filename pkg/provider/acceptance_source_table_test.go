@@ -31,6 +31,10 @@ func TestAccSourceTablePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "text_columns.0", "updated_at"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "upstream_name", "table2"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "upstream_schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "source.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "source.0.name", nameSpace+"_source_postgres"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_postgres", "source.0.database_name", "materialize"),
 				),
 			},
 		},
@@ -56,6 +60,10 @@ func TestAccSourceTableMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "upstream_schema_name", "shop"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "ignore_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "ignore_columns.0", "banned"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "source.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "source.0.name", nameSpace+"_source_mysql"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "source.0.database_name", "materialize"),
 					// resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "text_columns.#", "1"),
 					// resource.TestCheckResourceAttr("materialize_source_table.test_mysql", "text_columns.0", "about"),
 				),
@@ -80,6 +88,10 @@ func TestAccSourceTableLoadGen_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "upstream_name", "bids"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "source.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "source.0.name", nameSpace+"_loadgen"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test_loadgen", "source.0.database_name", "materialize"),
 				),
 			},
 		},
@@ -102,6 +114,10 @@ func TestAccSourceTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table.test", "text_columns.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_table.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_table.test", "comment", ""),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.0.name", nameSpace+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.0.database_name", "materialize"),
 				),
 			},
 			{
@@ -113,6 +129,9 @@ func TestAccSourceTable_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table.test", "text_columns.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_table.test", "ownership_role", nameSpace+"_role"),
 					resource.TestCheckResourceAttr("materialize_source_table.test", "comment", "Updated comment"),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.0.name", nameSpace+"_source"),
+					resource.TestCheckResourceAttr("materialize_source_table.test", "source.0.schema_name", "public"),
 				),
 			},
 		},
@@ -153,8 +172,7 @@ func testAccSourceTablePostgresBasicResource(nameSpace string) string {
 
 	resource "materialize_connection_postgres" "postgres_connection" {
 		name    = "%[1]s_connection_postgres"
-		// TODO: Change with container name once new image is available
-		host    = "localhost"
+		host    = "postgres"
 		port    = 5432
 		user {
 			text = "postgres"
@@ -207,8 +225,7 @@ func testAccSourceTableMySQLBasicResource(nameSpace string) string {
 
 	resource "materialize_connection_mysql" "mysql_connection" {
 		name    = "%[1]s_connection_mysql"
-		// TODO: Change with container name once new image is available
-		host    = "localhost"
+		host    = "mysql"
 		port    = 3306
 		user {
 			text = "repluser"
@@ -283,8 +300,7 @@ func testAccSourceTableBasicResource(nameSpace string) string {
 
 	resource "materialize_connection_postgres" "postgres_connection" {
 		name    = "%[1]s_connection"
-		// TODO: Change with container name once new image is available
-		host    = "localhost"
+		host    = "postgres"
 		port    = 5432
 		user {
 			text = "postgres"
@@ -343,8 +359,7 @@ func testAccSourceTableResource(nameSpace, upstreamName, ownershipRole, comment 
 
 	resource "materialize_connection_postgres" "postgres_connection" {
 		name    = "%[1]s_connection"
-		// TODO: Change with container name once new image is available
-		host    = "localhost"
+		host    = "postgres"
 		port    = 5432
 		user {
 			text = "postgres"
