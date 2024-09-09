@@ -47,6 +47,7 @@ var sourceTableSchema = map[string]*schema.Schema{
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
+		ForceNew:    true,
 	},
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
@@ -169,8 +170,18 @@ func sourceTableRead(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 
-	// TODO: Set source once the source_id is available in the mz_tables table
+	source := []interface{}{
+		map[string]interface{}{
+			"name":          t.SourceName.String,
+			"schema_name":   t.SourceSchemaName.String,
+			"database_name": t.SourceDatabaseName.String,
+		},
+	}
+	if err := d.Set("source", source); err != nil {
+		return diag.FromErr(err)
+	}
 
+	// TODO: Set the upstream_name and upstream_schema_name once supported on the Materialize side
 	// if err := d.Set("upstream_name", t.UpstreamName.String); err != nil {
 	// 	return diag.FromErr(err)
 	// }

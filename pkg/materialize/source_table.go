@@ -17,6 +17,7 @@ type SourceTableParams struct {
 	SourceName         sql.NullString `db:"source_name"`
 	SourceSchemaName   sql.NullString `db:"source_schema_name"`
 	SourceDatabaseName sql.NullString `db:"source_database_name"`
+	SourceType         sql.NullString `db:"source_type"`
 	UpstreamName       sql.NullString `db:"upstream_name"`
 	UpstreamSchemaName sql.NullString `db:"upstream_schema_name"`
 	TextColumns        pq.StringArray `db:"text_columns"`
@@ -32,6 +33,10 @@ var sourceTableQuery = NewBaseQuery(`
 		mz_tables.name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
+		mz_sources.name AS source_name,
+		source_schemas.name AS source_schema_name,
+		source_databases.name AS source_database_name,
+		mz_sources.type AS source_type,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
 		mz_tables.privileges
@@ -40,6 +45,12 @@ var sourceTableQuery = NewBaseQuery(`
 		ON mz_tables.schema_id = mz_schemas.id
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_sources
+		ON mz_tables.source_id = mz_sources.id
+	JOIN mz_schemas AS source_schemas
+		ON mz_sources.schema_id = source_schemas.id
+	JOIN mz_databases AS source_databases
+		ON source_schemas.database_id = source_databases.id
 	JOIN mz_roles
 		ON mz_tables.owner_id = mz_roles.id
 	LEFT JOIN (
@@ -88,6 +99,8 @@ type SourceTableBuilder struct {
 	upstreamSchemaName string
 	textColumns        []string
 	ignoreColumns      []string
+	sourceType         string
+	conn               *sqlx.DB
 }
 
 func NewSourceTableBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTableBuilder {
@@ -96,7 +109,29 @@ func NewSourceTableBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTableBui
 		tableName:    obj.Name,
 		schemaName:   obj.SchemaName,
 		databaseName: obj.DatabaseName,
+		conn:         conn,
 	}
+}
+
+func (b *SourceTableBuilder) GetSourceType() (string, error) {
+	if b.sourceType != "" {
+		return b.sourceType, nil
+	}
+
+	q := sourceQuery.QueryPredicate(map[string]string{
+		"mz_sources.name":   b.source.Name,
+		"mz_schemas.name":   b.source.SchemaName,
+		"mz_databases.name": b.source.DatabaseName,
+	})
+
+	var s SourceParams
+	if err := b.conn.Get(&s, q); err != nil {
+		return "", err
+	}
+
+	b.sourceType = s.SourceType.String
+
+	return b.sourceType, nil
 }
 
 func (b *SourceTableBuilder) QualifiedName() string {
@@ -148,8 +183,12 @@ func (b *SourceTableBuilder) Create() error {
 		options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
 	}
 
-	// TODO: Implement logic to only use IGNORE COLUMNS if the source is a MySQL source
-	if len(b.ignoreColumns) > 0 {
+	sourceType, err := b.GetSourceType()
+	if err != nil {
+		return err
+	}
+
+	if strings.EqualFold(sourceType, "mysql") && len(b.ignoreColumns) > 0 {
 		s := strings.Join(b.ignoreColumns, ", ")
 		options = append(options, fmt.Sprintf(`IGNORE COLUMNS (%s)`, s))
 	}
