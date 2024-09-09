@@ -35,21 +35,56 @@ func TestResourceSourceTableCreate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Expect source type query
+		sourceTypeQuery := `WHERE mz_databases.name = 'materialize' AND mz_schemas.name = 'public' AND mz_sources.name = 'source'`
+		testhelpers.MockSourceScanWithType(mock, sourceTypeQuery, "mysql")
+
 		// Create
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
-			FROM SOURCE "materialize"."public"."source"
-			\(REFERENCE "upstream_schema"."upstream_table"\)
-			WITH \(TEXT COLUMNS \(column1, column2\), IGNORE COLUMNS \(column3, column4\)\);`,
+            FROM SOURCE "materialize"."public"."source"
+            \(REFERENCE "upstream_schema"."upstream_table"\)
+            WITH \(TEXT COLUMNS \(column1, column2\), IGNORE COLUMNS \(column3, column4\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockTableScan(mock, ip)
+		testhelpers.MockSourceTableScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockTableScan(mock, pp)
+		testhelpers.MockSourceTableScan(mock, pp)
+
+		if err := sourceTableCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceSourceTableCreateNonMySQL(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourceTable().Schema, inSourceTable)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Expect source type query
+		sourceTypeQuery := `WHERE mz_databases.name = 'materialize' AND mz_schemas.name = 'public' AND mz_sources.name = 'source'`
+		testhelpers.MockSourceScan(mock, sourceTypeQuery)
+
+		// Create (without IGNORE COLUMNS)
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
+            FROM SOURCE "materialize"."public"."source"
+            \(REFERENCE "upstream_schema"."upstream_table"\)
+            WITH \(TEXT COLUMNS \(column1, column2\)\);`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		testhelpers.MockSourceTableScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockSourceTableScan(mock, pp)
 
 		if err := sourceTableCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -66,7 +101,7 @@ func TestResourceSourceTableRead(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockTableScan(mock, pp)
+		testhelpers.MockSourceTableScan(mock, pp)
 
 		if err := sourceTableRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -90,7 +125,7 @@ func TestResourceSourceTableUpdate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockTableScan(mock, pp)
+		testhelpers.MockSourceTableScan(mock, pp)
 
 		if err := sourceTableUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
