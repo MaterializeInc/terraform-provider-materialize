@@ -36,7 +36,7 @@ var sourceTableSchema = map[string]*schema.Schema{
 		Description: "The schema of the table in the upstream database.",
 	},
 	"text_columns": {
-		Description: "Columns to be decoded as text.",
+		Description: "Columns to be decoded as text. Not supported for the load generator sources, if the source is a load generator, the attribute will be ignored.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
