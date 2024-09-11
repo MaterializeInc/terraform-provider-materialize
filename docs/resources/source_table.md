@@ -29,7 +29,7 @@ description: |-
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the table schema in Materialize. Defaults to `public`.
-- `text_columns` (List of String) Columns to be decoded as text.
+- `text_columns` (List of String) Columns to be decoded as text. Not supported for the load generator sources, if the source is a load generator, the attribute will be ignored.
 - `upstream_schema_name` (String) The schema of the table in the upstream database.
 
 ### Read-Only

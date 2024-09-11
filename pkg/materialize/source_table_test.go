@@ -59,6 +59,30 @@ func TestSourceTableCreateWithMySQLSource(t *testing.T) {
 	})
 }
 
+func TestSourceTableLoadgenCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		sourceTypeQuery := `WHERE mz_databases.name = 'materialize' AND mz_schemas.name = 'public' AND mz_sources.name = 'source'`
+		testhelpers.MockSourceScanWithType(mock, sourceTypeQuery, "load-generator")
+
+		mock.ExpectExec(
+			`CREATE TABLE "database"."schema"."table"
+			FROM SOURCE "materialize"."public"."source"
+			\(REFERENCE "upstream_schema"."upstream_table"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceTableBuilder(db, sourceTable)
+		b.Source(IdentifierSchemaStruct{Name: "source", SchemaName: "public", DatabaseName: "materialize"})
+		b.UpstreamName("upstream_table")
+		b.UpstreamSchemaName("upstream_schema")
+		// Text columns are not supported for load-generator sources and should be ignored in the query builder
+		b.TextColumns([]string{"column1", "column2"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestGetSourceType(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		sourceTypeQuery := `WHERE mz_databases.name = 'materialize' AND mz_schemas.name = 'public' AND mz_sources.name = 'source'`
