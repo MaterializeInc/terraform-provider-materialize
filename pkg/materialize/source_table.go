@@ -178,16 +178,18 @@ func (b *SourceTableBuilder) Create() error {
 
 	var options []string
 
-	if len(b.textColumns) > 0 {
-		s := strings.Join(b.textColumns, ", ")
-		options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
-	}
-
 	sourceType, err := b.GetSourceType()
 	if err != nil {
 		return err
 	}
 
+	// Skip text columns for load-generator sources
+	if !strings.EqualFold(sourceType, "load-generator") && len(b.textColumns) > 0 {
+		s := strings.Join(b.textColumns, ", ")
+		options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
+	}
+
+	// Add ignore columns only for MySQL sources
 	if strings.EqualFold(sourceType, "mysql") && len(b.ignoreColumns) > 0 {
 		s := strings.Join(b.ignoreColumns, ", ")
 		options = append(options, fmt.Sprintf(`IGNORE COLUMNS (%s)`, s))
