@@ -18,7 +18,7 @@ var sourceTableLoadGenSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("table"),
 	"source": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "source",
-		Description: "The source this table is created from.",
+		Description: "The source this table is created from. Compatible with `auction_options`, `marketing_options`, and `tpch_options` load generator sources.",
 		Required:    true,
 		ForceNew:    true,
 	}),
