@@ -26,7 +26,6 @@ type SourceTableParams struct {
 	Privileges         pq.StringArray `db:"privileges"`
 }
 
-// TODO: Extend this query to include the upstream table name and schema name and the source
 var sourceTableQuery = NewBaseQuery(`
 	SELECT
 		mz_tables.id,
@@ -97,9 +96,6 @@ type SourceTableBuilder struct {
 	source             IdentifierSchemaStruct
 	upstreamName       string
 	upstreamSchemaName string
-	textColumns        []string
-	ignoreColumns      []string
-	sourceType         string
 	conn               *sqlx.DB
 }
 
@@ -111,27 +107,6 @@ func NewSourceTableBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTableBui
 		databaseName: obj.DatabaseName,
 		conn:         conn,
 	}
-}
-
-func (b *SourceTableBuilder) GetSourceType() (string, error) {
-	if b.sourceType != "" {
-		return b.sourceType, nil
-	}
-
-	q := sourceQuery.QueryPredicate(map[string]string{
-		"mz_sources.name":   b.source.Name,
-		"mz_schemas.name":   b.source.SchemaName,
-		"mz_databases.name": b.source.DatabaseName,
-	})
-
-	var s SourceParams
-	if err := b.conn.Get(&s, q); err != nil {
-		return "", err
-	}
-
-	b.sourceType = s.SourceType.String
-
-	return b.sourceType, nil
 }
 
 func (b *SourceTableBuilder) QualifiedName() string {
@@ -153,17 +128,20 @@ func (b *SourceTableBuilder) UpstreamSchemaName(n string) *SourceTableBuilder {
 	return b
 }
 
-func (b *SourceTableBuilder) TextColumns(c []string) *SourceTableBuilder {
-	b.textColumns = c
-	return b
+func (b *SourceTableBuilder) Rename(newName string) error {
+	oldName := b.QualifiedName()
+	b.tableName = newName
+	newName = b.QualifiedName()
+	return b.ddl.rename(oldName, newName)
 }
 
-func (b *SourceTableBuilder) IgnoreColumns(c []string) *SourceTableBuilder {
-	b.ignoreColumns = c
-	return b
+func (b *SourceTableBuilder) Drop() error {
+	qn := b.QualifiedName()
+	return b.ddl.drop(qn)
 }
 
-func (b *SourceTableBuilder) Create() error {
+// BaseCreate provides a template for the Create method
+func (b *SourceTableBuilder) BaseCreate(sourceType string, additionalOptions func() string) error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE TABLE %s`, b.QualifiedName()))
 	q.WriteString(fmt.Sprintf(` FROM SOURCE %s`, b.source.QualifiedName()))
@@ -176,43 +154,13 @@ func (b *SourceTableBuilder) Create() error {
 
 	q.WriteString(")")
 
-	var options []string
-
-	sourceType, err := b.GetSourceType()
-	if err != nil {
-		return err
-	}
-
-	// Skip text columns for load-generator sources
-	if !strings.EqualFold(sourceType, "load-generator") && len(b.textColumns) > 0 {
-		s := strings.Join(b.textColumns, ", ")
-		options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
-	}
-
-	// Add ignore columns only for MySQL sources
-	if strings.EqualFold(sourceType, "mysql") && len(b.ignoreColumns) > 0 {
-		s := strings.Join(b.ignoreColumns, ", ")
-		options = append(options, fmt.Sprintf(`IGNORE COLUMNS (%s)`, s))
-	}
-
-	if len(options) > 0 {
-		q.WriteString(" WITH (")
-		q.WriteString(strings.Join(options, ", "))
-		q.WriteString(")")
+	if additionalOptions != nil {
+		options := additionalOptions()
+		if options != "" {
+			q.WriteString(options)
+		}
 	}
 
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
-}
-
-func (b *SourceTableBuilder) Rename(newName string) error {
-	oldName := b.QualifiedName()
-	b.tableName = newName
-	newName = b.QualifiedName()
-	return b.ddl.rename(oldName, newName)
-}
-
-func (b *SourceTableBuilder) Drop() error {
-	qn := b.QualifiedName()
-	return b.ddl.drop(qn)
 }
