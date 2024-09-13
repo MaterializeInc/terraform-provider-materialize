@@ -164,3 +164,18 @@ func (b *SourceTableBuilder) BaseCreate(sourceType string, additionalOptions fun
 	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
+
+func ListSourceTables(conn *sqlx.DB, schemaName, databaseName string) ([]SourceTableParams, error) {
+	p := map[string]string{
+		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
+	}
+	q := sourceTableQuery.QueryPredicate(p)
+
+	var c []SourceTableParams
+	if err := conn.Select(&c, q); err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
