@@ -5,11 +5,13 @@ description: |-
 
 ---
 
-# Source versioning: migrating to `materialize_source_table` Resource
+# Source versioning: migrating to `materialize_source_table_{source}` Resource
 
 In previous versions of the Materialize Terraform provider, source tables were defined within the source resource itself and were considered subsources of the source rather than separate entities.
 
-This guide will walk you through the process of migrating your existing source table definitions to the new `materialize_source_table` resource.
+This guide will walk you through the process of migrating your existing source table definitions to the new `materialize_source_table_{source}` resource.
+
+For each source type (e.g., MySQL, Postgres, etc.), you will need to create a new `materialize_source_table_{source}` resource for each table that was previously defined within the source resource. This ensures that the tables are preserved during the migration process.
 
 ## Old Approach
 
@@ -38,18 +40,18 @@ The same approach was used for other source types such as Postgres and the load 
 
 ## New Approach
 
-The new approach separates source definitions and table definitions. You will now create the source without specifying the tables, and then define each table using the `materialize_source_table` resource.
+The new approach separates source definitions and table definitions. You will now create the source without specifying the tables, and then define each table using the `materialize_source_table_mysql` resource.
 
 ## Manual Migration Process
 
-This manual migration process requires users to create new source tables using the new `materialize_source_table` resource and then remove the old ones.
+This manual migration process requires users to create new source tables using the new `materialize_source_table_{source}` resource and then remove the old ones. In this example, we will use MySQL as the source type.
 
-### Step 1: Define `materialize_source_table` Resources
+### Step 1: Define `materialize_source_table_mysql` Resources
 
-Before making any changes to your existing source resources, create new `materialize_source_table` resources for each table that is currently defined within your sources. This ensures that the tables are preserved during the migration:
+Before making any changes to your existing source resources, create new `materialize_source_table_mysql` resources for each table that is currently defined within your sources. This ensures that the tables are preserved during the migration:
 
 ```hcl
-resource "materialize_source_table" "mysql_table_from_source" {
+resource "materialize_source_table_mysql" "mysql_table_from_source" {
   name           = "mysql_table1_from_source"
   schema_name    = "public"
   database_name  = "materialize"
@@ -68,13 +70,13 @@ resource "materialize_source_table" "mysql_table_from_source" {
 
 ### Step 2: Apply the Changes
 
-Run `terraform plan` and `terraform apply` to create the new `materialize_source_table` resources. This step ensures that the tables are defined separately from the source and are not removed from Materialize.
+Run `terraform plan` and `terraform apply` to create the new `materialize_source_table_mysql` resources. This step ensures that the tables are defined separately from the source and are not removed from Materialize.
 
 > **Note:** This will start an ingestion process for the newly created source tables.
 
 ### Step 3: Remove Table Blocks from Source Resources
 
-Once the new `materialize_source_table` resources are successfully created, you can safely remove the `table` blocks from your existing source resources:
+Once the new `materialize_source_table_mysql` resources are successfully created, you can safely remove the `table` blocks from your existing source resources:
 
 ```hcl
 resource "materialize_source_mysql" "mysql_source" {
@@ -84,6 +86,16 @@ resource "materialize_source_mysql" "mysql_source" {
   mysql_connection {
     name = materialize_connection_mysql.mysql_connection.name
   }
+
+  // Remove the table blocks from here
+  - table {
+  -   upstream_name        = "mysql_table1"
+  -   upstream_schema_name = "shop"
+  -   name                 = "mysql_table1_local"
+  -
+  -   ignore_columns = ["about"]
+  -
+  ...
 }
 ```
 
@@ -97,7 +109,9 @@ After removing the `table` blocks from your source resources, run `terraform pla
 
 After applying the changes, verify that your tables are still correctly set up in Materialize by checking the table definitions using Materialize’s SQL commands.
 
-During the migration, you can use both the old `table` blocks and the new `materialize_source_table` resources simultaneously. This allows for a gradual transition until the old method is fully deprecated.
+During the migration, you can use both the old `table` blocks and the new `materialize_source_table_{source}` resources simultaneously. This allows for a gradual transition until the old method is fully deprecated.
+
+The same approach can be used for other source types such as Postgres, eg. `materialize_source_table_postgres`.
 
 ## Automated Migration Process (TBD)
 
@@ -105,12 +119,12 @@ During the migration, you can use both the old `table` blocks and the new `mater
 
 Once the migration on the Materialize side has been implemented, a more automated migration process will be available. The steps will include:
 
-### Step 1: Define `materialize_source_table` Resources
+### Step 1: Define `materialize_source_table_{source}` Resources
 
-First, define the new `materialize_source_table` resources for each table:
+First, define the new `materialize_source_table_mysql` resources for each table:
 
 ```hcl
-resource "materialize_source_table" "mysql_table_from_source" {
+resource "materialize_source_table_mysql" "mysql_table_from_source" {
   name           = "mysql_table1_from_source"
   schema_name    = "public"
   database_name  = "materialize"
@@ -150,10 +164,10 @@ resource "materialize_source_mysql" "mysql_source" {
 
 ### Step 3: Import the Existing Tables
 
-You can then import the existing tables into the new `materialize_source_table` resources without disrupting your existing setup:
+You can then import the existing tables into the new `materialize_source_table_mysql` resources without disrupting your existing setup:
 
 ```bash
-terraform import materialize_source_table.mysql_table_from_source <region>:<table_id>
+terraform import materialize_source_table_mysql.mysql_table_from_source <region>:<table_id>
 ```
 
 Replace `<region>` with the actual region and `<table_id>` with the table ID. You can find the table ID by querying the `mz_tables` table.
@@ -169,7 +183,7 @@ This approach allows you to migrate your tables safely without disrupting your e
 To import existing tables into your Terraform state using the manual migration process, use the following command:
 
 ```bash
-terraform import materialize_source_table.table_name <region>:<table_id>
+terraform import materialize_source_table_mysql.table_name <region>:<table_id>
 ```
 
 Ensure you replace `<region>` with the region where the table is located and `<table_id>` with the ID of the table.

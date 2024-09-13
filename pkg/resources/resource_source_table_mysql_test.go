@@ -4,15 +4,14 @@ import (
 	"context"
 	"testing"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
-
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTable = map[string]interface{}{
+var inSourceTableMySQL = map[string]interface{}{
 	"name":          "table",
 	"schema_name":   "schema",
 	"database_name": "database",
@@ -29,16 +28,12 @@ var inSourceTable = map[string]interface{}{
 	"ignore_columns":       []interface{}{"column3", "column4"},
 }
 
-func TestResourceSourceTableCreate(t *testing.T) {
+func TestResourceSourceTableMySQLCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTable().Schema, inSourceTable)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-		// Expect source type query
-		sourceTypeQuery := `WHERE mz_databases.name = 'materialize' AND mz_schemas.name = 'public' AND mz_sources.name = 'source'`
-		testhelpers.MockSourceScanWithType(mock, sourceTypeQuery, "mysql")
-
 		// Create
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
@@ -55,46 +50,15 @@ func TestResourceSourceTableCreate(t *testing.T) {
 		pp := `WHERE mz_tables.id = 'u1'`
 		testhelpers.MockSourceTableScan(mock, pp)
 
-		if err := sourceTableCreate(context.TODO(), d, db); err != nil {
+		if err := sourceTableMySQLCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
 }
 
-func TestResourceSourceTableCreateNonMySQL(t *testing.T) {
+func TestResourceSourceTableMySQLRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTable().Schema, inSourceTable)
-	r.NotNil(d)
-
-	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-		// Expect source type query
-		sourceTypeQuery := `WHERE mz_databases.name = 'materialize' AND mz_schemas.name = 'public' AND mz_sources.name = 'source'`
-		testhelpers.MockSourceScan(mock, sourceTypeQuery)
-
-		// Create (without IGNORE COLUMNS)
-		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
-            FROM SOURCE "materialize"."public"."source"
-            \(REFERENCE "upstream_schema"."upstream_table"\)
-            WITH \(TEXT COLUMNS \(column1, column2\)\);`).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		// Query Id
-		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockSourceTableScan(mock, ip)
-
-		// Query Params
-		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
-
-		if err := sourceTableCreate(context.TODO(), d, db); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func TestResourceSourceTableRead(t *testing.T) {
-	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTable().Schema, inSourceTable)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
 	d.SetId("u1")
 	r.NotNil(d)
 
@@ -113,9 +77,9 @@ func TestResourceSourceTableRead(t *testing.T) {
 	})
 }
 
-func TestResourceSourceTableUpdate(t *testing.T) {
+func TestResourceSourceTableMySQLUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTable().Schema, inSourceTable)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
 	d.SetId("u1")
 	d.Set("name", "old_table")
 	r.NotNil(d)
@@ -133,9 +97,9 @@ func TestResourceSourceTableUpdate(t *testing.T) {
 	})
 }
 
-func TestResourceSourceTableDelete(t *testing.T) {
+func TestResourceSourceTableMySQLDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTable().Schema, inSourceTable)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
 	d.SetId("u1")
 	r.NotNil(d)
 
