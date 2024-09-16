@@ -4,7 +4,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// SourceTableLoadGenBuilder for Load Generator sources
 type SourceTableLoadGenBuilder struct {
 	*SourceTableBuilder
 }

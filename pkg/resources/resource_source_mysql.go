@@ -27,22 +27,22 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	}),
 	"ignore_columns": {
-		Description: "Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new materialize_source_table resource instead.",
-		Deprecated:  "Use the new materialize_source_table resource instead.",
+		Description: "Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new materialize_source_table_mysql resource instead.",
+		Deprecated:  "Use the new materialize_source_table_mysql resource instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new materialize_source_table resource instead.",
-		Deprecated:  "Use the new materialize_source_table resource instead.",
+		Description: "Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new materialize_source_table_mysql resource instead.",
+		Deprecated:  "Use the new materialize_source_table_mysql resource instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"table": {
-		Description: "Specify the tables to be included in the source. Deprecated: Use the new materialize_source_table resource instead.",
-		Deprecated:  "Use the new materialize_source_table resource instead.",
+		Description: "Specify the tables to be included in the source. Deprecated: Use the new materialize_source_table_mysql resource instead.",
+		Deprecated:  "Use the new materialize_source_table_mysql resource instead.",
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Elem: &schema.Resource{
@@ -81,7 +81,7 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 	},
 	"all_tables": {
 		Description: "Include all tables in the source. If `table` is specified, this will be ignored.",
-		Deprecated:  "Use the new materialize_source_table resource instead.",
+		Deprecated:  "Use the new materialize_source_table_mysql resource instead.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
