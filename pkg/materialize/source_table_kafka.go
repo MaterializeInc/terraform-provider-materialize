@@ -23,8 +23,6 @@ type SourceTableKafkaBuilder struct {
 	keyFormat        SourceFormatSpecStruct
 	valueFormat      SourceFormatSpecStruct
 	envelope         KafkaSourceEnvelopeStruct
-	startOffset      []int
-	startTimestamp   int
 	exposeProgress   IdentifierSchemaStruct
 }
 
@@ -106,16 +104,6 @@ func (b *SourceTableKafkaBuilder) KeyFormat(k SourceFormatSpecStruct) *SourceTab
 
 func (b *SourceTableKafkaBuilder) ValueFormat(v SourceFormatSpecStruct) *SourceTableKafkaBuilder {
 	b.valueFormat = v
-	return b
-}
-
-func (b *SourceTableKafkaBuilder) StartOffset(s []int) *SourceTableKafkaBuilder {
-	b.startOffset = s
-	return b
-}
-
-func (b *SourceTableKafkaBuilder) StartTimestamp(s int) *SourceTableKafkaBuilder {
-	b.startTimestamp = s
 	return b
 }
 
