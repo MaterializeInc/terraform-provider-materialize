@@ -73,8 +73,8 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
-- `start_offset` (List of Number, Deprecated) Read partitions from the specified offset. Deprecated: Use the new materialize_source_table_kafka resource instead.
-- `start_timestamp` (Number, Deprecated) Use the specified value to set `START OFFSET` based on the Kafka timestamp. Deprecated: Use the new materialize_source_table_kafka resource instead.
+- `start_offset` (List of Number) Read partitions from the specified offset.
+- `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only

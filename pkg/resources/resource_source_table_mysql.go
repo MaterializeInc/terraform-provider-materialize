@@ -42,8 +42,8 @@ var sourceTableMySQLSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"ignore_columns": {
-		Description: "Ignore specific columns when reading data from MySQL.",
+	"exclude_columns": {
+		Description: "Exclude specific columns when reading data from MySQL. The option used to be called `ignore_columns`.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
@@ -99,12 +99,12 @@ func sourceTableMySQLCreate(ctx context.Context, d *schema.ResourceData, meta an
 		b.TextColumns(textColumns)
 	}
 
-	if v, ok := d.GetOk("ignore_columns"); ok && len(v.([]interface{})) > 0 {
-		columns, err := materialize.GetSliceValueString("ignore_columns", v.([]interface{}))
+	if v, ok := d.GetOk("exclude_columns"); ok && len(v.([]interface{})) > 0 {
+		columns, err := materialize.GetSliceValueString("exclude_columns", v.([]interface{}))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		b.IgnoreColumns(columns)
+		b.ExcludeColumns(columns)
 	}
 
 	if err := b.Create(); err != nil {

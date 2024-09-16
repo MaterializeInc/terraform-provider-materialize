@@ -27,13 +27,7 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
-		Description: "The name of the table in the upstream database.",
-	},
-	"upstream_schema_name": {
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-		Description: "The schema of the table in the upstream database.",
+		Description: "The name of the Kafka topic in the upstream Kafka cluster.",
 	},
 	"include_key": {
 		Description: "Include a column containing the Kafka message key.",
@@ -174,21 +168,6 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		Optional: true,
 		ForceNew: true,
 	},
-	"start_offset": {
-		Description:   "Read partitions from the specified offset.",
-		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeInt},
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"start_timestamp"},
-	},
-	"start_timestamp": {
-		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp.",
-		Type:          schema.TypeInt,
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"start_offset"},
-	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
 		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
@@ -232,10 +211,6 @@ func sourceTableKafkaCreate(ctx context.Context, d *schema.ResourceData, meta an
 	b.Source(source)
 
 	b.UpstreamName(d.Get("upstream_name").(string))
-
-	if v, ok := d.GetOk("upstream_schema_name"); ok {
-		b.UpstreamSchemaName(v.(string))
-	}
 
 	if v, ok := d.GetOk("include_key"); ok && v.(bool) {
 		if alias, ok := d.GetOk("include_key_alias"); ok {
@@ -295,15 +270,6 @@ func sourceTableKafkaCreate(ctx context.Context, d *schema.ResourceData, meta an
 	if v, ok := d.GetOk("envelope"); ok {
 		envelope := materialize.GetSourceKafkaEnvelopeStruct(v)
 		b.Envelope(envelope)
-	}
-
-	if v, ok := d.GetOk("start_offset"); ok {
-		so := materialize.GetSliceValueInt(v.([]interface{}))
-		b.StartOffset(so)
-	}
-
-	if v, ok := d.GetOk("start_timestamp"); ok {
-		b.StartTimestamp(v.(int))
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {
