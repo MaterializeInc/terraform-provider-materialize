@@ -16,7 +16,7 @@ func TestSourceTableCreateWithMySQLSource(t *testing.T) {
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
 			\(REFERENCE "upstream_schema"."upstream_table"\)
-			WITH \(TEXT COLUMNS \(column1, column2\), IGNORE COLUMNS \(ignore1, ignore2\)\);`,
+			WITH \(TEXT COLUMNS \(column1, column2\), EXCLUDE COLUMNS \(exclude1, exclude2\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceTableMySQLBuilder(db, sourceTableMySQL)
@@ -24,7 +24,7 @@ func TestSourceTableCreateWithMySQLSource(t *testing.T) {
 		b.UpstreamName("upstream_table")
 		b.UpstreamSchemaName("upstream_schema")
 		b.TextColumns([]string{"column1", "column2"})
-		b.IgnoreColumns([]string{"ignore1", "ignore2"})
+		b.ExcludeColumns([]string{"exclude1", "exclude2"})
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
