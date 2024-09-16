@@ -40,7 +40,7 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
 
 ### Optional
 
-- `all_tables` (Boolean) Whether to include all tables in the source. Compatible with `auction_options`, `marketing_options`, and `tpch_options`. If not specified, use the `materialize_source_table` resource to specify tables to include.
+- `all_tables` (Boolean) Whether to include all tables in the source. Compatible with `auction_options`, `marketing_options`, and `tpch_options`. If not specified, use the `materialize_source_table_load_generator` resource to specify tables to include.
 - `auction_options` (Block List, Max: 1) Auction Options. (see [below for nested schema](#nestedblock--auction_options))
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) Comment on an object in the database.

@@ -11,93 +11,87 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var sourceKafkaSchema = map[string]*schema.Schema{
+var sourceTableKafkaSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source", true, false),
 	"schema_name":        SchemaNameSchema("source", false),
 	"database_name":      DatabaseNameSchema("source", false),
 	"qualified_sql_name": QualifiedNameSchema("source"),
 	"comment":            CommentSchema(false),
-	"cluster_name":       ObjectClusterNameSchema("source"),
-	"size":               ObjectSizeSchema("source"),
-	"kafka_connection": IdentifierSchema(IdentifierSchemaParams{
-		Elem:        "kafka_connection",
-		Description: "The Kafka connection to use in the source.",
+	"source": IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "source",
+		Description: "The source this table is created from.",
 		Required:    true,
 		ForceNew:    true,
 	}),
-	"topic": {
-		Description: "The Kafka topic you want to subscribe to.",
+	"upstream_name": {
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
+		Description: "The name of the table in the upstream database.",
+	},
+	"upstream_schema_name": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+		Description: "The schema of the table in the upstream database.",
 	},
 	"include_key": {
-		Description: "Include a column containing the Kafka message key. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Include a column containing the Kafka message key.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_key_alias": {
-		Description: "Provide an alias for the key column. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Provide an alias for the key column.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_headers": {
-		Description: "Include message headers. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Include message headers.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 		Default:     false,
 	},
 	"include_headers_alias": {
-		Description: "Provide an alias for the headers column. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Provide an alias for the headers column.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_partition": {
-		Description: "Include a partition column containing the Kafka message partition. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Include a partition column containing the Kafka message partition",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_partition_alias": {
-		Description: "Provide an alias for the partition column. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Provide an alias for the partition column.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_offset": {
-		Description: "Include an offset column containing the Kafka message offset. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Include an offset column containing the Kafka message offset.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_offset_alias": {
-		Description: "Provide an alias for the offset column. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Provide an alias for the offset column.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_timestamp": {
-		Description: "Include a timestamp column containing the Kafka message timestamp. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Include a timestamp column containing the Kafka message timestamp.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_timestamp_alias": {
-		Description: "Provide an alias for the timestamp column. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "Provide an alias for the timestamp column.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
@@ -106,8 +100,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
 	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
 	"envelope": {
-		Description: "How Materialize should interpret records (e.g. append-only, upsert). Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:  "Use the new materialize_source_table_kafka resource instead.",
+		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
 		Type:        schema.TypeList,
 		MaxItems:    1,
 		Elem: &schema.Resource{
@@ -182,8 +175,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"start_offset": {
-		Description:   "Read partitions from the specified offset. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:    "Use the new materialize_source_table_kafka resource instead.",
+		Description:   "Read partitions from the specified offset.",
 		Type:          schema.TypeList,
 		Elem:          &schema.Schema{Type: schema.TypeInt},
 		Optional:      true,
@@ -191,8 +183,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ConflictsWith: []string{"start_timestamp"},
 	},
 	"start_timestamp": {
-		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:    "Use the new materialize_source_table_kafka resource instead.",
+		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp.",
 		Type:          schema.TypeInt,
 		Optional:      true,
 		ForceNew:      true,
@@ -208,24 +199,24 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 	"region":         RegionSchema(),
 }
 
-func SourceKafka() *schema.Resource {
+func SourceTableKafka() *schema.Resource {
 	return &schema.Resource{
 		Description: "A Kafka source describes a Kafka cluster you want Materialize to read data from.",
 
-		CreateContext: sourceKafkaCreate,
-		ReadContext:   sourceRead,
-		UpdateContext: sourceUpdate,
-		DeleteContext: sourceDelete,
+		CreateContext: sourceTableKafkaCreate,
+		ReadContext:   sourceTableRead,
+		UpdateContext: sourceTableUpdate,
+		DeleteContext: sourceTableDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sourceKafkaSchema,
+		Schema: sourceTableKafkaSchema,
 	}
 }
 
-func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func sourceTableKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -235,19 +226,15 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSourceKafkaBuilder(metaDb, o)
+	b := materialize.NewSourceTableKafkaBuilder(metaDb, o)
 
-	if v, ok := d.GetOk("cluster_name"); ok {
-		b.ClusterName(v.(string))
-	}
+	source := materialize.GetIdentifierSchemaStruct(d.Get("source"))
+	b.Source(source)
 
-	if v, ok := d.GetOk("kafka_connection"); ok {
-		conn := materialize.GetIdentifierSchemaStruct(v)
-		b.KafkaConnection(conn)
-	}
+	b.UpstreamName(d.Get("upstream_name").(string))
 
-	if v, ok := d.GetOk("topic"); ok {
-		b.Topic(v.(string))
+	if v, ok := d.GetOk("upstream_schema_name"); ok {
+		b.UpstreamSchemaName(v.(string))
 	}
 
 	if v, ok := d.GetOk("include_key"); ok && v.(bool) {
@@ -352,11 +339,11 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	// set id
-	i, err := materialize.SourceId(metaDb, o)
+	i, err := materialize.SourceTableId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourceTableRead(ctx, d, meta)
 }
