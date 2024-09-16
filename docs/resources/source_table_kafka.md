@@ -19,7 +19,7 @@ A Kafka source describes a Kafka cluster you want Materialize to read data from.
 
 - `name` (String) The identifier for the source.
 - `source` (Block List, Min: 1, Max: 1) The source this table is created from. (see [below for nested schema](#nestedblock--source))
-- `upstream_name` (String) The name of the table in the upstream database.
+- `upstream_name` (String) The name of the Kafka topic in the upstream Kafka cluster.
 
 ### Optional
 
@@ -42,9 +42,6 @@ A Kafka source describes a Kafka cluster you want Materialize to read data from.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
-- `start_offset` (List of Number) Read partitions from the specified offset.
-- `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
-- `upstream_schema_name` (String) The schema of the table in the upstream database.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only

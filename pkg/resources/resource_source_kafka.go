@@ -182,8 +182,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"start_offset": {
-		Description:   "Read partitions from the specified offset. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:    "Use the new materialize_source_table_kafka resource instead.",
+		Description:   "Read partitions from the specified offset.",
 		Type:          schema.TypeList,
 		Elem:          &schema.Schema{Type: schema.TypeInt},
 		Optional:      true,
@@ -191,8 +190,7 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ConflictsWith: []string{"start_timestamp"},
 	},
 	"start_timestamp": {
-		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp. Deprecated: Use the new materialize_source_table_kafka resource instead.",
-		Deprecated:    "Use the new materialize_source_table_kafka resource instead.",
+		Description:   "Use the specified value to set `START OFFSET` based on the Kafka timestamp.",
 		Type:          schema.TypeInt,
 		Optional:      true,
 		ForceNew:      true,

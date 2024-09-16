@@ -12,8 +12,8 @@ import (
 // TODO: Add upstream table name and schema name
 type SourceTableMySQLParams struct {
 	SourceTableParams
-	IgnoreColumns pq.StringArray `db:"ignore_columns"`
-	TextColumns   pq.StringArray `db:"text_columns"`
+	ExcludeColumns pq.StringArray `db:"exclude_columns"`
+	TextColumns    pq.StringArray `db:"text_columns"`
 }
 
 var sourceTableMySQLQuery = `
@@ -81,8 +81,8 @@ func ScanSourceTableMySQL(conn *sqlx.DB, id string) (SourceTableMySQLParams, err
 // SourceTableMySQLBuilder for MySQL sources
 type SourceTableMySQLBuilder struct {
 	*SourceTableBuilder
-	textColumns   []string
-	ignoreColumns []string
+	textColumns    []string
+	excludeColumns []string
 }
 
 func NewSourceTableMySQLBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTableMySQLBuilder {
@@ -96,8 +96,8 @@ func (b *SourceTableMySQLBuilder) TextColumns(c []string) *SourceTableMySQLBuild
 	return b
 }
 
-func (b *SourceTableMySQLBuilder) IgnoreColumns(c []string) *SourceTableMySQLBuilder {
-	b.ignoreColumns = c
+func (b *SourceTableMySQLBuilder) ExcludeColumns(c []string) *SourceTableMySQLBuilder {
+	b.excludeColumns = c
 	return b
 }
 
@@ -110,9 +110,9 @@ func (b *SourceTableMySQLBuilder) Create() error {
 			options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
 		}
 
-		if len(b.ignoreColumns) > 0 {
-			s := strings.Join(b.ignoreColumns, ", ")
-			options = append(options, fmt.Sprintf(`IGNORE COLUMNS (%s)`, s))
+		if len(b.excludeColumns) > 0 {
+			s := strings.Join(b.excludeColumns, ", ")
+			options = append(options, fmt.Sprintf(`EXCLUDE COLUMNS (%s)`, s))
 		}
 
 		if len(options) > 0 {
