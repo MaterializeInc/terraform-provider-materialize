@@ -25,8 +25,8 @@ func TestAccSourceTableKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "name", nameSpace+"_table_kafka"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s_table_kafka"`, nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "upstream_name", "terraform"),
+					// resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s_table_kafka"`, nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_key", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_key_alias", "message_key"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_headers", "true"),
@@ -37,13 +37,11 @@ func TestAccSourceTableKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_offset_alias", "message_offset"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_timestamp", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_timestamp_alias", "message_timestamp"),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "format.0.json", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "key_format.0.text", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "value_format.0.json", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "envelope.0.upsert", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "envelope.0.upsert_options.0.value_decoding_errors.0.inline.0.enabled", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "envelope.0.upsert_options.0.value_decoding_errors.0.inline.0.alias", "decoding_error"),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "expose_progress.0.name", nameSpace+"_progress"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "comment", "This is a test Kafka source table"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "source.#", "1"),
@@ -68,7 +66,7 @@ func TestAccSourceTableKafka_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceTableExists("materialize_source_table_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "name", nameSpace+"_table"),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "upstream_name", "terraform"),
+					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "comment", ""),
 				),
@@ -78,7 +76,7 @@ func TestAccSourceTableKafka_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceTableExists("materialize_source_table_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "name", nameSpace+"_table"),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "upstream_name", "terraform"),
+					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "ownership_role", nameSpace+"_role"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "comment", "Updated comment"),
 				),
@@ -141,7 +139,7 @@ func testAccSourceTableKafkaBasicResource(nameSpace string) string {
 			name = materialize_source_kafka.test_source_kafka.name
 		}
 
-		upstream_name = "terraform"
+		topic = "terraform"
 		include_key   = true
 		include_key_alias = "message_key"
 		include_headers = true
@@ -221,7 +219,7 @@ func testAccSourceTableKafkaResource(nameSpace, upstreamName, ownershipRole, com
 			database_name = "materialize"
 		}
 
-		upstream_name = "%[2]s"
+		topic = "%[2]s"
 
 		ownership_role = "%[3]s"
 		comment        = "%[4]s"

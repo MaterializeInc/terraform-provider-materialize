@@ -13,7 +13,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY AS message_key, HEADERS AS message_headers, PARTITION AS message_partition
             ENVELOPE UPSERT
@@ -23,7 +23,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 		o := MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSourceTableKafkaBuilder(db, o)
 		b.Source(IdentifierSchemaStruct{Name: "kafka_source", DatabaseName: "database", SchemaName: "schema"})
-		b.UpstreamName("upstream_table")
+		b.UpstreamName("topic")
 		b.Format(SourceFormatSpecStruct{Json: true})
 		b.IncludeKey()
 		b.IncludeKeyAlias("message_key")
@@ -45,7 +45,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."schema_registry"
             KEY STRATEGY EXTRACT
             VALUE STRATEGY EXTRACT
@@ -56,7 +56,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 		o := MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSourceTableKafkaBuilder(db, o)
 		b.Source(IdentifierSchemaStruct{Name: "kafka_source", DatabaseName: "database", SchemaName: "schema"})
-		b.UpstreamName("upstream_table")
+		b.UpstreamName("topic")
 		b.Format(SourceFormatSpecStruct{
 			Avro: &AvroFormatSpec{
 				SchemaRegistryConnection: IdentifierSchemaStruct{Name: "schema_registry", DatabaseName: "database", SchemaName: "schema"},
@@ -78,7 +78,7 @@ func TestResourceSourceTableKafkaCreateWithUpsertOptions(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS my_error_col\)\)
@@ -88,7 +88,7 @@ func TestResourceSourceTableKafkaCreateWithUpsertOptions(t *testing.T) {
 		o := MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 		b := NewSourceTableKafkaBuilder(db, o)
 		b.Source(IdentifierSchemaStruct{Name: "kafka_source", DatabaseName: "database", SchemaName: "schema"})
-		b.UpstreamName("upstream_table")
+		b.UpstreamName("topic")
 		b.Format(SourceFormatSpecStruct{Json: true})
 		b.IncludeKey()
 		b.IncludeHeaders()
