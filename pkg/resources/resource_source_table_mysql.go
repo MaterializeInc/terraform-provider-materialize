@@ -58,7 +58,7 @@ func SourceTableMySQL() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: sourceTableMySQLCreate,
 		ReadContext:   sourceTableMySQLRead,
-		UpdateContext: sourceTableUpdate,
+		UpdateContext: sourceTableMySQLUpdate,
 		DeleteContext: sourceTableDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -131,11 +131,53 @@ func sourceTableMySQLCreate(ctx context.Context, d *schema.ResourceData, meta an
 		}
 	}
 
-	i, err := materialize.SourceTableId(metaDb, o)
+	i, err := materialize.SourceTableMySQLId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	return sourceTableMySQLRead(ctx, d, meta)
+}
+
+func sourceTableMySQLUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	tableName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.MaterializeObject{ObjectType: "TABLE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewSourceTableBuilder(metaDb, o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(metaDb, o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(metaDb, o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	return sourceTableMySQLRead(ctx, d, meta)
 }
