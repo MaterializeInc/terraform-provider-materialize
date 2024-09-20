@@ -37,6 +37,11 @@ func TestAccSourceTablePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.0.database_name", "materialize"),
 				),
 			},
+			{
+				ResourceName:      "materialize_source_table_postgres.test_postgres",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }

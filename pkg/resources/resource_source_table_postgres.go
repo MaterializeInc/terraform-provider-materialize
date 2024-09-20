@@ -166,14 +166,13 @@ func sourceTablePostgresRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	// TODO: Set the upstream_name and upstream_schema_name once supported on the Materialize side
-	// if err := d.Set("upstream_name", t.UpstreamName.String); err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	if err := d.Set("upstream_name", t.UpstreamName.String); err != nil {
+		return diag.FromErr(err)
+	}
 
-	// if err := d.Set("upstream_schema_name", t.UpstreamSchemaName.String); err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	if err := d.Set("upstream_schema_name", t.UpstreamSchemaName.String); err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err := d.Set("ownership_role", t.OwnerName.String); err != nil {
 		return diag.FromErr(err)

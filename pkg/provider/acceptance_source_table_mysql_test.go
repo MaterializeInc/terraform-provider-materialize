@@ -35,9 +35,12 @@ func TestAccSourceTableMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_mysql.test_mysql", "source.0.name", nameSpace+"_source_mysql"),
 					resource.TestCheckResourceAttr("materialize_source_table_mysql.test_mysql", "source.0.schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_table_mysql.test_mysql", "source.0.database_name", "materialize"),
-					// resource.TestCheckResourceAttr("materialize_source_table_mysql.test_mysql", "text_columns.#", "1"),
-					// resource.TestCheckResourceAttr("materialize_source_table_mysql.test_mysql", "text_columns.0", "about"),
 				),
+			},
+			{
+				ResourceName:      "materialize_source_table_mysql.test_mysql",
+				ImportState:       true,
+				ImportStateVerify: false,
 			},
 		},
 	})
