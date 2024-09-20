@@ -43,11 +43,11 @@ func TestResourceSourceTablePostgresCreate(t *testing.T) {
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTablePostgresScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
 
 		if err := sourceTablePostgresCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -64,9 +64,9 @@ func TestResourceSourceTablePostgresRead(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
 
-		if err := sourceTableRead(context.TODO(), d, db); err != nil {
+		if err := sourceTablePostgresRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 
@@ -88,9 +88,9 @@ func TestResourceSourceTablePostgresUpdate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
 
-		if err := sourceTableUpdate(context.TODO(), d, db); err != nil {
+		if err := sourceTablePostgresUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

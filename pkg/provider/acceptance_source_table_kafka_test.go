@@ -64,11 +64,11 @@ func TestAccSourceTableKafka_update(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTableKafkaResource(nameSpace, "kafka_table2", "mz_system", ""),
+				Config: testAccSourceTableKafkaResource(nameSpace, "terraform", "mz_system", ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceTableExists("materialize_source_table_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "name", nameSpace+"_table"),
-					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "upstream_name", "kafka_table2"),
+					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "upstream_name", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test", "comment", ""),
 				),
