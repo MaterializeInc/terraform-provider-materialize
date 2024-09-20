@@ -66,14 +66,14 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 
 ### Required
 
-- `name` (String) The identifier for the source.
+- `name` (String) The identifier for the source table.
 - `source` (Block List, Min: 1, Max: 1) The source this table is created from. (see [below for nested schema](#nestedblock--source))
-- `upstream_name` (String) The name of the Kafka topic in the upstream Kafka cluster.
+- `topic` (String) The name of the Kafka topic in the upstream Kafka cluster.
 
 ### Optional
 
 - `comment` (String) **Public Preview** Comment on an object in the database.
-- `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `database_name` (String) The identifier for the source table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
@@ -90,13 +90,13 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
-- `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
+- `schema_name` (String) The identifier for the source table schema in Materialize. Defaults to `public`.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `qualified_sql_name` (String) The fully qualified name of the source.
+- `qualified_sql_name` (String) The fully qualified name of the source table.
 
 <a id="nestedblock--source"></a>
 ### Nested Schema for `source`
