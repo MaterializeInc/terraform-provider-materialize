@@ -22,7 +22,7 @@ var inSourceTableKafka = map[string]interface{}{
 			"database_name": "materialize",
 		},
 	},
-	"upstream_name":           "upstream_table",
+	"topic":                   "topic",
 	"include_key":             true,
 	"include_key_alias":       "message_key",
 	"include_headers":         true,
@@ -65,7 +65,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY AS message_key, HEADERS AS message_headers, PARTITION AS message_partition
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS decoding_error\)\);`,
@@ -73,11 +73,11 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -94,9 +94,9 @@ func TestResourceSourceTableKafkaRead(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
-		if err := sourceTableRead(context.TODO(), d, db); err != nil {
+		if err := sourceTableKafkaRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 
@@ -118,9 +118,9 @@ func TestResourceSourceTableKafkaUpdate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
-		if err := sourceTableUpdate(context.TODO(), d, db); err != nil {
+		if err := sourceTableKafkaUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -154,7 +154,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 				"database_name": "materialize",
 			},
 		},
-		"upstream_name": "upstream_table",
+		"topic": "topic",
 		"format": []interface{}{
 			map[string]interface{}{
 				"avro": []interface{}{
@@ -184,18 +184,18 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_avro"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."sr_conn"
             ENVELOPE DEBEZIUM;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table_avro'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -224,7 +224,7 @@ func TestResourceSourceTableKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS decoding_error\)\);`,
@@ -232,11 +232,11 @@ func TestResourceSourceTableKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -262,18 +262,18 @@ func TestResourceSourceTableKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS decoding_error\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -294,7 +294,7 @@ func TestResourceSourceTableKafkaCreateWithCSVFormat(t *testing.T) {
 				"database_name": "materialize",
 			},
 		},
-		"upstream_name": "upstream_table",
+		"topic": "topic",
 		"format": []interface{}{
 			map[string]interface{}{
 				"csv": []interface{}{
@@ -314,17 +314,17 @@ func TestResourceSourceTableKafkaCreateWithCSVFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_csv"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT CSV WITH HEADER \( column1, column2, column3 \) DELIMITER ',';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table_csv'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -345,7 +345,7 @@ func TestResourceSourceTableKafkaCreateWithKeyAndValueFormat(t *testing.T) {
 				"database_name": "materialize",
 			},
 		},
-		"upstream_name": "upstream_table",
+		"topic": "topic",
 		"key_format": []interface{}{
 			map[string]interface{}{
 				"json": true,
@@ -375,18 +375,18 @@ func TestResourceSourceTableKafkaCreateWithKeyAndValueFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_key_value"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             KEY FORMAT JSON
             VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."sr_conn";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table_key_value'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -407,7 +407,7 @@ func TestResourceSourceTableKafkaCreateWithProtobufFormat(t *testing.T) {
 				"database_name": "materialize",
 			},
 		},
-		"upstream_name": "upstream_table",
+		"topic": "topic",
 		"format": []interface{}{
 			map[string]interface{}{
 				"protobuf": []interface{}{
@@ -438,18 +438,18 @@ func TestResourceSourceTableKafkaCreateWithProtobufFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_protobuf"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "upstream_table"\)
+            \(REFERENCE "topic"\)
             FORMAT PROTOBUF MESSAGE 'MyMessage' USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."sr_conn"
             ENVELOPE NONE;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table_protobuf'`
-		testhelpers.MockSourceTableScan(mock, ip)
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
 
 		// Query Params
 		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
 
 		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
