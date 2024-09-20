@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -12,10 +13,10 @@ import (
 )
 
 var sourceTableKafkaSchema = map[string]*schema.Schema{
-	"name":               ObjectNameSchema("source", true, false),
-	"schema_name":        SchemaNameSchema("source", false),
-	"database_name":      DatabaseNameSchema("source", false),
-	"qualified_sql_name": QualifiedNameSchema("source"),
+	"name":               ObjectNameSchema("source table", true, false),
+	"schema_name":        SchemaNameSchema("source table", false),
+	"database_name":      DatabaseNameSchema("source table", false),
+	"qualified_sql_name": QualifiedNameSchema("source table"),
 	"comment":            CommentSchema(false),
 	"source": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "source",
@@ -23,7 +24,7 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	}),
-	"upstream_name": {
+	"topic": {
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
@@ -183,8 +184,8 @@ func SourceTableKafka() *schema.Resource {
 		Description: "A Kafka source describes a Kafka cluster you want Materialize to read data from.",
 
 		CreateContext: sourceTableKafkaCreate,
-		ReadContext:   sourceTableRead,
-		UpdateContext: sourceTableUpdate,
+		ReadContext:   sourceTableKafkaRead,
+		UpdateContext: sourceTableKafkaUpdate,
 		DeleteContext: sourceTableDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -204,13 +205,13 @@ func sourceTableKafkaCreate(ctx context.Context, d *schema.ResourceData, meta an
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSourceTableKafkaBuilder(metaDb, o)
 
 	source := materialize.GetIdentifierSchemaStruct(d.Get("source"))
 	b.Source(source)
 
-	b.UpstreamName(d.Get("upstream_name").(string))
+	b.UpstreamName(d.Get("topic").(string))
 
 	if v, ok := d.GetOk("include_key"); ok && v.(bool) {
 		if alias, ok := d.GetOk("include_key_alias"); ok {
@@ -305,11 +306,109 @@ func sourceTableKafkaCreate(ctx context.Context, d *schema.ResourceData, meta an
 	}
 
 	// set id
-	i, err := materialize.SourceTableId(metaDb, o)
+	i, err := materialize.SourceTableKafkaId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceTableRead(ctx, d, meta)
+	return sourceTableKafkaRead(ctx, d, meta)
+}
+
+func sourceTableKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	i := d.Id()
+
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	t, err := materialize.ScanSourceTableKafka(metaDb, utils.ExtractId(i))
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	if err := d.Set("name", t.TableName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", t.SchemaName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", t.DatabaseName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	source := []interface{}{
+		map[string]interface{}{
+			"name":          t.SourceName.String,
+			"schema_name":   t.SourceSchemaName.String,
+			"database_name": t.SourceDatabaseName.String,
+		},
+	}
+	if err := d.Set("source", source); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("topic", t.UpstreamName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("ownership_role", t.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("comment", t.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+func sourceTableKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	tableName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.MaterializeObject{ObjectType: "TABLE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewSourceTableKafkaBuilder(metaDb, o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(metaDb, o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(metaDb, o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return sourceTableKafkaRead(ctx, d, meta)
 }
