@@ -40,9 +40,8 @@ func TestSourceTableDatasource(t *testing.T) {
 		r.Equal("schema", table["schema_name"])
 		r.Equal("database", table["database_name"])
 		r.Equal("KAFKA", table["source_type"])
-		// TODO: Update once upstream_name and upstream_schema_name are supported
-		r.Equal("", table["upstream_name"])
-		r.Equal("", table["upstream_schema_name"])
+		r.Equal("table", table["upstream_name"])
+		r.Equal("schema", table["upstream_schema_name"])
 		r.Equal("comment", table["comment"])
 		r.Equal("materialize", table["owner_name"])
 
