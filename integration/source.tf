@@ -77,7 +77,9 @@ resource "materialize_source_table_load_generator" "load_generator_auction_table
   database_name = "materialize"
 
   source {
-    name = materialize_source_load_generator.load_generator_auction.name
+    name          = materialize_source_load_generator.load_generator_auction.name
+    schema_name   = materialize_source_load_generator.load_generator_auction.schema_name
+    database_name = materialize_source_load_generator.load_generator_auction.database_name
   }
 
   comment = "source table load generator comment"
@@ -104,7 +106,9 @@ resource "materialize_source_table_load_generator" "load_generator_marketing_tab
   database_name = "materialize"
 
   source {
-    name = materialize_source_load_generator.load_generator_marketing.name
+    name          = materialize_source_load_generator.load_generator_marketing.name
+    schema_name   = materialize_source_load_generator.load_generator_marketing.schema_name
+    database_name = materialize_source_load_generator.load_generator_marketing.database_name
   }
 
   comment = "source table load generator comment"
@@ -230,18 +234,26 @@ resource "materialize_source_table_kafka" "source_table_kafka" {
     database_name = materialize_source_kafka.example_source_kafka_format_text.database_name
   }
 
-  topic                   = "topic1"
-  key_format_text         = true
-  value_format_text       = true
-  envelope_none           = true
-  include_timestamp       = true
-  include_offset          = true
-  include_partition       = true
+  topic = "topic1"
+
+  key_format {
+    text = true
+  }
+  value_format {
+    json = true
+  }
+
   include_key             = true
-  include_key_alias       = "key_alias"
-  include_offset_alias    = "offset_alias"
-  include_partition_alias = "partition_alias"
-  include_timestamp_alias = "timestamp_alias"
+  include_key_alias       = "message_key"
+  include_headers         = true
+  include_headers_alias   = "message_headers"
+  include_partition       = true
+  include_partition_alias = "message_partition"
+  include_offset          = true
+  include_offset_alias    = "message_offset"
+  include_timestamp       = true
+  include_timestamp_alias = "message_timestamp"
+
 }
 
 resource "materialize_source_kafka" "example_source_kafka_format_bytes" {
@@ -471,16 +483,22 @@ resource "materialize_source_table_kafka" "source_table_kafka_upsert_options" {
 
   topic = "topic1"
 
-  key_format_text   = true
-  value_format_text = true
+  key_format {
+    text = true
+  }
+  value_format {
+    text = true
+  }
 
-  envelope_upsert = true
 
-  upsert_options {
-    value_decoding_errors {
-      inline {
-        enabled = true
-        alias   = "my_error_col"
+  envelope {
+    upsert = true
+    upsert_options {
+      value_decoding_errors {
+        inline {
+          enabled = true
+          alias   = "decoding_error"
+        }
       }
     }
   }
