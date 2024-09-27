@@ -28,7 +28,7 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
-		Description: "The name of the Kafka topic in the upstream Kafka cluster.",
+		Description: "The name of the Kafka topic in the Kafka cluster.",
 	},
 	"include_key": {
 		Description: "Include a column containing the Kafka message key.",
