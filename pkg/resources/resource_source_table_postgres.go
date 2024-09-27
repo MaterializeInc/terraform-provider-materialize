@@ -146,8 +146,6 @@ func sourceTablePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
-	// TODO: Handle source and text_columns changes once supported on the Materialize side
-
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
 		b := materialize.NewOwnershipBuilder(metaDb, o)
