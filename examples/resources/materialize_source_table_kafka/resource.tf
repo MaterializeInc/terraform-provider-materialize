@@ -9,7 +9,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
     database_name = materialize_source_kafka.test_source_kafka.database_name
   }
 
-  upstream_name           = "terraform" # The kafka source topic name
+  topic                   = "terraform"
   include_key             = true
   include_key_alias       = "message_key"
   include_headers         = true
