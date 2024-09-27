@@ -24,7 +24,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
     database_name = materialize_source_kafka.test_source_kafka.database_name
   }
 
-  upstream_name           = "terraform" # The kafka source topic name
+  topic                   = "terraform"
   include_key             = true
   include_key_alias       = "message_key"
   include_headers         = true
@@ -68,7 +68,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 
 - `name` (String) The identifier for the source table.
 - `source` (Block List, Min: 1, Max: 1) The source this table is created from. (see [below for nested schema](#nestedblock--source))
-- `topic` (String) The name of the Kafka topic in the upstream Kafka cluster.
+- `topic` (String) The name of the Kafka topic in the Kafka cluster.
 
 ### Optional
 
