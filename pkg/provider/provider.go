@@ -219,6 +219,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 			log.Printf("[ERROR] Error initializing DB client for region %s: %v\n", provider.ID, diags)
 			continue
 		}
+		// Explicitly set the transaction isolation level to 'strict serializable' for each region
+		_, err = dbClient.Exec("SET TRANSACTION_ISOLATION TO 'STRICT SERIALIZABLE''")
+		if err != nil {
+			log.Printf("[ERROR] Failed to set transaction isolation level for region %s: %v\n", provider.ID, err)
+			continue
+		}
 
 		dbClients[clients.Region(provider.ID)] = dbClient
 	}
