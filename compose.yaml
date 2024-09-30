@@ -1,9 +1,7 @@
 services:
 
   materialized:
-    # TODO: Revise the image tag to the latest stable release after testing
-    # image: materialize/materialized:latest
-    image: materialize/materialized:v0.118.0-dev.0--pr.g4c4d1ae4f815f25f8e2e29f59be7d3634a489b7f
+    image: materialize/materialized:latest
     container_name: materialized
     command:
       - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
