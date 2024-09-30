@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.9 - 2024-09-30
+
+### BugFixes
+
+* Explicitly set `TRANSACTION_ISOLATION` to `STRICT SERIALIZABLE` [#657](https://github.com/MaterializeInc/terraform-provider-materialize/pull/657)
+* Fix user not found state status in the `materialize_user` resource [#638](https://github.com/MaterializeInc/terraform-provider-materialize/pull/638)
+* Fix Inconsistent Error Handling in `ReadUser` in the `materialize_user` resource [#642](https://github.com/MaterializeInc/terraform-provider-materialize/pull/642)
+
+### Misc
+
+* Update Go version to 1.22 [#650](https://github.com/MaterializeInc/terraform-provider-materialize/pull/650)
+* Switched tests to use a stable version of the Rust Frontegg mock service [#653](https://github.com/MaterializeInc/terraform-provider-materialize/pull/653)
+* Improve the Cloud Mock Service [#651](https://github.com/MaterializeInc/terraform-provider-materialize/pull/651)
+* Disable telemetry in CI [#640](https://github.com/MaterializeInc/terraform-provider-materialize/pull/640)
+
 ## 0.8.8 - 2024-08-26
 
 ### Features
