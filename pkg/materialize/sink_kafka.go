@@ -40,6 +40,7 @@ type SinkKafkaBuilder struct {
 	snapshot               bool
 	headers                string
 	keyNotEnforced         bool
+	partitionBy            string
 }
 
 func NewSinkKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *SinkKafkaBuilder {
@@ -124,6 +125,11 @@ func (b *SinkKafkaBuilder) KeyNotEnforced(s bool) *SinkKafkaBuilder {
 	return b
 }
 
+func (b *SinkKafkaBuilder) PartitionBy(expr string) *SinkKafkaBuilder {
+	b.partitionBy = expr
+	return b
+}
+
 func (b *SinkKafkaBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SINK %s`, b.QualifiedName()))
@@ -157,6 +163,11 @@ func (b *SinkKafkaBuilder) Create() error {
 			}
 			q.WriteString(fmt.Sprintf(`, TOPIC CONFIG MAP[%s]`, strings.Join(configItems, ", ")))
 		}
+
+		if b.partitionBy != "" {
+			q.WriteString(fmt.Sprintf(`, PARTITION BY %s`, b.partitionBy))
+		}
+
 		q.WriteString(")")
 	}
 
