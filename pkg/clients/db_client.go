@@ -33,6 +33,8 @@ func NewDBClient(host, user, password string, port int, database, application_na
 }
 
 func buildConnectionString(host, user, password string, port int, database, sslmode, application_name string) string {
+	options := "--transaction_isolation=strict\\ serializable"
+
 	url := &url.URL{
 		Scheme: "postgres",
 		User:   url.UserPassword(user, password),
@@ -41,6 +43,7 @@ func buildConnectionString(host, user, password string, port int, database, sslm
 		RawQuery: url.Values{
 			"application_name": {application_name},
 			"sslmode":          {sslmode},
+			"options":          {options},
 		}.Encode(),
 	}
 
