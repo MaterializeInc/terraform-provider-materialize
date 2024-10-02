@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -93,12 +92,6 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 	dbClient, exists := providerMeta.DB[region]
 	if !exists {
 		return nil, region, fmt.Errorf("no database client for region: %s", region)
-	}
-
-	// Explicitly set the transaction isolation level to 'strict serializable'
-	_, err = dbClient.Exec("SET TRANSACTION_ISOLATION TO 'STRICT SERIALIZABLE'")
-	if err != nil {
-		log.Printf("[ERROR] Failed to set transaction isolation level for region %s: %v\n", region, err)
 	}
 
 	return dbClient.SQLX(), region, nil
