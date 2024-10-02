@@ -48,6 +48,7 @@ func TestAccSinkKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "snapshot", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "headers", "column_1"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "envelope.0.upsert", "true"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "partition_by", "column_2"),
 				),
 			},
 			{
@@ -302,6 +303,10 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		  name = "column_1"
 		  type = "map[text => text]"
 		}
+		column {
+		  name = "column_2"
+		  type = "int"
+		}
 		lifecycle {
 			ignore_changes = [column]
 		}
@@ -410,6 +415,8 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		envelope {
 			upsert = true
 		}
+
+		partition_by = "column_2"
 	}
 	`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner, comment)
 }
