@@ -162,6 +162,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_secret":            datasources.Secret(),
 			"materialize_sink":              datasources.Sink(),
 			"materialize_source":            datasources.Source(),
+			"materialize_source_reference":  datasources.SourceReference(),
 			"materialize_source_table":      datasources.SourceTable(),
 			"materialize_scim_groups":       datasources.SCIMGroups(),
 			"materialize_scim_configs":      datasources.SCIMConfigs(),
