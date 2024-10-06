@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.8.10 - 2024-10-7
+
+## Features
+
+* Add support for `partition_by` attribute in `materialize_sink_kafka` [#659](https://github.com/MaterializeInc/terraform-provider-materialize/pull/659)
+  * The `partition_by` attribute accepts a SQL expression used to partition the data in the Kafka sink. Can only be used with `ENVELOPE UPSERT`.
+  * Example usage:
+  ```hcl
+  resource "materialize_sink_kafka" "orders_kafka_sink" {
+    name         = "orders_sink"
+    kafka_connection {
+      name = "kafka_connection"
+    }
+    topic        = "orders_topic"
+
+    partition_by = "column_name"
+
+    # Additional configuration...
+  }
+  ```
+
+## Misc
+
+* Set `transaction_isolation` as conneciton option instead of executing a `SET` command [#660](https://github.com/MaterializeInc/terraform-provider-materialize/pull/660)
+* Routine dependency updates: [#661](https://github.com/MaterializeInc/terraform-provider-materialize/pull/661)
+
 ## 0.8.9 - 2024-09-30
 
 ### BugFixes
