@@ -264,7 +264,7 @@ func TestResourceSourceTableKafkaCreateIncludeFalseWithAlias(t *testing.T) {
             FROM SOURCE "materialize"."public"."kafka_source"
             \(REFERENCE "topic"\)
             FORMAT JSON
-            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS decoding_error\)\);`,
+            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "decoding_error"\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
