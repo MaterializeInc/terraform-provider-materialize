@@ -43,7 +43,7 @@ var sourceTableMySQLSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"exclude_columns": {
-		Description: "Exclude specific columns when reading data from MySQL. The option used to be called `ignore_columns`.",
+		Description: "Exclude specific columns when reading data from MySQL. This option used to be called `ignore_columns`.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
