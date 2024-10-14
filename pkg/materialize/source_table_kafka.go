@@ -215,7 +215,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 				options = append(options, fmt.Sprintf(`FORMAT CSV WITH HEADER ( %s )`, strings.Join(b.format.Csv.Header, ", ")))
 			}
 			if b.format.Csv.DelimitedBy != "" {
-				options = append(options, fmt.Sprintf(`DELIMITER '%s'`, b.format.Csv.DelimitedBy))
+				options = append(options, fmt.Sprintf(`DELIMITER %s`, QuoteString(b.format.Csv.DelimitedBy)))
 			}
 		}
 
@@ -244,7 +244,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 
 		if b.keyFormat.Protobuf != nil {
 			if b.keyFormat.Protobuf.SchemaRegistryConnection.Name != "" && b.keyFormat.Protobuf.MessageName != "" {
-				options = append(options, fmt.Sprintf(`KEY FORMAT PROTOBUF MESSAGE '%s' USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.keyFormat.Protobuf.MessageName, QualifiedName(b.keyFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.keyFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.keyFormat.Protobuf.SchemaRegistryConnection.Name)))
+				options = append(options, fmt.Sprintf(`KEY FORMAT PROTOBUF MESSAGE %s USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteString(b.keyFormat.Protobuf.MessageName), QualifiedName(b.keyFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.keyFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.keyFormat.Protobuf.SchemaRegistryConnection.Name)))
 			} else if b.keyFormat.Protobuf.SchemaRegistryConnection.Name != "" {
 				options = append(options, fmt.Sprintf(`KEY FORMAT PROTOBUF USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.keyFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.keyFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.keyFormat.Protobuf.SchemaRegistryConnection.Name)))
 			}
@@ -258,7 +258,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 				options = append(options, fmt.Sprintf(`KEY FORMAT CSV WITH HEADER ( %s )`, strings.Join(b.keyFormat.Csv.Header, ", ")))
 			}
 			if b.keyFormat.Csv.DelimitedBy != "" {
-				options = append(options, fmt.Sprintf(`KEY DELIMITER '%s'`, b.keyFormat.Csv.DelimitedBy))
+				options = append(options, fmt.Sprintf(`KEY DELIMITER %s`, QuoteString(b.keyFormat.Csv.DelimitedBy)))
 			}
 		}
 
@@ -287,7 +287,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 
 		if b.valueFormat.Protobuf != nil {
 			if b.valueFormat.Protobuf.SchemaRegistryConnection.Name != "" && b.valueFormat.Protobuf.MessageName != "" {
-				options = append(options, fmt.Sprintf(`VALUE FORMAT PROTOBUF MESSAGE '%s' USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.valueFormat.Protobuf.MessageName, QualifiedName(b.valueFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.valueFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.valueFormat.Protobuf.SchemaRegistryConnection.Name)))
+				options = append(options, fmt.Sprintf(`VALUE FORMAT PROTOBUF MESSAGE %s USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteString(b.valueFormat.Protobuf.MessageName), QualifiedName(b.valueFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.valueFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.valueFormat.Protobuf.SchemaRegistryConnection.Name)))
 			} else if b.valueFormat.Protobuf.SchemaRegistryConnection.Name != "" {
 				options = append(options, fmt.Sprintf(`VALUE FORMAT PROTOBUF USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.valueFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.valueFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.valueFormat.Protobuf.SchemaRegistryConnection.Name)))
 			}
@@ -301,7 +301,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 				options = append(options, fmt.Sprintf(`VALUE FORMAT CSV WITH HEADER ( %s )`, strings.Join(b.valueFormat.Csv.Header, ", ")))
 			}
 			if b.valueFormat.Csv.DelimitedBy != "" {
-				options = append(options, fmt.Sprintf(`VALUE DELIMITER '%s'`, b.valueFormat.Csv.DelimitedBy))
+				options = append(options, fmt.Sprintf(`VALUE DELIMITER %s`, QuoteString(b.valueFormat.Csv.DelimitedBy)))
 			}
 		}
 
@@ -319,35 +319,35 @@ func (b *SourceTableKafkaBuilder) Create() error {
 		var metadataOptions []string
 		if b.includeKey {
 			if b.keyAlias != "" {
-				metadataOptions = append(metadataOptions, fmt.Sprintf("KEY AS %s", b.keyAlias))
+				metadataOptions = append(metadataOptions, fmt.Sprintf("KEY AS %s", QuoteIdentifier(b.keyAlias)))
 			} else {
 				metadataOptions = append(metadataOptions, "KEY")
 			}
 		}
 		if b.includeHeaders {
 			if b.headersAlias != "" {
-				metadataOptions = append(metadataOptions, fmt.Sprintf("HEADERS AS %s", b.headersAlias))
+				metadataOptions = append(metadataOptions, fmt.Sprintf("HEADERS AS %s", QuoteIdentifier(b.headersAlias)))
 			} else {
 				metadataOptions = append(metadataOptions, "HEADERS")
 			}
 		}
 		if b.includePartition {
 			if b.partitionAlias != "" {
-				metadataOptions = append(metadataOptions, fmt.Sprintf("PARTITION AS %s", b.partitionAlias))
+				metadataOptions = append(metadataOptions, fmt.Sprintf("PARTITION AS %s", QuoteIdentifier(b.partitionAlias)))
 			} else {
 				metadataOptions = append(metadataOptions, "PARTITION")
 			}
 		}
 		if b.includeOffset {
 			if b.offsetAlias != "" {
-				metadataOptions = append(metadataOptions, fmt.Sprintf("OFFSET AS %s", b.offsetAlias))
+				metadataOptions = append(metadataOptions, fmt.Sprintf("OFFSET AS %s", QuoteIdentifier(b.offsetAlias)))
 			} else {
 				metadataOptions = append(metadataOptions, "OFFSET")
 			}
 		}
 		if b.includeTimestamp {
 			if b.timestampAlias != "" {
-				metadataOptions = append(metadataOptions, fmt.Sprintf("TIMESTAMP AS %s", b.timestampAlias))
+				metadataOptions = append(metadataOptions, fmt.Sprintf("TIMESTAMP AS %s", QuoteIdentifier(b.timestampAlias)))
 			} else {
 				metadataOptions = append(metadataOptions, "TIMESTAMP")
 			}
