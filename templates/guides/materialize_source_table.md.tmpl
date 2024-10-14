@@ -1,10 +1,10 @@
-# Source versioning: migrating to `materialize_source_table_{source}` Resource
+# Source versioning: migrating to `materialize_source_table_{source_type}` Resource
 
 In previous versions of the Materialize Terraform provider, source tables were defined within the source resource itself and were considered subsources of the source rather than separate entities.
 
-This guide will walk you through the process of migrating your existing source table definitions to the new `materialize_source_table_{source}` resource.
+This guide will walk you through the process of migrating your existing source table definitions to the new `materialize_source_table_{source_type}` resource.
 
-For each source type (e.g., MySQL, Postgres, etc.), you will need to create a new `materialize_source_table_{source}` resource for each table that was previously defined within the source resource. This ensures that the tables are preserved during the migration process. For Kafka sources, you will need to create at least one `materialize_source_table_kafka` table to hold data for the kafka topic.
+For each source type (e.g., MySQL, Postgres, etc.), you will need to create a new `materialize_source_table_{source_type}` resource for each table that was previously defined within the source resource. This ensures that the tables are preserved during the migration process. For Kafka sources, you will need to create at least one `materialize_source_table_kafka` table to hold data for the kafka topic.
 
 ## Old Approach
 
@@ -54,15 +54,15 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
 
 ## New Approach
 
-The new approach separates source definitions and table definitions. You will now create the source without specifying the tables, and then define each table using the `materialize_source_table_{source}` resource.
+The new approach separates source definitions and table definitions. You will now create the source without specifying the tables, and then define each table using the `materialize_source_table_{source_type}` resource.
 
 ## Manual Migration Process
 
-This manual migration process requires users to create new source tables using the new `materialize_source_table_{source}` resource and then remove the old ones. We'll cover examples for both MySQL and Kafka sources.
+This manual migration process requires users to create new source tables using the new `materialize_source_table_{source_type}` resource and then remove the old ones. We'll cover examples for both MySQL and Kafka sources.
 
-### Step 1: Define `materialize_source_table_{source}` Resources
+### Step 1: Define `materialize_source_table_{source_type}` Resources
 
-Before making any changes to your existing source resources, create new `materialize_source_table_{source}` resources for each table that is currently defined within your sources.
+Before making any changes to your existing source resources, create new `materialize_source_table_{source_type}` resources for each table that is currently defined within your sources.
 
 #### MySQL Example:
 
@@ -109,11 +109,11 @@ resource "materialize_source_table_kafka" "kafka_table_from_source" {
 
 ### Step 2: Apply the Changes
 
-Run `terraform plan` and `terraform apply` to create the new `materialize_source_table_{source}` resources.
+Run `terraform plan` and `terraform apply` to create the new `materialize_source_table_{source_type}` resources.
 
 ### Step 3: Remove Table Blocks from Source Resources
 
-Once the new `materialize_source_table_{source}` resources are successfully created, remove all the deprecated and table-specific attributes from your source resources.
+Once the new `materialize_source_table_{source_type}` resources are successfully created, remove all the deprecated and table-specific attributes from your source resources.
 
 #### MySQL Example:
 
@@ -167,7 +167,7 @@ resource "materialize_source_kafka" "kafka_source" {
 }
 ```
 
-In the `lifecycle` block, add the `ignore_changes` meta-argument to prevent Terraform from trying to update these attributes during subsequent applies, that way Terraform won't try to update these values based on incomplete information from the state as they will no longer be defined in the source resource itself but in the new `materialize_source_table_{source}` resources.
+In the `lifecycle` block, add the `ignore_changes` meta-argument to prevent Terraform from trying to update these attributes during subsequent applies, that way Terraform won't try to update these values based on incomplete information from the state as they will no longer be defined in the source resource itself but in the new `materialize_source_table_{source_type}` resources.
 
 > Note: We will make the changes to those attributes a no-op, so the `ignore_changes` block will not be necessary.
 
@@ -184,7 +184,7 @@ After applying the changes, verify that your tables are still correctly set up i
 To import existing tables into your Terraform state, use the following command:
 
 ```bash
-terraform import materialize_source_table_{source}.table_name <region>:<table_id>
+terraform import materialize_source_table_{source_type}.table_name <region>:<table_id>
 ```
 
 Replace `{source}` with the appropriate source type (e.g., `mysql`, `kafka`), `<region>` with the actual region, and `<table_id>` with the table ID.

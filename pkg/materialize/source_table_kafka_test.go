@@ -15,7 +15,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
             FROM SOURCE "database"."schema"."kafka_source"
             \(REFERENCE "topic"\)
             FORMAT JSON
-            INCLUDE KEY AS message_key, HEADERS AS message_headers, PARTITION AS message_partition
+            INCLUDE KEY AS "message_key", HEADERS AS "message_headers", PARTITION AS "message_partition"
             ENVELOPE UPSERT
             EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

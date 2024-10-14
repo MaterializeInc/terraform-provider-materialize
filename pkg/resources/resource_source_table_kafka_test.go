@@ -67,8 +67,8 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
             FROM SOURCE "materialize"."public"."kafka_source"
             \(REFERENCE "topic"\)
             FORMAT JSON
-            INCLUDE KEY AS message_key, HEADERS AS message_headers, PARTITION AS message_partition
-            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS decoding_error\)\);`,
+            INCLUDE KEY AS "message_key", HEADERS AS "message_headers", PARTITION AS "message_partition"
+            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "decoding_error"\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -227,7 +227,7 @@ func TestResourceSourceTableKafkaCreateIncludeTrueNoAlias(t *testing.T) {
             \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP
-            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS decoding_error\)\);`,
+            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "decoding_error"\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
