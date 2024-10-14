@@ -367,7 +367,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 				if inlineOptions.Enabled {
 					upsertOption += " (VALUE DECODING ERRORS = (INLINE"
 					if inlineOptions.Alias != "" {
-						upsertOption += fmt.Sprintf(" AS %s", inlineOptions.Alias)
+						upsertOption += fmt.Sprintf(" AS %s", QuoteIdentifier(inlineOptions.Alias))
 					}
 					upsertOption += "))"
 				}
