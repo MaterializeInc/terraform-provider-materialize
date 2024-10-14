@@ -81,7 +81,7 @@ func TestResourceSourceTableKafkaCreateWithUpsertOptions(t *testing.T) {
             \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP
-            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS my_error_col\)\)
+            ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "my_error_col"\)\)
             EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
