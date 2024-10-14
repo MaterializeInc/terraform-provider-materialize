@@ -62,8 +62,8 @@ resource "materialize_source_postgres" "example_source_postgres" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
-- `table` (Block Set, Deprecated) Creates subsources for specific tables in the Postgres connection. Deprecated: Use the new materialize_source_table_postgres resource instead. (see [below for nested schema](#nestedblock--table))
-- `text_columns` (List of String, Deprecated) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new materialize_source_table_postgres resource instead.
+- `table` (Block Set, Deprecated) Creates subsources for specific tables in the Postgres connection. Deprecated: Use the new `materialize_source_table_postgres` resource instead. (see [below for nested schema](#nestedblock--table))
+- `text_columns` (List of String, Deprecated) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new `materialize_source_table_postgres` resource instead.
 
 ### Read-Only
 
