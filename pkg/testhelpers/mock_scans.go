@@ -961,6 +961,36 @@ func MockSourceTableScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+func MockSourceReferenceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		sr.source_id,
+		sr.namespace,
+		sr.name,
+		sr.updated_at,
+		sr.columns,
+		s.name AS source_name,
+		ss.name AS source_schema_name,
+		sd.name AS source_database_name,
+		s.type AS source_type
+	FROM mz_internal.mz_source_references sr
+	JOIN mz_sources s ON sr.source_id = s.id
+	JOIN mz_schemas ss ON s.schema_id = ss.id
+	JOIN mz_databases sd ON ss.database_id = sd.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{
+		"source_id", "namespace", "name", "updated_at", "columns",
+		"source_name", "source_schema_name", "source_database_name", "source_type",
+	}).AddRow(
+		"source-id", "namespace", "reference_name", "2023-10-01T12:34:56Z",
+		pq.StringArray{"column1", "column2"},
+		"source_name", "source_schema_name", "source_database_name", "source_type",
+	)
+
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
 func MockTypeScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
