@@ -201,7 +201,7 @@ func (b *SourceTableKafkaBuilder) Create() error {
 
 		if b.format.Protobuf != nil {
 			if b.format.Protobuf.SchemaRegistryConnection.Name != "" && b.format.Protobuf.MessageName != "" {
-				options = append(options, fmt.Sprintf(`FORMAT PROTOBUF MESSAGE '%s' USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.format.Protobuf.MessageName, QualifiedName(b.format.Protobuf.SchemaRegistryConnection.DatabaseName, b.format.Protobuf.SchemaRegistryConnection.SchemaName, b.format.Protobuf.SchemaRegistryConnection.Name)))
+				options = append(options, fmt.Sprintf(`FORMAT PROTOBUF MESSAGE %s USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteString(b.format.Protobuf.MessageName), QualifiedName(b.format.Protobuf.SchemaRegistryConnection.DatabaseName, b.format.Protobuf.SchemaRegistryConnection.SchemaName, b.format.Protobuf.SchemaRegistryConnection.Name)))
 			} else if b.format.Protobuf.SchemaRegistryConnection.Name != "" {
 				options = append(options, fmt.Sprintf(`FORMAT PROTOBUF USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QualifiedName(b.format.Protobuf.SchemaRegistryConnection.DatabaseName, b.format.Protobuf.SchemaRegistryConnection.SchemaName, b.format.Protobuf.SchemaRegistryConnection.Name)))
 			}
