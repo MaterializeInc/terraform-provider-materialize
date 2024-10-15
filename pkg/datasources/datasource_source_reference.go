@@ -96,7 +96,7 @@ func sourceReferenceRead(ctx context.Context, d *schema.ResourceData, meta inter
 		referenceMap := map[string]interface{}{
 			"namespace":            sr.Namespace.String,
 			"name":                 sr.Name.String,
-			"updated_at":           sr.UpdatedAt.Time.String(),
+			"updated_at":           sr.UpdatedAt.String,
 			"columns":              sr.Columns,
 			"source_name":          sr.SourceName.String,
 			"source_schema_name":   sr.SourceSchemaName.String,

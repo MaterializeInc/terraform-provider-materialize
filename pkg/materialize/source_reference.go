@@ -11,7 +11,7 @@ type SourceReferenceParams struct {
 	SourceId         sql.NullString `db:"source_id"`
 	Namespace        sql.NullString `db:"namespace"`
 	Name             sql.NullString `db:"name"`
-	UpdatedAt        sql.NullTime   `db:"updated_at"`
+	UpdatedAt        sql.NullString `db:"updated_at"`
 	Columns          pq.StringArray `db:"columns"`
 	SourceName       sql.NullString `db:"source_name"`
 	SourceSchemaName sql.NullString `db:"source_schema_name"`
