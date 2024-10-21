@@ -33,14 +33,17 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute. Deprecated: Use the new `materialize_source_table_postgres` resource instead.",
+		Deprecated:  "Use the new `materialize_source_table_postgres` resource instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"table": {
-		Description: "Creates subsources for specific tables in the Postgres connection.",
+		Description: "Creates subsources for specific tables in the Postgres connection. Deprecated: Use the new `materialize_source_table_postgres` resource instead.",
+		Deprecated:  "Use the new `materialize_source_table_postgres` resource instead.",
 		Type:        schema.TypeSet,
+		Optional:    true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"upstream_name": {
@@ -74,8 +77,6 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Required: true,
-		MinItems: 1,
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
@@ -203,6 +204,7 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if v, ok := d.GetOk("table"); ok {
+		log.Printf("[WARN] The 'table' field in materialize_source_postgres is deprecated. Use the new `materialize_source_table_postgres` resource instead.")
 		tables := v.(*schema.Set).List()
 		t := materialize.GetTableStruct(tables)
 		b.Table(t)
@@ -289,6 +291,7 @@ func sourcePostgresUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 	}
 
 	if d.HasChange("table") {
+		log.Printf("[WARN] The 'table' field in materialize_source_postgres is deprecated. Use the new `materialize_source_table_postgres` resource instead.")
 		ot, nt := d.GetChange("table")
 		addTables := materialize.DiffTableStructs(nt.(*schema.Set).List(), ot.(*schema.Set).List())
 		dropTables := materialize.DiffTableStructs(ot.(*schema.Set).List(), nt.(*schema.Set).List())
