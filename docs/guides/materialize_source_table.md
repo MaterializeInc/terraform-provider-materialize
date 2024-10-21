@@ -13,7 +13,7 @@ In previous versions of the Materialize Terraform provider, source tables were d
 
 This guide will walk you through the process of migrating your existing source table definitions to the new `materialize_source_table_{source_type}` resource.
 
-For each source type (e.g., MySQL, Postgres, etc.), you will need to create a new `materialize_source_table_{source_type}` resource for each table that was previously defined within the source resource. This ensures that the tables are preserved during the migration process. For Kafka sources, you will need to create at least one `materialize_source_table_kafka` table to hold data for the kafka topic.
+For each MySQL and Postgres source, you will need to create a new `materialize_source_table_{source_type}` resource for each table that was previously defined within the source resource. This ensures that the tables are preserved during the migration process. For Kafka sources, you will need to create a `materialize_source_table_kafka` table with the same name as the kafka source to contain the data for the kafka topic.
 
 ## Old Approach
 
@@ -242,4 +242,4 @@ After importing, you may need to manually update these ignored attributes in you
 
 ## Future Improvements
 
-The Kafka and Webhooks sources are currently being implemented. Once these changes, the migration process will be updated to include them.
+Webhooks sources have not yet been migrated to the new model. Once this changes, the migration process will be updated to include them.
