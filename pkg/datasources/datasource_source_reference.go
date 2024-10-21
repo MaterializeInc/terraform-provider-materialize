@@ -13,6 +13,7 @@ import (
 func SourceReference() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: sourceReferenceRead,
+		Description: "The `materialize_source_reference` data source retrieves information about a Materialize source's references, including details about namespaces, columns, and last update times.",
 		Schema: map[string]*schema.Schema{
 			"source_id": {
 				Type:        schema.TypeString,
