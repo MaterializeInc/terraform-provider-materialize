@@ -3,12 +3,12 @@
 page_title: "materialize_source_reference Data Source - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  The materialize_source_reference data source retrieves information about a Materialize source's references, including details about namespaces, columns, and last update times.
 ---
 
 # materialize_source_reference (Data Source)
 
-
+The `materialize_source_reference` data source retrieves information about a Materialize source's references, including details about namespaces, columns, and last update times.
 
 ## Example Usage
 

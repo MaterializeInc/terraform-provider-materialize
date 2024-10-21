@@ -68,7 +68,6 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 
 - `name` (String) The identifier for the source table.
 - `source` (Block List, Min: 1, Max: 1) The source this table is created from. (see [below for nested schema](#nestedblock--source))
-- `topic` (String) The name of the Kafka topic in the Kafka cluster.
 
 ### Optional
 
@@ -91,6 +90,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source table schema in Materialize. Defaults to `public`.
+- `topic` (String) The name of the Kafka topic in the Kafka cluster.
 - `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only

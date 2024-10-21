@@ -26,7 +26,7 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 	}),
 	"topic": {
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 		Description: "The name of the Kafka topic in the Kafka cluster.",
 	},

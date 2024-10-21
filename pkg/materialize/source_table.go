@@ -156,14 +156,18 @@ func (b *SourceTableBuilder) BaseCreate(sourceType string, additionalOptions fun
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE TABLE %s`, b.QualifiedName()))
 	q.WriteString(fmt.Sprintf(` FROM SOURCE %s`, b.source.QualifiedName()))
-	q.WriteString(` (REFERENCE `)
 
-	if b.upstreamSchemaName != "" {
-		q.WriteString(fmt.Sprintf(`%s.`, QuoteIdentifier(b.upstreamSchemaName)))
+	// Reference is not required for Kafka sources and single-output load generator sources
+	if b.upstreamName != "" {
+		q.WriteString(` (REFERENCE `)
+
+		if b.upstreamSchemaName != "" {
+			q.WriteString(fmt.Sprintf(`%s.`, QuoteIdentifier(b.upstreamSchemaName)))
+		}
+		q.WriteString(QuoteIdentifier(b.upstreamName))
+
+		q.WriteString(")")
 	}
-	q.WriteString(QuoteIdentifier(b.upstreamName))
-
-	q.WriteString(")")
 
 	if additionalOptions != nil {
 		options := additionalOptions()

@@ -456,3 +456,53 @@ func TestResourceSourceTableKafkaCreateWithProtobufFormat(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceSourceTableKafkaCreateWithNoTopic(t *testing.T) {
+	r := require.New(t)
+	inSourceTableKafkaNoTopic := map[string]interface{}{
+		"name":          "no_topic",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "kafka_source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
+		},
+		"format": []interface{}{
+			map[string]interface{}{
+				"json": true,
+			},
+		},
+		"envelope": []interface{}{
+			map[string]interface{}{
+				"none": true,
+			},
+		},
+	}
+	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafkaNoTopic)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE TABLE "database"."schema"."no_topic"
+            FROM SOURCE "materialize"."public"."kafka_source"
+            FORMAT JSON
+            ENVELOPE NONE;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'no_topic'`
+		testhelpers.MockSourceTableKafkaScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockSourceTableKafkaScan(mock, pp)
+
+		if err := sourceTableKafkaCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

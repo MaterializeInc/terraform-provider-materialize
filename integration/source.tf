@@ -222,6 +222,29 @@ resource "materialize_source_kafka" "example_source_kafka_format_text" {
   depends_on = [materialize_sink_kafka.sink_kafka]
 }
 
+resource "materialize_source_kafka" "example_source_kafka_no_topic" {
+  name         = "source_kafka_no_topic"
+  comment      = "source kafka comment no topic"
+  cluster_name = materialize_cluster.cluster_source.name
+
+  kafka_connection {
+    name          = materialize_connection_kafka.kafka_connection.name
+    schema_name   = materialize_connection_kafka.kafka_connection.schema_name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+  }
+  key_format {
+    text = true
+  }
+  value_format {
+    text = true
+  }
+  expose_progress {
+    name = "expose_kafka"
+  }
+
+  depends_on = [materialize_sink_kafka.sink_kafka]
+}
+
 # Create source table from Kafka source
 resource "materialize_source_table_kafka" "source_table_kafka" {
   name          = "source_table_kafka"
