@@ -361,6 +361,8 @@ func sourceTableKafkaRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
+	// TODO: include envelope_type, key_format and value_format from mz_internal.mz_kafka_source_tables
+
 	if err := d.Set("ownership_role", t.OwnerName.String); err != nil {
 		return diag.FromErr(err)
 	}
