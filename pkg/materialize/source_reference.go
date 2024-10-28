@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -61,9 +62,22 @@ func ScanSourceReference(conn *sqlx.DB, id string) (SourceReferenceParams, error
 	return s, nil
 }
 
-func ListSourceReferences(conn *sqlx.DB, sourceId string) ([]SourceReferenceParams, error) {
+func refreshSourceReferences(conn *sqlx.DB, sourceName, schemaName, databaseName string) error {
+	query := fmt.Sprintf(`ALTER SOURCE %s REFRESH REFERENCES`, QualifiedName(databaseName, schemaName, sourceName))
+	_, err := conn.Exec(query)
+	return err
+}
+
+func ListSourceReferences(conn *sqlx.DB, id string) ([]SourceReferenceParams, error) {
+	source, err := ScanSource(conn, id)
+	if err == nil {
+		if err := refreshSourceReferences(conn, source.SourceName.String, source.SchemaName.String, source.DatabaseName.String); err != nil {
+			return nil, fmt.Errorf("error refreshing source references: %v", err)
+		}
+	}
+
 	p := map[string]string{
-		"sr.source_id": sourceId,
+		"sr.source_id": id,
 	}
 	q := sourceReferenceQuery.QueryPredicate(p)
 
