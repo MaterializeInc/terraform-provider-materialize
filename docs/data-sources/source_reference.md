@@ -3,12 +3,12 @@
 page_title: "materialize_source_reference Data Source - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The materialize_source_reference data source retrieves information about a Materialize source's references, including details about namespaces, columns, and last update times.
+  The materialize_source_reference data source retrieves a list of available upstream references for a given Materialize source. These references represent potential tables that can be created based on the source, but they do not necessarily indicate references the source is already ingesting. This allows users to see all upstream data that could be materialized into tables.
 ---
 
 # materialize_source_reference (Data Source)
 
-The `materialize_source_reference` data source retrieves information about a Materialize source's references, including details about namespaces, columns, and last update times.
+The `materialize_source_reference` data source retrieves a list of *available* upstream references for a given Materialize source. These references represent potential tables that can be created based on the source, but they do not necessarily indicate references the source is already ingesting. This allows users to see all upstream data that could be materialized into tables.
 
 ## Example Usage
 
