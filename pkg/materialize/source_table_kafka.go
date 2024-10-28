@@ -9,9 +9,6 @@ import (
 
 type SourceTableKafkaParams struct {
 	SourceTableParams
-	EnvelopeType string `db:"envelope_type"`
-	KeyFormat    string `db:"key_format"`
-	ValueFormat  string `db:"value_format"`
 }
 
 var sourceTableKafkaQuery = `
@@ -24,9 +21,6 @@ var sourceTableKafkaQuery = `
         source_schemas.name AS source_schema_name,
         source_databases.name AS source_database_name,
         mz_kafka_source_tables.topic AS upstream_table_name,
-        mz_kafka_source_tables.envelope_type,
-        mz_kafka_source_tables.key_format,
-        mz_kafka_source_tables.value_format,
         mz_sources.type AS source_type,
         comments.comment AS comment,
         mz_roles.name AS owner_name,
@@ -63,7 +57,7 @@ func SourceTableKafkaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	}
 	q := NewBaseQuery(sourceTableKafkaQuery).QueryPredicate(p)
 
-	var t SourceTableParams
+	var t SourceTableKafkaParams
 	if err := conn.Get(&t, q); err != nil {
 		return "", err
 	}
