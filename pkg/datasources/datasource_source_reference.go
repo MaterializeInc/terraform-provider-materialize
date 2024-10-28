@@ -13,7 +13,7 @@ import (
 func SourceReference() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: sourceReferenceRead,
-		Description: "The `materialize_source_reference` data source retrieves information about a Materialize source's references, including details about namespaces, columns, and last update times.",
+		Description: "The `materialize_source_reference` data source retrieves a list of *available* upstream references for a given Materialize source. These references represent potential tables that can be created based on the source, but they do not necessarily indicate references the source is already ingesting. This allows users to see all upstream data that could be materialized into tables.",
 		Schema: map[string]*schema.Schema{
 			"source_id": {
 				Type:        schema.TypeString,
@@ -79,6 +79,7 @@ func SourceReference() *schema.Resource {
 
 func sourceReferenceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	sourceID := d.Get("source_id").(string)
+	sourceID = utils.ExtractId(sourceID)
 
 	var diags diag.Diagnostics
 
