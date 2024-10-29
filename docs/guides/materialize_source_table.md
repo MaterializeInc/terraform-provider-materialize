@@ -178,8 +178,6 @@ resource "materialize_source_kafka" "kafka_source" {
 
 In the `lifecycle` block, add the `ignore_changes` meta-argument to prevent Terraform from trying to update these attributes during subsequent applies, that way Terraform won't try to update these values based on incomplete information from the state as they will no longer be defined in the source resource itself but in the new `materialize_source_table_{source_type}` resources.
 
-> Note: Once the migration process is fully implemented on the Materialize side and the attributes will have to be updated as no-op in future versions of the provider. That way the `ignore_changes` block will no longer be required. At that point, Terraform will correctly handle these attributes without needing the extra lifecycle configuration. Keep an eye on upcoming releases for this change.
-
 ### Step 4: Update Terraform State
 
 After removing the `table` blocks and the table/topic specific attributes from your source resources, run `terraform plan` and `terraform apply` again to update the Terraform state and apply the changes.
