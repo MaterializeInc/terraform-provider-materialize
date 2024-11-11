@@ -13,6 +13,7 @@ import (
 func NetworkPolicy() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: networkPolicyRead,
+		Description: "A network policy data source. This can be used to get information about all network policies in Materialize.",
 		Schema: map[string]*schema.Schema{
 			"network_policies": {
 				Type:        schema.TypeList,

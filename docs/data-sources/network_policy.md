@@ -3,12 +3,12 @@
 page_title: "materialize_network_policy Data Source - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  
+  A network policy data source. This can be used to get information about all network policies in Materialize.
 ---
 
 # materialize_network_policy (Data Source)
 
-
+A network policy data source. This can be used to get information about all network policies in Materialize.
 
 ## Example Usage
 
