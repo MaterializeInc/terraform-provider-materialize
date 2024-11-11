@@ -179,3 +179,32 @@ func ScanNetworkPolicy(conn *sqlx.DB, id string) (NetworkPolicyParams, error) {
 
 	return policy, nil
 }
+
+func ListNetworkPolicies(conn *sqlx.DB) ([]NetworkPolicyParams, error) {
+	var policies []NetworkPolicyParams
+	q := networkPolicyQuery.QueryPredicate(map[string]string{})
+
+	var results []networkPolicyQueryResult
+	if err := conn.Select(&results, q); err != nil {
+		return policies, err
+	}
+
+	for _, result := range results {
+		policy := NetworkPolicyParams{
+			PolicyId:   result.PolicyId,
+			PolicyName: result.PolicyName,
+			Comment:    result.Comment,
+			OwnerName:  result.OwnerName,
+			Privileges: result.Privileges,
+		}
+
+		// Parse the JSON rules
+		if err := json.Unmarshal(result.Rules, &policy.Rules); err != nil {
+			return policies, err
+		}
+
+		policies = append(policies, policy)
+	}
+
+	return policies, nil
+}
