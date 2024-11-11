@@ -87,6 +87,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_index":                                resources.Index(),
 			"materialize_materialized_view":                    resources.MaterializedView(),
 			"materialize_materialized_view_grant":              resources.GrantMaterializedView(),
+			"materialize_network_policy":                       resources.NetworkPolicy(),
 			"materialize_region":                               resources.Region(),
 			"materialize_role":                                 resources.Role(),
 			"materialize_role_grant":                           resources.GrantRole(),
