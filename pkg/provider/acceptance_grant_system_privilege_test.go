@@ -28,6 +28,8 @@ func TestAccGrantSystemPrivilege_basic(t *testing.T) {
 							resource.TestMatchResourceAttr("materialize_grant_system_privilege.test", "id", terraformGrantSystemIdRegex),
 							resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "role_name", roleName),
 							resource.TestCheckResourceAttr("materialize_grant_system_privilege.test", "privilege", "CREATEDB"),
+							resource.TestCheckResourceAttr("materialize_grant_system_privilege.role_createnetworkpolicy", "role_name", roleName),
+							resource.TestCheckResourceAttr("materialize_grant_system_privilege.role_createnetworkpolicy", "privilege", "CREATENETWORKPOLICY"),
 						),
 					},
 				},
@@ -66,6 +68,12 @@ resource "materialize_grant_system_privilege" "test" {
 	role_name = materialize_role.test.name
 	privilege = "CREATEDB"
 }
+
+resource "materialize_grant_system_privilege" "role_createnetworkpolicy" {
+  role_name = materialize_role.test.name
+  privilege = "CREATENETWORKPOLICY"
+}
+
 `, roleName)
 }
 
