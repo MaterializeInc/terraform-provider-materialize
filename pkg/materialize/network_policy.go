@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -10,10 +11,10 @@ import (
 )
 
 type NetworkPolicyRule struct {
-	Name      string
-	Action    string
-	Direction string
-	Address   string
+	Name      string `json:"rule_name"`
+	Action    string `json:"rule_action"`
+	Direction string `json:"rule_direction"`
+	Address   string `json:"rule_address"`
 }
 
 type NetworkPolicyBuilder struct {
@@ -58,7 +59,7 @@ func (b *NetworkPolicyBuilder) Create() error {
 
 func (b *NetworkPolicyBuilder) Alter() error {
 	q := strings.Builder{}
-	q.WriteString(fmt.Sprintf(`ALTER NETWORK POLICY %s`, QuoteIdentifier(b.name)))
+	q.WriteString(fmt.Sprintf(`ALTER NETWORK POLICY %s SET`, QuoteIdentifier(b.name)))
 
 	if len(b.rules) > 0 {
 		q.WriteString(` ( RULES ( `)
@@ -89,49 +90,92 @@ type NetworkPolicyParams struct {
 	Comment    sql.NullString `db:"comment"`
 	OwnerName  sql.NullString `db:"owner_name"`
 	Privileges pq.StringArray `db:"privileges"`
+	Rules      []NetworkPolicyRule
+}
+
+type networkPolicyQueryResult struct {
+	PolicyId   sql.NullString `db:"id"`
+	PolicyName sql.NullString `db:"policy_name"`
+	Comment    sql.NullString `db:"comment"`
+	OwnerName  sql.NullString `db:"owner_name"`
+	Privileges pq.StringArray `db:"privileges"`
+	Rules      []byte         `db:"rules"`
 }
 
 var networkPolicyQuery = NewBaseQuery(`
+	WITH policy AS (
+		SELECT
+			mz_network_policies.id,
+			mz_network_policies.name AS policy_name,
+			comments.comment AS comment,
+			mz_roles.name AS owner_name,
+			mz_network_policies.privileges
+		FROM mz_internal.mz_network_policies
+		JOIN mz_roles
+			ON mz_network_policies.owner_id = mz_roles.id
+		LEFT JOIN (
+			SELECT id, comment
+			FROM mz_internal.mz_comments
+			WHERE object_type = 'network-policy'
+		) comments ON mz_network_policies.id = comments.id
+	),
+	rules AS (
+		SELECT
+			policy_id,
+			jsonb_agg(
+				jsonb_build_object(
+					'rule_name', name,
+					'rule_action', action,
+					'rule_direction', direction,
+					'rule_address', address
+				)
+			) as rules
+		FROM mz_internal.mz_network_policy_rules
+		GROUP BY policy_id
+	)
 	SELECT
-		mz_network_policies.id,
-		mz_network_policies.name AS policy_name,
-		comments.comment AS comment,
-		mz_roles.name AS owner_name,
-		mz_network_policies.privileges
-	FROM mz_internal.mz_network_policies
-	JOIN mz_roles
-		ON mz_network_policies.owner_id = mz_roles.id
-	LEFT JOIN (
-		SELECT id, comment
-		FROM mz_internal.mz_comments
-		WHERE object_type = 'network-policy'
-	) comments
-		ON mz_network_policies.id = comments.id`)
+		policy.*,
+		COALESCE(rules.rules, '[]'::json) as rules
+	FROM policy
+	LEFT JOIN rules ON policy.id = rules.policy_id`)
 
 func NetworkPolicyId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
-		"mz_network_policies.name": obj.Name,
+		"policy_name": obj.Name,
 	}
 	q := networkPolicyQuery.QueryPredicate(p)
 
-	var c NetworkPolicyParams
-	if err := conn.Get(&c, q); err != nil {
+	var result networkPolicyQueryResult
+	if err := conn.Get(&result, q); err != nil {
 		return "", err
 	}
 
-	return c.PolicyId.String, nil
+	return result.PolicyId.String, nil
 }
 
 func ScanNetworkPolicy(conn *sqlx.DB, id string) (NetworkPolicyParams, error) {
 	p := map[string]string{
-		"mz_network_policies.id": id,
+		"policy.id": id,
 	}
 	q := networkPolicyQuery.QueryPredicate(p)
 
-	var c NetworkPolicyParams
-	if err := conn.Get(&c, q); err != nil {
-		return c, err
+	var result networkPolicyQueryResult
+	if err := conn.Get(&result, q); err != nil {
+		return NetworkPolicyParams{}, err
 	}
 
-	return c, nil
+	policy := NetworkPolicyParams{
+		PolicyId:   result.PolicyId,
+		PolicyName: result.PolicyName,
+		Comment:    result.Comment,
+		OwnerName:  result.OwnerName,
+		Privileges: result.Privileges,
+	}
+
+	// Parse the JSON rules
+	if err := json.Unmarshal(result.Rules, &policy.Rules); err != nil {
+		return NetworkPolicyParams{}, err
+	}
+
+	return policy, nil
 }
