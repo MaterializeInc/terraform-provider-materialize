@@ -115,6 +115,6 @@ func networkPolicyRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
-	SetId(string(region), "network_policies", "", "", d)
+	d.SetId(utils.TransformIdWithRegion(string(region), "network_policies"))
 	return diags
 }

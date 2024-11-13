@@ -43,11 +43,11 @@ func (b *NetworkPolicyBuilder) Create() error {
 		q.WriteString(` ( RULES ( `)
 		ruleStrings := make([]string, len(b.rules))
 		for i, rule := range b.rules {
-			ruleStrings[i] = fmt.Sprintf(`%s (action='%s', direction='%s', address='%s')`,
+			ruleStrings[i] = fmt.Sprintf(`%s (action=%s, direction=%s, address=%s)`,
 				QuoteIdentifier(rule.Name),
-				rule.Action,
-				rule.Direction,
-				rule.Address)
+				QuoteString(rule.Action),
+				QuoteString(rule.Direction),
+				QuoteString(rule.Address))
 		}
 		q.WriteString(strings.Join(ruleStrings, ", "))
 		q.WriteString(` ))`)
@@ -65,11 +65,11 @@ func (b *NetworkPolicyBuilder) Alter() error {
 		q.WriteString(` ( RULES ( `)
 		ruleStrings := make([]string, len(b.rules))
 		for i, rule := range b.rules {
-			ruleStrings[i] = fmt.Sprintf(`%s (action='%s', direction='%s', address='%s')`,
+			ruleStrings[i] = fmt.Sprintf(`%s (action=%s, direction=%s, address=%s)`,
 				QuoteIdentifier(rule.Name),
-				rule.Action,
-				rule.Direction,
-				rule.Address)
+				QuoteString(rule.Action),
+				QuoteString(rule.Direction),
+				QuoteString(rule.Address))
 		}
 		q.WriteString(strings.Join(ruleStrings, ", "))
 		q.WriteString(` ))`)
@@ -93,7 +93,7 @@ type NetworkPolicyParams struct {
 	Rules      []NetworkPolicyRule
 }
 
-type networkPolicyQueryResult struct {
+type NetworkPolicyQueryResult struct {
 	PolicyId   sql.NullString `db:"id"`
 	PolicyName sql.NullString `db:"policy_name"`
 	Comment    sql.NullString `db:"comment"`
@@ -145,7 +145,7 @@ func NetworkPolicyId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	}
 	q := networkPolicyQuery.QueryPredicate(p)
 
-	var result networkPolicyQueryResult
+	var result NetworkPolicyQueryResult
 	if err := conn.Get(&result, q); err != nil {
 		return "", err
 	}
@@ -159,7 +159,7 @@ func ScanNetworkPolicy(conn *sqlx.DB, id string) (NetworkPolicyParams, error) {
 	}
 	q := networkPolicyQuery.QueryPredicate(p)
 
-	var result networkPolicyQueryResult
+	var result NetworkPolicyQueryResult
 	if err := conn.Get(&result, q); err != nil {
 		return NetworkPolicyParams{}, err
 	}
@@ -184,7 +184,7 @@ func ListNetworkPolicies(conn *sqlx.DB) ([]NetworkPolicyParams, error) {
 	var policies []NetworkPolicyParams
 	q := networkPolicyQuery.QueryPredicate(map[string]string{})
 
-	var results []networkPolicyQueryResult
+	var results []NetworkPolicyQueryResult
 	if err := conn.Select(&results, q); err != nil {
 		return policies, err
 	}

@@ -65,7 +65,6 @@ var networkPolicySchema = map[string]*schema.Schema{
 		},
 		MaxItems: 25,
 	},
-	// "ownership_role": OwnershipRoleSchema(),
 	"region": RegionSchema(),
 }
 
@@ -111,10 +110,6 @@ func networkPolicyRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err := d.Set("comment", policy.Comment.String); err != nil {
 		return diag.FromErr(err)
 	}
-
-	// if err := d.Set("ownership_role", policy.OwnerName.String); err != nil {
-	// 	return diag.FromErr(err)
-	// }
 
 	// Convert rules to terraform format
 	ruleList := make([]interface{}, len(policy.Rules))
@@ -168,16 +163,6 @@ func networkPolicyCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	// ownership not currently supported
-	// if v, ok := d.GetOk("ownership_role"); ok {
-	// 	ownership := materialize.NewOwnershipBuilder(metaDb, o)
-	// 	if err := ownership.Alter(v.(string)); err != nil {
-	// 		log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
-	// 		b.Drop()
-	// 		return diag.FromErr(err)
-	// 	}
-	// }
-
 	// comment
 	if v, ok := d.GetOk("comment"); ok {
 		comment := materialize.NewCommentBuilder(metaDb, o)
@@ -230,16 +215,6 @@ func networkPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 			return diag.FromErr(err)
 		}
 	}
-
-	// Not currently supported
-	// if d.HasChange("ownership_role") {
-	// 	_, newRole := d.GetChange("ownership_role")
-	// 	ownership := materialize.NewOwnershipBuilder(metaDb, o)
-
-	// 	if err := ownership.Alter(newRole.(string)); err != nil {
-	// 		return diag.FromErr(err)
-	// 	}
-	// }
 
 	if d.HasChange("comment") {
 		_, newComment := d.GetChange("comment")
