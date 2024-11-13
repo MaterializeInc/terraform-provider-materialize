@@ -31,6 +31,7 @@ const (
 	BaseType         EntityType = "TYPE"
 	View             EntityType = "VIEW"
 	System           EntityType = "SYSTEM"
+	NetworkPolicy    EntityType = "NETWORK POLICY"
 )
 
 type Builder struct {

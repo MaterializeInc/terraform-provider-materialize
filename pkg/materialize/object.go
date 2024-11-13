@@ -89,6 +89,9 @@ func ObjectId(conn *sqlx.DB, object MaterializeObject) (string, error) {
 
 	case "CLUSTER":
 		i, e = ClusterId(conn, object)
+
+	case "NETWORK POLICY":
+		i, e = NetworkPolicyId(conn, object)
 	}
 
 	if e != nil {

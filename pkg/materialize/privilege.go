@@ -17,6 +17,7 @@ var Permissions = map[string]string{
 	"R": "CREATEROLE",
 	"B": "CREATEDB",
 	"N": "CREATECLUSTER",
+	"P": "CREATENETWORKPOLICY",
 }
 
 type ObjectType struct {
@@ -62,7 +63,7 @@ var ObjectPermissions = map[string]ObjectType{
 		Permissions: []string{"U", "C"},
 	},
 	"SYSTEM": {
-		Permissions: []string{"R", "B", "N"},
+		Permissions: []string{"R", "B", "N", "P"},
 	},
 }
 
@@ -234,6 +235,11 @@ func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) ([]string, error
 
 	case "CLUSTER":
 		params, err := ScanCluster(conn, objectId, false)
+		p = params.Privileges
+		e = err
+
+	case "NETWORK POLICY":
+		params, err := ScanNetworkPolicy(conn, objectId)
 		p = params.Privileges
 		e = err
 	}
