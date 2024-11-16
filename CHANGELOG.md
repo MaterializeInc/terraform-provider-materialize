@@ -51,11 +51,28 @@
     }
     ```
 
+  * An initial `default` network policy will be created.
+    This policy allows open access to the environment and can be altered by a `superuser`.
+    Use the `ALTER SYSTEM SET network_policy TO 'office_access_policy'` command
+    or the `materialize_system_parameter` resource to update the default network policy.
+
+    ```hcl
+    resource "materialize_system_parameter" "system_parameter" {
+      name  = "network_policy"
+      value = "office_access_policy"
+    }
+    ```
+
+## Bug Fixes
+
+* Updated the cluster and cluster replica query builders to skip `DISK` property for `cc` and `C` clusters as this is enabled by default for those sizes [#671](https://github.com/MaterializeInc/terraform-provider-materialize/pull/671)
+
 ## Misc
 
 * Upgrade from `pgx` v3 to v4 [#663](https://github.com/MaterializeInc/terraform-provider-materialize/pull/663)
 * Routine dependency updates: [#668](https://github.com/MaterializeInc/terraform-provider-materialize/pull/668), [#667](https://github.com/MaterializeInc/terraform-provider-materialize/pull/667)
 * Upgraded Go version from `1.22.0` to `1.22.7` for improved performance and security fixes [#669](https://github.com/MaterializeInc/terraform-provider-materialize/pull/669)
+* Added `--bootstrap-builtin-analytics-cluster-replica-size` to the Docker compose file to fix failing tests [#671](https://github.com/MaterializeInc/terraform-provider-materialize/pull/671)
 
 ## 0.8.10 - 2024-10-7
 
