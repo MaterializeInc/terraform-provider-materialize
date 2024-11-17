@@ -1,6 +1,4 @@
 ---
-version: "3.9"
-
 services:
 
   materialized:
@@ -13,6 +11,7 @@ services:
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
       - --bootstrap-builtin-support-cluster-replica-size=3xsmall
       - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-analytics-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --aws-account-id=123456789000
@@ -40,6 +39,7 @@ services:
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
       - --bootstrap-builtin-support-cluster-replica-size=3xsmall
       - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-analytics-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --aws-account-id=123456789000
