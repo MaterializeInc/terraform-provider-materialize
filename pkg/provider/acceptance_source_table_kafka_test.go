@@ -25,7 +25,6 @@ func TestAccSourceTableKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "name", nameSpace+"_table_kafka"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "schema_name", "public"),
-					// resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s_table_kafka"`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_key", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_kafka", "include_key_alias", "message_key"),
