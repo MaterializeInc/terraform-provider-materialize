@@ -167,7 +167,8 @@ func (b *ClusterBuilder) GenerateClusterOptions() string {
 		p = append(p, i)
 	}
 
-	if b.disk {
+	// Only add DISK to the quiery builder if it's enabled AND size doesn't end in either "cc" or "C"
+	if b.disk && !strings.HasSuffix(b.size, "cc") && !strings.HasSuffix(b.size, "C") {
 		i := fmt.Sprintf(`DISK`)
 		p = append(p, i)
 	}

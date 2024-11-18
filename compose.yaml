@@ -1,18 +1,16 @@
----
-version: "3.9"
-
 services:
 
   materialized:
     image: materialize/materialized:latest
     container_name: materialized
     command:
-      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
       - --bootstrap-builtin-support-cluster-replica-size=3xsmall
       - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-analytics-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --aws-account-id=123456789000
@@ -34,12 +32,13 @@ services:
     image: materialize/materialized:latest
     container_name: materialized2
     command:
-      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
       - --bootstrap-builtin-support-cluster-replica-size=3xsmall
       - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-analytics-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --aws-account-id=123456789000
