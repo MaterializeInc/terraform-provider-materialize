@@ -9,14 +9,29 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// ProviderMode represents the mode in which the provider is operating
+type ProviderMode string
+
+const (
+	ModeSaaS       ProviderMode = "saas"
+	ModeSelfHosted ProviderMode = "self_hosted"
+)
+
 // ProviderMeta holds essential configuration and client information
 // required across various parts of the provider. It acts as a central
 // repository of shared data, particularly for database connections, API clients,
 // and regional settings.
 type ProviderMeta struct {
+	// Mode represents the mode in which the provider is operating: default to SaaS
+	Mode ProviderMode
+
 	// DB is a map that associates each supported region with its corresponding
 	// database client. This allows for region-specific database operations.
 	DB map[clients.Region]*clients.DBClient
+
+	// DefaultRegion specifies the default region to be used when no specific
+	// region is provided in the resources and data sources.
+	DefaultRegion clients.Region
 
 	// Frontegg represents the client used to interact with the Frontegg API,
 	// which may involve authentication, token management, etc.
@@ -24,10 +39,6 @@ type ProviderMeta struct {
 
 	// CloudAPI is the client used for interactions with the cloud API
 	CloudAPI *clients.CloudAPIClient
-
-	// DefaultRegion specifies the default region to be used when no specific
-	// region is provided in the resources and data sources.
-	DefaultRegion clients.Region
 
 	// RegionsEnabled is a map indicating which regions are currently enabled
 	// for use. This can be used to quickly check the availability in different regions.
@@ -38,15 +49,26 @@ type ProviderMeta struct {
 	FronteggRoles map[string]string
 }
 
+func (p *ProviderMeta) IsSelfHosted() bool {
+	return p.Mode == ModeSelfHosted
+}
+
+func (p *ProviderMeta) IsSaaS() bool {
+	// Empty string or explicit ModeSaaS both indicate SaaS mode
+	return p.Mode == "" || p.Mode == ModeSaaS
+}
+
 var DefaultRegion string
 
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
 	providerMeta := meta.(*ProviderMeta)
 
-	if err := providerMeta.Frontegg.NeedsTokenRefresh(); err != nil {
-		err := providerMeta.Frontegg.RefreshToken()
-		if err != nil {
-			return nil, fmt.Errorf("failed to refresh token: %v", err)
+	// Only refresh token for SaaS mode
+	if providerMeta.Mode == ModeSaaS && providerMeta.Frontegg != nil {
+		if err := providerMeta.Frontegg.NeedsTokenRefresh(); err != nil {
+			if err := providerMeta.Frontegg.RefreshToken(); err != nil {
+				return nil, fmt.Errorf("failed to refresh token: %v", err)
+			}
 		}
 	}
 
@@ -59,7 +81,20 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 		return nil, "", err
 	}
 
-	// Determine the region to use, if one is not specified, use the default region
+	if providerMeta.IsSelfHosted() {
+		region := clients.Region("self-hosted")
+		if d != nil {
+			d.Set("region", string(region))
+		}
+
+		dbClient, exists := providerMeta.DB[region]
+		if !exists {
+			return nil, region, fmt.Errorf("database client not initialized for self-hosted instance")
+		}
+		return dbClient.SQLX(), region, nil
+	}
+
+	// Determine region for SaaS deployments
 	var region clients.Region
 	if d != nil && d.Get("region") != "" {
 		region = clients.Region(d.Get("region").(string))
@@ -73,7 +108,7 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 		d.Set("region", string(region))
 	}
 
-	// Check if the region is enabled using the stored information
+	// Validate region is enabled (SaaS only)
 	enabled, exists := providerMeta.RegionsEnabled[region]
 	if !exists {
 		var regions []string
