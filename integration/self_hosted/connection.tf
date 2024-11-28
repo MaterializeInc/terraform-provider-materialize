@@ -109,49 +109,6 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
   validate                          = false
 }
 
-resource "materialize_connection_kafka" "kafka_top_level_privatelink" {
-  name = "kafka_top_level_privatelink"
-  # The Privatelink connection is created during the docker compose setup
-  # As if you were to drop the privatelink connection, the container would crash
-  aws_privatelink {
-    privatelink_connection {
-      name          = "privatelink_conn"
-      database_name = "materialize"
-      schema_name   = "public"
-    }
-    privatelink_connection_port = 9092
-  }
-
-  security_protocol = "SASL_SSL"
-  sasl_mechanisms   = "SCRAM-SHA-256"
-
-  sasl_username {
-    text = "sasl_username"
-  }
-
-  sasl_password {
-    name          = materialize_secret.kafka_password.name
-    database_name = materialize_secret.kafka_password.database_name
-    schema_name   = materialize_secret.kafka_password.schema_name
-  }
-
-  ssl_certificate {
-    text = "ssl_certificate_content"
-  }
-
-  ssl_key {
-    name          = materialize_secret.kafka_password.name
-    database_name = materialize_secret.kafka_password.database_name
-    schema_name   = materialize_secret.kafka_password.schema_name
-  }
-
-  ssl_certificate_authority {
-    text = "ssl_ca_content"
-  }
-
-  validate = false
-}
-
 resource "materialize_connection_confluent_schema_registry" "schema_registry" {
   name    = "schema_registry_connection"
   comment = "connection schema registry comment"
@@ -171,29 +128,6 @@ resource "materialize_connection_confluent_schema_registry" "csr_with_basic_auth
     name          = materialize_secret.kafka_password.name
     database_name = materialize_secret.kafka_password.database_name
     schema_name   = materialize_secret.kafka_password.schema_name
-  }
-
-  validate = false
-}
-
-resource "materialize_connection_confluent_schema_registry" "csr_with_aws_privatelink" {
-  name = "csr_with_aws_privatelink"
-  url  = "http://redpanda:8081"
-
-  username {
-    text = "username"
-  }
-
-  password {
-    name          = materialize_secret.kafka_password.name
-    database_name = materialize_secret.kafka_password.database_name
-    schema_name   = materialize_secret.kafka_password.schema_name
-  }
-
-  aws_privatelink {
-    name          = "privatelink_conn"
-    database_name = "materialize"
-    schema_name   = "public"
   }
 
   validate = false
@@ -380,29 +314,6 @@ resource "materialize_connection_mysql" "mysql_connection" {
     database_name = materialize_secret.mysql_password.database_name
     schema_name   = materialize_secret.mysql_password.schema_name
   }
-}
-
-resource "materialize_connection_mysql" "mysql_connection_aws_pl" {
-  name    = "mysql_connection_aws_pl"
-  comment = "connection mysql comment with aws privatelink"
-
-  host = "mysql"
-  port = 3306
-  user {
-    text = "repluser"
-  }
-  password {
-    name          = materialize_secret.mysql_password.name
-    database_name = materialize_secret.mysql_password.database_name
-    schema_name   = materialize_secret.mysql_password.schema_name
-  }
-
-  aws_privatelink {
-    name          = "privatelink_conn"
-    database_name = "materialize"
-    schema_name   = "public"
-  }
-  validate = false
 }
 
 resource "materialize_connection_mysql" "mysql_connection_with_secret" {
