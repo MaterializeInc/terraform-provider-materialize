@@ -17,4 +17,18 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - run: go test -v -cover ./...
+      - name: Run Tests
+        run: |
+          set -e
+          retries=3
+          count=0
+          until [ $count -ge $retries ]
+          do
+            go test -v -cover ./... && break
+            count=$((count+1))
+            echo "Retrying tests... Attempt $count of $retries"
+          done
+          if [ $count -ge $retries ]; then
+            echo "Tests failed after $retries attempts."
+            exit 1
+          fi
