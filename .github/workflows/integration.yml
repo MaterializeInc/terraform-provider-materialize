@@ -10,7 +10,7 @@ on:
     - cron: 1 11 * * 0
 
 jobs:
-  integration:
+  saas:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
