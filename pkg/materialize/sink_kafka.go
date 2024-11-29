@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -157,9 +158,15 @@ func (b *SinkKafkaBuilder) Create() error {
 			q.WriteString(fmt.Sprintf(`, TOPIC PARTITION COUNT = %d`, b.topicPartitionCount))
 		}
 		if len(b.topicConfig) > 0 {
+			keys := make([]string, 0, len(b.topicConfig))
+			for k := range b.topicConfig {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
 			configItems := make([]string, 0, len(b.topicConfig))
-			for k, v := range b.topicConfig {
-				configItems = append(configItems, fmt.Sprintf("%s => %s", QuoteString(k), QuoteString(v)))
+			for _, k := range keys {
+				configItems = append(configItems, fmt.Sprintf("%s => %s", QuoteString(k), QuoteString(b.topicConfig[k])))
 			}
 			q.WriteString(fmt.Sprintf(`, TOPIC CONFIG MAP[%s]`, strings.Join(configItems, ", ")))
 		}
