@@ -7,7 +7,7 @@ toolchain go1.22.9
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/hashicorp/terraform-plugin-docs v0.20.0
+	github.com/hashicorp/terraform-plugin-docs v0.20.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.35.0
 	github.com/hashicorp/terraform-plugin-testing v1.11.0
 	github.com/jackc/pgconn v1.14.3
