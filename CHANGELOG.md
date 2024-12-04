@@ -4,6 +4,183 @@
 
 * Remove outdated feature lifecycle annotations for features that are now Generally Available (GA).
 
+## 0.8.11 - 2024-11-13
+
+## Features
+
+* Adding a new `materialize_network_policy` resource and data source [#669](https://github.com/MaterializeInc/terraform-provider-materialize/pull/669).
+
+  A network policy allows you to manage access to the system through IP-based rules.
+
+  * Example `materialize_network_policy` resource:
+
+    ```hcl
+    resource "materialize_network_policy" "office_policy" {
+      name = "office_access_policy"
+
+      rule {
+        name      = "new_york"
+        action    = "allow"
+        direction = "ingress"
+        address   = "8.2.3.4/28"
+      }
+
+      rule {
+        name      = "minnesota"
+        action    = "allow"
+        direction = "ingress"
+        address   = "2.3.4.5/32"
+      }
+
+      comment = "Network policy for office locations"
+    }
+    ```
+
+  * Example `materialize_network_policy` data source:
+
+    ```hcl
+    data "materialize_network_policy" "all" {}
+    ```
+
+  * Added support for the new `CREATENETWORKPOLICY` system privilege:
+
+    ```hcl
+    resource "materialize_role" "test" {
+      name = "test_role"
+    }
+
+    resource "materialize_grant_system_privilege" "role_createnetworkpolicy" {
+      role_name = materialize_role.test.name
+      privilege = "CREATENETWORKPOLICY"
+    }
+    ```
+
+  * An initial `default` network policy will be created.
+    This policy allows open access to the environment and can be altered by a `superuser`.
+    Use the `ALTER SYSTEM SET network_policy TO 'office_access_policy'` command
+    or the `materialize_system_parameter` resource to update the default network policy.
+
+    ```hcl
+    resource "materialize_system_parameter" "system_parameter" {
+      name  = "network_policy"
+      value = "office_access_policy"
+    }
+    ```
+
+## Bug Fixes
+
+* Updated the cluster and cluster replica query builders to skip `DISK` property for `cc` and `C` clusters as this is enabled by default for those sizes [#671](https://github.com/MaterializeInc/terraform-provider-materialize/pull/671)
+
+## Misc
+
+* Upgrade from `pgx` v3 to v4 [#663](https://github.com/MaterializeInc/terraform-provider-materialize/pull/663)
+* Routine dependency updates: [#668](https://github.com/MaterializeInc/terraform-provider-materialize/pull/668), [#667](https://github.com/MaterializeInc/terraform-provider-materialize/pull/667)
+* Upgraded Go version from `1.22.0` to `1.22.7` for improved performance and security fixes [#669](https://github.com/MaterializeInc/terraform-provider-materialize/pull/669)
+* Added `--bootstrap-builtin-analytics-cluster-replica-size` to the Docker compose file to fix failing tests [#671](https://github.com/MaterializeInc/terraform-provider-materialize/pull/671)
+
+## 0.8.10 - 2024-10-7
+
+## Features
+
+* Add support for `partition_by` attribute in `materialize_sink_kafka` [#659](https://github.com/MaterializeInc/terraform-provider-materialize/pull/659)
+  * The `partition_by` attribute accepts a SQL expression used to partition the data in the Kafka sink. Can only be used with `ENVELOPE UPSERT`.
+  * Example usage:
+  ```hcl
+  resource "materialize_sink_kafka" "orders_kafka_sink" {
+    name         = "orders_sink"
+    kafka_connection {
+      name = "kafka_connection"
+    }
+    topic        = "orders_topic"
+
+    partition_by = "column_name"
+
+    # Additional configuration...
+  }
+  ```
+
+## Misc
+
+* Set `transaction_isolation` as conneciton option instead of executing a `SET` command [#660](https://github.com/MaterializeInc/terraform-provider-materialize/pull/660)
+* Routine dependency updates: [#661](https://github.com/MaterializeInc/terraform-provider-materialize/pull/661)
+
+## 0.8.9 - 2024-09-30
+
+### BugFixes
+
+* Explicitly set `TRANSACTION_ISOLATION` to `STRICT SERIALIZABLE` [#657](https://github.com/MaterializeInc/terraform-provider-materialize/pull/657)
+* Fix user not found state status in the `materialize_user` resource [#638](https://github.com/MaterializeInc/terraform-provider-materialize/pull/638)
+* Fix Inconsistent Error Handling in `ReadUser` in the `materialize_user` resource [#642](https://github.com/MaterializeInc/terraform-provider-materialize/pull/642)
+
+### Misc
+
+* Update Go version to 1.22 [#650](https://github.com/MaterializeInc/terraform-provider-materialize/pull/650)
+* Switched tests to use a stable version of the Rust Frontegg mock service [#653](https://github.com/MaterializeInc/terraform-provider-materialize/pull/653)
+* Improve the Cloud Mock Service [#651](https://github.com/MaterializeInc/terraform-provider-materialize/pull/651)
+* Disable telemetry in CI [#640](https://github.com/MaterializeInc/terraform-provider-materialize/pull/640)
+
+## 0.8.8 - 2024-08-26
+
+### Features
+
+* Add `wait_until_ready` option to `cluster` resources, which allows graceful cluster reconfiguration (i.e., with no downtime) for clusters with no sources or sinks. [#632](https://github.com/MaterializeInc/terraform-provider-materialize/pull/632)
+  * Example usage:
+  ```hcl
+  resource "materialize_cluster" "cluster" {
+    name = var.mz_cluster
+    size = "25cc"
+    wait_until_ready {
+      enabled = true
+      timeout = "10m"
+      on_timeout = "COMMIT"
+    }
+  }
+  ```
+
+### Misc
+
+* Unify the cluster alter commands [#628](https://github.com/MaterializeInc/terraform-provider-materialize/pull/628)
+* Switched tests to use the Rust Frontegg mock service [#634](https://github.com/MaterializeInc/terraform-provider-materialize/pull/634)
+
+
+## 0.8.7 - 2024-08-15
+
+### Features
+
+* Add support for AWS IAM authentication in `materialize_connection_kafka` [#627](https://github.com/MaterializeInc/terraform-provider-materialize/pull/627)
+  * Example usage:
+  ```hcl
+  # Create an AWS connection for IAM authentication
+  resource "materialize_connection_aws" "msk_auth" {
+    name                    = "aws_msk"
+    assume_role_arn         = "arn:aws:iam::123456789012:role/MaterializeMSK"
+  }
+
+  # Create a Kafka connection using AWS IAM authentication
+  resource "materialize_connection_kafka" "kafka_msk" {
+    name              = "kafka_msk"
+    kafka_broker {
+      broker = "b-1.your-cluster-name.abcdef.c1.kafka.us-east-1.amazonaws.com:9098"
+    }
+    security_protocol = "SASL_SSL"
+    aws_connection {
+      name          = materialize_connection_aws.msk_auth.name
+      database_name = materialize_connection_aws.msk_auth.database_name
+      schema_name   = materialize_connection_aws.msk_auth.schema_name
+    }
+  }
+  ```
+
+### Bug Fixes
+
+* Fix `materialize_connection_aws` read function issues caused by empty internal table [#630](https://github.com/MaterializeInc/terraform-provider-materialize/pull/630)
+* Fix duplicate application name in the provider configuration [#626](https://github.com/MaterializeInc/terraform-provider-materialize/pull/626)
+
+### Misc
+
+* Add more information to import docs for all resources [#623](https://github.com/MaterializeInc/terraform-provider-materialize/pull/623)
+* Routine dependency updates: [#631](https://github.com/MaterializeInc/terraform-provider-materialize/pull/631)
+
 ## 0.8.6 - 2024-07-31
 
 ### Features

@@ -27,11 +27,11 @@ func TestAccUser_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "send_activation_email", "false"),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
-					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "false"),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "true"),
 					// Data source tests
 					resource.TestCheckResourceAttrPair("data.materialize_user.user_data", "id", "materialize_user.example_user", "id"),
 					resource.TestCheckResourceAttr("data.materialize_user.user_data", "email", email),
-					resource.TestCheckResourceAttr("data.materialize_user.user_data", "verified", "false"),
+					resource.TestCheckResourceAttr("data.materialize_user.user_data", "verified", "true"),
 				),
 			},
 		},
@@ -73,7 +73,7 @@ func TestAccUser_updateRole(t *testing.T) {
 					testAccCheckUserExists("materialize_user.example_user", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "email", email),
 					resource.TestCheckResourceAttr("materialize_user.example_user", "roles.0", "Member"),
-					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "false"),
+					resource.TestCheckResourceAttr("materialize_user.example_user", "verified", "true"),
 				),
 			},
 			{

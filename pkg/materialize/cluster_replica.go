@@ -67,7 +67,8 @@ func (b *ClusterReplicaBuilder) Create() error {
 		p = append(p, s)
 	}
 
-	if b.disk {
+	// Only add DISK to the quiery builder if it's enabled AND size doesn't end in either "cc" or "C"
+	if b.disk && !strings.HasSuffix(b.size, "cc") && !strings.HasSuffix(b.size, "C") {
 		i := " DISK"
 		p = append(p, i)
 	}

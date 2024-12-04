@@ -432,7 +432,7 @@ func TestSinkKafkaTopicOptionsWithCompressionCreate(t *testing.T) {
 			FROM "database"."schema"."src"
 			INTO KAFKA CONNECTION "database"."schema"."kafka_conn"
 			\(TOPIC 'testdrive-snk1-seed', COMPRESSION TYPE = gzip, TOPIC REPLICATION FACTOR = 3, TOPIC PARTITION COUNT = 6,
-			TOPIC CONFIG MAP\[.*?'cleanup\.policy' => 'compact'.*?'retention\.ms' => '86400000'.*?\]\)
+			TOPIC CONFIG MAP\['cleanup.policy' => 'compact', 'compression.type' => 'gzip', 'retention.ms' => '86400000'\]\)
 			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."csr_conn"
 			ENVELOPE DEBEZIUM;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -446,8 +446,9 @@ func TestSinkKafkaTopicOptionsWithCompressionCreate(t *testing.T) {
 		b.TopicReplicationFactor(3)
 		b.TopicPartitionCount(6)
 		b.TopicConfig(map[string]string{
-			"cleanup.policy": "compact",
-			"retention.ms":   "86400000",
+			"cleanup.policy":   "compact",
+			"retention.ms":     "86400000",
+			"compression.type": "gzip",
 		})
 		b.Format(
 			SinkFormatSpecStruct{
@@ -505,6 +506,32 @@ func TestSinkKafkaAvroCompatibilityLevelsCreate(t *testing.T) {
 				ValueCompatibilityLevel: "FORWARD",
 			},
 		})
+		b.Envelope(KafkaSinkEnvelopeStruct{Upsert: true})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSinkKafkaPartitionByCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."sink"
+			FROM "database"."schema"."src"
+			INTO KAFKA CONNECTION "database"."schema"."kafka_conn"
+			\(TOPIC 'testdrive-snk1-seed', PARTITION BY customer_id\)
+			FORMAT JSON
+			ENVELOPE UPSERT;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkKafkaBuilder(db, o)
+		b.From(IdentifierSchemaStruct{Name: "src", SchemaName: "schema", DatabaseName: "database"})
+		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"})
+		b.Topic("testdrive-snk1-seed")
+		b.PartitionBy("customer_id")
+		b.Format(SinkFormatSpecStruct{Json: true})
 		b.Envelope(KafkaSinkEnvelopeStruct{Upsert: true})
 
 		if err := b.Create(); err != nil {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	_ "github.com/jackc/pgx/stdlib"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 func Provider(version string) *schema.Provider {
@@ -38,7 +38,7 @@ func Provider(version string) *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", "require"),
 				Description: "For testing purposes, the SSL mode to use.",
 			},
-			// TODO: Switch to Admin Endpoint
+			// TODO: Switch name to Admin Endpoint for consistency:
 			"endpoint": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -87,6 +87,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_index":                                resources.Index(),
 			"materialize_materialized_view":                    resources.MaterializedView(),
 			"materialize_materialized_view_grant":              resources.GrantMaterializedView(),
+			"materialize_network_policy":                       resources.NetworkPolicy(),
 			"materialize_region":                               resources.Region(),
 			"materialize_role":                                 resources.Role(),
 			"materialize_role_grant":                           resources.GrantRole(),
@@ -132,6 +133,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_egress_ips":        datasources.EgressIps(),
 			"materialize_index":             datasources.Index(),
 			"materialize_materialized_view": datasources.MaterializedView(),
+			"materialize_network_policy":    datasources.NetworkPolicy(),
 			"materialize_region":            datasources.Region(),
 			"materialize_role":              datasources.Role(),
 			"materialize_schema":            datasources.Schema(),
@@ -168,7 +170,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 		return nil, diag.FromErr(err)
 	}
 
-	// Initialize the Frontegg client.
+	// Initialize the Frontegg client
 	fronteggClient, err := clients.NewFronteggClient(ctx, password, endpoint)
 	if err != nil {
 		return nil, diag.Errorf("Unable to create Frontegg client: %s", err)

@@ -151,7 +151,7 @@ resource "materialize_connection_kafka" "kafka_conn_multiple_brokers" {
 
 resource "materialize_connection_kafka" "kafka_top_level_privatelink" {
   name = "kafka_top_level_privatelink"
-  # The Privatelink connection is created during the docker-compose setup
+  # The Privatelink connection is created during the docker compose setup
   # As if you were to drop the privatelink connection, the container would crash
   aws_privatelink {
     privatelink_connection {

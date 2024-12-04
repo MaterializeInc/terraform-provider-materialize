@@ -9,6 +9,12 @@ import (
 	"github.com/lib/pq"
 )
 
+type ReconfigurationOptions struct {
+	enabled    bool
+	timeout    string
+	on_timeout string
+}
+
 // DDL
 type ClusterBuilder struct {
 	ddl                    Builder
@@ -31,6 +37,7 @@ func NewClusterBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterBuilder {
 
 type SchedulingConfig struct {
 	OnRefresh OnRefreshConfig
+	IsSet     bool
 }
 
 type OnRefreshConfig struct {
@@ -68,6 +75,7 @@ func GetSchedulingConfig(v interface{}) SchedulingConfig {
 		OnRefresh: OnRefreshConfig{
 			Enabled: false,
 		},
+		IsSet: true,
 	}
 
 	if enabled, ok := onRefreshMap["enabled"].(bool); ok {
@@ -83,6 +91,34 @@ func GetSchedulingConfig(v interface{}) SchedulingConfig {
 	}
 
 	return config
+}
+
+func (b *ClusterBuilder) GetReconfigOpts(v interface{}) ReconfigurationOptions {
+	if v == nil {
+		return ReconfigurationOptions{}
+	}
+	configSlice, ok := v.([]interface{})
+	if !ok || len(configSlice) == 0 {
+		return ReconfigurationOptions{}
+	}
+
+	configMap, ok := configSlice[0].(map[string]interface{})
+	if !ok {
+		return ReconfigurationOptions{}
+	}
+
+	reconfigOpts := ReconfigurationOptions{}
+
+	if o, ok := configMap["enabled"]; ok {
+		reconfigOpts.enabled = o.(bool)
+	}
+	if o, ok := configMap["timeout"]; ok {
+		reconfigOpts.timeout = o.(string)
+	}
+	if o, ok := configMap["on_timeout"]; ok {
+		reconfigOpts.on_timeout = o.(string)
+	}
+	return reconfigOpts
 }
 
 func (b *ClusterBuilder) QualifiedName() string {
@@ -124,65 +160,97 @@ func (b *ClusterBuilder) Scheduling(v []interface{}) *ClusterBuilder {
 	return b
 }
 
+func (b *ClusterBuilder) GenerateClusterOptions() string {
+	var p []string
+	if b.size != "" {
+		i := fmt.Sprintf(`SIZE %s`, QuoteString(b.size))
+		p = append(p, i)
+	}
+
+	// Only add DISK to the quiery builder if it's enabled AND size doesn't end in either "cc" or "C"
+	if b.disk && !strings.HasSuffix(b.size, "cc") && !strings.HasSuffix(b.size, "C") {
+		i := fmt.Sprintf(`DISK`)
+		p = append(p, i)
+	}
+
+	if b.replicationFactor != nil {
+		i := fmt.Sprintf(`REPLICATION FACTOR %v`, *b.replicationFactor)
+		p = append(p, i)
+	}
+
+	if len(b.availabilityZones) > 0 {
+		var az []string
+		for _, z := range b.availabilityZones {
+			f := QuoteString(z)
+			az = append(az, f)
+		}
+		a := fmt.Sprintf(`AVAILABILITY ZONES = [%s]`, strings.Join(az[:], ","))
+		p = append(p, a)
+	}
+
+	if b.introspectionInterval != "" {
+		i := fmt.Sprintf(`INTROSPECTION INTERVAL = %s`, QuoteString(b.introspectionInterval))
+		p = append(p, i)
+	}
+
+	if b.introspectionDebugging {
+		p = append(p, `INTROSPECTION DEBUGGING = TRUE`)
+	}
+
+	if b.schedulingConfig.IsSet {
+		// We skip setting this in alter cluster because it
+		// will be handled independently
+		p = append(p, b.GenSchedulingConfigSql(b.schedulingConfig))
+	}
+
+	if len(p) > 0 {
+		return strings.Join(p[:], ", ")
+	}
+	return ""
+}
+
 func (b *ClusterBuilder) Create() error {
 	q := strings.Builder{}
 
 	q.WriteString(fmt.Sprintf(`CREATE CLUSTER %s`, b.QualifiedName()))
-	// Only create empty clusters, manage replicas with separate resource if size is not set
+	// Size is the only required option for managed clusters. A "REPLICAS ()" option indicates
+	// and is required for unmanaged clusters. No other options can be provided for managed
+	// clusters.
 	if b.size != "" {
-		q.WriteString(fmt.Sprintf(` SIZE %s`, QuoteString(b.size)))
-
-		var p []string
-
-		if b.disk {
-			i := fmt.Sprintf(` DISK`)
-			p = append(p, i)
-		}
-
-		if b.replicationFactor != nil {
-			i := fmt.Sprintf(` REPLICATION FACTOR %v`, *b.replicationFactor)
-			p = append(p, i)
-		}
-
-		if len(b.availabilityZones) > 0 {
-			var az []string
-			for _, z := range b.availabilityZones {
-				f := QuoteString(z)
-				az = append(az, f)
-			}
-			a := fmt.Sprintf(` AVAILABILITY ZONES = [%s]`, strings.Join(az[:], ","))
-			p = append(p, a)
-		}
-
-		if b.introspectionInterval != "" {
-			i := fmt.Sprintf(` INTROSPECTION INTERVAL = %s`, QuoteString(b.introspectionInterval))
-			p = append(p, i)
-		}
-
-		if b.introspectionDebugging {
-			p = append(p, ` INTROSPECTION DEBUGGING = TRUE`)
-		}
-
-		if b.schedulingConfig.OnRefresh.Enabled {
-			scheduleStatement := " SCHEDULE = ON REFRESH"
-			if b.schedulingConfig.OnRefresh.HydrationTimeEstimate != "" {
-				scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.HydrationTimeEstimate))
-			} else if b.schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
-				scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.RehydrationTimeEstimate))
-			}
-			p = append(p, scheduleStatement)
-		}
-
-		if len(p) > 0 {
-			p := strings.Join(p[:], ",")
-			q.WriteString(fmt.Sprintf(`,%s`, p))
-		}
+		q.WriteString(fmt.Sprintf(` (%s)`, b.GenerateClusterOptions()))
 	} else {
-		q.WriteString(` REPLICAS ()`)
+		q.WriteString(` (REPLICAS ())`)
 	}
 
 	q.WriteString(`;`)
+	return b.ddl.exec(q.String())
+}
 
+func (b *ClusterBuilder) AlterClusterScheduling(s SchedulingConfig) error {
+	q := strings.Builder{}
+	q.WriteString(fmt.Sprintf(`ALTER CLUSTER %s`, b.QualifiedName()))
+	q.WriteString(fmt.Sprintf(` SET (%s)`, b.GenSchedulingConfigSql(s)))
+	q.WriteString(`;`)
+	return b.ddl.exec(q.String())
+}
+
+func (b *ClusterBuilder) AlterCluster(reconfig_opts ReconfigurationOptions) error {
+	q := strings.Builder{}
+	graceful_reconfig_statement := fmt.Sprintf(
+		" WITH ( WAIT UNTIL READY ( TIMEOUT %s, ON TIMEOUT %s ) )",
+		QuoteString(reconfig_opts.timeout),
+		QuoteString(reconfig_opts.on_timeout),
+	)
+
+	q.WriteString(fmt.Sprintf(`ALTER CLUSTER %s`, b.QualifiedName()))
+	// The only alterations to unmanaged clusters should be to
+	// move them to maanged clusters, we will assume here that we are only
+	// dealing with managed clusters
+	q.WriteString(fmt.Sprintf(` SET (%s)`, b.GenerateClusterOptions()))
+	if reconfig_opts.enabled {
+		q.WriteString(graceful_reconfig_statement)
+	}
+	q.WriteString(`;`)
 	return b.ddl.exec(q.String())
 }
 
@@ -191,57 +259,48 @@ func (b *ClusterBuilder) Drop() error {
 	return b.ddl.drop(qn)
 }
 
-func (b *ClusterBuilder) Resize(newSize string) error {
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (SIZE '%s');`, b.QualifiedName(), newSize)
-	return b.ddl.exec(q)
+func (b *ClusterBuilder) SetSize(newSize string) {
+	b.size = newSize
 }
 
-func (b *ClusterBuilder) SetDisk(disk bool) error {
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (DISK %t);`, b.QualifiedName(), disk)
-	return b.ddl.exec(q)
+func (b *ClusterBuilder) SetDisk(disk bool) {
+	b.disk = disk
 }
 
-func (b *ClusterBuilder) SetReplicationFactor(newReplicationFactor int) error {
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (REPLICATION FACTOR %d);`, b.QualifiedName(), newReplicationFactor)
-	return b.ddl.exec(q)
+func (b *ClusterBuilder) SetReplicationFactor(newReplicationFactor int) {
+	b.replicationFactor = &newReplicationFactor
 }
 
-func (b *ClusterBuilder) SetAvailabilityZones(availabilityZones []string) error {
-	az := strings.Join(availabilityZones[:], ",")
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (AVAILABILITY ZONES = [%s]);`, b.QualifiedName(), az)
-	return b.ddl.exec(q)
+func (b *ClusterBuilder) SetAvailabilityZones(availabilityZones []string) {
+	b.availabilityZones = availabilityZones
 }
 
-func (b *ClusterBuilder) SetIntrospectionInterval(introspectionInterval string) error {
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (INTROSPECTION INTERVAL %s);`, b.QualifiedName(), QuoteString(introspectionInterval))
-	return b.ddl.exec(q)
+func (b *ClusterBuilder) SetIntrospectionInterval(introspectionInterval string) {
+	b.introspectionInterval = introspectionInterval
 }
 
-func (b *ClusterBuilder) SetIntrospectionDebugging(introspectionDebugging bool) error {
-	q := fmt.Sprintf(`ALTER CLUSTER %s SET (INTROSPECTION DEBUGGING %t);`, b.QualifiedName(), introspectionDebugging)
-	return b.ddl.exec(q)
+func (b *ClusterBuilder) SetIntrospectionDebugging(introspectionDebugging bool) {
+	b.introspectionDebugging = introspectionDebugging
 }
 
-func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) error {
-	schedulingConfig := GetSchedulingConfig(s)
-	var scheduleStatement string
-	var q string
+func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) {
+	b.schedulingConfig = GetSchedulingConfig(s)
+}
 
-	// Check if the scheduling is enabled and set the appropriate SQL command.
-	if schedulingConfig.OnRefresh.Enabled {
-		scheduleStatement = "SCHEDULE = ON REFRESH"
-		if schedulingConfig.OnRefresh.HydrationTimeEstimate != "" {
-			scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.HydrationTimeEstimate))
-		} else if schedulingConfig.OnRefresh.RehydrationTimeEstimate != "" {
-			scheduleStatement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(schedulingConfig.OnRefresh.RehydrationTimeEstimate))
-		}
-		q = fmt.Sprintf("ALTER CLUSTER %s SET (%s);", b.QualifiedName(), scheduleStatement)
+func (b *ClusterBuilder) GenSchedulingConfigSql(s SchedulingConfig) string {
+	statement := "SCHEDULE = "
+	if !s.IsSet || !s.OnRefresh.Enabled {
+		statement += "MANUAL"
+		return statement
 	} else {
-		// Reset the schedule settings if not enabled.
-		q = fmt.Sprintf("ALTER CLUSTER %s RESET (SCHEDULE);", b.QualifiedName())
+		statement += "ON REFRESH"
+		if s.OnRefresh.HydrationTimeEstimate != "" {
+			statement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.HydrationTimeEstimate))
+		} else if s.OnRefresh.RehydrationTimeEstimate != "" {
+			statement += fmt.Sprintf(" (HYDRATION TIME ESTIMATE = %s)", QuoteString(b.schedulingConfig.OnRefresh.RehydrationTimeEstimate))
+		}
 	}
-
-	return b.ddl.exec(q)
+	return statement
 }
 
 // DML

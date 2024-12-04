@@ -798,3 +798,63 @@ func MockViewScan(mock sqlmock.Sqlmock, predicate string) {
 		AddRow("u1", "view", "schema", "database", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
+
+func MockNetworkPolicyScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+		WITH policy AS \( 
+			SELECT 
+				mz_network_policies\.id, 
+				mz_network_policies\.name AS policy_name, 
+				comments\.comment AS comment, 
+				mz_roles\.name AS owner_name, 
+				mz_network_policies\.privileges 
+			FROM mz_internal\.mz_network_policies 
+			JOIN mz_roles 
+				ON mz_network_policies\.owner_id = mz_roles\.id 
+			LEFT JOIN \( 
+				SELECT id, comment 
+				FROM mz_internal\.mz_comments 
+				WHERE object_type = 'network-policy' 
+			\) comments 
+				ON mz_network_policies\.id = comments\.id 
+		\), 
+		rules AS \( 
+			SELECT 
+				policy_id, 
+				jsonb_agg\( 
+					jsonb_build_object\( 
+						'rule_name', name, 
+						'rule_action', action, 
+						'rule_direction', direction, 
+						'rule_address', address 
+					\) 
+				\) as rules 
+			FROM mz_internal\.mz_network_policy_rules 
+			GROUP BY policy_id 
+		\) 
+		SELECT 
+			policy\.\*, 
+			COALESCE\(rules\.rules, '\[\]'::json\) as rules 
+		FROM policy 
+		LEFT JOIN rules 
+			ON policy\.id = rules\.policy_id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{
+		"id",
+		"policy_name",
+		"comment",
+		"owner_name",
+		"privileges",
+		"rules",
+	}).AddRow(
+		"u1",
+		"office_policy",
+		"Network policy for office locations",
+		"mz_system",
+		pq.StringArray{"s1=U/s1"},
+		`[{"rule_name":"minnesota","rule_action":"allow","rule_direction":"ingress","rule_address":"2.3.4.5/32"},
+          {"rule_name":"new_york","rule_action":"allow","rule_direction":"ingress","rule_address":"1.2.3.4/28"}]`,
+	)
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}

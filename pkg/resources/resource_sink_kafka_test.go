@@ -93,8 +93,9 @@ var inSinkKafka = map[string]interface{}{
 			},
 		},
 	},
-	"envelope": []interface{}{map[string]interface{}{"upsert": true}},
-	"snapshot": false,
+	"envelope":     []interface{}{map[string]interface{}{"upsert": true}},
+	"partition_by": "partition_by",
+	"snapshot":     false,
 }
 
 func TestResourceSinkKafkaCreate(t *testing.T) {
@@ -109,7 +110,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
             IN CLUSTER "cluster" FROM "database"."public"."item"
             INTO KAFKA CONNECTION "materialize"."public"."kafka_conn"
             \(TOPIC 'topic', COMPRESSION TYPE = gzip, TOPIC REPLICATION FACTOR = 3, TOPIC PARTITION COUNT = 6,
-            TOPIC CONFIG MAP\[('cleanup.policy' => 'compact'|'retention.ms' => '86400000'),\s*('cleanup.policy' => 'compact'|'retention.ms' => '86400000')\]\)
+            TOPIC CONFIG MAP\[('cleanup.policy' => 'compact'|'retention.ms' => '86400000'),\s*('cleanup.policy' => 'compact'|'retention.ms' => '86400000')\], PARTITION BY partition_by\)
             KEY \(key_1, key_2\)
             NOT ENFORCED HEADERS headers FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."csr_conn"
             \(AVRO KEY FULLNAME 'avro_key_fullname' AVRO VALUE FULLNAME 'avro_value_fullname',

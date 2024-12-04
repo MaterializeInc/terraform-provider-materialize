@@ -121,6 +121,12 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"partition_by": {
+		Description: "A SQL expression used to partition the data in the Kafka sink. Can only be used with `ENVELOPE UPSERT`.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"region": RegionSchema(),
 }
 
@@ -219,6 +225,10 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 
 	if v, ok := d.GetOk("headers"); ok {
 		b.Headers(v.(string))
+	}
+
+	if v, ok := d.GetOk("partition_by"); ok {
+		b.PartitionBy(v.(string))
 	}
 
 	// create resource

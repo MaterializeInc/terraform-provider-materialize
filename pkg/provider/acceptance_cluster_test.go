@@ -349,6 +349,34 @@ func TestAccCluster_disappears(t *testing.T) {
 	})
 }
 
+func TestAccClusterAlterGraceful(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	size := "3xsmall"
+	newSize := "2xsmall"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccManagedClusterResource(clusterName, size, "1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", size),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "1"),
+				),
+			},
+			{
+				Config: testAccManagedClusterResourceAlterGraceful(clusterName, newSize, "1", "COMMIT"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "size", newSize),
+					resource.TestCheckResourceAttr("materialize_cluster.test", "replication_factor", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccClusterResource(
 	roleName,
 	cluster1Name,
@@ -408,6 +436,34 @@ func testAccClusterManagedNoReplicationResource(clusterName, clusterSize string)
 	}
 	`,
 		clusterName, clusterSize)
+}
+
+func testAccManagedClusterResource(clusterName, clusterSize string, replicationFactor string) string {
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+		size = "%[2]s"
+		replication_factor = %[3]s
+	}
+	`,
+		clusterName, clusterSize, replicationFactor)
+}
+
+func testAccManagedClusterResourceAlterGraceful(clusterName, clusterSize string, replicationFactor string, onTimeoutAction string) string {
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test" {
+		name = "%[1]s"
+		size = "%[2]s"
+		replication_factor  = %[3]s
+		wait_until_ready {
+			enabled = true
+			timeout = "10m"
+			on_timeout = "%[4]s"
+			
+		}
+	}
+	`,
+		clusterName, clusterSize, replicationFactor, onTimeoutAction)
 }
 
 func testAccClusterManagedZeroReplicationResource(clusterName, clusterSize string) string {

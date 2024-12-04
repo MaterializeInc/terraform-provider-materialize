@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -31,6 +31,7 @@ const (
 	BaseType         EntityType = "TYPE"
 	View             EntityType = "VIEW"
 	System           EntityType = "SYSTEM"
+	NetworkPolicy    EntityType = "NETWORK POLICY"
 )
 
 type Builder struct {
@@ -46,9 +47,7 @@ func (b *Builder) exec(statement string) error {
 	_, err := b.conn.Exec(statement)
 	if err != nil {
 		log.Printf("[DEBUG] error executing: %s", statement)
-		var pgErr pgx.PgError
-		pgErr, ok := err.(pgx.PgError)
-		if ok {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
 			msg := fmt.Sprintf("%s: %s", pgErr.Severity, pgErr.Message)
 			if pgErr.Detail != "" {
 				msg += fmt.Sprintf(" DETAIL: %s", pgErr.Detail)

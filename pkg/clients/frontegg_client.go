@@ -246,11 +246,10 @@ func (c *FronteggClient) RefreshToken() error {
 
 // Helper function to handle API errors
 func HandleApiError(resp *http.Response) error {
-	responseBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode == http.StatusNotFound {
-		return nil
+		return NewFronteggAPIError(resp, "Resource not found")
 	}
-	return fmt.Errorf("API error: %s - %s", resp.Status, string(responseBody))
+	return HandleAPIError(resp)
 }
 
 // Helper function to perform HTTP requests
@@ -261,5 +260,51 @@ func FronteggRequest(ctx context.Context, client *FronteggClient, method, url st
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	return client.HTTPClient.Do(req)
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, HandleApiError(resp)
+	}
+
+	return resp, nil
+}
+
+// FronteggAPIError represents a standardized error structure for Frontegg API calls
+type FronteggAPIError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *FronteggAPIError) Error() string {
+	return fmt.Sprintf("Frontegg API error (HTTP %d): %s", e.StatusCode, e.Message)
+}
+
+// NewFronteggAPIError creates a new FronteggAPIError instance
+func NewFronteggAPIError(resp *http.Response, message string) *FronteggAPIError {
+	return &FronteggAPIError{
+		StatusCode: resp.StatusCode,
+		Message:    message,
+	}
+}
+
+// HandleAPIError processes an HTTP response and returns a FronteggAPIError if applicable
+func HandleAPIError(resp *http.Response) error {
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return nil
+	}
+
+	responseBody, _ := io.ReadAll(resp.Body)
+	message := fmt.Sprintf("unexpected status code: %d - %s", resp.StatusCode, string(responseBody))
+	return NewFronteggAPIError(resp, message)
+}
+
+// IsNotFoundError checks if the error is a 404 Not Found error
+func IsNotFoundError(err error) bool {
+	if fronteggErr, ok := err.(*FronteggAPIError); ok {
+		return fronteggErr.StatusCode == http.StatusNotFound
+	}
+	return false
 }

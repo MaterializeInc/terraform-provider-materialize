@@ -24,7 +24,7 @@ func TestAccSSORoleGroupMapping_basic(t *testing.T) {
 					testAccCheckSSORoleGroupMappingExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "group", "group1"),
 					resource.TestCheckResourceAttr(resourceName, "roles.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 				),
 			},

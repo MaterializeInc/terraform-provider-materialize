@@ -1,0 +1,38 @@
+name: Documentation
+description: A request for new or updated documentation for the Materialize Terraform provider. For example, "Add examples for using the `materialize_connection_kafka` resource with different configurations."
+labels: [documentation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in helping us improve the Materialize Terraform provider documentation!
+  - type: textarea
+    id: documentation-request
+    attributes:
+      label: Documentation Request
+      description: Please describe the documentation you'd like to see added or updated for the Materialize Terraform provider.
+      placeholder: |
+        For example:
+        - Add examples for using the `materialize_connection_kafka` resource with different configurations.
+        - Update the documentation for the `materialize_view` resource to include information about comments.
+        - Create a troubleshooting guide for common issues when using the provider.
+    validations:
+      required: true
+  - type: textarea
+    id: affected-pages
+    attributes:
+      label: Affected Pages
+      description: |
+        If available, link any existing provider documentation pages relevant to your documentation change request.
+      placeholder: |
+        https://registry.terraform.io/providers/MaterializeInc/materialize/latest/docs/resources/database
+    validations:
+      required: false
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |
+        Provide any additional context or information that might be helpful for understanding or implementing this documentation request.
+    validations:
+      required: false

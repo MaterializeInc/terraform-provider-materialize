@@ -38,6 +38,7 @@ resource "materialize_cluster" "example_cluster" {
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
 - `scheduling` (Block List, Max: 1) Defines the scheduling parameters for the cluster. (see [below for nested schema](#nestedblock--scheduling))
 - `size` (String) The size of the managed cluster.
+- `wait_until_ready` (Block List, Max: 1) Defines the parameters for the WAIT UNTIL READY options (see [below for nested schema](#nestedblock--wait_until_ready))
 
 ### Read-Only
 
@@ -58,6 +59,17 @@ Optional:
 - `enabled` (Boolean) Enable scheduling to refresh the cluster.
 - `hydration_time_estimate` (String) Estimated time to hydrate the cluster during refresh.
 - `rehydration_time_estimate` (String, Deprecated) Estimated time to rehydrate the cluster during refresh. This field is deprecated and will be removed in a future release. Use `hydration_time_estimate` instead.
+
+
+
+<a id="nestedblock--wait_until_ready"></a>
+### Nested Schema for `wait_until_ready`
+
+Optional:
+
+- `enabled` (Boolean) Enable wait_until_ready.
+- `on_timeout` (String) Action to take on timeout: COMMIT|ROLLBACK
+- `timeout` (String) Max duration to wait for the new replicas to be ready.
 
 ## Import
 

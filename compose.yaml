@@ -1,43 +1,16 @@
----
-version: "3.9"
-
 services:
 
   materialized:
     image: materialize/materialized:latest
     container_name: materialized
     command:
-      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
       - --bootstrap-builtin-support-cluster-replica-size=3xsmall
       - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
-      - --availability-zone=test1
-      - --availability-zone=test2
-      - --aws-account-id=123456789000
-      - --aws-external-id-prefix=eb5cb59b-e2fe-41f3-87ca-d2176a495345
-      - --aws-connection-role-arn=arn:aws:iam::123456789000:role/MaterializeConnection
-      - --system-parameter-default=max_clusters=100
-      - --system-parameter-default=max_sources=100
-      - --system-parameter-default=max_aws_privatelink_connections=10
-      - --all-features
-    ports:
-      - 6875:6875
-      - 6877:6877
-      - 6878:6878
-    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
-
-  materialized2:
-    image: materialize/materialized:latest
-    container_name: materialized2
-    command:
-      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
-      - --bootstrap-default-cluster-replica-size=3xsmall
-      - --bootstrap-builtin-system-cluster-replica-size=3xsmall
-      - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
-      - --bootstrap-builtin-support-cluster-replica-size=3xsmall
-      - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-analytics-cluster-replica-size=3xsmall
       - --availability-zone=test1
       - --availability-zone=test2
       - --aws-account-id=123456789000
@@ -48,6 +21,36 @@ services:
       - --system-parameter-default=max_aws_privatelink_connections=10
       - --all-features
     environment:
+      MZ_NO_TELEMETRY: 1
+    ports:
+      - 6875:6875
+      - 6877:6877
+      - 6878:6878
+    healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
+
+  materialized2:
+    image: materialize/materialized:latest
+    container_name: materialized2
+    command:
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - --bootstrap-default-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-system-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-support-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-probe-cluster-replica-size=3xsmall
+      - --bootstrap-builtin-analytics-cluster-replica-size=3xsmall
+      - --availability-zone=test1
+      - --availability-zone=test2
+      - --aws-account-id=123456789000
+      - --aws-external-id-prefix=eb5cb59b-e2fe-41f3-87ca-d2176a495345
+      - --aws-connection-role-arn=arn:aws:iam::123456789000:role/MaterializeConnection
+      - --system-parameter-default=max_clusters=100
+      - --system-parameter-default=max_sources=100
+      - --system-parameter-default=max_aws_privatelink_connections=10
+      - --system-parameter-default=transaction_isolation=serializable
+      - --all-features
+    environment:
+      MZ_NO_TELEMETRY: 1
       MZ_SQL_LISTEN_ADDR: 0.0.0.0:7875
       MZ_HTTP_LISTEN_ADDR: 0.0.0.0:7876
       MZ_INTERNAL_SQL_LISTEN_ADDR: 0.0.0.0:7877
@@ -154,14 +157,35 @@ services:
     command: >
       sh -c "tail -F /dev/null"
 
+  test-certs:
+    image: materialize/test-certs:v0.116.0
+    volumes:
+      - certs:/secrets
+
   frontegg:
-    container_name: frontegg
-    build: mocks/frontegg
+    image: materialize/frontegg-mock:v0.116.0
+    depends_on:
+      - test-certs
     ports:
       - "3000:3000"
+    volumes:
+      - certs:/secrets
+    command: >
+      --listen-addr 0.0.0.0:3000
+      --users '[{"id": "1b2a3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "email": "mz_system", "password": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b", "tenant_id": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b", "initial_api_tokens": [{"client_id": "1b2a3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "secret": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b"}], "roles": ["Organization Admin", "Organization Member"]}]'
+      --roles '[{"id":"1", "name": "Organization Admin", "key": "MaterializePlatformAdmin"}, {"id":"2", "name": "Organization Member", "key": "MaterializePlatform"}]'
+      --issuer "http://frontegg-mock:6880"
+      --encoding-key-file /secrets/frontegg-mock.key
+      --decoding-key-file /secrets/frontegg-mock.crt
 
   cloud:
     container_name: cloud
     build: mocks/cloud
     ports:
       - "3001:3001"
+    environment:
+      - CLOUD_HOSTNAME=cloud
+      - CLOUD_PORT=3001
+
+volumes:
+  certs:
