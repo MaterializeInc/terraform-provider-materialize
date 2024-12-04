@@ -65,7 +65,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 ### Optional
 
 - `cluster_name` (String) The cluster to maintain this sink.
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `compression_type` (String) The type of compression to apply to messages before they are sent to Kafka.
 - `database_name` (String) The identifier for the sink database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
@@ -140,8 +140,8 @@ Required:
 
 Optional:
 
-- `avro_doc_column` (Block List) **Private Preview** Add column level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_column))
-- `avro_doc_type` (Block List, Max: 1) **Private Preview** Add top level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_type))
+- `avro_doc_column` (Block List) Add column level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_column))
+- `avro_doc_type` (Block List, Max: 1) Add top level documentation comment to the generated Avro schemas. (see [below for nested schema](#nestedblock--format--avro--avro_doc_type))
 - `avro_key_fullname` (String) The full name of the Avro key schema.
 - `avro_value_fullname` (String) The full name of the Avro value schema.
 - `key_compatibility_level` (String) If specified, set the Compatibility Level for the generated key schema.

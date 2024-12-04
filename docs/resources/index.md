@@ -42,7 +42,7 @@ resource "materialize_index" "loadgen_index" {
 
 ### Optional
 
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `default` (Boolean) Creates a default index using all inferred columns are used.
 - `method` (String) The name of the index method to use.
 - `name` (String) The identifier for the index.

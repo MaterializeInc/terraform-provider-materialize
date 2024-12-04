@@ -27,7 +27,7 @@ var materializedViewSchema = map[string]*schema.Schema{
 		Required:    true,
 	},
 	"not_null_assertion": {
-		Description: "**Private Preview** A list of columns for which to create non-null assertions.",
+		Description: "A list of columns for which to create non-null assertions.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,

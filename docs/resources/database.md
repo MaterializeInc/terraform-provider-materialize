@@ -48,7 +48,7 @@ resource "materialize_schema_grant" "schema_grant_usage" {
 
 ### Optional
 
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 

@@ -91,7 +91,7 @@ func SizeSchema(resource string, required bool, forceNew bool) *schema.Schema {
 func ValidateConnectionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeBool,
-		Description: "**Private Preview** If the connection should wait for validation.",
+		Description: "If the connection should wait for validation.",
 		Optional:    true,
 		Default:     true,
 	}
@@ -309,7 +309,7 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								ForceNew:    true,
 							},
 							"avro_doc_type": {
-								Description: "**Private Preview** Add top level documentation comment to the generated Avro schemas.",
+								Description: "Add top level documentation comment to the generated Avro schemas.",
 								Type:        schema.TypeList,
 								MinItems:    1,
 								MaxItems:    1,
@@ -342,7 +342,7 @@ func SinkFormatSpecSchema(elem string, description string, required bool) *schem
 								},
 							},
 							"avro_doc_column": {
-								Description: "**Private Preview** Add column level documentation comment to the generated Avro schemas.",
+								Description: "Add column level documentation comment to the generated Avro schemas.",
 								Type:        schema.TypeList,
 								MinItems:    1,
 								Optional:    true,
@@ -520,7 +520,7 @@ func DiskSchema(forceNew bool) *schema.Schema {
 
 func CommentSchema(forceNew bool) *schema.Schema {
 	return &schema.Schema{
-		Description: "**Public Preview** Comment on an object in the database.",
+		Description: "Comment on an object in the database.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    forceNew,
