@@ -158,7 +158,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 
 func SourceWebhook() *schema.Resource {
 	return &schema.Resource{
-		Description: "**Private Preview** A webhook source describes a webhook you want Materialize to read data from.",
+		Description: "A webhook source describes a webhook you want Materialize to read data from.",
 
 		CreateContext: sourceWebhookCreate,
 		ReadContext:   sourceRead,

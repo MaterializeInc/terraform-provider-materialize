@@ -80,7 +80,7 @@ resource "materialize_connection_mysql" "example_mysql_connection" {
 ### Optional
 
 - `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the MySQL database. (see [below for nested schema](#nestedblock--aws_privatelink))
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `ownership_role` (String) The owernship role of the object.
 - `password` (Block List, Max: 1) The MySQL database password. (see [below for nested schema](#nestedblock--password))
@@ -92,7 +92,7 @@ resource "materialize_connection_mysql" "example_mysql_connection" {
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the MySQL database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
 - `ssl_key` (Block List, Max: 1) The client key for the MySQL database. (see [below for nested schema](#nestedblock--ssl_key))
 - `ssl_mode` (String) The SSL mode for the MySQL database. Allowed values are disabled, required, verify-ca, verify-identity.
-- `validate` (Boolean) **Private Preview** If the connection should wait for validation.
+- `validate` (Boolean) If the connection should wait for validation.
 
 ### Read-Only
 
