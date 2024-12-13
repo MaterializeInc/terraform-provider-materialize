@@ -75,7 +75,7 @@ services:
 
   redpanda:
     container_name: redpanda
-    image: docker.vectorized.io/vectorized/redpanda:v23.3.5
+    image: redpandadata/redpanda:v23.3.5
     depends_on:
       - postgres
     command:
