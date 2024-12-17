@@ -53,7 +53,7 @@ resource "materialize_system_parameter" "system_parameter" {
 
 ### Optional
 
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 
 ### Read-Only
