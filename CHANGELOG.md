@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Remove outdated feature lifecycle annotations for features that are now Generally Available (GA).
+
 ## 0.8.11 - 2024-11-13
 
 ## Features

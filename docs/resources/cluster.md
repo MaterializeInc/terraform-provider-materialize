@@ -28,7 +28,7 @@ resource "materialize_cluster" "example_cluster" {
 ### Optional
 
 - `availability_zones` (List of String) The specific availability zones of the cluster.
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
 - `identify_by_name` (Boolean) Use the cluster name as the resource identifier in your state file, rather than the internal cluster ID. This is particularly useful in scenarios like dbt-materialize blue/green deployments, where clusters are swapped but the ID changes. By identifying by name, the resource can be managed consistently even when the underlying cluster ID is updated.
 - `introspection_debugging` (Boolean) Whether to introspect the gathering of the introspection data.
