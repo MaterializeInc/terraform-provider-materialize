@@ -46,7 +46,7 @@ resource "materialize_source_table_mysql" "mysql_table_from_source" {
 
 ### Optional
 
-- `comment` (String) **Public Preview** Comment on an object in the database.
+- `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `exclude_columns` (List of String) Exclude specific columns when reading data from MySQL. This option used to be called `ignore_columns`.
 - `ownership_role` (String) The owernship role of the object.
