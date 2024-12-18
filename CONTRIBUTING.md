@@ -68,10 +68,10 @@ docker exec provider terraform plan -detailed-exitcode
 docker exec provider terraform destroy -auto-approve -compact-warnings
 
 # Self-hosted tests
-docker exec provider sh -c "cd /usr/src/app/integration/self_hosted && terraform init"
-docker exec provider sh -c "cd /usr/src/app/integration/self_hosted && terraform apply -auto-approve -compact-warnings"
-docker exec provider sh -c "cd /usr/src/app/integration/self_hosted && terraform plan -detailed-exitcode"
-docker exec provider sh -c "cd /usr/src/app/integration/self_hosted && terraform destroy -auto-approve -compact-warnings"
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform init
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform apply -auto-approve -compact-warnings
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform plan -detailed-exitcode
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform destroy -auto-approve -compact-warnings
 ```
 
 > Note: You might have to delete the `integration/.terraform`, `integration/.terraform.lock.hcl` and `integration/terraform.tfstate*` files before running the tests. Or if you are running the self-hosted tests, you will have to delete the `integration/self_hosted/.terraform`, `integration/self_hosted/.terraform.lock.hcl` and `integration/self_hosted/terraform.tfstate*` files.
