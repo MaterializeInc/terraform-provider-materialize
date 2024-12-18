@@ -20,19 +20,19 @@ jobs:
 
       - name: Terraform Init
         run: |
-          docker exec provider sh -c "cd self_hosted && terraform init"
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform init
 
       - name: Terraform Apply
         run: |
-          docker exec provider sh -c "cd self_hosted && terraform apply -auto-approve -compact-warnings"
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform apply -auto-approve -compact-warnings
 
       - name: Terraform Plan
         run: |
-          docker exec provider sh -c "cd self_hosted && terraform plan -detailed-exitcode"
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform plan -detailed-exitcode
 
       - name: Terraform Destroy
         run: |
-          docker exec provider sh -c "cd self_hosted && terraform destroy -auto-approve -compact-warnings"
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform destroy -auto-approve -compact-warnings
 
       - name: Docker Compose Down
         run: docker compose down

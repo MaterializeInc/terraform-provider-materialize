@@ -73,13 +73,13 @@ func Provider(version string) *schema.Provider {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "The Materialize SQL port. Can also come from the `MZ_PORT` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6877),
+				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6875),
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
-				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", "mz_system"),
+				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", "materialize"),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
