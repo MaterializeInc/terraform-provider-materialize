@@ -1,0 +1,38 @@
+name: integration
+on:
+  pull_request:
+    paths:
+      - pkg/**
+      - integration/self_hosted/**
+      - main.go
+      - go.mod
+  schedule:
+    - cron: 1 11 * * 0
+
+jobs:
+  self-hosted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Docker Compose Up
+        run: docker compose up --build -d materialized materialized_init redpanda postgres localstack mysql provider
+
+      - name: Terraform Init
+        run: |
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform init
+
+      - name: Terraform Apply
+        run: |
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform apply -auto-approve -compact-warnings
+
+      - name: Terraform Plan
+        run: |
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform plan -detailed-exitcode
+
+      - name: Terraform Destroy
+        run: |
+          docker exec --workdir /usr/src/app/integration/self_hosted provider terraform destroy -auto-approve -compact-warnings
+
+      - name: Docker Compose Down
+        run: docker compose down

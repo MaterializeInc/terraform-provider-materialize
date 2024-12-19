@@ -61,14 +61,20 @@ make testacc
 To run the full integration project, set the necessary env variables and start the docker compose similar to the acceptance tests. Then to interact with the provider you can run:
 
 ```bash
-# Run the tests
+# SaaS tests
 docker exec provider terraform init
 docker exec provider terraform apply -auto-approve -compact-warnings
 docker exec provider terraform plan -detailed-exitcode
 docker exec provider terraform destroy -auto-approve -compact-warnings
+
+# Self-hosted tests
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform init
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform apply -auto-approve -compact-warnings
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform plan -detailed-exitcode
+docker exec --workdir /usr/src/app/integration/self_hosted provider terraform destroy -auto-approve -compact-warnings
 ```
 
-> Note: You might have to delete the `integration/.terraform`, `integration/.terraform.lock.hcl` and `integration/terraform.tfstate*` files before running the tests.
+> Note: You might have to delete the `integration/.terraform`, `integration/.terraform.lock.hcl` and `integration/terraform.tfstate*` files before running the tests. Or if you are running the self-hosted tests, you will have to delete the `integration/self_hosted/.terraform`, `integration/self_hosted/.terraform.lock.hcl` and `integration/self_hosted/terraform.tfstate*` files.
 
 ### Debugging
 Terraform has detailed logs that you can enable by setting the `TF_LOG` environment variable to any value. Enabling this setting causes detailed logs to appear on `stderr`.
