@@ -63,6 +63,24 @@ func Provider(version string) *schema.Provider {
 				Description: "The default region if not specified in the resource",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DEFAULT_REGION", "aws/us-east-1"),
 			},
+			"host": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The Materialize host. Can also come from the `MZ_HOST` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
+			},
+			"port": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The Materialize SQL port. Can also come from the `MZ_PORT` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_PORT", 6875),
+			},
+			"username": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", "materialize"),
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_app_password":                         resources.AppPassword(),
@@ -156,6 +174,56 @@ func Provider(version string) *schema.Provider {
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
+	// Check for self-hosted configuration
+	if host := d.Get("host").(string); host != "" {
+		log.Printf("[DEBUG] Configuring self-hosted provider")
+		return configureSelfHosted(ctx, d, version)
+	}
+	log.Printf("[DEBUG] Configuring SaaS provider")
+	return configureSaaS(ctx, d, version)
+}
+
+func configureSelfHosted(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
+	host := d.Get("host").(string)
+	port := d.Get("port").(int)
+	database := d.Get("database").(string)
+	username := d.Get("username").(string)
+	password := d.Get("password").(string)
+	sslmode := d.Get("sslmode").(string)
+	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
+
+	// Initialize single DB client for self-hosted
+	dbClient, diags := clients.NewDBClient(
+		host,
+		username,
+		password,
+		port,
+		database,
+		application_name,
+		version,
+		sslmode,
+	)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	// Create provider meta for self-hosted
+	dbClients := make(map[clients.Region]*clients.DBClient)
+	dbClients["self-hosted"] = dbClient
+
+	providerMeta := &utils.ProviderMeta{
+		Mode:          utils.ModeSelfHosted,
+		DB:            dbClients,
+		DefaultRegion: "self-hosted",
+		RegionsEnabled: map[clients.Region]bool{
+			"self-hosted": true,
+		},
+	}
+
+	return providerMeta, nil
+}
+
+func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
 	password := d.Get("password").(string)
 	database := d.Get("database").(string)
 	sslmode := d.Get("sslmode").(string)
@@ -240,6 +308,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, version stri
 
 	// Construct and return the provider meta with all clients initialized.
 	providerMeta := &utils.ProviderMeta{
+		Mode:           utils.ModeSaaS,
 		DB:             dbClients,
 		Frontegg:       fronteggClient,
 		CloudAPI:       cloudAPIClient,
