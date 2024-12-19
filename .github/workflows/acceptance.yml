@@ -19,6 +19,8 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
+      - uses: hashicorp/setup-terraform@v3
+
       - name: Docker Compose Up
         run: docker compose up --build -d
 
