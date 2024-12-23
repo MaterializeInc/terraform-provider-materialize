@@ -4,12 +4,12 @@
 
 ## Features
 
-* Support self-hosted instances [#674](https://github.com/MaterializeInc/terraform-provider-materialize/pull/674).
+* Support self-managed instances [#674](https://github.com/MaterializeInc/terraform-provider-materialize/pull/674).
     Now users can configure the provider like this:
     ```hcl
-    # Self-hosted configuration
+    # Self-managed configuration
     provider "materialize" {
-      host     = "localhost"      # Required for self-hosted mode
+      host     = "localhost"      # Required for self-managed deployments
       port     = 6875             # Optional, defaults to 6875
       database = "materialize"    # Optional, defaults to materialize
       username = "materialize"    # Optional, defaults to materialize
