@@ -1,8 +1,39 @@
 # Changelog
 
-## Unreleased
+## 0.8.12 - 2024-12-20
 
-* Remove outdated feature lifecycle annotations for features that are now Generally Available (GA).
+## Features
+
+* Support self-managed instances [#674](https://github.com/MaterializeInc/terraform-provider-materialize/pull/674).
+    Now users can configure the provider like this:
+    ```hcl
+    # Self-managed configuration
+    provider "materialize" {
+      host     = "localhost"      # Required for self-managed deployments
+      port     = 6875             # Optional, defaults to 6875
+      database = "materialize"    # Optional, defaults to materialize
+      username = "materialize"    # Optional, defaults to materialize
+      password = ""               # Optional
+      sslmode  = "disable"        # Optional, defaults to require
+    }
+
+    # SaaS configuration (unchanged)
+    provider "materialize" {
+      password       = "materialize_password"
+      default_region = "aws/us-east-1"
+    }
+    ```
+
+## Bug Fixes
+
+* Fix intermittent test failures [#684](https://github.com/MaterializeInc/terraform-provider-materialize/pull/684)
+* `materialize_sink_kafka` resource: sort topic config map keys for consistent SQL generation [#677](https://github.com/MaterializeInc/terraform-provider-materialize/pull/677)
+
+## Misc
+
+* Remove outdated feature lifecycle annotations for features that are now Generally Available (GA) [#679](https://github.com/MaterializeInc/terraform-provider-materialize/pull/679)
+* Update Redpanda image reference: [#681](https://github.com/MaterializeInc/terraform-provider-materialize/pull/681)
+* Routine dependency updates: [#672](https://github.com/MaterializeInc/terraform-provider-materialize/pull/672), [#673](https://github.com/MaterializeInc/terraform-provider-materialize/pull/673), [#678](https://github.com/MaterializeInc/terraform-provider-materialize/pull/678), [#680](https://github.com/MaterializeInc/terraform-provider-materialize/pull/680), [#683](https://github.com/MaterializeInc/terraform-provider-materialize/pull/683)
 
 ## 0.8.11 - 2024-11-13
 
