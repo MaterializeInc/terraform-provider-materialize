@@ -459,7 +459,6 @@ func testAccManagedClusterResourceAlterGraceful(clusterName, clusterSize string,
 			enabled = true
 			timeout = "10m"
 			on_timeout = "%[4]s"
-			
 		}
 	}
 	`,
