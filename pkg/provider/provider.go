@@ -137,6 +137,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_source_table_load_generator":          resources.SourceTableLoadGen(),
 			"materialize_source_table_mysql":                   resources.SourceTableMySQL(),
 			"materialize_source_table_postgres":                resources.SourceTablePostgres(),
+			"materialize_source_table_webhook":                 resources.SourceTableWebhook(),
 			"materialize_table_grant":                          resources.GrantTable(),
 			"materialize_table_grant_default_privilege":        resources.GrantTableDefaultPrivilege(),
 			"materialize_type":                                 resources.Type(),
