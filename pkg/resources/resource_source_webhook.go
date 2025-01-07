@@ -158,7 +158,12 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 
 func SourceWebhook() *schema.Resource {
 	return &schema.Resource{
-		Description: "A webhook source describes a webhook you want Materialize to read data from.",
+		Description: "A webhook source describes a webhook you want Materialize to read data from. " +
+			"This resource is deprecated and will be removed in a future release. " +
+			"Please use materialize_source_table_webhook instead.",
+
+		DeprecationMessage: "This resource is deprecated and will be removed in a future release. " +
+			"Please use materialize_source_table_webhook instead.",
 
 		CreateContext: sourceWebhookCreate,
 		ReadContext:   sourceRead,
