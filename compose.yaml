@@ -19,7 +19,6 @@ services:
       - --system-parameter-default=max_clusters=100
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
-      - --system-parameter-default=enable_create_table_from_source=on
       - --all-features
     environment:
       MZ_NO_TELEMETRY: 1
@@ -49,7 +48,6 @@ services:
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
       - --system-parameter-default=transaction_isolation=serializable
-      - --system-parameter-default=enable_create_table_from_source=on
       - --all-features
     environment:
       MZ_NO_TELEMETRY: 1
