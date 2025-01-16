@@ -127,7 +127,20 @@ func getToken(ctx context.Context, password string, endpoint string) (string, st
 
 	email, ok := claims["email"].(string)
 	if !ok {
-		return "", "", time.Time{}, errors.New("email claim not found in token")
+		email = ""
+		// If email is not present (service account case), use metadata.user or sub as identifier
+		if metadata, hasMetadata := claims["metadata"].(map[string]interface{}); hasMetadata {
+			if user, hasUser := metadata["user"].(string); hasUser {
+				email = user
+			}
+		}
+		if email == "" {
+			if sub, hasSub := claims["sub"].(string); hasSub {
+				email = sub
+			} else {
+				return "", "", time.Time{}, errors.New("neither email nor subject found in token")
+			}
+		}
 	}
 
 	var tokenExpiry time.Time
