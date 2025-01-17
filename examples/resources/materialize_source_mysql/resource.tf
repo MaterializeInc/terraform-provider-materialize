@@ -21,3 +21,7 @@ resource "materialize_source_mysql" "test" {
     name                 = "mysql_table2_local"
   }
 }
+
+# CREATE SOURCE schema.source_mysql
+#   FROM MYSQL CONNECTION "database"."schema"."mysql_connection" (PUBLICATION 'mz_source')
+#   FOR TABLES (shop.mysql_table1 AS mysql_table1_local, shop.mysql_table2 AS mysql_table2_local);
