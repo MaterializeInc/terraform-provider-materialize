@@ -2,32 +2,23 @@ package resources
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var sourceWebhookSchema = map[string]*schema.Schema{
-	"name":               ObjectNameSchema("source", true, false),
-	"schema_name":        SchemaNameSchema("source", false),
-	"database_name":      DatabaseNameSchema("source", false),
-	"qualified_sql_name": QualifiedNameSchema("source"),
+var sourceTableWebhookSchema = map[string]*schema.Schema{
+	"name":               ObjectNameSchema("table", true, false),
+	"schema_name":        SchemaNameSchema("table", false),
+	"database_name":      DatabaseNameSchema("table", false),
+	"qualified_sql_name": QualifiedNameSchema("table"),
 	"comment":            CommentSchema(false),
-	"cluster_name": {
-		Description: "The cluster to maintain this source.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-	},
-	"size": {
-		Description: "The size of the cluster maintaining this source.",
-		Type:        schema.TypeString,
-		Computed:    true,
-	},
 	"body_format": {
 		Description: "The body format of the webhook.",
 		Type:        schema.TypeString,
@@ -156,46 +147,37 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 	"region":         RegionSchema(),
 }
 
-func SourceWebhook() *schema.Resource {
+func SourceTableWebhook() *schema.Resource {
 	return &schema.Resource{
-		Description: "A webhook source describes a webhook you want Materialize to read data from. " +
-			"This resource is deprecated and will be removed in a future release. " +
-			"Please use materialize_source_table_webhook instead.",
+		Description: "A webhook source table allows reading data directly from webhooks.",
 
-		DeprecationMessage: "This resource is deprecated and will be removed in a future release. " +
-			"Please use materialize_source_table_webhook instead.",
-
-		CreateContext: sourceWebhookCreate,
-		ReadContext:   sourceRead,
-		UpdateContext: sourceUpdate,
-		DeleteContext: sourceDelete,
+		CreateContext: sourceTableWebhookCreate,
+		ReadContext:   sourceTableWebhookRead,
+		UpdateContext: sourceTableWebhookUpdate,
+		DeleteContext: sourceTableDelete,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		Schema: sourceWebhookSchema,
+		Schema: sourceTableWebhookSchema,
 	}
 }
 
-func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	sourceName := d.Get("name").(string)
+func sourceTableWebhookCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	tableName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-
-	clusterName := d.Get("cluster_name").(string)
-	bodyFormat := d.Get("body_format").(string)
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
-	b := materialize.NewSourceWebhookBuilder(metaDb, o)
 
-	b.ClusterName(clusterName).
-		BodyFormat(bodyFormat).
-		CheckExpression(d.Get("check_expression").(string))
+	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+	b := materialize.NewSourceTableWebhookBuilder(metaDb, o)
+
+	b.BodyFormat(d.Get("body_format").(string))
 
 	if v, ok := d.GetOk("include_header"); ok {
 		var headers []materialize.HeaderStruct
@@ -213,6 +195,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if v, ok := d.GetOk("include_headers"); ok {
 		var i materialize.IncludeHeadersStruct
 		u := v.([]interface{})[0].(map[string]interface{})
+
 		if v, ok := u["all"]; ok {
 			i.All = v.(bool)
 		}
@@ -260,15 +243,19 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		b.CheckOptions(options)
 	}
+
+	if v, ok := d.GetOk("check_expression"); ok {
+		b.CheckExpression(v.(string))
+	}
+
 	// Create resource
 	if err := b.Create(); err != nil {
 		return diag.FromErr(err)
 	}
 
-	// ownership
+	// Handle ownership
 	if v, ok := d.GetOk("ownership_role"); ok {
 		ownership := materialize.NewOwnershipBuilder(metaDb, o)
-
 		if err := ownership.Alter(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
 			b.Drop()
@@ -276,10 +263,9 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 	}
 
-	// object comment
+	// Handle comments
 	if v, ok := d.GetOk("comment"); ok {
 		comment := materialize.NewCommentBuilder(metaDb, o)
-
 		if err := comment.Object(v.(string)); err != nil {
 			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
 			b.Drop()
@@ -287,12 +273,95 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 	}
 
-	// Set id
-	i, err := materialize.SourceId(metaDb, o)
+	// Set ID
+	i, err := materialize.SourceTableWebhookId(metaDb, o)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourceTableWebhookRead(ctx, d, meta)
+}
+
+func sourceTableWebhookRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	i := d.Id()
+
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	t, err := materialize.ScanSourceTableWebhook(metaDb, utils.ExtractId(i))
+	if err == sql.ErrNoRows {
+		d.SetId("")
+		return nil
+	} else if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(utils.TransformIdWithRegion(string(region), i))
+
+	if err := d.Set("name", t.TableName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("schema_name", t.SchemaName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("database_name", t.DatabaseName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("ownership_role", t.OwnerName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("comment", t.Comment.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+func sourceTableWebhookUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	tableName := d.Get("name").(string)
+	schemaName := d.Get("schema_name").(string)
+	databaseName := d.Get("database_name").(string)
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+
+	if d.HasChange("name") {
+		oldName, newName := d.GetChange("name")
+		o := materialize.MaterializeObject{ObjectType: "TABLE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		b := materialize.NewSourceTableBuilder(metaDb, o)
+		if err := b.Rename(newName.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("ownership_role") {
+		_, newRole := d.GetChange("ownership_role")
+		b := materialize.NewOwnershipBuilder(metaDb, o)
+
+		if err := b.Alter(newRole.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("comment") {
+		_, newComment := d.GetChange("comment")
+		b := materialize.NewCommentBuilder(metaDb, o)
+
+		if err := b.Object(newComment.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return sourceTableWebhookRead(ctx, d, meta)
 }
