@@ -961,6 +961,38 @@ func MockSourceTableScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+func MockSourceTableWebhookScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_tables.id,
+		mz_tables.name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_sources.type AS source_type,
+		comments.comment AS comment,
+		mz_roles.name AS owner_name,
+		mz_tables.privileges
+	FROM mz_tables
+	JOIN mz_schemas
+		ON mz_tables.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	JOIN mz_roles
+		ON mz_tables.owner_id = mz_roles.id
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'table'
+		AND object_sub_id IS NULL
+	\) comments
+		ON mz_tables.id = comments.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "comment", "owner_name", "privileges"}).
+		AddRow("u1", "table", "schema", "database", "webhook", "comment", "materialize", defaultPrivilege)
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
 func MockSourceReferenceScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
