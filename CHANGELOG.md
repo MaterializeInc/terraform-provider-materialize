@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.13 - 2025-01-21
+
+## Features
+
+* Added support for authenticating with service accounts. [#690](https://github.com/MaterializeInc/terraform-provider-materialize/pull/690)
+
 ## 0.8.12 - 2024-12-20
 
 ## Features
