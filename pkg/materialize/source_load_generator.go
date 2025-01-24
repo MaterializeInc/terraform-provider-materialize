@@ -127,6 +127,7 @@ type SourceLoadgenBuilder struct {
 	clusterName       string
 	size              string
 	loadGeneratorType string
+	allTables         bool
 	counterOptions    CounterOptions
 	auctionOptions    AuctionOptions
 	marketingOptions  MarketingOptions
@@ -154,6 +155,11 @@ func (b *SourceLoadgenBuilder) Size(s string) *SourceLoadgenBuilder {
 
 func (b *SourceLoadgenBuilder) LoadGeneratorType(l string) *SourceLoadgenBuilder {
 	b.loadGeneratorType = l
+	return b
+}
+
+func (b *SourceLoadgenBuilder) AllTables() *SourceLoadgenBuilder {
+	b.allTables = true
 	return b
 }
 
@@ -251,7 +257,9 @@ func (b *SourceLoadgenBuilder) Create() error {
 
 	// Include for multi-output sources
 	if b.loadGeneratorType == "AUCTION" || b.loadGeneratorType == "MARKETING" || b.loadGeneratorType == "TPCH" {
-		q.WriteString(` FOR ALL TABLES`)
+		if b.allTables {
+			q.WriteString(` FOR ALL TABLES`)
+		}
 	}
 
 	if b.exposeProgress.Name != "" {

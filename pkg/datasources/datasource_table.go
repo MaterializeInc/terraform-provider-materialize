@@ -32,20 +32,24 @@ func Table() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Description: "The unique identifier for the table",
+							Type:        schema.TypeString,
+							Computed:    true,
 						},
 						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Description: "The name of the table",
+							Type:        schema.TypeString,
+							Computed:    true,
 						},
 						"schema_name": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Description: "The schema of the table",
+							Type:        schema.TypeString,
+							Computed:    true,
 						},
 						"database_name": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Description: "The database of the table",
+							Type:        schema.TypeString,
+							Computed:    true,
 						},
 					},
 				},
