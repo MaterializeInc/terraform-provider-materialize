@@ -174,6 +174,14 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:      true,
 		ConflictsWith: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
 	},
+	"all_tables": {
+		Description:   "Whether to include all tables in the source. Compatible with `auction_options`, `marketing_options`, and `tpch_options`. If not specified, use the `materialize_source_table_load_generator` resource to specify tables to include.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Default:       false,
+		ConflictsWith: []string{"counter_options", "key_value_options"},
+		ForceNew:      true,
+	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
 		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
@@ -249,6 +257,11 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 	if v, ok := d.GetOk("key_value_options"); ok {
 		o := materialize.GetKeyValueOptionsStruct(v)
 		b.KeyValueOptions(o)
+	}
+
+	// all_tables
+	if v, ok := d.GetOk("all_tables"); ok && v.(bool) {
+		b.AllTables()
 	}
 
 	// create resource
