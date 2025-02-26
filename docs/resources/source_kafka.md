@@ -56,19 +56,19 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
+- `envelope` (Block List, Max: 1, Deprecated) How Materialize should interpret records (e.g. append-only, upsert). Deprecated: Use the new `materialize_source_table_kafka` resource instead. (see [below for nested schema](#nestedblock--envelope))
 - `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
-- `include_headers` (Boolean) Include message headers.
-- `include_headers_alias` (String) Provide an alias for the headers column.
-- `include_key` (Boolean) Include a column containing the Kafka message key.
-- `include_key_alias` (String) Provide an alias for the key column.
-- `include_offset` (Boolean) Include an offset column containing the Kafka message offset.
-- `include_offset_alias` (String) Provide an alias for the offset column.
-- `include_partition` (Boolean) Include a partition column containing the Kafka message partition
-- `include_partition_alias` (String) Provide an alias for the partition column.
-- `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
-- `include_timestamp_alias` (String) Provide an alias for the timestamp column.
+- `include_headers` (Boolean, Deprecated) Include message headers. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_headers_alias` (String, Deprecated) Provide an alias for the headers column. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_key` (Boolean, Deprecated) Include a column containing the Kafka message key. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_key_alias` (String, Deprecated) Provide an alias for the key column. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_offset` (Boolean, Deprecated) Include an offset column containing the Kafka message offset. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_offset_alias` (String, Deprecated) Provide an alias for the offset column. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_partition` (Boolean, Deprecated) Include a partition column containing the Kafka message partition. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_partition_alias` (String, Deprecated) Provide an alias for the partition column. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_timestamp` (Boolean, Deprecated) Include a timestamp column containing the Kafka message timestamp. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
+- `include_timestamp_alias` (String, Deprecated) Provide an alias for the timestamp column. Deprecated: Use the new `materialize_source_table_kafka` resource instead.
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
