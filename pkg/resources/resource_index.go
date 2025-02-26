@@ -19,6 +19,7 @@ var indexSchema = map[string]*schema.Schema{
 		Type:         schema.TypeString,
 		Optional:     true,
 		ForceNew:     true,
+		Computed:     true,
 		ExactlyOneOf: []string{"name", "default"},
 	},
 	"schema_name": {
@@ -74,6 +75,7 @@ var indexSchema = map[string]*schema.Schema{
 		},
 		Optional:      true,
 		ConflictsWith: []string{"default"},
+		Computed:      true,
 		ForceNew:      true,
 	},
 	"region": RegionSchema(),
@@ -134,7 +136,7 @@ func indexRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 
-	// Index columns
+	// Get and set the index columns
 	indexColumns, err := materialize.ListIndexColumns(metaDb, utils.ExtractId(i))
 	if err != nil {
 		return diag.FromErr(err)
@@ -211,11 +213,33 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 
 	// set id
-	i, err := materialize.IndexId(metaDb, indexName)
-	if err != nil {
-		return diag.FromErr(err)
+	if indexDefault {
+		// For default indexes, find the index by the object it's on
+		idxParams, err := materialize.FindIndexByObject(
+			metaDb,
+			obj["name"].(string),
+			obj["schema_name"].(string),
+			obj["database_name"].(string),
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Set the real generated name in the state
+		if err := d.Set("name", idxParams.IndexName.String); err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Set the correct ID
+		d.SetId(utils.TransformIdWithRegion(string(region), idxParams.IndexId.String))
+	} else {
+		// Original code for named indexes
+		i, err := materialize.IndexId(metaDb, indexName)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(utils.TransformIdWithRegion(string(region), i))
 	}
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return indexRead(ctx, d, meta)
 }
