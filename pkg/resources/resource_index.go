@@ -32,7 +32,7 @@ var indexSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"default": {
-		Description:  "Creates a default index using all inferred columns are used.",
+		Description:  "Creates a default index using all inferred columns are used. Required if col_expr is not set.",
 		Type:         schema.TypeBool,
 		Optional:     true,
 		ForceNew:     true,
@@ -72,8 +72,9 @@ var indexSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Required: true,
-		ForceNew: true,
+		Optional:      true,
+		ConflictsWith: []string{"default"},
+		ForceNew:      true,
 	},
 	"region": RegionSchema(),
 }
@@ -158,6 +159,12 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	indexDefault := d.Get("default").(bool)
 
 	obj := d.Get("obj_name").([]interface{})[0].(map[string]interface{})
+
+	colExpr := d.Get("col_expr").([]interface{})
+
+	if !indexDefault && len(colExpr) == 0 {
+		return diag.Errorf("col_expr is required when creating a non-default index")
+	}
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {

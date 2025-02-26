@@ -19,6 +19,7 @@ func TestResourceIndexCreate(t *testing.T) {
 		"name":         "index",
 		"default":      false,
 		"obj_name":     []interface{}{map[string]interface{}{"name": "source", "schema_name": "schema", "database_name": "database"}},
+		"col_expr":     []interface{}{map[string]interface{}{"field": "column"}},
 		"cluster_name": "cluster",
 	}
 	d := schema.TestResourceDataRaw(t, Index().Schema, in)
@@ -27,7 +28,7 @@ func TestResourceIndexCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(\);`,
+			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT \(column\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -95,6 +96,42 @@ func TestResourceIndexDelete(t *testing.T) {
 		mock.ExpectExec(`DROP INDEX "database"."schema"."index" RESTRICT;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		if err := indexDelete(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceIndexDefaultCreate(t *testing.T) {
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"name":         "index",
+		"default":      true,
+		"obj_name":     []interface{}{map[string]interface{}{"name": "source", "schema_name": "schema", "database_name": "database"}},
+		"cluster_name": "cluster",
+	}
+	d := schema.TestResourceDataRaw(t, Index().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE DEFAULT INDEX IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_indexes.name = 'index' AND mz_objects.type IN \('source', 'view', 'materialized-view'\)`
+		testhelpers.MockIndexScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_indexes.id = 'u1' AND mz_objects.type IN \('source', 'view', 'materialized-view'\)`
+		testhelpers.MockIndexScan(mock, pp)
+
+		// Query Columns
+		cp := `WHERE mz_indexes.id = 'u1'`
+		testhelpers.MockIndexColumnScan(mock, cp)
+
+		if err := indexCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})

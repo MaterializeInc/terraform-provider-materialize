@@ -81,21 +81,17 @@ func (b *IndexBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` USING %s`, b.method))
 	}
 
-	if len(b.colExpr) > 0 && !b.indexDefault {
-		var columns []string
-
-		for _, c := range b.colExpr {
-			s := strings.Builder{}
-
-			s.WriteString(c.Field)
-			o := s.String()
-			columns = append(columns, o)
-
+	if !b.indexDefault {
+		if len(b.colExpr) > 0 {
+			var columns []string
+			for _, c := range b.colExpr {
+				columns = append(columns, c.Field)
+			}
+			p := strings.Join(columns[:], ", ")
+			q.WriteString(fmt.Sprintf(` (%s)`, p))
+		} else {
+			q.WriteString(` ()`)
 		}
-		p := strings.Join(columns[:], ", ")
-		q.WriteString(fmt.Sprintf(` (%s)`, p))
-	} else {
-		q.WriteString(` ()`)
 	}
 
 	q.WriteString(`;`)

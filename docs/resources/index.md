@@ -37,11 +37,11 @@ resource "materialize_index" "loadgen_index" {
 ### Required
 
 - `cluster_name` (String) The cluster to maintain this index.
-- `col_expr` (Block List, Min: 1) The expressions to use as the key for the index. (see [below for nested schema](#nestedblock--col_expr))
 - `obj_name` (Block List, Min: 1, Max: 1) The name of the source, view, or materialized view on which you want to create an index. (see [below for nested schema](#nestedblock--obj_name))
 
 ### Optional
 
+- `col_expr` (Block List) The expressions to use as the key for the index. (see [below for nested schema](#nestedblock--col_expr))
 - `comment` (String) Comment on an object in the database.
 - `default` (Boolean) Creates a default index using all inferred columns are used.
 - `method` (String) The name of the index method to use.
@@ -55,14 +55,6 @@ resource "materialize_index" "loadgen_index" {
 - `qualified_sql_name` (String) The fully qualified name of the index.
 - `schema_name` (String) The identifier for the index schema.
 
-<a id="nestedblock--col_expr"></a>
-### Nested Schema for `col_expr`
-
-Required:
-
-- `field` (String) The name of the option you want to set.
-
-
 <a id="nestedblock--obj_name"></a>
 ### Nested Schema for `obj_name`
 
@@ -74,6 +66,14 @@ Optional:
 
 - `database_name` (String) The obj_name database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The obj_name schema name. Defaults to `public`.
+
+
+<a id="nestedblock--col_expr"></a>
+### Nested Schema for `col_expr`
+
+Required:
+
+- `field` (String) The name of the option you want to set.
 
 ## Import
 
