@@ -215,7 +215,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	// set id
 	if indexDefault {
 		// For default indexes, find the index by the object it's on
-		idxParams, err := materialize.FindIndexByObject(
+		idxParams, err := materialize.FindDefaultIndexByObject(
 			metaDb,
 			obj["name"].(string),
 			obj["schema_name"].(string),

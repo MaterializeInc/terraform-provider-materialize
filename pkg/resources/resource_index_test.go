@@ -119,8 +119,8 @@ func TestResourceIndexDefaultCreate(t *testing.T) {
 			`CREATE DEFAULT INDEX IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		// Update the WHERE clause order to match the actual query
-		ip := `WHERE mz_databases.name = 'database' AND mz_objects.name = 'source' AND mz_objects.type IN \('source', 'view', 'materialized-view'\) AND mz_schemas.name = 'schema'`
+		// Update the WHERE clause to include the default index name pattern
+		ip := `WHERE mz_databases.name = 'database' AND mz_indexes.name = 'source_primary_idx' AND mz_objects.name = 'source' AND mz_objects.type IN \('source', 'view', 'materialized-view'\) AND mz_schemas.name = 'schema'`
 		testhelpers.MockIndexScan(mock, ip)
 
 		// Query Params

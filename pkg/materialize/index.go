@@ -180,22 +180,25 @@ func ListIndexes(conn *sqlx.DB, schemaName, databaseName string) ([]IndexParams,
 	return c, nil
 }
 
-func FindIndexByObject(conn *sqlx.DB, objectName, schemaName, databaseName string) (IndexParams, error) {
+func FindDefaultIndexByObject(conn *sqlx.DB, objectName, schemaName, databaseName string) (IndexParams, error) {
+	// Construct the expected default index name pattern
+	defaultIndexPattern := objectName + "_primary_idx"
+
+	// Set up predicates to find the index
 	p := map[string]string{
 		"mz_objects.name":   objectName,
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
+		"mz_indexes.name":   defaultIndexPattern,
 	}
+
 	q := indexQuery.QueryPredicate(p)
 
-	var indexes []IndexParams
-	if err := conn.Select(&indexes, q); err != nil {
-		return IndexParams{}, err
+	var index IndexParams
+	if err := conn.Get(&index, q); err != nil {
+		return IndexParams{}, fmt.Errorf("failed to find default index for object %s.%s.%s: %w",
+			databaseName, schemaName, objectName, err)
 	}
 
-	if len(indexes) == 0 {
-		return IndexParams{}, fmt.Errorf("no index found for object %s.%s.%s", databaseName, schemaName, objectName)
-	}
-
-	return indexes[0], nil
+	return index, nil
 }
