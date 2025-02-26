@@ -50,7 +50,6 @@ resource "materialize_index" "materialized_view_index" {
 }
 
 resource "materialize_index" "materialized_view_default_index" {
-  name         = "simple_default_index"
   cluster_name = "quickstart"
 
   default = true
