@@ -43,7 +43,7 @@ resource "materialize_index" "loadgen_index" {
 
 - `col_expr` (Block List) The expressions to use as the key for the index. (see [below for nested schema](#nestedblock--col_expr))
 - `comment` (String) Comment on an object in the database.
-- `default` (Boolean) Creates a default index using all inferred columns are used.
+- `default` (Boolean) Creates a default index using all inferred columns are used. Required if col_expr is not set.
 - `method` (String) The name of the index method to use.
 - `name` (String) The identifier for the index.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
