@@ -1,14 +1,25 @@
 # Changelog
 
+## 0.8.14 - 2025-02-27
+
+### Bug Fixes
+
+* Fixed state convergence for default indexes in the `materialize_index` resource, by correctly identifying them by their naming pattern [#699](https://github.com/MaterializeInc/terraform-provider-materialize/pull/699)
+* In the `materialize_index` resource, made column expressions optional for default indexes, defaulting to the Materialize default behavior for automatically selecting appropriate columns [#699](https://github.com/MaterializeInc/terraform-provider-materialize/pull/699)
+
+### Misc
+
+* Routine dependency updates: [#696](https://github.com/MaterializeInc/terraform-provider-materialize/pull/696), [#695](https://github.com/MaterializeInc/terraform-provider-materialize/pull/695)
+
 ## 0.8.13 - 2025-01-21
 
-## Features
+### Features
 
 * Added support for authenticating with service accounts. [#690](https://github.com/MaterializeInc/terraform-provider-materialize/pull/690)
 
 ## 0.8.12 - 2024-12-20
 
-## Features
+### Features
 
 * Support self-managed instances [#674](https://github.com/MaterializeInc/terraform-provider-materialize/pull/674).
     Now users can configure the provider like this:
@@ -30,12 +41,12 @@
     }
     ```
 
-## Bug Fixes
+### Bug Fixes
 
 * Fix intermittent test failures [#684](https://github.com/MaterializeInc/terraform-provider-materialize/pull/684)
 * `materialize_sink_kafka` resource: sort topic config map keys for consistent SQL generation [#677](https://github.com/MaterializeInc/terraform-provider-materialize/pull/677)
 
-## Misc
+### Misc
 
 * Remove outdated feature lifecycle annotations for features that are now Generally Available (GA) [#679](https://github.com/MaterializeInc/terraform-provider-materialize/pull/679)
 * Update Redpanda image reference: [#681](https://github.com/MaterializeInc/terraform-provider-materialize/pull/681)
@@ -43,7 +54,7 @@
 
 ## 0.8.11 - 2024-11-13
 
-## Features
+### Features
 
 * Adding a new `materialize_network_policy` resource and data source [#669](https://github.com/MaterializeInc/terraform-provider-materialize/pull/669).
 
@@ -104,11 +115,11 @@
     }
     ```
 
-## Bug Fixes
+### Bug Fixes
 
 * Updated the cluster and cluster replica query builders to skip `DISK` property for `cc` and `C` clusters as this is enabled by default for those sizes [#671](https://github.com/MaterializeInc/terraform-provider-materialize/pull/671)
 
-## Misc
+### Misc
 
 * Upgrade from `pgx` v3 to v4 [#663](https://github.com/MaterializeInc/terraform-provider-materialize/pull/663)
 * Routine dependency updates: [#668](https://github.com/MaterializeInc/terraform-provider-materialize/pull/668), [#667](https://github.com/MaterializeInc/terraform-provider-materialize/pull/667)
@@ -117,7 +128,7 @@
 
 ## 0.8.10 - 2024-10-7
 
-## Features
+### Features
 
 * Add support for `partition_by` attribute in `materialize_sink_kafka` [#659](https://github.com/MaterializeInc/terraform-provider-materialize/pull/659)
   * The `partition_by` attribute accepts a SQL expression used to partition the data in the Kafka sink. Can only be used with `ENVELOPE UPSERT`.
@@ -136,7 +147,7 @@
   }
   ```
 
-## Misc
+### Misc
 
 * Set `transaction_isolation` as conneciton option instead of executing a `SET` command [#660](https://github.com/MaterializeInc/terraform-provider-materialize/pull/660)
 * Routine dependency updates: [#661](https://github.com/MaterializeInc/terraform-provider-materialize/pull/661)
