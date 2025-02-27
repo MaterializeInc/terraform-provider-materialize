@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.15 - 2025-02-27
+
+### Bug Fixes
+
+* Fixed index column detection in index read query for the `materialize_index` resource [#701](https://github.com/MaterializeInc/terraform-provider-materialize/pull/701)
+
 ## 0.8.14 - 2025-02-27
 
 ### Bug Fixes
