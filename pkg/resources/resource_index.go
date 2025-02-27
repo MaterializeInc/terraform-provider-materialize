@@ -70,6 +70,7 @@ var indexSchema = map[string]*schema.Schema{
 					Description: "The name of the option you want to set.",
 					Type:        schema.TypeString,
 					Required:    true,
+					ForceNew:    true,
 				},
 			},
 		},
