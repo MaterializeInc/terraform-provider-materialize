@@ -81,21 +81,17 @@ func (b *IndexBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` USING %s`, b.method))
 	}
 
-	if len(b.colExpr) > 0 && !b.indexDefault {
-		var columns []string
-
-		for _, c := range b.colExpr {
-			s := strings.Builder{}
-
-			s.WriteString(c.Field)
-			o := s.String()
-			columns = append(columns, o)
-
+	if !b.indexDefault {
+		if len(b.colExpr) > 0 {
+			var columns []string
+			for _, c := range b.colExpr {
+				columns = append(columns, c.Field)
+			}
+			p := strings.Join(columns[:], ", ")
+			q.WriteString(fmt.Sprintf(` (%s)`, p))
+		} else {
+			q.WriteString(` ()`)
 		}
-		p := strings.Join(columns[:], ", ")
-		q.WriteString(fmt.Sprintf(` (%s)`, p))
-	} else {
-		q.WriteString(` ()`)
 	}
 
 	q.WriteString(`;`)
@@ -182,4 +178,27 @@ func ListIndexes(conn *sqlx.DB, schemaName, databaseName string) ([]IndexParams,
 	}
 
 	return c, nil
+}
+
+func FindDefaultIndexByObject(conn *sqlx.DB, objectName, schemaName, databaseName string) (IndexParams, error) {
+	// Construct the expected default index name pattern
+	defaultIndexPattern := objectName + "_primary_idx"
+
+	// Set up predicates to find the index
+	p := map[string]string{
+		"mz_objects.name":   objectName,
+		"mz_schemas.name":   schemaName,
+		"mz_databases.name": databaseName,
+		"mz_indexes.name":   defaultIndexPattern,
+	}
+
+	q := indexQuery.QueryPredicate(p)
+
+	var index IndexParams
+	if err := conn.Get(&index, q); err != nil {
+		return IndexParams{}, fmt.Errorf("failed to find default index for object %s.%s.%s: %w",
+			databaseName, schemaName, objectName, err)
+	}
+
+	return index, nil
 }
