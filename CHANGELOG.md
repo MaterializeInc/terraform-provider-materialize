@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Misc
+
+* Upgraded Go version from `1.22.7` to `1.23.6` for improved performance and security fixes.
+
 ## 0.8.15 - 2025-02-27
 
 ### Bug Fixes
