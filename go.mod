@@ -1,8 +1,6 @@
 module github.com/MaterializeInc/terraform-provider-materialize
 
-go 1.22.7
-
-toolchain go1.22.9
+go 1.23.6
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
