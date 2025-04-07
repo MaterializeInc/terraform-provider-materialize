@@ -4,7 +4,7 @@ services:
     image: materialize/materialized:latest
     container_name: materialized
     command:
-      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
@@ -32,7 +32,7 @@ services:
     image: materialize/materialized:latest
     container_name: materialized2
     command:
-      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1"}}'
+      - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}}'
       - --bootstrap-default-cluster-replica-size=3xsmall
       - --bootstrap-builtin-system-cluster-replica-size=3xsmall
       - --bootstrap-builtin-catalog-server-cluster-replica-size=3xsmall
