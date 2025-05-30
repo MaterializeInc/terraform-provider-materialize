@@ -541,6 +541,8 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		COALESCE\(mz_sources.size, mz_clusters.size\) AS size,
 		mz_sources.envelope_type,
 		mz_connections.name as connection_name,
+		conn_schemas.name as connection_schema_name,
+		conn_databases.name as connection_database_name,
 		mz_clusters.name as cluster_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
@@ -552,6 +554,10 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_schemas.database_id = mz_databases.id
 	LEFT JOIN mz_connections
 		ON mz_sources.connection_id = mz_connections.id
+	LEFT JOIN mz_schemas conn_schemas
+		ON mz_connections.schema_id = conn_schemas.id
+	LEFT JOIN mz_databases conn_databases
+		ON conn_schemas.database_id = conn_databases.id
 	LEFT JOIN mz_clusters
 		ON mz_sources.cluster_id = mz_clusters.id
 	JOIN mz_roles
@@ -564,8 +570,8 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_sources.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "cluster", "joe", defaultPrivilege)
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "connection_schema_name", "connection_database_name", "cluster_name", "comment", "owner_name", "privileges"}).
+		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "public", "materialize", "cluster", nil, "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
