@@ -111,18 +111,20 @@ func (b *Source) DropCascade() error {
 }
 
 type SourceParams struct {
-	SourceId       sql.NullString `db:"id"`
-	SourceName     sql.NullString `db:"name"`
-	SchemaName     sql.NullString `db:"schema_name"`
-	DatabaseName   sql.NullString `db:"database_name"`
-	SourceType     sql.NullString `db:"source_type"`
-	Size           sql.NullString `db:"size"`
-	EnvelopeType   sql.NullString `db:"envelope_type"`
-	ConnectionName sql.NullString `db:"connection_name"`
-	ClusterName    sql.NullString `db:"cluster_name"`
-	Comment        sql.NullString `db:"comment"`
-	OwnerName      sql.NullString `db:"owner_name"`
-	Privileges     pq.StringArray `db:"privileges"`
+	SourceId               sql.NullString `db:"id"`
+	SourceName             sql.NullString `db:"name"`
+	SchemaName             sql.NullString `db:"schema_name"`
+	DatabaseName           sql.NullString `db:"database_name"`
+	SourceType             sql.NullString `db:"source_type"`
+	Size                   sql.NullString `db:"size"`
+	EnvelopeType           sql.NullString `db:"envelope_type"`
+	ConnectionName         sql.NullString `db:"connection_name"`
+	ConnectionSchemaName   sql.NullString `db:"connection_schema_name"`
+	ConnectionDatabaseName sql.NullString `db:"connection_database_name"`
+	ClusterName            sql.NullString `db:"cluster_name"`
+	Comment                sql.NullString `db:"comment"`
+	OwnerName              sql.NullString `db:"owner_name"`
+	Privileges             pq.StringArray `db:"privileges"`
 }
 
 var sourceQuery = NewBaseQuery(`
@@ -135,6 +137,8 @@ var sourceQuery = NewBaseQuery(`
 			COALESCE(mz_sources.size, mz_clusters.size) AS size,
 			mz_sources.envelope_type,
 			mz_connections.name as connection_name,
+			conn_schemas.name as connection_schema_name,
+			conn_databases.name as connection_database_name,
 			mz_clusters.name as cluster_name,
 			comments.comment AS comment,
 			mz_roles.name AS owner_name,
@@ -146,6 +150,10 @@ var sourceQuery = NewBaseQuery(`
 			ON mz_schemas.database_id = mz_databases.id
 		LEFT JOIN mz_connections
 			ON mz_sources.connection_id = mz_connections.id
+		LEFT JOIN mz_schemas conn_schemas
+			ON mz_connections.schema_id = conn_schemas.id
+		LEFT JOIN mz_databases conn_databases
+			ON conn_schemas.database_id = conn_databases.id
 		LEFT JOIN mz_clusters
 			ON mz_sources.cluster_id = mz_clusters.id
 		JOIN mz_roles
