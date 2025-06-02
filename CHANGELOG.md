@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.17 - 2025-06-03
+
+### Bug Fixes
+* Fixed a bug during `terraform import` for source resources where the connection detail was not being set correctly [#714](https://github.com/MaterializeInc/terraform-provider-materialize/pull/714)
+* Fixed a bug in the CI setup to correctly set the `memory_limit` key in `cluster-replica-sizes` [#708](https://github.com/MaterializeInc/terraform-provider-materialize/pull/708)
+
+### Misc
+* Routine dependency updates: [#712](https://github.com/MaterializeInc/terraform-provider-materialize/pull/712), [#711](https://github.com/MaterializeInc/terraform-provider-materialize/pull/711), [#709](https://github.com/MaterializeInc/terraform-provider-materialize/pull/709)
+
 ## 0.8.16 - 2025-04-03
 
 ### Misc
