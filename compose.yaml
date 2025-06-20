@@ -149,6 +149,7 @@ services:
     container_name: provider
     depends_on:
       materialized: {condition: service_healthy}
+      materialized2: {condition: service_healthy}
       redpanda: {condition: service_healthy}
     volumes:
       - ./integration:/usr/src/app/integration
