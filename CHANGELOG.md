@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.18 - 2025-06-20
+
+### Features
+
+* Added `url` attribute to the `materialize_source_webhook` resource, allowing retrieving the webhook URL after creation [#718](https://github.com/MaterializeInc/terraform-provider-materialize/pull/718)
+
+### Misc
+* Routine dependency updates: [#716](https://github.com/MaterializeInc/terraform-provider-materialize/pull/716)
+
 ## 0.8.17 - 2025-06-03
 
 ### Bug Fixes
