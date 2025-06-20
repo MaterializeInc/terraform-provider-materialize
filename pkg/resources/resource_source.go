@@ -61,9 +61,9 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	// Set the webhook URL if this is a webhook source
-	if err := d.Set("url", s.WebhookUrl.String); err != nil {
-		return diag.FromErr(err)
+	// Set the webhook URL only if this is a webhook source
+	if s.WebhookUrl.Valid {
+		_ = d.Set("url", s.WebhookUrl.String)
 	}
 
 	if v, ok := d.GetOk("envelope"); ok {
