@@ -42,6 +42,7 @@ func TestAccSourceWebhook_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.1.field.0.headers", "true"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.2.field.0.secret.0.name", secretName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_expression", "headers->'authorization' = BASIC_HOOK_AUTH"),
+					resource.TestCheckResourceAttrSet("materialize_source_webhook.test", "url"),
 				),
 			},
 			{
@@ -76,6 +77,7 @@ func TestAccSourceWebhookSegment_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.2.alias", "secret"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.2.bytes", "true"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_expression", "decode(headers->'x-signature', 'hex') = hmac(body, secret, 'sha1')"),
+					resource.TestCheckResourceAttrSet("materialize_source_webhook.test", "url"),
 				),
 			},
 			{
@@ -107,6 +109,7 @@ func TestAccSourceWebhookRudderstack_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.1.field.0.headers", "true"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_options.2.field.0.secret.0.name", "rudderstack_basic_auth"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "check_expression", "headers->'authorization' = rudderstack_basic_auth"),
+					resource.TestCheckResourceAttrSet("materialize_source_webhook.test", "url"),
 				),
 			},
 			{
@@ -137,6 +140,7 @@ func TestAccSourceWebhook_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", sourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "comment", "Comment"),
+					resource.TestCheckResourceAttrSet("materialize_source_webhook.test", "url"),
 				),
 			},
 			{
@@ -146,6 +150,7 @@ func TestAccSourceWebhook_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "name", newSourceName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "ownership_role", roleName),
 					resource.TestCheckResourceAttr("materialize_source_webhook.test", "comment", "New Comment"),
+					resource.TestCheckResourceAttrSet("materialize_source_webhook.test", "url"),
 				),
 			},
 		},

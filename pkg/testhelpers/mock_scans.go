@@ -546,6 +546,7 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_clusters.name as cluster_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,
+		mz_webhook_sources.url AS webhook_url,
 		mz_sources.privileges
 	FROM mz_sources
 	JOIN mz_schemas
@@ -567,11 +568,13 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		FROM mz_internal.mz_comments
 		WHERE object_type = 'source'
 	\) comments
-		ON mz_sources.id = comments.id`
+		ON mz_sources.id = comments.id
+	LEFT JOIN mz_internal.mz_webhook_sources
+		ON mz_sources.id = mz_webhook_sources.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "connection_schema_name", "connection_database_name", "cluster_name", "comment", "owner_name", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "public", "materialize", "cluster", nil, "joe", defaultPrivilege)
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "connection_schema_name", "connection_database_name", "cluster_name", "comment", "owner_name", "webhook_url", "privileges"}).
+		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "public", "materialize", "cluster", nil, "joe", "https://webhook.url/example", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

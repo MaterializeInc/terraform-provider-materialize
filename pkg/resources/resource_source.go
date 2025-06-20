@@ -61,6 +61,11 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	// Set the webhook URL if this is a webhook source
+	if err := d.Set("url", s.WebhookUrl.String); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if v, ok := d.GetOk("envelope"); ok {
 		envelope := v.([]interface{})[0].(map[string]interface{})
 		if upsertOptions, ok := envelope["upsert_options"].([]interface{}); ok && len(upsertOptions) > 0 {

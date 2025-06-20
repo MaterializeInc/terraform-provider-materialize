@@ -124,6 +124,7 @@ type SourceParams struct {
 	ClusterName            sql.NullString `db:"cluster_name"`
 	Comment                sql.NullString `db:"comment"`
 	OwnerName              sql.NullString `db:"owner_name"`
+	WebhookUrl             sql.NullString `db:"webhook_url"`
 	Privileges             pq.StringArray `db:"privileges"`
 }
 
@@ -142,6 +143,7 @@ var sourceQuery = NewBaseQuery(`
 			mz_clusters.name as cluster_name,
 			comments.comment AS comment,
 			mz_roles.name AS owner_name,
+			mz_webhook_sources.url AS webhook_url,
 			mz_sources.privileges
 		FROM mz_sources
 		JOIN mz_schemas
@@ -163,7 +165,9 @@ var sourceQuery = NewBaseQuery(`
 			FROM mz_internal.mz_comments
 			WHERE object_type = 'source'
 		) comments
-			ON mz_sources.id = comments.id`)
+			ON mz_sources.id = comments.id
+		LEFT JOIN mz_internal.mz_webhook_sources
+			ON mz_sources.id = mz_webhook_sources.id`)
 
 func SourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
