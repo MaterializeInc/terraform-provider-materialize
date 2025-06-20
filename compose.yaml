@@ -51,10 +51,9 @@ services:
       - --all-features
     environment:
       MZ_NO_TELEMETRY: 1
-      MZ_SQL_LISTEN_ADDR: 0.0.0.0:7875
-      MZ_HTTP_LISTEN_ADDR: 0.0.0.0:7876
-      MZ_INTERNAL_SQL_LISTEN_ADDR: 0.0.0.0:7877
-      MZ_INTERNAL_HTTP_LISTEN_ADDR: 0.0.0.0:7878
+      MZ_LISTENERS_CONFIG_PATH: /custom-listeners.json
+    volumes:
+      - ./.github/listener_configs/no_auth.json:/custom-listeners.json
     ports:
       - 7875:7875
       - 7877:7877
@@ -149,7 +148,6 @@ services:
     container_name: provider
     depends_on:
       materialized: {condition: service_healthy}
-      materialized2: {condition: service_healthy}
       redpanda: {condition: service_healthy}
     volumes:
       - ./integration:/usr/src/app/integration
