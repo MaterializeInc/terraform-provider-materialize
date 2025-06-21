@@ -3,12 +3,12 @@
 page_title: "materialize_source_webhook Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A webhook source describes a webhook you want Materialize to read data from.
+  A webhook source describes a webhook you want Materialize to read data from. This resource is deprecated and will be removed in a future release. Please use materialize_source_table_webhook instead.
 ---
 
 # materialize_source_webhook (Resource)
 
-A webhook source describes a webhook you want Materialize to read data from.
+A webhook source describes a webhook you want Materialize to read data from. This resource is deprecated and will be removed in a future release. Please use materialize_source_table_webhook instead.
 
 ## Example Usage
 
