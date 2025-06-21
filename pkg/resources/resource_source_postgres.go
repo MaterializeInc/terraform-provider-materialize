@@ -155,6 +155,19 @@ func sourcePostgresRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
+	if s.ConnectionName.Valid && s.ConnectionSchemaName.Valid && s.ConnectionDatabaseName.Valid {
+		postgresConnection := []interface{}{
+			map[string]interface{}{
+				"name":          s.ConnectionName.String,
+				"schema_name":   s.ConnectionSchemaName.String,
+				"database_name": s.ConnectionDatabaseName.String,
+			},
+		}
+		if err := d.Set("postgres_connection", postgresConnection); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	deps, err := materialize.ListPostgresSubsources(metaDb, utils.ExtractId(i), "subsource")
 	if err != nil {
 		return diag.FromErr(err)

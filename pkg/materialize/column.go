@@ -74,18 +74,27 @@ var indexColumnQuery = NewBaseQuery(`
 		ON mz_columns.id = mz_indexes.on_id
 	LEFT JOIN mz_index_columns
 		ON mz_index_columns.index_id = mz_indexes.id
-		AND mz_index_columns.index_position = mz_columns.position`).Order("mz_columns.position")
+		AND mz_index_columns.on_position = mz_columns.position`).Order("mz_columns.position")
 
-func ListIndexColumns(conn *sqlx.DB, indexiId string) ([]IndexColumnParams, error) {
+func ListIndexColumns(conn *sqlx.DB, indexId string) ([]IndexColumnParams, error) {
 	p := map[string]string{
-		"mz_indexes.id": indexiId,
+		"mz_indexes.id": indexId,
 	}
 	q := indexColumnQuery.QueryPredicate(p)
 
-	var c []IndexColumnParams
-	if err := conn.Select(&c, q); err != nil {
-		return c, err
+	// Filter out non-indexed columns
+	var allColumns []IndexColumnParams
+	if err := conn.Select(&allColumns, q); err != nil {
+		return allColumns, err
 	}
 
-	return c, nil
+	// Only keep columns that are part of the index
+	var indexedColumns []IndexColumnParams
+	for _, col := range allColumns {
+		if col.IndexedColumn.Bool {
+			indexedColumns = append(indexedColumns, col)
+		}
+	}
+
+	return indexedColumns, nil
 }

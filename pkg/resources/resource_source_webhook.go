@@ -28,6 +28,11 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
 	},
+	"url": {
+		Description: "The webhook URL that can be used to send data to this source.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"body_format": {
 		Description: "The body format of the webhook.",
 		Type:        schema.TypeString,
