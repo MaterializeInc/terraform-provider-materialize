@@ -51,6 +51,11 @@ var connectionAwsSchema = map[string]*schema.Schema{
 		ForceNew:     false,
 		RequiredWith: []string{"assume_role_arn"},
 	},
+	"external_id": {
+		Description: "The external ID used for trust relationship when assume_role_arn is specified. This is a read-only attribute that is automatically generated.",
+		Type:        schema.TypeString,
+		Computed:    true,
+	},
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -137,6 +142,10 @@ func connectionAwsRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	if err := d.Set("assume_role_session_name", s.AssumeRoleSessionName.String); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("external_id", s.ExternalId.String); err != nil {
 		return diag.FromErr(err)
 	}
 

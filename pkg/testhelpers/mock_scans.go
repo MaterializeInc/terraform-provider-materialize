@@ -132,6 +132,7 @@ func MockConnectionAwsScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_aws_connections.assume_role_session_name,
 		comments.comment AS comment,
 		mz_aws_connections.principal,
+		mz_aws_connections.external_id,
 		mz_roles.name AS owner_name
 	FROM mz_connections
 	JOIN mz_schemas
@@ -165,6 +166,8 @@ func MockConnectionAwsScan(mock sqlmock.Sqlmock, predicate string) {
 		"assume_role_arn",
 		"assume_role_session_name",
 		"comment",
+		"principal",
+		"external_id",
 		"owner_name",
 	}).AddRow(
 		"u1",
@@ -181,6 +184,8 @@ func MockConnectionAwsScan(mock sqlmock.Sqlmock, predicate string) {
 		"arn:aws:iam::123456789012:user/JohnDoe",
 		"s3-access-example",
 		"comment",
+		"principal",
+		"mz_12345678-1234-1234-1234-123456789012_u123",
 		"owner_name",
 	)
 	mock.ExpectQuery(q).WillReturnRows(ir)

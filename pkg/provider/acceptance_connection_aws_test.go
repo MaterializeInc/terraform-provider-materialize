@@ -3,6 +3,7 @@ package provider
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -35,6 +36,7 @@ func TestAccConnectionAws_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "aws_region", region),
 					resource.TestCheckResourceAttr(resourceName, "secret_access_key.0.name", connectionName+"_secret_access_key"),
 					resource.TestCheckResourceAttr(resourceName, "session_token.0.secret.0.name", connectionName+"_session_token"),
+					resource.TestCheckResourceAttr(resourceName, "external_id", ""),
 				),
 			},
 		},
@@ -70,6 +72,7 @@ func TestAccConnectionAws_update(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "aws_region", initialRegion),
 					resource.TestCheckResourceAttr(resourceName, "secret_access_key.0.name", initialConnectionName+"_secret_access_key"),
 					resource.TestCheckResourceAttr(resourceName, "session_token.0.secret.0.name", initialConnectionName+"_session_token"),
+					resource.TestCheckResourceAttr(resourceName, "external_id", ""),
 				),
 			},
 			{
@@ -82,6 +85,47 @@ func TestAccConnectionAws_update(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "aws_region", updatedRegion),
 					resource.TestCheckResourceAttr(resourceName, "secret_access_key.0.name", updatedConnectionName+"_secret_access_key"),
 					resource.TestCheckResourceAttr(resourceName, "session_token.0.secret.0.name", updatedConnectionName+"_session_token"),
+					resource.TestCheckResourceAttr(resourceName, "external_id", ""),
+				),
+			},
+		},
+	})
+}
+
+func TestAccConnectionAws_withAssumeRole(t *testing.T) {
+	resourceName := "materialize_connection_aws.aws_conn_assume_role"
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	endpoint := "http://localhost:4566"
+	accessKeyText := "test_access_key"
+	region := "us-east-1"
+	secretKeyText := "test_secret_key"
+	sessionToken := "test_session_token"
+	assumeRoleArn := "arn:aws:iam::123456789012:role/test-role"
+	assumeRoleSessionName := "test-session"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnectionAwsResourceWithAssumeRole(connectionName, endpoint, accessKeyText, region, secretKeyText, sessionToken, assumeRoleArn, assumeRoleSessionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionAwsExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", connectionName),
+					resource.TestCheckResourceAttr(resourceName, "assume_role_arn", assumeRoleArn),
+					resource.TestCheckResourceAttr(resourceName, "assume_role_session_name", assumeRoleSessionName),
+					resource.TestCheckResourceAttrWith(resourceName, "external_id", func(value string) error {
+						if value == "" {
+							return fmt.Errorf("external_id should not be empty when assume_role_arn is specified")
+						}
+						if !strings.HasPrefix(value, "mz_") {
+							return fmt.Errorf("external_id should start with 'mz_', got: %s", value)
+						}
+						if len(value) < 10 {
+							return fmt.Errorf("external_id seems too short: %s", value)
+						}
+						return nil
+					}),
 				),
 			},
 		},
@@ -126,6 +170,19 @@ resource "materialize_connection_aws" "aws_conn" {
   validate = false
 }
 `, name, endpoint, accessKeyText, region, secretKeyText, sessionToken)
+}
+
+func testAccConnectionAwsResourceWithAssumeRole(name, endpoint, accessKeyText, region, secretKeyText, sessionToken, assumeRoleArn, assumeRoleSessionName string) string {
+	return fmt.Sprintf(`
+resource "materialize_connection_aws" "aws_conn_assume_role" {
+  name     = "%[1]s"
+  endpoint = "%[2]s"
+  aws_region = "%[4]s"
+  assume_role_arn = "%[7]s"
+  assume_role_session_name = "%[8]s"
+  validate = false
+}
+`, name, endpoint, accessKeyText, region, secretKeyText, sessionToken, assumeRoleArn, assumeRoleSessionName)
 }
 
 func testAccCheckConnectionAwsExists(resourceName string) resource.TestCheckFunc {

@@ -137,6 +137,7 @@ type ConnectionAwsParams struct {
 	AssumeRoleSessionName   sql.NullString `db:"assume_role_session_name"`
 	Comment                 sql.NullString `db:"comment"`
 	Principal               sql.NullString `db:"principal"`
+	ExternalId              sql.NullString `db:"external_id"`
 	OwnerName               sql.NullString `db:"owner_name"`
 }
 
@@ -157,6 +158,7 @@ var connectionAwsQuery = NewBaseQuery(`
 		mz_aws_connections.assume_role_session_name,
 		comments.comment AS comment,
 		mz_aws_connections.principal,
+		mz_aws_connections.external_id,
 		mz_roles.name AS owner_name
 	FROM mz_connections
 	JOIN mz_schemas
