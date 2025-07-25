@@ -72,8 +72,44 @@ func TestResourceConnectionAwsReadIdMigration(t *testing.T) {
 		if d.Id() != "aws/us-east-1:u1" {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
-	})
 
+		expectedExternalId := "mz_12345678-1234-1234-1234-123456789012_u123"
+		if d.Get("external_id").(string) != expectedExternalId {
+			t.Fatalf("Expected external_id to be %s, got %s", expectedExternalId, d.Get("external_id").(string))
+		}
+	})
+}
+
+func TestResourceConnectionAwsReadWithExternalId(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws)
+	r.NotNil(d)
+
+	d.SetId("u1")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionAwsScan(mock, pp)
+
+		if err := connectionAwsRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		// Verify all the basic attributes are set
+		if d.Get("name").(string) != "connection" {
+			t.Fatalf("unexpected name")
+		}
+
+		if d.Get("assume_role_arn").(string) != "arn:aws:iam::123456789012:user/JohnDoe" {
+			t.Fatalf("unexpected assume_role_arn")
+		}
+
+		expectedExternalId := "mz_12345678-1234-1234-1234-123456789012_u123"
+		if d.Get("external_id").(string) != expectedExternalId {
+			t.Fatalf("Expected external_id to be %s, got %s", expectedExternalId, d.Get("external_id").(string))
+		}
+	})
 }
 
 func TestResourceConnectionAwsUpdate(t *testing.T) {
