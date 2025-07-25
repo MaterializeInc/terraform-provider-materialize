@@ -40,6 +40,8 @@ resource "materialize_sso_default_roles" "example_sso_default_roles_2" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Retrieve the SSO Configuration ID using the materialize_sso_config data source
 # Example of using the data source in your configuration:

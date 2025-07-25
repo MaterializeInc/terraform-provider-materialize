@@ -59,6 +59,8 @@ resource "materialize_app_password" "example_app_password" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # App passwords can be imported using the app password id:
 terraform import materialize_app_password.example_app_password <app_password_id>

@@ -139,6 +139,8 @@ Optional:
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Sources can be imported using the source id:
 terraform import materialize_source_webhook.example_source_webhook <region>:<source_id>

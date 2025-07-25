@@ -79,6 +79,8 @@ Required:
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Indexes can be imported using the index id:
 terraform import materialize_index.example_index <region>:<index_id>

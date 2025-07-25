@@ -52,6 +52,7 @@ resource "materialize_connection_aws" "example_connection" {
 
 ### Read-Only
 
+- `external_id` (String) The external ID used for trust relationship when assume_role_arn is specified. This is a read-only attribute that is automatically generated.
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the connection.
 
@@ -113,6 +114,8 @@ Optional:
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 # Connections can be imported using the connection id:

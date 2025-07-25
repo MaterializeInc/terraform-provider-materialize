@@ -38,6 +38,8 @@ resource "materialize_region" "example" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Regions can be imported using the `aws/` prefix followed by the region name.
 terraform import materialize_region.example_region aws/us-east-1

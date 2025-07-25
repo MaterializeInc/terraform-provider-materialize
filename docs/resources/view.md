@@ -63,6 +63,8 @@ resource "materialize_view" "simple_view" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Views can be imported using the view id:
 terraform import materialize_view.example_view <region>:<view_id>
