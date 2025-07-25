@@ -217,6 +217,8 @@ Optional:
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Sinks can be imported using the sink id:
 terraform import materialize_sink_kafka.example_sink_kafka <region>:<sink_id>

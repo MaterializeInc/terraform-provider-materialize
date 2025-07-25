@@ -42,6 +42,8 @@ resource "materialize_database_grant_default_privilege" "example" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Grants can be imported using the concatenation of GRANT DEFAULT and the grantee id of the role.
 # Optionally, you can include the target id and database id. The privilege is required.

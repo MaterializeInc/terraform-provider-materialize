@@ -40,6 +40,8 @@ resource "materialize_role" "example_role" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Roles can be imported using the role id:
 terraform import materialize_role.example_role <region>:<role_id>

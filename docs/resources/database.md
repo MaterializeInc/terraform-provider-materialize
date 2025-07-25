@@ -60,6 +60,8 @@ resource "materialize_schema_grant" "schema_grant_usage" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Databases can be imported using the database id:
 terraform import materialize_database.example_database <region>:<database_id>

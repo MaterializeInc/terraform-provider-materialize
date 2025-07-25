@@ -40,6 +40,8 @@ resource "materialize_role_grant" "role_grant_user" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Grants can be imported using the concatenation of
 # ROLE MEMBER, the id of the role and id of the member

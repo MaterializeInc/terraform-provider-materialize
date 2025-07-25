@@ -74,6 +74,8 @@ Required:
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Network policies can be imported using the `terraform import` command.
 terraform import materialize_network_policy.example_network_policy <region>:<network_policy_id>

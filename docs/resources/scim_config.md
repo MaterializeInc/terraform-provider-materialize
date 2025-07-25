@@ -41,6 +41,8 @@ resource "materialize_scim_config" "example_scim_config" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Retrieve the SCIM Configuration ID using the materialize_scim_configs data source
 # Example of using the data source in your configuration:

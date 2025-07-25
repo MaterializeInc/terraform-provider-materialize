@@ -36,6 +36,8 @@ resource "materialize_sso_domain" "example_sso_domain" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Retrieve the SSO Configuration ID using the materialize_sso_config data source
 # Example of using the data source in your configuration:

@@ -42,6 +42,8 @@ resource "materialize_user" "example_user" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Retrieve the User ID using the materialize_user data source
 # Example of using the data source in your configuration:
