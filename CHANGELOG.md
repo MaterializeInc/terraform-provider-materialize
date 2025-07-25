@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.19 - 2025-07-25
+
+### Features
+
+* Added `external_id` attribute to the `materialize_connection_aws` resource [#727](https://github.com/MaterializeInc/terraform-provider-materialize/pull/727)
+
+### Misc
+
+* Routine dependency updates: [#725](https://github.com/MaterializeInc/terraform-provider-materialize/pull/725), [#723](https://github.com/MaterializeInc/terraform-provider-materialize/pull/723)
+
 ## 0.8.18 - 2025-06-20
 
 ### Features
