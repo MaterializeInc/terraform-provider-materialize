@@ -50,6 +50,12 @@ func scimGroupUsersCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM group users are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_group_users"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	err = frontegg.AddUsersToGroup(ctx, client, groupID, userIDs)

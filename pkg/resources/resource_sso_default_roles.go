@@ -49,6 +49,12 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO default roles are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_default_roles"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Get("sso_config_id").(string)
@@ -79,6 +85,12 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO default roles are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_default_roles"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Id()
@@ -116,6 +128,12 @@ func ssoDefaultRolesDelete(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO default roles are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_default_roles"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Id()

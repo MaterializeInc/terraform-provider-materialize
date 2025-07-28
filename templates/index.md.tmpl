@@ -13,11 +13,34 @@ Configure the provider by adding the following block to your Terraform project:
 
 {{tffile "examples/provider/provider.tf"}}
 
+## ⚠️ Important: SaaS vs Self-Hosted Resources
+
+**The provider supports two distinct configuration modes with different resource availability:**
+
+### Materialize Cloud (SaaS) Mode
+When configured with `password` and `default_region` (first example above), **all resources are available**.
+
+### Self-Hosted Mode  
+When configured with `host`, `username`, etc. (second example above), **some resources are NOT available**, including:
+
+- `materialize_app_password`
+- `materialize_user` 
+- `materialize_sso_config` and related SSO resources
+- `materialize_scim_config` and related SCIM resources
+
+These organization and identity management resources depend on Frontegg (Materialize Cloud's identity provider) and will produce clear error messages if used in self-hosted mode.
+
+**⚠️ Migration Warning:** Switching between SaaS and self-hosted modes requires careful state file management. We strongly recommend using consistent configuration mode from the beginning to avoid complex state migrations.
+
 ## Schema
 
-* `password` (String, Sensitive) Materialize App Password. Can also come from the `MZ_PASSWORD` environment variable.
+* `password` (String, Sensitive) Materialize App Password (SaaS) or database password (self-hosted). Can also come from the `MZ_PASSWORD` environment variable.
+* `default_region` (String, Optional) The Materialize AWS region (SaaS only). Can also come from the `MZ_DEFAULT_REGION` environment variable. Defaults to `aws/us-east-1`.
+* `host` (String, Optional) The Materialize host (self-hosted only). Can also come from the `MZ_HOST` environment variable.
+* `port` (Number, Optional) The Materialize port (self-hosted only). Can also come from the `MZ_PORT` environment variable. Defaults to `6875`.
+* `username` (String, Optional) The database username (self-hosted only). Can also come from the `MZ_USER` environment variable. Defaults to `materialize`.
 * `database` (String, Optional) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
-* `default_region` (String, Optional) The Materialize AWS region. Can also come from the `MZ_DEFAULT_REGION` environment variable. Defaults to `aws/us-east-1`.
+* `sslmode` (String, Optional) SSL mode (self-hosted only). Can also come from the `MZ_SSLMODE` environment variable. Defaults to `require`.
 
 ## Order precedence
 

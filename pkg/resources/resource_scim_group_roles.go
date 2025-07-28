@@ -51,6 +51,12 @@ func scimGroupRoleCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM group roles are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_group_roles"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	roleIDs, err := getRoleIDsByName(ctx, providerMeta, roleNames)

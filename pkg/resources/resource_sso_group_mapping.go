@@ -57,6 +57,12 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO group mappings are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_group_mapping"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Get("sso_config_id").(string)

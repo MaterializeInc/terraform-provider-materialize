@@ -51,6 +51,12 @@ func ssoDomainCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO domains are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_domain"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	ssoConfigID := d.Get("sso_config_id").(string)

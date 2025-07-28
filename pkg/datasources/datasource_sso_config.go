@@ -134,6 +134,12 @@ func dataSourceSSOConfigRead(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO config data source is only used in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_config data source"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	rawConfigurations, err := frontegg.FetchSSOConfigurationsRaw(ctx, client)

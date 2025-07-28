@@ -45,6 +45,12 @@ func scim2GroupCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM groups are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_group"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	params := frontegg.GroupCreateParams{
