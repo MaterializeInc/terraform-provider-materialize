@@ -118,6 +118,12 @@ func dataSourceSCIMGroupsRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM groups data source is only used in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_groups data source"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	groups, err := frontegg.FetchSCIMGroups(ctx, client)

@@ -74,6 +74,12 @@ func ssoConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO configs are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_config"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 	baseEndpoint := providerMeta.CloudAPI.BaseEndpoint
 
@@ -106,6 +112,12 @@ func ssoConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO configs are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_config"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	// Fetch SSO configurations
@@ -182,6 +194,12 @@ func ssoConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SSO configs are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_sso_config"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	err = frontegg.DeleteSSOConfiguration(ctx, client, d.Id())

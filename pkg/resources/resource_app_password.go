@@ -77,6 +77,12 @@ func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that app passwords are only used in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_app_password"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	name := d.Get("name").(string)
@@ -172,6 +178,11 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 
+	// Validate that app passwords are only used in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_app_password"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 	id := d.Id()
 
@@ -242,6 +253,12 @@ func appPasswordDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that app passwords are only used in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_app_password"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	id := d.Id()
