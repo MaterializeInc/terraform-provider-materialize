@@ -64,6 +64,12 @@ func dataSourceSCIM2ConfigurationsRead(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM configs data source is only used in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_configs data source"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	configurations, err := frontegg.FetchSCIM2Configurations(ctx, client)

@@ -202,3 +202,41 @@ func TestProviderMetaModeHelpers(t *testing.T) {
 		})
 	}
 }
+
+func TestProviderMeta_ValidateSaaSOnly_SelfHosted(t *testing.T) {
+	r := require.New(t)
+
+	providerMeta := &ProviderMeta{
+		Mode: ModeSelfHosted,
+	}
+
+	diags := providerMeta.ValidateSaaSOnly("materialize_app_password")
+	r.True(diags.HasError())
+
+	r.Contains(diags[0].Summary, "materialize_app_password is only available in Materialize Cloud (SaaS) environments")
+	r.Contains(diags[0].Summary, "You are currently using self-hosted authentication mode")
+	r.Contains(diags[0].Summary, "you need to switch to Materialize Cloud (SaaS) mode")
+}
+
+func TestProviderMeta_ValidateSaaSOnly_SaaS(t *testing.T) {
+	r := require.New(t)
+
+	providerMeta := &ProviderMeta{
+		Mode: ModeSaaS,
+	}
+
+	diags := providerMeta.ValidateSaaSOnly("materialize_app_password")
+	r.False(diags.HasError())
+}
+
+func TestProviderMeta_ValidateSaaSOnly_EmptyMode(t *testing.T) {
+	r := require.New(t)
+
+	// Empty mode should default to SaaS
+	providerMeta := &ProviderMeta{
+		Mode: "",
+	}
+
+	diags := providerMeta.ValidateSaaSOnly("materialize_app_password")
+	r.False(diags.HasError())
+}

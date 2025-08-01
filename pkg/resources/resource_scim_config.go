@@ -75,6 +75,12 @@ func resourceSCIM2ConfigurationsCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM configs are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_config"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	config := frontegg.SCIM2Configuration{
@@ -108,6 +114,12 @@ func resourceSCIM2ConfigurationsDelete(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM configs are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_config"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	err = frontegg.DeleteSCIM2Configuration(ctx, client, d.Id())
@@ -124,6 +136,12 @@ func resourceSCIM2ConfigurationsRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Validate that SCIM configs are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_scim_config"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 
 	configurations, err := frontegg.FetchSCIM2Configurations(ctx, client)

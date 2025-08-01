@@ -42,6 +42,31 @@ func TestAppPasswordResourceCreate(t *testing.T) {
 	})
 }
 
+func TestAppPasswordResourceCreate_SelfHostedError(t *testing.T) {
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"name":  "test-app-password",
+		"type":  "service",
+		"user":  "test_user",
+		"roles": []interface{}{"Member"},
+	}
+	d := schema.TestResourceDataRaw(t, AppPassword().Schema, in)
+	r.NotNil(d)
+
+	// Create a provider meta configured for self-hosted mode
+	providerMeta := &utils.ProviderMeta{
+		Mode: utils.ModeSelfHosted,
+		// No Frontegg client in self-hosted mode
+		Frontegg: nil,
+	}
+
+	diags := appPasswordCreate(context.TODO(), d, providerMeta)
+	r.True(diags.HasError())
+	r.Contains(diags[0].Summary, "materialize_app_password is only available in Materialize Cloud (SaaS) environments")
+	r.Contains(diags[0].Summary, "You are currently using self-hosted authentication mode")
+}
+
 func TestAppPasswordResourceRead(t *testing.T) {
 	r := require.New(t)
 

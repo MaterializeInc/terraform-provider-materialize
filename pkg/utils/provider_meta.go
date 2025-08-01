@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/jmoiron/sqlx"
 )
@@ -56,6 +57,28 @@ func (p *ProviderMeta) IsSelfHosted() bool {
 func (p *ProviderMeta) IsSaaS() bool {
 	// Empty string or explicit ModeSaaS both indicate SaaS mode
 	return p.Mode == "" || p.Mode == ModeSaaS
+}
+
+// ValidateSaaSOnly validates that a resource is only used in SaaS mode and returns
+// a clear error message if used in self-hosted mode.
+func (p *ProviderMeta) ValidateSaaSOnly(resourceType string) diag.Diagnostics {
+	if p.IsSelfHosted() {
+		return diag.Errorf(`%s is only available in Materialize Cloud (SaaS) environments.
+
+You are currently using self-hosted authentication mode because your provider is configured with 'host', 'username', and 'password' parameters.
+
+To use %s, you need to switch to Materialize Cloud (SaaS) mode by configuring the provider with an app password:
+
+provider "materialize" {
+  password       = var.materialize_app_password  # Your app password
+  default_region = "aws/us-east-1"               # Your default region
+}
+
+Note: These organization and identity management features are not applicable to self-hosted Materialize instances.
+
+For more information on provider configuration, see: https://registry.terraform.io/providers/MaterializeInc/materialize/latest/docs`, resourceType, resourceType)
+	}
+	return nil
 }
 
 var DefaultRegion string

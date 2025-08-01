@@ -70,6 +70,11 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	// Validate that users are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_user"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 	email := d.Get("email").(string)
 	sendActivationEmail := d.Get("send_activation_email").(bool)
@@ -119,6 +124,11 @@ func userRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	// Validate that users are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_user"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 	userID := d.Id()
 
@@ -156,6 +166,11 @@ func userUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
+	// Validate that users are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_user"); diags.HasError() {
+		return diags
+	}
+
 	client := providerMeta.Frontegg
 	userID := d.Id()
 	email := d.Get("email").(string)
@@ -187,6 +202,11 @@ func userDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Validate that users are only managed in SaaS mode
+	if diags := providerMeta.ValidateSaaSOnly("materialize_user"); diags.HasError() {
+		return diags
 	}
 
 	client := providerMeta.Frontegg
