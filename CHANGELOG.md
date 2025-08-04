@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.20 - 2025-08-04
+
+### Bug Fixes
+
+*  Added clear error messages for Frontegg resources in self-hosted mode [#729](https://github.com/MaterializeInc/terraform-provider-materialize/pull/729)
+
+### Misc
+
+* Routine dependency updates: [#731](https://github.com/MaterializeInc/terraform-provider-materialize/pull/731)
+
 ## 0.8.19 - 2025-07-25
 
 ### Features
