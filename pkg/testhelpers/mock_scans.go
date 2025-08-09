@@ -687,6 +687,40 @@ func MockMysqlSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+// MockSQLServerSubsourceScan mocks the scan of a SQL Server source
+func MockSQLServerSubsourceScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT DISTINCT
+		mz_sources.id AS object_id,
+		subsources.id AS referenced_object_id,
+		mz_sources.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_sources.type
+		-- TODO: mz_sqlserver_source_tables.table_name and mz_sqlserver_source_tables.schema_name are not implemented yet
+		-- mz_sqlserver_source_tables.table_name AS upstream_table_name,
+		-- mz_sqlserver_source_tables.schema_name AS upstream_table_schema
+	FROM mz_sources AS subsources
+	JOIN mz_internal.mz_object_dependencies
+		ON subsources.id = mz_object_dependencies.referenced_object_id
+	JOIN mz_sources
+		ON mz_sources.id = mz_object_dependencies.object_id
+	JOIN mz_schemas
+		ON mz_sources.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	-- TODO: Uncomment when mz_sqlserver_source_tables is implemented
+	-- LEFT JOIN mz_internal.mz_sqlserver_source_tables
+	--	ON mz_sources.id = mz_sqlserver_source_tables.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	// TODO: Add back upstream_table_name and upstream_table_schema columns when mz_sqlserver_source_tables is implemented
+	ir := mock.NewRows([]string{"object_id", "referenced_object_id", "object_name", "schema_name", "database_name", "type"}).
+		AddRow("u1", "u2", "table1", "schema", "database", "subsource").
+		AddRow("u1", "u2", "table2", "schema", "database", "subsource")
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
 func MockTableColumnScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT
