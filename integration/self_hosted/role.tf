@@ -38,6 +38,19 @@ resource "materialize_cluster_grant" "cluster_grant_public" {
   cluster_name = materialize_cluster.cluster.name
 }
 
+# TODO: Configure the materialized image to enable authentication for self-hosted testing
+# resource "materialize_role" "self_hosted_admin" {
+#   name      = "self_hosted_admin"
+#   password  = "secure_password_123"
+#   superuser = true
+# }
+
+# resource "materialize_role" "self_hosted_user" {
+#   name      = "self_hosted_user"
+#   password  = "user_password_456"
+#   superuser = false
+# }
+
 output "qualified_role" {
   value = materialize_role.role_1.qualified_sql_name
 }

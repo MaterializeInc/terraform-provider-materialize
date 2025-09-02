@@ -39,6 +39,40 @@ func TestRoleAlter(t *testing.T) {
 	})
 }
 
+func TestRoleCreateWithSuperuser(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role" INHERIT SUPERUSER;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
+		b.Inherit()
+		b.Superuser(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleCreateWithNoSuperuser(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role" INHERIT NOSUPERUSER;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
+		b.Inherit()
+		b.Superuser(false)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestRoleDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
