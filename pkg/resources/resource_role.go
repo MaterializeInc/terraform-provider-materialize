@@ -21,6 +21,18 @@ var roleSchema = map[string]*schema.Schema{
 		Type:        schema.TypeBool,
 		Computed:    true,
 	},
+	"password": {
+		Description: "Password for the role. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		Sensitive:   true,
+	},
+	"superuser": {
+		Description: "Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+	},
 	"region": RegionSchema(),
 }
 
@@ -67,6 +79,10 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("superuser", s.Superuser.Bool); err != nil {
+		return diag.FromErr(err)
+	}
+
 	qn := materialize.QualifiedName(s.RoleName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
@@ -92,6 +108,14 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if v, ok := d.GetOk("inherit"); ok && v.(bool) {
 		b.Inherit()
+	}
+
+	if v, ok := d.GetOk("password"); ok && v.(string) != "" {
+		b.Password(v.(string))
+	}
+
+	if v, ok := d.GetOk("superuser"); ok {
+		b.Superuser(v.(bool))
 	}
 
 	// create resource
@@ -128,6 +152,24 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	b := materialize.NewRoleBuilder(metaDb, o)
+
+	if d.HasChange("password") {
+		_, newPassword := d.GetChange("password")
+		if newPassword.(string) != "" {
+			if err := b.AlterPassword(newPassword.(string)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("superuser") {
+		_, newSuperuser := d.GetChange("superuser")
+		if err := b.AlterSuperuser(newSuperuser.(bool)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("comment") {
