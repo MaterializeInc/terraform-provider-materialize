@@ -109,6 +109,13 @@ var mysqlSSLMode = []string{
 	"verify-identity",
 }
 
+var sqlServerSSLMode = []string{
+	"require",
+	"disable",
+	"verify",
+	"verify-ca",
+}
+
 var sinkFormatCompatibilityLevels = []string{
 	"BACKWARD",
 	"BACKWARD_TRANSITIVE",
