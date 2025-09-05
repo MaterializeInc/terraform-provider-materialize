@@ -515,6 +515,11 @@ func DiskSchema(forceNew bool) *schema.Schema {
 		ForceNew:    forceNew,
 		Deprecated:  "Disk replicas are deprecated and will be removed in a future release. The `disk` attribute will be enabled by default for 'cc' clusters",
 		Computed:    true,
+		DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+			// TODO: remove this once the disk attr is removed
+			// The disk attr is deprecated and is not configurable
+			return old == "true"
+		},
 	}
 }
 

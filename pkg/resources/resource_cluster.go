@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -174,7 +173,8 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("disk", s.Disk.Bool); err != nil {
+	// The disk attr is deprecated and is not configurable
+	if err := d.Set("disk", true); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -208,15 +208,9 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			b.ReplicationFactor(&r)
 		}
 
-		// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
-		if strings.HasSuffix(size.(string), "cc") || strings.HasSuffix(size.(string), "C") {
-			log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
-			d.Set("disk", true)
-		} else {
-			if v, ok := d.GetOk("disk"); ok {
-				b.Disk(v.(bool))
-			}
-		}
+		// TODO: remove this once the disk attr is removed
+		// The disk attr is deprecated and is not configurable
+		log.Printf("[DEBUG] disk option is deprecated.")
 
 		if v, ok := d.GetOk("availability_zones"); ok && len(v.([]interface{})) > 0 {
 			f, err := materialize.GetSliceValueString("availability_zones", v.([]interface{}))
@@ -338,16 +332,9 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	if d.HasChange("disk") {
-		// DISK option not supported for cluster sizes ending in cc or C because disk is always enabled
-		size := d.Get("size").(string)
-		if strings.HasSuffix(size, "cc") || strings.HasSuffix(size, "C") {
-			log.Printf("[WARN] disk option not supported for cluster size %s, disk is always enabled", size)
-			d.Set("disk", true)
-		} else {
-			_, newDisk := d.GetChange("disk")
-			b.SetDisk(newDisk.(bool))
-		}
-		changed = true
+		// TODO: remove this once the disk attr is removed
+		// The disk attr is deprecated and is not configurable
+		log.Printf("[DEBUG] disk option is deprecated and always enabled, ignoring disk change")
 	}
 
 	if d.HasChange("replication_factor") {
@@ -458,7 +445,8 @@ func clusterImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 	d.Set("ownership_role", s.OwnerName.String)
 	d.Set("replication_factor", s.ReplicationFactor.Int64)
 	d.Set("size", s.Size.String)
-	d.Set("disk", s.Disk.Bool)
+	// Disk is always enabled for all clusters now (deprecated feature)
+	d.Set("disk", true)
 	d.Set("availability_zones", s.AvailabilityZones)
 	d.Set("comment", s.Comment.String)
 
