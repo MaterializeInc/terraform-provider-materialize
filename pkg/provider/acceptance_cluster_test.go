@@ -166,7 +166,7 @@ func TestAccCluster_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "replication_factor", "2"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_interval", "1s"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "introspection_debugging", "true"),
-					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "false"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "disk", "true"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_managed_cluster", "comment", "Comment"),
 				),
 			},
