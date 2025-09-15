@@ -63,6 +63,31 @@ var mysqlSubsourceQuery = NewBaseQuery(`
 		ON mz_sources.id = mz_mysql_source_tables.id
 `)
 
+var sqlserverSubsourceQuery = NewBaseQuery(`
+	SELECT DISTINCT
+		mz_sources.id AS object_id,
+		subsources.id AS referenced_object_id,
+		mz_sources.name AS object_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_sources.type
+		-- TODO: mz_sqlserver_source_tables.table_name and mz_sqlserver_source_tables.schema_name are not implemented yet
+		-- mz_sqlserver_source_tables.table_name AS upstream_table_name,
+		-- mz_sqlserver_source_tables.schema_name AS upstream_table_schema
+	FROM mz_sources AS subsources
+	JOIN mz_internal.mz_object_dependencies
+		ON subsources.id = mz_object_dependencies.referenced_object_id
+	JOIN mz_sources
+		ON mz_sources.id = mz_object_dependencies.object_id
+	JOIN mz_schemas
+		ON mz_sources.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	-- TODO: Uncomment when mz_sqlserver_source_tables is implemented
+	-- LEFT JOIN mz_internal.mz_sqlserver_source_tables
+	--	ON mz_sources.id = mz_sqlserver_source_tables.id
+`)
+
 func ListPostgresSubsources(conn *sqlx.DB, sourceId string, objectType string) ([]SubsourceDetail, error) {
 	p := map[string]string{
 		"mz_object_dependencies.referenced_object_id": sourceId,
@@ -91,6 +116,24 @@ func ListMysqlSubsources(conn *sqlx.DB, sourceId string, objectType string) ([]S
 	}
 
 	q := mysqlSubsourceQuery.QueryPredicate(p)
+
+	var subsources []SubsourceDetail
+	if err := conn.Select(&subsources, q); err != nil {
+		return nil, err
+	}
+	return subsources, nil
+}
+
+func ListSQLServerSubsources(conn *sqlx.DB, sourceId string, objectType string) ([]SubsourceDetail, error) {
+	p := map[string]string{
+		"mz_object_dependencies.referenced_object_id": sourceId,
+	}
+
+	if objectType != "" {
+		p["mz_sources.type"] = objectType
+	}
+
+	q := sqlserverSubsourceQuery.QueryPredicate(p)
 
 	var subsources []SubsourceDetail
 	if err := conn.Select(&subsources, q); err != nil {
