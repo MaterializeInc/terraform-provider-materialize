@@ -207,7 +207,7 @@ func ssoRoleGroupMappingImport(ctx context.Context, d *schema.ResourceData, meta
 		for _, d := range diags {
 			if d.Severity == diag.Error {
 				if err == nil {
-					err = fmt.Errorf(d.Summary)
+					err = fmt.Errorf("%s", d.Summary)
 				} else {
 					err = fmt.Errorf("%v; %s", err, d.Summary)
 				}

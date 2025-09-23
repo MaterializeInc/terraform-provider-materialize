@@ -154,7 +154,7 @@ func ssoDomainImport(ctx context.Context, d *schema.ResourceData, meta interface
 		for _, d := range diags {
 			if d.Severity == diag.Error {
 				if err == nil {
-					err = fmt.Errorf(d.Summary)
+					err = fmt.Errorf("%s", d.Summary)
 				} else {
 					err = fmt.Errorf("%v; %s", err, d.Summary)
 				}
