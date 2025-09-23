@@ -44,7 +44,7 @@ func TestAccSourceMySQL_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "ownership_role", "mz_system"),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "comment", fmt.Sprintf(`%s comment`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_mysql.test", "cluster_name", "quickstart"),
-					resource.TestCheckResourceAttr("materialize_source_mysql.test", "size", "25cc"),
+					resource.TestCheckResourceAttr("materialize_source_mysql.test", "size", "3xsmall"),
 				),
 			},
 			{
