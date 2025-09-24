@@ -19,9 +19,14 @@ services:
       - --system-parameter-default=max_clusters=100
       - --system-parameter-default=max_sources=100
       - --system-parameter-default=max_aws_privatelink_connections=10
+      - --system-parameter-default=enable_load_generator_counter=true
+      - --system-parameter-default=enable_password_auth=true
       - --all-features
     environment:
       MZ_NO_TELEMETRY: 1
+      MZ_LISTENERS_CONFIG_PATH: /custom-listeners.json
+    volumes:
+      - ./.github/listener_configs/password.json:/custom-listeners.json
     ports:
       - 6875:6875
       - 6877:6877
