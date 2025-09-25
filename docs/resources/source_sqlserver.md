@@ -121,6 +121,7 @@ resource "materialize_source_sqlserver" "with_options" {
 
 ### Optional
 
+- `aws_privatelink` (Block List, Max: 1) The AWS PrivateLink configuration for the SQL Server database. (see [below for nested schema](#nestedblock--aws_privatelink))
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
@@ -129,6 +130,8 @@ resource "materialize_source_sqlserver" "with_options" {
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the SQL Server database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_mode` (String) The SSL mode for the SQL Server database. Allowed values are disable, require, verify, verify-ca.
 - `table` (Block Set) Specify the tables to be included in the source. If not specified, all tables are included. (see [below for nested schema](#nestedblock--table))
 - `text_columns` (List of String) Decode data as text for specific columns that contain SQL Server types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.
 
@@ -151,6 +154,19 @@ Optional:
 - `schema_name` (String) The sqlserver_connection schema name. Defaults to `public`.
 
 
+<a id="nestedblock--aws_privatelink"></a>
+### Nested Schema for `aws_privatelink`
+
+Required:
+
+- `name` (String) The aws_privatelink name.
+
+Optional:
+
+- `database_name` (String) The aws_privatelink database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The aws_privatelink schema name. Defaults to `public`.
+
+
 <a id="nestedblock--expose_progress"></a>
 ### Nested Schema for `expose_progress`
 
@@ -162,6 +178,28 @@ Optional:
 
 - `database_name` (String) The expose_progress database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The expose_progress schema name. Defaults to `public`.
+
+
+<a id="nestedblock--ssl_certificate_authority"></a>
+### Nested Schema for `ssl_certificate_authority`
+
+Optional:
+
+- `secret` (Block List, Max: 1) The `ssl_certificate_authority` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
+- `text` (String, Sensitive) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
+
+<a id="nestedblock--ssl_certificate_authority--secret"></a>
+### Nested Schema for `ssl_certificate_authority.secret`
+
+Required:
+
+- `name` (String) The ssl_certificate_authority name.
+
+Optional:
+
+- `database_name` (String) The ssl_certificate_authority database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssl_certificate_authority schema name. Defaults to `public`.
+
 
 
 <a id="nestedblock--table"></a>
@@ -181,6 +219,8 @@ Optional:
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 #!/bin/bash

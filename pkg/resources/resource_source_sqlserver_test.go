@@ -164,6 +164,106 @@ func TestResourceSourceSQLServerCreateWithTextColumnsOnly(t *testing.T) {
 	})
 }
 
+func TestResourceSourceSQLServerCreateWithSSL(t *testing.T) {
+	sslInput := map[string]interface{}{
+		"name":          "ssl_source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"sqlserver_connection": []interface{}{
+			map[string]interface{}{
+				"name":          "sqlserver_connection",
+				"schema_name":   "schema",
+				"database_name": "database",
+			},
+		},
+		"ssl_mode": "require",
+		"ssl_certificate_authority": []interface{}{
+			map[string]interface{}{
+				"text": "-----BEGIN CERTIFICATE-----",
+			},
+		},
+	}
+
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, sslInput)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create with SSL
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."ssl_source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(SSL MODE 'require', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----'\) FOR ALL TABLES;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sources.name = 'ssl_source'`
+		testhelpers.MockSourceScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Subsources - SQL Server
+		ps := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
+		testhelpers.MockSQLServerSubsourceScan(mock, ps)
+
+		if err := sourceSQLServerCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceSourceSQLServerCreateWithSSLSecret(t *testing.T) {
+	sslSecretInput := map[string]interface{}{
+		"name":          "ssl_secret_source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"sqlserver_connection": []interface{}{
+			map[string]interface{}{
+				"name":          "sqlserver_connection",
+				"schema_name":   "schema",
+				"database_name": "database",
+			},
+		},
+		"ssl_mode": "verify-ca",
+		"ssl_certificate_authority": []interface{}{
+			map[string]interface{}{
+				"secret": []interface{}{map[string]interface{}{
+					"name":          "ssl_ca_secret",
+					"schema_name":   "schema",
+					"database_name": "database",
+				}},
+			},
+		},
+	}
+
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, sslSecretInput)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create with SSL secret
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."ssl_secret_source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(SSL MODE 'verify-ca', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."ssl_ca_secret"\) FOR ALL TABLES;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sources.name = 'ssl_secret_source'`
+		testhelpers.MockSourceScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Subsources - SQL Server
+		ps := `WHERE mz_object_dependencies.referenced_object_id = 'u1' AND mz_sources.type = 'subsource'`
+		testhelpers.MockSQLServerSubsourceScan(mock, ps)
+
+		if err := sourceSQLServerCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestResourceSourceSQLServerCreateWithExcludeColumnsOnly(t *testing.T) {
 	excludeColumnsInput := map[string]interface{}{
 		"name":          "exclude_cols_source",

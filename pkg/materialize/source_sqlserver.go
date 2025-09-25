@@ -9,13 +9,16 @@ import (
 
 type SourceSQLServerBuilder struct {
 	Source
-	clusterName         string
-	size                string
-	sqlserverConnection IdentifierSchemaStruct
-	textColumns         []string
-	excludeColumns      []string
-	table               []TableStruct
-	exposeProgress      IdentifierSchemaStruct
+	clusterName             string
+	size                    string
+	sqlserverConnection     IdentifierSchemaStruct
+	textColumns             []string
+	excludeColumns          []string
+	table                   []TableStruct
+	exposeProgress          IdentifierSchemaStruct
+	sslMode                 string
+	sslCertificateAuthority ValueSecretStruct
+	awsPrivateLink          IdentifierSchemaStruct
 }
 
 func NewSourceSQLServerBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceSQLServerBuilder {
@@ -60,6 +63,21 @@ func (b *SourceSQLServerBuilder) ExposeProgress(e IdentifierSchemaStruct) *Sourc
 	return b
 }
 
+func (b *SourceSQLServerBuilder) SSLMode(sslMode string) *SourceSQLServerBuilder {
+	b.sslMode = sslMode
+	return b
+}
+
+func (b *SourceSQLServerBuilder) SSLCertificateAuthority(sslCertificateAuthority ValueSecretStruct) *SourceSQLServerBuilder {
+	b.sslCertificateAuthority = sslCertificateAuthority
+	return b
+}
+
+func (b *SourceSQLServerBuilder) AWSPrivateLink(awsPrivateLink IdentifierSchemaStruct) *SourceSQLServerBuilder {
+	b.awsPrivateLink = awsPrivateLink
+	return b
+}
+
 func (b *SourceSQLServerBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
@@ -81,6 +99,21 @@ func (b *SourceSQLServerBuilder) Create() error {
 	if len(b.excludeColumns) > 0 {
 		s := strings.Join(b.excludeColumns, ", ")
 		options = append(options, fmt.Sprintf(`EXCLUDE COLUMNS (%s)`, s))
+	}
+
+	if b.sslMode != "" {
+		options = append(options, fmt.Sprintf(`SSL MODE %s`, QuoteString(b.sslMode)))
+	}
+
+	if b.sslCertificateAuthority.Text != "" {
+		options = append(options, fmt.Sprintf(`SSL CERTIFICATE AUTHORITY %s`, QuoteString(b.sslCertificateAuthority.Text)))
+	}
+	if b.sslCertificateAuthority.Secret.Name != "" {
+		options = append(options, fmt.Sprintf(`SSL CERTIFICATE AUTHORITY SECRET %s`, b.sslCertificateAuthority.Secret.QualifiedName()))
+	}
+
+	if b.awsPrivateLink.Name != "" {
+		options = append(options, fmt.Sprintf(`AWS PRIVATELINK %s`, b.awsPrivateLink.QualifiedName()))
 	}
 
 	if len(options) > 0 {

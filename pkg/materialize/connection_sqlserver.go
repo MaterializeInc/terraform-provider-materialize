@@ -9,15 +9,17 @@ import (
 
 type ConnectionSQLServerBuilder struct {
 	Connection
-	connectionType          string
-	sqlserverDatabase       string
-	sqlserverHost           string
-	sqlserverPort           int
-	sqlserverUser           ValueSecretStruct
-	sqlserverPassword       IdentifierSchemaStruct
-	sqlserverSSHTunnel      IdentifierSchemaStruct
-	sqlserverAWSPrivateLink IdentifierSchemaStruct
-	validate                bool
+	connectionType                   string
+	sqlserverDatabase                string
+	sqlserverHost                    string
+	sqlserverPort                    int
+	sqlserverUser                    ValueSecretStruct
+	sqlserverPassword                IdentifierSchemaStruct
+	sqlserverSSHTunnel               IdentifierSchemaStruct
+	sqlserverAWSPrivateLink          IdentifierSchemaStruct
+	sqlserverSSLMode                 string
+	sqlserverSSLCertificateAuthority ValueSecretStruct
+	validate                         bool
 }
 
 func NewConnectionSQLServerBuilder(conn *sqlx.DB, obj MaterializeObject) *ConnectionSQLServerBuilder {
@@ -67,6 +69,16 @@ func (b *ConnectionSQLServerBuilder) SQLServerAWSPrivateLink(sqlserverAWSPrivate
 	return b
 }
 
+func (b *ConnectionSQLServerBuilder) SQLServerSSLMode(sslMode string) *ConnectionSQLServerBuilder {
+	b.sqlserverSSLMode = sslMode
+	return b
+}
+
+func (b *ConnectionSQLServerBuilder) SQLServerSSLCertificateAuthority(sslCertificateAuthority ValueSecretStruct) *ConnectionSQLServerBuilder {
+	b.sqlserverSSLCertificateAuthority = sslCertificateAuthority
+	return b
+}
+
 func (b *ConnectionSQLServerBuilder) Validate(validate bool) *ConnectionSQLServerBuilder {
 	b.validate = validate
 	return b
@@ -93,6 +105,17 @@ func (b *ConnectionSQLServerBuilder) Create() error {
 	}
 	if b.sqlserverAWSPrivateLink.Name != "" {
 		q.WriteString(fmt.Sprintf(`, AWS PRIVATELINK %s`, b.sqlserverAWSPrivateLink.QualifiedName()))
+	}
+
+	if b.sqlserverSSLMode != "" {
+		q.WriteString(fmt.Sprintf(`, SSL MODE %s`, QuoteString(b.sqlserverSSLMode)))
+	}
+
+	if b.sqlserverSSLCertificateAuthority.Text != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY %s`, QuoteString(b.sqlserverSSLCertificateAuthority.Text)))
+	}
+	if b.sqlserverSSLCertificateAuthority.Secret.Name != "" {
+		q.WriteString(fmt.Sprintf(`, SSL CERTIFICATE AUTHORITY SECRET %s`, b.sqlserverSSLCertificateAuthority.Secret.QualifiedName()))
 	}
 
 	q.WriteString(fmt.Sprintf(`, DATABASE %s`, QuoteString(b.sqlserverDatabase)))
