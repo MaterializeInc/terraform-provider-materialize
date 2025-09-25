@@ -123,6 +123,8 @@ resource "materialize_connection_sqlserver" "privatelink_example" {
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the SQL Server database. (see [below for nested schema](#nestedblock--ssh_tunnel))
+- `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the SQL Server database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
+- `ssl_mode` (String) The SSL mode for the SQL Server database. Allowed values are disable, require, verify, verify-ca.
 - `validate` (Boolean) If the connection should wait for validation.
 
 ### Read-Only
@@ -190,9 +192,32 @@ Optional:
 - `database_name` (String) The ssh_tunnel database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The ssh_tunnel schema name. Defaults to `public`.
 
+
+<a id="nestedblock--ssl_certificate_authority"></a>
+### Nested Schema for `ssl_certificate_authority`
+
+Optional:
+
+- `secret` (Block List, Max: 1) The `ssl_certificate_authority` secret value. Conflicts with `text` within this block. (see [below for nested schema](#nestedblock--ssl_certificate_authority--secret))
+- `text` (String, Sensitive) The `ssl_certificate_authority` text value. Conflicts with `secret` within this block
+
+<a id="nestedblock--ssl_certificate_authority--secret"></a>
+### Nested Schema for `ssl_certificate_authority.secret`
+
+Required:
+
+- `name` (String) The ssl_certificate_authority name.
+
+Optional:
+
+- `database_name` (String) The ssl_certificate_authority database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The ssl_certificate_authority schema name. Defaults to `public`.
+
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 #!/bin/bash

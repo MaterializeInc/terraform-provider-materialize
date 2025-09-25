@@ -92,6 +92,50 @@ func TestConnectionSQLServerWithoutValidation(t *testing.T) {
 	})
 }
 
+func TestConnectionSQLServerWithSSLCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSL MODE 'require', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----', DATABASE 'testdb'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewConnectionSQLServerBuilder(db, connSQLServer)
+		b.SQLServerHost("sqlserver_host")
+		b.SQLServerPort(1433)
+		b.SQLServerUser(ValueSecretStruct{Text: "user"})
+		b.SQLServerPassword(IdentifierSchemaStruct{Name: "password", SchemaName: "schema", DatabaseName: "database"})
+		b.SQLServerSSLMode("require")
+		b.SQLServerSSLCertificateAuthority(ValueSecretStruct{Text: "-----BEGIN CERTIFICATE-----"})
+		b.SQLServerDatabase("testdb")
+		b.Validate(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestConnectionSQLServerWithSSLSecretCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSL MODE 'verify-ca', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."ssl_ca_secret", DATABASE 'testdb'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewConnectionSQLServerBuilder(db, connSQLServer)
+		b.SQLServerHost("sqlserver_host")
+		b.SQLServerPort(1433)
+		b.SQLServerUser(ValueSecretStruct{Text: "user"})
+		b.SQLServerPassword(IdentifierSchemaStruct{Name: "password", SchemaName: "schema", DatabaseName: "database"})
+		b.SQLServerSSLMode("verify-ca")
+		b.SQLServerSSLCertificateAuthority(ValueSecretStruct{Secret: IdentifierSchemaStruct{Name: "ssl_ca_secret", SchemaName: "schema", DatabaseName: "database"}})
+		b.SQLServerDatabase("testdb")
+		b.Validate(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestConnectionSQLServerDefaultPort(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

@@ -3,12 +3,14 @@ package resources
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var connectionSQLServerSchema = map[string]*schema.Schema{
@@ -55,9 +57,17 @@ var connectionSQLServerSchema = map[string]*schema.Schema{
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"validate":       ValidateConnectionSchema(),
-	"ownership_role": OwnershipRoleSchema(),
-	"region":         RegionSchema(),
+	"ssl_mode": {
+		Description:  "The SSL mode for the SQL Server database. Allowed values are " + strings.Join(sqlServerSSLMode, ", ") + ".",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice(sqlServerSSLMode, true),
+	},
+	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the SQL Server database.", false, true),
+	"validate":                  ValidateConnectionSchema(),
+	"ownership_role":            OwnershipRoleSchema(),
+	"region":                    RegionSchema(),
 }
 
 func ConnectionSQLServer() *schema.Resource {
@@ -123,6 +133,15 @@ func connectionSQLServerCreate(ctx context.Context, d *schema.ResourceData, meta
 	if v, ok := d.GetOk("ssh_tunnel"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.SQLServerSSHTunnel(conn)
+	}
+
+	if v, ok := d.GetOk("ssl_mode"); ok {
+		b.SQLServerSSLMode(v.(string))
+	}
+
+	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
+		ssl_ca := materialize.GetValueSecretStruct(v)
+		b.SQLServerSSLCertificateAuthority(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("validate"); ok {

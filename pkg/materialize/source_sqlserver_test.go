@@ -147,6 +147,56 @@ func TestSourceSQLServerDefaultSchemaHandling(t *testing.T) {
 	})
 }
 
+func TestSourceSQLServerWithSSLCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(SSL MODE 'require', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----'\) FOR ALL TABLES;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceSQLServerBuilder(db, sourceSQLServer)
+		b.SQLServerConnection(IdentifierSchemaStruct{Name: "sqlserver_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.SSLMode("require")
+		b.SSLCertificateAuthority(ValueSecretStruct{Text: "-----BEGIN CERTIFICATE-----"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSourceSQLServerWithSSLSecretCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(SSL MODE 'verify-ca', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."ssl_ca_secret"\) FOR ALL TABLES;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceSQLServerBuilder(db, sourceSQLServer)
+		b.SQLServerConnection(IdentifierSchemaStruct{Name: "sqlserver_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.SSLMode("verify-ca")
+		b.SSLCertificateAuthority(ValueSecretStruct{Secret: IdentifierSchemaStruct{Name: "ssl_ca_secret", SchemaName: "schema", DatabaseName: "database"}})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSourceSQLServerWithAWSPrivateLinkCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(AWS PRIVATELINK "database"."schema"."aws_privatelink_conn"\) FOR ALL TABLES;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceSQLServerBuilder(db, sourceSQLServer)
+		b.SQLServerConnection(IdentifierSchemaStruct{Name: "sqlserver_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.AWSPrivateLink(IdentifierSchemaStruct{Name: "aws_privatelink_conn", SchemaName: "schema", DatabaseName: "database"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestSourceSQLServerAddSubsource(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

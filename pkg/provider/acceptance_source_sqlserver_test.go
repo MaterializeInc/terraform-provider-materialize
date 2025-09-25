@@ -97,6 +97,26 @@ func TestAccSourceSQLServer_update(t *testing.T) {
 	})
 }
 
+func TestAccSourceSQLServer_ssl(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceSQLServerSSLResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceSQLServerExists("materialize_source_sqlserver.test_ssl"),
+					resource.TestMatchResourceAttr("materialize_source_sqlserver.test_ssl", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_source_sqlserver.test_ssl", "name", fmt.Sprintf("%s_ssl_source", nameSpace)),
+					resource.TestCheckResourceAttr("materialize_source_sqlserver.test_ssl", "ssl_mode", "require"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceSQLServer_disappears(t *testing.T) {
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -194,6 +214,60 @@ func testAccSourceSQLServerBasicResource(nameSpace string) string {
 	`, nameSpace)
 }
 
+func testAccSourceSQLServerSSLResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_database" "test_ssl" {
+		name = "%[1]s_ssl_database"
+	}
+
+	resource "materialize_schema" "test_ssl" {
+		name = "%[1]s_ssl_schema"
+		database_name = materialize_database.test_ssl.name
+	}
+
+	resource "materialize_secret" "sqlserver_password_ssl" {
+		name  = "%[1]s_ssl_secret"
+		value = "Password123!"
+	}
+
+	resource "materialize_cluster" "test_ssl" {
+		name = "%[1]s_ssl_cluster"
+		size = "25cc"
+	}
+
+	resource "materialize_connection_sqlserver" "test_ssl" {
+		name = "%[1]s_ssl_conn"
+		host = "sqlserver"
+		port = 1433
+		user {
+			text = "sa"
+		}
+		password {
+			name          = materialize_secret.sqlserver_password_ssl.name
+			schema_name   = materialize_secret.sqlserver_password_ssl.schema_name
+			database_name = materialize_secret.sqlserver_password_ssl.database_name
+		}
+		database = "testdb"
+		ssl_mode = "require"
+	}
+
+	resource "materialize_source_sqlserver" "test_ssl" {
+		name = "%[1]s_ssl_source"
+		schema_name = materialize_schema.test_ssl.name
+		database_name = materialize_database.test_ssl.name
+
+		sqlserver_connection {
+			name = materialize_connection_sqlserver.test_ssl.name
+			schema_name = materialize_connection_sqlserver.test_ssl.schema_name
+			database_name = materialize_connection_sqlserver.test_ssl.database_name
+		}
+
+		cluster_name = materialize_cluster.test_ssl.name
+		ssl_mode     = "require"
+	}
+	`, nameSpace)
+}
+
 func testAccSourceSQLServerResource(roleName, secretName, connName, sourceName, source2Name, sourceOwner, comment string) string {
 	return fmt.Sprintf(`
 	resource "materialize_role" "test" {
@@ -265,6 +339,7 @@ func testAccSourceSQLServerResource(roleName, secretName, connName, sourceName, 
 		}
 		exclude_columns = ["dbo.table1.about"]
 		text_columns    = ["dbo.table2.about"]
+		ssl_mode        = "require"
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 
@@ -342,6 +417,7 @@ func testAccSourceSQLServerResourceUpdate(roleName, secretName, connName, source
 			name 		= "%[3]s_table_role_2"
 		}
 		exclude_columns = ["dbo.table1.about"]
+		ssl_mode        = "require"
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 
