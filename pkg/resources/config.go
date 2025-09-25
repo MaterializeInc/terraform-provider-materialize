@@ -111,7 +111,7 @@ var mysqlSSLMode = []string{
 
 var sqlServerSSLMode = []string{
 	"disable",
-	"require",
+	"required",
 	"verify",
 	"verify-ca",
 }
