@@ -110,7 +110,6 @@ func TestAccSourceSQLServer_ssl(t *testing.T) {
 					testAccCheckSourceSQLServerExists("materialize_source_sqlserver.test_ssl"),
 					resource.TestMatchResourceAttr("materialize_source_sqlserver.test_ssl", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_sqlserver.test_ssl", "name", fmt.Sprintf("%s_ssl_source", nameSpace)),
-					resource.TestCheckResourceAttr("materialize_source_sqlserver.test_ssl", "ssl_mode", "require"),
 				),
 			},
 		},
@@ -263,7 +262,6 @@ func testAccSourceSQLServerSSLResource(nameSpace string) string {
 		}
 
 		cluster_name = materialize_cluster.test_ssl.name
-		ssl_mode     = "require"
 	}
 	`, nameSpace)
 }
@@ -339,7 +337,6 @@ func testAccSourceSQLServerResource(roleName, secretName, connName, sourceName, 
 		}
 		exclude_columns = ["dbo.table1.about"]
 		text_columns    = ["dbo.table2.about"]
-		ssl_mode        = "require"
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 
@@ -417,7 +414,6 @@ func testAccSourceSQLServerResourceUpdate(roleName, secretName, connName, source
 			name 		= "%[3]s_table_role_2"
 		}
 		exclude_columns = ["dbo.table1.about"]
-		ssl_mode        = "require"
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 

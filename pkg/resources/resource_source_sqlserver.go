@@ -4,14 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var sourceSQLServerSchema = map[string]*schema.Schema{
@@ -84,14 +82,6 @@ var sourceSQLServerSchema = map[string]*schema.Schema{
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"ssl_mode": {
-		Description:  "The SSL mode for the SQL Server database. Allowed values are " + strings.Join(sqlServerSSLMode, ", ") + ".",
-		Type:         schema.TypeString,
-		Optional:     true,
-		ForceNew:     false,
-		ValidateFunc: validation.StringInSlice(sqlServerSSLMode, true),
-	},
-	"ssl_certificate_authority": ValueSecretSchema("ssl_certificate_authority", "The CA certificate for the SQL Server database.", false, false),
 	"aws_privatelink": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "aws_privatelink",
 		Description: "The AWS PrivateLink configuration for the SQL Server database.",
@@ -166,15 +156,6 @@ func sourceSQLServerCreate(ctx context.Context, d *schema.ResourceData, meta any
 	if v, ok := d.GetOk("expose_progress"); ok {
 		e := materialize.GetIdentifierSchemaStruct(v)
 		b.ExposeProgress(e)
-	}
-
-	if v, ok := d.GetOk("ssl_mode"); ok {
-		b.SSLMode(v.(string))
-	}
-
-	if v, ok := d.GetOk("ssl_certificate_authority"); ok {
-		ssl_ca := materialize.GetValueSecretStruct(v)
-		b.SSLCertificateAuthority(ssl_ca)
 	}
 
 	if v, ok := d.GetOk("aws_privatelink"); ok {
