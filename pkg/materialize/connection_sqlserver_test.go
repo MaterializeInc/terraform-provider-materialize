@@ -95,7 +95,7 @@ func TestConnectionSQLServerWithoutValidation(t *testing.T) {
 func TestConnectionSQLServerWithSSLCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSL MODE 'require', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----', DATABASE 'testdb'\);`,
+			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSL MODE 'required', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----', DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewConnectionSQLServerBuilder(db, connSQLServer)
@@ -103,7 +103,7 @@ func TestConnectionSQLServerWithSSLCreate(t *testing.T) {
 		b.SQLServerPort(1433)
 		b.SQLServerUser(ValueSecretStruct{Text: "user"})
 		b.SQLServerPassword(IdentifierSchemaStruct{Name: "password", SchemaName: "schema", DatabaseName: "database"})
-		b.SQLServerSSLMode("require")
+		b.SQLServerSSLMode("required")
 		b.SQLServerSSLCertificateAuthority(ValueSecretStruct{Text: "-----BEGIN CERTIFICATE-----"})
 		b.SQLServerDatabase("testdb")
 		b.Validate(true)

@@ -194,7 +194,7 @@ func TestResourceConnectionSQLServerCreateWithSSL(t *testing.T) {
 		"database":      "testdb",
 		"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
 		"password":      []interface{}{map[string]interface{}{"name": "password"}},
-		"ssl_mode":      "require",
+		"ssl_mode":      "required",
 		"ssl_certificate_authority": []interface{}{
 			map[string]interface{}{
 				"text": "-----BEGIN CERTIFICATE-----",
@@ -211,7 +211,7 @@ func TestResourceConnectionSQLServerCreateWithSSL(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create with SSL
 		mock.ExpectExec(
-			`CREATE CONNECTION "database"."schema"."ssl_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER SECRET "materialize"."public"."user", PASSWORD SECRET "materialize"."public"."password", SSL MODE 'require', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----', DATABASE 'testdb'\);`,
+			`CREATE CONNECTION "database"."schema"."ssl_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER SECRET "materialize"."public"."user", PASSWORD SECRET "materialize"."public"."password", SSL MODE 'required', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----', DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Comment

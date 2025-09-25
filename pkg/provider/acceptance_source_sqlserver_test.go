@@ -247,7 +247,7 @@ func testAccSourceSQLServerSSLResource(nameSpace string) string {
 			database_name = materialize_secret.sqlserver_password_ssl.database_name
 		}
 		database = "testdb"
-		ssl_mode = "require"
+		ssl_mode = "required"
 	}
 
 	resource "materialize_source_sqlserver" "test_ssl" {
@@ -260,6 +260,13 @@ func testAccSourceSQLServerSSLResource(nameSpace string) string {
 			schema_name = materialize_connection_sqlserver.test_ssl.schema_name
 			database_name = materialize_connection_sqlserver.test_ssl.database_name
 		}
+
+		table {
+			upstream_name  		= "table1"
+			upstream_schema_name = "dbo"
+			name 		= "%[1]s_table1"
+		}
+		exclude_columns = ["dbo.table1.about"]
 
 		cluster_name = materialize_cluster.test_ssl.name
 	}
