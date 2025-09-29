@@ -114,9 +114,10 @@ var roleQuery = NewBaseQuery(`
 		mz_roles.id,
 		mz_roles.name AS role_name,
 		mz_roles.inherit,
-		mz_roles.superuser,
+		pg_roles.rolsuper AS superuser,
 		comments.comment AS comment
 	FROM mz_roles
+	LEFT JOIN pg_roles ON mz_roles.name = pg_roles.rolname
 	LEFT JOIN (
 		SELECT id, comment
 		FROM mz_internal.mz_comments
