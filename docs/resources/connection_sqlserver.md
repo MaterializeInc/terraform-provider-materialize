@@ -124,7 +124,7 @@ resource "materialize_connection_sqlserver" "privatelink_example" {
 - `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 - `ssh_tunnel` (Block List, Max: 1) The SSH tunnel configuration for the SQL Server database. (see [below for nested schema](#nestedblock--ssh_tunnel))
 - `ssl_certificate_authority` (Block List, Max: 1) The CA certificate for the SQL Server database.. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--ssl_certificate_authority))
-- `ssl_mode` (String) The SSL mode for the SQL Server database. Allowed values are disable, required, verify, verify-ca.
+- `ssl_mode` (String) The SSL mode for the SQL Server database. Allowed values are disabled, required, verify, verify-ca.
 - `validate` (Boolean) If the connection should wait for validation.
 
 ### Read-Only
