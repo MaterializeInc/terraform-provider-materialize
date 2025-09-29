@@ -42,6 +42,7 @@ var sourceSQLServerSchema = map[string]*schema.Schema{
 		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
 		Type:        schema.TypeSet,
 		Optional:    true,
+		Computed:    true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"upstream_name": {
@@ -261,26 +262,25 @@ func sourceSQLServerRead(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 	}
 
-	// TODO: Uncomment when mz_sqlserver_source_tables is implemented
-	// deps, err := materialize.ListSQLServerSubsources(metaDb, utils.ExtractId(i), "subsource")
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	deps, err := materialize.ListSQLServerSubsources(metaDb, utils.ExtractId(i), "subsource")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	// Tables
-	// tMaps := []interface{}{}
-	// for _, dep := range deps {
-	// 	tMap := map[string]interface{}{}
-	// 	tMap["upstream_name"] = dep.UpstreamTableName.String
-	// 	tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
-	// 	tMap["name"] = dep.ObjectName.String
-	// 	tMap["schema_name"] = dep.ObjectSchemaName.String
-	// 	tMap["database_name"] = dep.ObjectDatabaseName.String
-	// 	tMaps = append(tMaps, tMap)
-	// }
-	// if err := d.Set("table", tMaps); err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	tMaps := []interface{}{}
+	for _, dep := range deps {
+		tMap := map[string]interface{}{}
+		tMap["upstream_name"] = dep.UpstreamTableName.String
+		tMap["upstream_schema_name"] = dep.UpstreamTableSchemaName.String
+		tMap["name"] = dep.ObjectName.String
+		tMap["schema_name"] = dep.ObjectSchemaName.String
+		tMap["database_name"] = dep.ObjectDatabaseName.String
+		tMaps = append(tMaps, tMap)
+	}
+	if err := d.Set("table", tMaps); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }

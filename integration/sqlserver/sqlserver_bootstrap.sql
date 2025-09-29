@@ -60,21 +60,21 @@ EXEC sys.sp_cdc_enable_table
     @source_schema = N'dbo',
     @source_name = N'table1',
     @role_name = NULL,
-    @supports_net_changes = 1;
+    @supports_net_changes = 0;
 GO
 
 EXEC sys.sp_cdc_enable_table
     @source_schema = N'dbo',
     @source_name = N'table2',
     @role_name = NULL,
-    @supports_net_changes = 1;
+    @supports_net_changes = 0;
 GO
 
 EXEC sys.sp_cdc_enable_table
     @source_schema = N'dbo',
     @source_name = N'table3',
     @role_name = NULL,
-    @supports_net_changes = 1;
+    @supports_net_changes = 0;
 GO
 
 -- Insert sample data
