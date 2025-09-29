@@ -412,8 +412,10 @@ func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_roles.id,
 		mz_roles.name AS role_name,
 		mz_roles.inherit,
+		pg_roles.rolsuper AS superuser,
 		comments.comment AS comment
 	FROM mz_roles
+	LEFT JOIN pg_roles ON mz_roles.name = pg_roles.rolname
 	LEFT JOIN \(
 		SELECT id, comment
 		FROM mz_internal.mz_comments
@@ -422,8 +424,8 @@ func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_roles.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "role_name", "inherit"}).
-		AddRow("u1", "joe", true)
+	ir := mock.NewRows([]string{"id", "role_name", "inherit", "superuser", "comment"}).
+		AddRow("u1", "joe", true, false, "")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
