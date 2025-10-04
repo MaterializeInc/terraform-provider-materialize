@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.21 - 2025-09-04
+
+### Bug Fixes
+
+* Fix failing disk tests [#739](https://github.com/MaterializeInc/terraform-provider-materialize/pull/739)
+* Fix non-constant format string lint errors in SSO resources [#742](https://github.com/MaterializeInc/terraform-provider-materialize/pull/742)
+
+### Misc
+
+* Update Go version to 1.24 [#742](https://github.com/MaterializeInc/terraform-provider-materialize/pull/742)
+* Routine dependency updates: [#735](https://github.com/MaterializeInc/terraform-provider-materialize/pull/735), [#734](https://github.com/MaterializeInc/terraform-provider-materialize/pull/734), [#733](https://github.com/MaterializeInc/terraform-provider-materialize/pull/733), [#740](https://github.com/MaterializeInc/terraform-provider-materialize/pull/740)
+
 ## 0.8.20 - 2025-08-04
 
 ### Bug Fixes
