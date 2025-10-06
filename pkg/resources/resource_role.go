@@ -33,6 +33,12 @@ var roleSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Default:     false,
 	},
+	"login": {
+		Description: "Whether the role can log in. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+	},
 	"region": RegionSchema(),
 }
 
@@ -83,6 +89,10 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("login", s.Login.Bool); err != nil {
+		return diag.FromErr(err)
+	}
+
 	qn := materialize.QualifiedName(s.RoleName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
@@ -116,6 +126,10 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if v, ok := d.GetOk("superuser"); ok {
 		b.Superuser(v.(bool))
+	}
+
+	if v, ok := d.GetOk("login"); ok {
+		b.Login(v.(bool))
 	}
 
 	// create resource
@@ -168,6 +182,13 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if d.HasChange("superuser") {
 		_, newSuperuser := d.GetChange("superuser")
 		if err := b.AlterSuperuser(newSuperuser.(bool)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("login") {
+		_, newLogin := d.GetChange("login")
+		if err := b.AlterLogin(newLogin.(bool)); err != nil {
 			return diag.FromErr(err)
 		}
 	}

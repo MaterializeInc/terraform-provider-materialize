@@ -34,6 +34,7 @@ resource "materialize_role" "admin_user" {
 ### Optional
 
 - `comment` (String) Comment on an object in the database.
+- `login` (Boolean) Whether the role can log in. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.
 - `password` (String, Sensitive) Password for the role. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `superuser` (Boolean) Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.
