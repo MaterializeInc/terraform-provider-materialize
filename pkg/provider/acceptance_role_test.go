@@ -88,6 +88,35 @@ func TestAccRole_disappears(t *testing.T) {
 	})
 }
 
+func TestAccRole_withPasswordAndSuperuser(t *testing.T) {
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	password := "secure_password_123"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleWithPasswordAndSuperuser(roleName, password, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+					resource.TestMatchResourceAttr("materialize_role.test", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_role.test", "name", roleName),
+					resource.TestCheckResourceAttr("materialize_role.test", "password", password),
+					resource.TestCheckResourceAttr("materialize_role.test", "superuser", "true"),
+					resource.TestCheckResourceAttr("materialize_role.test", "inherit", "true"),
+				),
+			},
+			{
+				ResourceName:      "materialize_role.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccRoleResource(roleName string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {
@@ -103,6 +132,16 @@ resource "materialize_role" "test" {
 	comment = "%s"
 }
 `, roleName, comment)
+}
+
+func testAccRoleWithPasswordAndSuperuser(roleName, password string, superuser bool) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%s"
+	password = "%s"
+	superuser = %t
+}
+`, roleName, password, superuser)
 }
 
 func testAccCheckRoleExists(name string) resource.TestCheckFunc {
