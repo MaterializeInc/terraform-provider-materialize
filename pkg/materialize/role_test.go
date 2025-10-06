@@ -73,6 +73,85 @@ func TestRoleCreateWithNoSuperuser(t *testing.T) {
 	})
 }
 
+func TestRoleCreateWithLogin(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role" INHERIT WITH LOGIN;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
+		b.Inherit()
+		b.Login(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleCreateWithPasswordAndLogin(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role" INHERIT WITH LOGIN PASSWORD 'password123';`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
+		b.Inherit()
+		b.Password("password123")
+		b.Login(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleCreateWithPasswordNoLogin(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role" INHERIT WITH PASSWORD 'password123';`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
+		b.Inherit()
+		b.Password("password123")
+		b.Login(false)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleAlterLogin(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER ROLE "role" LOGIN;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		if err := NewRoleBuilder(db, o).AlterLogin(true); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleAlterNoLogin(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`ALTER ROLE "role" NOLOGIN;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		if err := NewRoleBuilder(db, o).AlterLogin(false); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestRoleDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

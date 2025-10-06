@@ -15,6 +15,7 @@ type RoleBuilder struct {
 	password     string
 	superuser    bool
 	superuserSet bool
+	login        bool
 }
 
 func NewRoleBuilder(conn *sqlx.DB, obj MaterializeObject) *RoleBuilder {
@@ -44,6 +45,11 @@ func (b *RoleBuilder) Superuser(superuser bool) *RoleBuilder {
 	return b
 }
 
+func (b *RoleBuilder) Login(login bool) *RoleBuilder {
+	b.login = login
+	return b
+}
+
 func (b *RoleBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE ROLE %s`, b.QualifiedName()))
@@ -57,7 +63,13 @@ func (b *RoleBuilder) Create() error {
 	}
 
 	if b.password != "" {
-		p = append(p, fmt.Sprintf(` WITH LOGIN PASSWORD %s`, QuoteString(b.password)))
+		if b.login {
+			p = append(p, fmt.Sprintf(` WITH LOGIN PASSWORD %s`, QuoteString(b.password)))
+		} else {
+			p = append(p, fmt.Sprintf(` WITH PASSWORD %s`, QuoteString(b.password)))
+		}
+	} else if b.login {
+		p = append(p, ` WITH LOGIN`)
 	}
 
 	if b.superuserSet {
@@ -96,6 +108,14 @@ func (b *RoleBuilder) AlterSuperuser(superuser bool) error {
 	return b.Alter(permission)
 }
 
+func (b *RoleBuilder) AlterLogin(login bool) error {
+	permission := "NOLOGIN"
+	if login {
+		permission = "LOGIN"
+	}
+	return b.Alter(permission)
+}
+
 func (b *RoleBuilder) Drop() error {
 	qn := b.QualifiedName()
 	return b.ddl.drop(qn)
@@ -106,6 +126,7 @@ type RoleParams struct {
 	RoleName  sql.NullString `db:"role_name"`
 	Inherit   sql.NullBool   `db:"inherit"`
 	Superuser sql.NullBool   `db:"superuser"`
+	Login     sql.NullBool   `db:"login"`
 	Comment   sql.NullString `db:"comment"`
 }
 
@@ -115,6 +136,7 @@ var roleQuery = NewBaseQuery(`
 		mz_roles.name AS role_name,
 		mz_roles.inherit,
 		pg_roles.rolsuper AS superuser,
+		pg_roles.rolcanlogin AS login,
 		comments.comment AS comment
 	FROM mz_roles
 	LEFT JOIN pg_roles ON mz_roles.name = pg_roles.rolname
