@@ -42,12 +42,20 @@ resource "materialize_role" "self_hosted_admin" {
   name      = "self_hosted_admin"
   password  = "secure_password_123"
   superuser = true
+  login     = true
 }
 
 resource "materialize_role" "self_hosted_user" {
   name      = "self_hosted_user"
   password  = "user_password_456"
   superuser = false
+  login     = true
+}
+
+resource "materialize_role" "self_hosted_login_user" {
+  name     = "self_hosted_login_user"
+  password = "login_password_789"
+  login    = false
 }
 
 output "qualified_role" {
