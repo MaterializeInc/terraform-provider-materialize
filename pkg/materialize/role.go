@@ -57,7 +57,7 @@ func (b *RoleBuilder) Create() error {
 	}
 
 	if b.password != "" {
-		p = append(p, fmt.Sprintf(` WITH PASSWORD %s`, QuoteString(b.password)))
+		p = append(p, fmt.Sprintf(` WITH LOGIN PASSWORD %s`, QuoteString(b.password)))
 	}
 
 	if b.superuserSet {
