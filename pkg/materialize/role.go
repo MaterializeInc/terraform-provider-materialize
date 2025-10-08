@@ -62,14 +62,18 @@ func (b *RoleBuilder) Create() error {
 		p = append(p, ` INHERIT`)
 	}
 
+	p = append(p, ` WITH`)
+
+	if b.login {
+		p = append(p, ` LOGIN`)
+	} else {
+		p = append(p, ` NOLOGIN`)
+	}
+
 	if b.password != "" {
-		if b.login {
-			p = append(p, fmt.Sprintf(` WITH LOGIN PASSWORD %s`, QuoteString(b.password)))
-		} else {
-			p = append(p, fmt.Sprintf(` WITH PASSWORD %s`, QuoteString(b.password)))
-		}
-	} else if b.login {
-		p = append(p, ` WITH LOGIN`)
+		p = append(p, fmt.Sprintf(` PASSWORD %s`, QuoteString(b.password)))
+	} else {
+		p = append(p, ` NOPASSWORD`)
 	}
 
 	if b.superuserSet {
