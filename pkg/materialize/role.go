@@ -9,13 +9,12 @@ import (
 )
 
 type RoleBuilder struct {
-	ddl          Builder
-	roleName     string
-	inherit      bool
-	password     string
-	superuser    bool
-	superuserSet bool
-	login        bool
+	ddl       Builder
+	roleName  string
+	inherit   bool
+	password  string
+	superuser bool
+	login     bool
 }
 
 func NewRoleBuilder(conn *sqlx.DB, obj MaterializeObject) *RoleBuilder {
@@ -41,7 +40,6 @@ func (b *RoleBuilder) Password(password string) *RoleBuilder {
 
 func (b *RoleBuilder) Superuser(superuser bool) *RoleBuilder {
 	b.superuser = superuser
-	b.superuserSet = true
 	return b
 }
 
@@ -76,12 +74,10 @@ func (b *RoleBuilder) Create() error {
 		p = append(p, ` NOPASSWORD`)
 	}
 
-	if b.superuserSet {
-		if b.superuser {
-			p = append(p, ` SUPERUSER`)
-		} else {
-			p = append(p, ` NOSUPERUSER`)
-		}
+	if b.superuser {
+		p = append(p, ` SUPERUSER`)
+	} else {
+		p = append(p, ` NOSUPERUSER`)
 	}
 
 	if len(p) > 0 {

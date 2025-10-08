@@ -13,7 +13,7 @@ import (
 func TestRoleCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH NOLOGIN NOPASSWORD;`,
+			`CREATE ROLE "role" INHERIT WITH NOLOGIN NOPASSWORD NOSUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -29,7 +29,7 @@ func TestRoleCreate(t *testing.T) {
 func TestRoleCreateWithNeitherPasswordNorLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH NOLOGIN NOPASSWORD;`,
+			`CREATE ROLE "role" INHERIT WITH NOLOGIN NOPASSWORD NOSUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -93,7 +93,7 @@ func TestRoleCreateWithNoSuperuser(t *testing.T) {
 func TestRoleCreateWithLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH LOGIN NOPASSWORD;`,
+			`CREATE ROLE "role" INHERIT WITH LOGIN NOPASSWORD NOSUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -110,7 +110,7 @@ func TestRoleCreateWithLogin(t *testing.T) {
 func TestRoleCreateWithPasswordAndLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH LOGIN PASSWORD 'password123';`,
+			`CREATE ROLE "role" INHERIT WITH LOGIN PASSWORD 'password123' NOSUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -128,7 +128,7 @@ func TestRoleCreateWithPasswordAndLogin(t *testing.T) {
 func TestRoleCreateWithPasswordNoLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH NOLOGIN PASSWORD 'password123';`,
+			`CREATE ROLE "role" INHERIT WITH NOLOGIN PASSWORD 'password123' NOSUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
