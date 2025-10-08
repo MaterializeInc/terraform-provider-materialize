@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.22 - 2025-09-18
+
+### Features
+
+* Added support for SQL Server connections and sources [#721](https://github.com/MaterializeInc/terraform-provider-materialize/pull/721)
+  * New resource `materialize_connection_sqlserver` for managing SQL Server connections
+  * New resource `materialize_source_sqlserver` for creating SQL Server sources
+
 ## 0.8.21 - 2025-09-04
 
 ### Bug Fixes
