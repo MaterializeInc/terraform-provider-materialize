@@ -14,8 +14,9 @@ A SQL Server connection establishes a link to a single database of a SQL Server 
 
 ```terraform
 resource "materialize_secret" "sqlserver_password" {
-  name  = "sqlserver_password"
-  value = base64encode("c2VjcmV0Cg==")
+  name    = "sqlserver_password"
+  value   = "some-secret-value"
+  comment = "secret comment"
 }
 
 # Basic SQL Server connection

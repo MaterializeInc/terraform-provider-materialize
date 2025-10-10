@@ -4,4 +4,4 @@
 terraform import materialize_source_sqlserver.example <region>:<source_name>
 
 # Example
-terraform import materialize_source_sqlserver.example aws/us-east-1:my_sqlserver_source 
+terraform import materialize_source_sqlserver.example aws/us-east-1:my_sqlserver_source
