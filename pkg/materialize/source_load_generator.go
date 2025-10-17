@@ -8,24 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type CounterOptions struct {
-	TickInterval   string
-	MaxCardinality int
-}
-
-func GetCounterOptionsStruct(v interface{}) CounterOptions {
-	var o CounterOptions
-	u := v.([]interface{})[0].(map[string]interface{})
-	if v, ok := u["tick_interval"]; ok {
-		o.TickInterval = v.(string)
-	}
-
-	if v, ok := u["max_cardinality"]; ok {
-		o.MaxCardinality = v.(int)
-	}
-	return o
-}
-
 type AuctionOptions struct {
 	TickInterval string
 }
@@ -127,7 +109,6 @@ type SourceLoadgenBuilder struct {
 	clusterName       string
 	size              string
 	loadGeneratorType string
-	counterOptions    CounterOptions
 	auctionOptions    AuctionOptions
 	marketingOptions  MarketingOptions
 	tpchOptions       TPCHOptions
@@ -159,11 +140,6 @@ func (b *SourceLoadgenBuilder) LoadGeneratorType(l string) *SourceLoadgenBuilder
 
 func (b *SourceLoadgenBuilder) ExposeProgress(e IdentifierSchemaStruct) *SourceLoadgenBuilder {
 	b.exposeProgress = e
-	return b
-}
-
-func (b *SourceLoadgenBuilder) CounterOptions(c CounterOptions) *SourceLoadgenBuilder {
-	b.counterOptions = c
 	return b
 }
 
@@ -200,7 +176,7 @@ func (b *SourceLoadgenBuilder) Create() error {
 	// Optional Parameters
 	var p []string
 
-	for _, t := range []string{b.counterOptions.TickInterval, b.auctionOptions.TickInterval, b.marketingOptions.TickInterval, b.tpchOptions.TickInterval} {
+	for _, t := range []string{b.auctionOptions.TickInterval, b.marketingOptions.TickInterval, b.tpchOptions.TickInterval} {
 		if t != "" {
 			p = append(p, fmt.Sprintf(`TICK INTERVAL %s`, QuoteString(t)))
 		}
@@ -237,11 +213,6 @@ func (b *SourceLoadgenBuilder) Create() error {
 		if b.keyValueOptions.BatchSize != 0 {
 			p = append(p, fmt.Sprintf(`BATCH SIZE %d`, b.keyValueOptions.BatchSize))
 		}
-	}
-
-	if b.counterOptions.MaxCardinality != 0 {
-		s := fmt.Sprintf(`MAX CARDINALITY %d`, b.counterOptions.MaxCardinality)
-		p = append(p, s)
 	}
 
 	if len(p) != 0 {

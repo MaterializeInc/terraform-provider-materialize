@@ -11,7 +11,7 @@ resource "materialize_index" "loadgen_index" {
   }
 
   col_expr {
-    field = "counter"
+    field = "key"
   }
 }
 
@@ -30,7 +30,7 @@ resource "materialize_index" "loadgen_index_us_west" {
   }
 
   col_expr {
-    field = "counter"
+    field = "key"
   }
 }
 

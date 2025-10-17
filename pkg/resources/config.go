@@ -3,7 +3,6 @@ package resources
 var loadGeneratorTypes = []string{
 	"AUCTION",
 	"MARKETING",
-	"COUNTER",
 	"TPCH",
 	"KEY VALUE",
 }

@@ -5,12 +5,12 @@ resource "materialize_sink_kafka" "sink_kafka" {
   comment          = "sink comment"
   cluster_name     = materialize_cluster.cluster_sink.name
   topic            = "topic1"
-  key              = ["counter"]
+  key              = ["key"]
   key_not_enforced = true
   from {
-    name          = materialize_source_load_generator.load_generator.name
-    database_name = materialize_source_load_generator.load_generator.database_name
-    schema_name   = materialize_source_load_generator.load_generator.schema_name
+    name          = materialize_source_load_generator.load_generator_cluster.name
+    database_name = materialize_source_load_generator.load_generator_cluster.database_name
+    schema_name   = materialize_source_load_generator.load_generator_cluster.schema_name
   }
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
@@ -34,21 +34,21 @@ resource "materialize_sink_kafka" "sink_kafka" {
       }
       avro_doc_column {
         object {
-          name          = materialize_source_load_generator.load_generator.name
-          database_name = materialize_source_load_generator.load_generator.database_name
-          schema_name   = materialize_source_load_generator.load_generator.schema_name
+          name          = materialize_source_load_generator.load_generator_cluster.name
+          database_name = materialize_source_load_generator.load_generator_cluster.database_name
+          schema_name   = materialize_source_load_generator.load_generator_cluster.schema_name
         }
-        column = "counter"
+        column = "key"
         doc    = "comment key"
         key    = true
       }
       avro_doc_column {
         object {
-          name          = materialize_source_load_generator.load_generator.name
-          database_name = materialize_source_load_generator.load_generator.database_name
-          schema_name   = materialize_source_load_generator.load_generator.schema_name
+          name          = materialize_source_load_generator.load_generator_cluster.name
+          database_name = materialize_source_load_generator.load_generator_cluster.database_name
+          schema_name   = materialize_source_load_generator.load_generator_cluster.schema_name
         }
-        column = "counter"
+        column = "value"
         doc    = "comment value"
         value  = true
       }
@@ -67,13 +67,13 @@ resource "materialize_sink_kafka" "sink_kafka_cluster" {
   database_name    = materialize_database.database.name
   cluster_name     = materialize_cluster.cluster_sink.name
   topic            = "topic1"
-  key              = ["counter"]
+  key              = ["key"]
   key_not_enforced = true
   snapshot         = true
   from {
-    name          = materialize_source_load_generator.load_generator.name
-    database_name = materialize_source_load_generator.load_generator.database_name
-    schema_name   = materialize_source_load_generator.load_generator.schema_name
+    name          = materialize_source_load_generator.load_generator_cluster.name
+    database_name = materialize_source_load_generator.load_generator_cluster.database_name
+    schema_name   = materialize_source_load_generator.load_generator_cluster.schema_name
   }
   kafka_connection {
     name          = materialize_connection_kafka.kafka_connection.name
