@@ -77,11 +77,10 @@ func testAccDatasourceSource(nameSpace string) string {
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
 		cluster_name  = "quickstart"
-		load_generator_type = "TPCH"
+		load_generator_type = "AUCTION"
 		
-		tpch_options {
+		auction_options {
 			tick_interval = "1s"
-			scale_factor = 0.01
 		}
 	}
 
@@ -90,11 +89,10 @@ func testAccDatasourceSource(nameSpace string) string {
 		database_name = materialize_database.test.name
 		schema_name   = materialize_schema.test.name
 		cluster_name  = "quickstart"
-		load_generator_type = "TPCH"
+		load_generator_type = "MARKETING"
 		
-		tpch_options {
+		marketing_options {
 			tick_interval = "1s"
-			scale_factor = 0.01
 		}
 	}
 
@@ -103,11 +101,12 @@ func testAccDatasourceSource(nameSpace string) string {
 		database_name = materialize_database.test_2.name
 		schema_name   = materialize_schema.test_2.name
 		cluster_name  = "quickstart"
-		load_generator_type = "TPCH"
+		load_generator_type = "KEY VALUE"
 		
-		tpch_options {
+		key_value_options {
+			keys = 100
+			snapshot_rounds = 1
 			tick_interval = "1s"
-			scale_factor = 0.01
 		}
 	}
 
@@ -116,11 +115,10 @@ func testAccDatasourceSource(nameSpace string) string {
 		database_name = materialize_database.test_2.name
 		schema_name   = materialize_schema.test_2.name
 		cluster_name  = "quickstart"
-		load_generator_type = "TPCH"
+		load_generator_type = "AUCTION"
 		
-		tpch_options {
+		auction_options {
 			tick_interval = "1s"
-			scale_factor = 0.01
 		}
 	}
 

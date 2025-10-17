@@ -260,10 +260,11 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 		name = "%[3]s"
 		schema_name = "public"
 		cluster_name = materialize_cluster.test.name
-		load_generator_type = "TPCH"
-		tpch_options {
+		load_generator_type = "KEY VALUE"
+		key_value_options {
+			keys = 100
+			snapshot_rounds = 1
 			tick_interval = "1000ms"
-			scale_factor = 0.01
 		}
 		ownership_role = "%[5]s"
 		comment = "%[6]s"

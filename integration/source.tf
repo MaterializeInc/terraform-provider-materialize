@@ -39,11 +39,12 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   schema_name         = materialize_schema.schema.name
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
-  load_generator_type = "TPCH"
+  load_generator_type = "KEY VALUE"
 
-  tpch_options {
+  key_value_options {
+    keys = 1000
+    snapshot_rounds = 1
     tick_interval = "500ms"
-    scale_factor  = 0.01
   }
 }
 
@@ -53,12 +54,13 @@ resource "materialize_source_load_generator" "load_generator_cluster_us_west" {
   schema_name         = materialize_schema.schema_us_west.name
   database_name       = materialize_database.database_us_west.name
   cluster_name        = materialize_cluster.cluster_source_us_west.name
-  load_generator_type = "TPCH"
+  load_generator_type = "KEY VALUE"
   region              = "aws/us-west-2"
 
-  tpch_options {
+  key_value_options {
+    keys = 1000
+    snapshot_rounds = 1
     tick_interval = "500ms"
-    scale_factor  = 0.01
   }
 }
 
@@ -91,9 +93,9 @@ resource "materialize_source_load_generator" "load_generator_tpch" {
   schema_name         = materialize_schema.schema.name
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
-  load_generator_type = "TPCH"
+  load_generator_type = "AUCTION"
 
-  tpch_options {
+  auction_options {
     tick_interval = "500ms"
   }
 }

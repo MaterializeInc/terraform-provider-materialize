@@ -11,7 +11,7 @@ resource "materialize_index" "loadgen_index" {
   }
 
   col_expr {
-    field = "counter"
+    field = "c_custkey"
   }
 }
 

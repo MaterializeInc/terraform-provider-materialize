@@ -81,7 +81,7 @@ func TestAccSinkKafkaAvro_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "topic_partition_count", "6"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "topic_config.cleanup.policy", "compact"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "topic_config.retention.ms", "86400000"),
-					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "key.0", "counter"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "key.0", "key"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "key_not_enforced", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.schema_registry_connection.0.name", sinkName+"_conn_schema"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.schema_registry_connection.0.database_name", "materialize"),
@@ -93,13 +93,13 @@ func TestAccSinkKafkaAvro_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.object.0.name", sinkName+"_load_gen"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.object.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.object.0.schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.column", "counter"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.column", "key"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.doc", "comment key"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.key", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.name", sinkName+"_load_gen"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.column", "counter"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.column", "key"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.doc", "comment value"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.value", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.key_compatibility_level", "BACKWARD"),
@@ -199,7 +199,13 @@ func testAccSinkKafkaAvroResourceWithTopicOptions(sinkName string) string {
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
-		load_generator_type = "TPCH"
+		load_generator_type = "KEY VALUE"
+		
+		key_value_options {
+			keys = 100
+			snapshot_rounds = 1
+			tick_interval = "1s"
+		}
 	}
 
 	resource "materialize_connection_kafka" "test" {
@@ -227,7 +233,7 @@ func testAccSinkKafkaAvroResourceWithTopicOptions(sinkName string) string {
 			"retention.ms"   = "86400000"
 		}
 		compression_type = "none"
-		key              = ["counter"]
+		key              = ["key"]
 		key_not_enforced = true
 		from {
 		  name          = materialize_source_load_generator.test.name
@@ -260,7 +266,7 @@ func testAccSinkKafkaAvroResourceWithTopicOptions(sinkName string) string {
 						database_name = materialize_source_load_generator.test.database_name
 						schema_name   = materialize_source_load_generator.test.schema_name
 					}
-					column = "counter"
+					column = "key"
 					doc    = "comment key"
 					key    = true
 				}
@@ -270,7 +276,7 @@ func testAccSinkKafkaAvroResourceWithTopicOptions(sinkName string) string {
 						database_name = materialize_source_load_generator.test.database_name
 						schema_name   = materialize_source_load_generator.test.schema_name
 					}
-					column = "counter"
+					column = "key"
 					doc    = "comment value"
 					value  = true
 				}
@@ -431,7 +437,13 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
-		load_generator_type = "TPCH"
+		load_generator_type = "KEY VALUE"
+		
+		key_value_options {
+			keys = 100
+			snapshot_rounds = 1
+			tick_interval = "1s"
+		}
 	}
 
 	resource "materialize_connection_kafka" "test" {
@@ -453,7 +465,7 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 		cluster_name     = materialize_cluster.test.name
 		topic            = "topic1"
 		compression_type = "none"
-		key              = ["counter"]
+		key              = ["key"]
 		key_not_enforced = true
 		from {
 		  name          = materialize_source_load_generator.test.name
@@ -486,7 +498,7 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 						database_name = materialize_source_load_generator.test.database_name
 						schema_name   = materialize_source_load_generator.test.schema_name
 					}
-					column = "counter"
+					column = "key"
 					doc    = "comment key"
 					key    = true
 				}
@@ -496,7 +508,7 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 						database_name = materialize_source_load_generator.test.database_name
 						schema_name   = materialize_source_load_generator.test.schema_name
 					}
-					column = "counter"
+					column = "key"
 					doc    = "comment value"
 					value  = true
 				}

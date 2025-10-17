@@ -311,14 +311,20 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
-		load_generator_type = "TPCH"
+		load_generator_type = "KEY VALUE"
+		
+		key_value_options {
+			keys = 100
+			snapshot_rounds = 1
+			tick_interval = "1s"
+		}
 	}
 
 	resource "materialize_sink_kafka" "test" {
 		name             = "%[1]s_sink"
 		topic            = "terraform"
 		cluster_name	 = materialize_cluster.test.name
-		key              = ["counter"]
+		key              = ["key"]
 		key_not_enforced = true
 		from {
 			name          = materialize_source_load_generator.test.name
