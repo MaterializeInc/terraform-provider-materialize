@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccSourceLoadGeneratorCounter_basic(t *testing.T) {
+func TestAccSourceLoadGeneratorTpch_basic(t *testing.T) {
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	source2Name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
@@ -31,9 +31,9 @@ func TestAccSourceLoadGeneratorCounter_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "cluster_name", roleName+"_cluster"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "COUNTER"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.tick_interval", "1000ms"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "counter_options.0.max_cardinality", "8"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "TPCH"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.tick_interval", "1000ms"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.scale_factor", "0.01"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "ownership_role", "mz_system"),
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "name", source2Name),
@@ -249,10 +249,10 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 		name = "%[2]s"
 		schema_name = "public"
 		cluster_name = materialize_cluster.test.name
-		load_generator_type = "COUNTER"
-		counter_options {
-			tick_interval   = "1000ms"
-			max_cardinality = 8
+		load_generator_type = "TPCH"
+		tpch_options {
+			tick_interval = "1000ms"
+			scale_factor = 0.01
 		}
 	}
 
@@ -260,9 +260,10 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 		name = "%[3]s"
 		schema_name = "public"
 		cluster_name = materialize_cluster.test.name
-		load_generator_type = "COUNTER"
-		counter_options {
+		load_generator_type = "TPCH"
+		tpch_options {
 			tick_interval = "1000ms"
+			scale_factor = 0.01
 		}
 		ownership_role = "%[5]s"
 		comment = "%[6]s"

@@ -3,13 +3,15 @@ resource "materialize_source_load_generator" "example_source_load_generator" {
   schema_name  = "schema"
   cluster_name = "quickstart"
 
-  load_generator_type = "COUNTER"
+  load_generator_type = "TPCH"
 
-  counter_options {
+  tpch_options {
     tick_interval = "500ms"
+    scale_factor  = 0.01
   }
 }
 
 # CREATE SOURCE schema.source_load_generator
-#   FROM LOAD GENERATOR COUNTER
-#   (TICK INTERVAL '500ms');
+#   FROM LOAD GENERATOR TPCH
+#   (TICK INTERVAL '500ms', SCALE FACTOR 0.01)
+#   FOR ALL TABLES;
