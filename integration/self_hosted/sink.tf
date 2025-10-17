@@ -5,7 +5,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   comment          = "sink comment"
   cluster_name     = materialize_cluster.cluster_sink.name
   topic            = "topic1"
-  key              = ["counter"]
+  key              = ["c_custkey"]
   key_not_enforced = true
   from {
     name          = materialize_source_load_generator.load_generator.name
@@ -38,7 +38,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
           database_name = materialize_source_load_generator.load_generator.database_name
           schema_name   = materialize_source_load_generator.load_generator.schema_name
         }
-        column = "counter"
+        column = "c_custkey"
         doc    = "comment key"
         key    = true
       }
@@ -48,7 +48,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
           database_name = materialize_source_load_generator.load_generator.database_name
           schema_name   = materialize_source_load_generator.load_generator.schema_name
         }
-        column = "counter"
+        column = "c_custkey"
         doc    = "comment value"
         value  = true
       }
@@ -67,7 +67,7 @@ resource "materialize_sink_kafka" "sink_kafka_cluster" {
   database_name    = materialize_database.database.name
   cluster_name     = materialize_cluster.cluster_sink.name
   topic            = "topic1"
-  key              = ["counter"]
+  key              = ["c_custkey"]
   key_not_enforced = true
   snapshot         = true
   from {
