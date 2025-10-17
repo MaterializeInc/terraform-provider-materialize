@@ -52,27 +52,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		ValidateFunc: validation.StringInSlice(loadGeneratorTypes, true),
 	},
-	"counter_options": {
-		Description: "Counter Options.",
-		Type:        schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"tick_interval": tick_interval,
-				"scale_factor":  scale_factor_deprecated,
-				"max_cardinality": {
-					Description: "Causes the generator to delete old values to keep the collection at most a given size. Defaults to unlimited.",
-					Type:        schema.TypeInt,
-					Optional:    true,
-					ForceNew:    true,
-				},
-			},
-		},
-		Optional:      true,
-		MinItems:      1,
-		MaxItems:      1,
-		ForceNew:      true,
-		ConflictsWith: []string{"auction_options", "marketing_options", "tpch_options"},
-	},
+
 	"auction_options": {
 		Description: "Auction Options.",
 		Type:        schema.TypeList,
@@ -86,7 +66,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		MinItems:      1,
 		MaxItems:      1,
 		ForceNew:      true,
-		ConflictsWith: []string{"counter_options", "marketing_options", "tpch_options"},
+		ConflictsWith: []string{"marketing_options", "tpch_options"},
 	},
 	"marketing_options": {
 		Description: "Marketing Options.",
@@ -101,7 +81,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		MinItems:      1,
 		MaxItems:      1,
 		ForceNew:      true,
-		ConflictsWith: []string{"counter_options", "auction_options", "tpch_options"},
+		ConflictsWith: []string{"auction_options", "tpch_options"},
 	},
 	"tpch_options": {
 		Description: "TPCH Options.",
@@ -116,7 +96,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		MinItems:      1,
 		MaxItems:      1,
 		ForceNew:      true,
-		ConflictsWith: []string{"counter_options", "auction_options", "marketing_options"},
+		ConflictsWith: []string{"auction_options", "marketing_options"},
 	},
 	"key_value_options": {
 		Description: "KEY VALUE Load Generator Options.",
@@ -172,7 +152,7 @@ var sourceLoadgenSchema = map[string]*schema.Schema{
 		MinItems:      1,
 		MaxItems:      1,
 		ForceNew:      true,
-		ConflictsWith: []string{"counter_options", "auction_options", "marketing_options", "tpch_options"},
+		ConflictsWith: []string{"auction_options", "marketing_options", "tpch_options"},
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
@@ -224,11 +204,6 @@ func sourceLoadgenCreate(ctx context.Context, d *schema.ResourceData, meta any) 
 
 	if v, ok := d.GetOk("load_generator_type"); ok {
 		b.LoadGeneratorType(v.(string))
-	}
-
-	if v, ok := d.GetOk("counter_options"); ok {
-		o := materialize.GetCounterOptionsStruct(v)
-		b.CounterOptions(o)
 	}
 
 	if v, ok := d.GetOk("auction_options"); ok {

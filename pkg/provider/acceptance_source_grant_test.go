@@ -99,10 +99,11 @@ resource "materialize_source_load_generator" "test" {
 	schema_name         = materialize_schema.test.name
 	database_name       = materialize_database.test.name
 	cluster_name        = materialize_cluster.test.name
-	load_generator_type = "COUNTER"
+	load_generator_type = "TPCH"
 
-	counter_options {
+	tpch_options {
 	  tick_interval = "500ms"
+	  scale_factor = 0.01
 	}
 }
 

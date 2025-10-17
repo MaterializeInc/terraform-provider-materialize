@@ -311,7 +311,7 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
-		load_generator_type = "COUNTER"
+		load_generator_type = "TPCH"
 	}
 
 	resource "materialize_sink_kafka" "test" {
