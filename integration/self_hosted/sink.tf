@@ -8,7 +8,7 @@ resource "materialize_sink_kafka" "sink_kafka" {
   key              = ["c_custkey"]
   key_not_enforced = true
   from {
-    name          = materialize_source_load_generator.load_generator.name
+    name          = "customer"
     database_name = materialize_source_load_generator.load_generator.database_name
     schema_name   = materialize_source_load_generator.load_generator.schema_name
   }
@@ -71,7 +71,7 @@ resource "materialize_sink_kafka" "sink_kafka_cluster" {
   key_not_enforced = true
   snapshot         = true
   from {
-    name          = materialize_source_load_generator.load_generator.name
+    name          = "customer"
     database_name = materialize_source_load_generator.load_generator.database_name
     schema_name   = materialize_source_load_generator.load_generator.schema_name
   }
