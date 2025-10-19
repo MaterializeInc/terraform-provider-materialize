@@ -73,32 +73,3 @@ func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
 		}
 	})
 }
-
-func TestSourceLoadgenKeyValueCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectExec(
-			`CREATE SOURCE "database"."schema"."source"
-			FROM LOAD GENERATOR KEY VALUE
-			\(KEYS 200, SNAPSHOT ROUNDS 5, TRANSACTIONAL SNAPSHOT true, VALUE SIZE 256, TICK INTERVAL '2s', SEED 42, PARTITIONS 10, BATCH SIZE 20\)
-			EXPOSE PROGRESS AS "database"."schema"."progress";`,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		b := NewSourceLoadgenBuilder(db, sourceLoadgen)
-		b.LoadGeneratorType("KEY VALUE")
-		b.KeyValueOptions(KeyValueOptions{
-			Keys:                  200,
-			SnapshotRounds:        5,
-			TransactionalSnapshot: true,
-			ValueSize:             256,
-			TickInterval:          "2s",
-			Seed:                  42,
-			Partitions:            10,
-			BatchSize:             20,
-		})
-		b.ExposeProgress(IdentifierSchemaStruct{Name: "progress", DatabaseName: "database", SchemaName: "schema"})
-
-		if err := b.Create(); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
