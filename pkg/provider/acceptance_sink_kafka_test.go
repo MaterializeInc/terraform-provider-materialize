@@ -96,7 +96,7 @@ func TestAccSinkKafkaAvro_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.column", "id"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.doc", "comment key"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.0.key", "true"),
-					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.name", sinkName+"_load_gen"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.name", "accounts"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.database_name", "materialize"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.object.0.schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.test", "format.0.avro.0.avro_doc_column.1.column", "id"),
