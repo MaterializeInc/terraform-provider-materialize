@@ -5,13 +5,13 @@ resource "materialize_index" "loadgen_index" {
   cluster_name = materialize_cluster.cluster.name
 
   obj_name {
-    name          = materialize_source_load_generator.load_generator_cluster.name
+    name          = "accounts"
     schema_name   = materialize_source_load_generator.load_generator_cluster.schema_name
     database_name = materialize_source_load_generator.load_generator_cluster.database_name
   }
 
   col_expr {
-    field = "key"
+    field = "id"
   }
 }
 
@@ -24,13 +24,13 @@ resource "materialize_index" "loadgen_index_us_west" {
   cluster_name = materialize_cluster.cluster_source_us_west.name
 
   obj_name {
-    name          = materialize_source_load_generator.load_generator_cluster_us_west.name
+    name          = "accounts"
     schema_name   = materialize_source_load_generator.load_generator_cluster_us_west.schema_name
     database_name = materialize_source_load_generator.load_generator_cluster_us_west.database_name
   }
 
   col_expr {
-    field = "key"
+    field = "id"
   }
 }
 

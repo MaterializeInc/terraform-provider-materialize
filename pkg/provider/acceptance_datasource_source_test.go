@@ -21,10 +21,10 @@ func TestAccDatasourceSource_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.materialize_source.test_database", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_source.test_database", "sources.#", "6"),
+					resource.TestCheckResourceAttr("data.materialize_source.test_database", "sources.#", "25"),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "database_name", nameSpace),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "schema_name", nameSpace),
-					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "sources.#", "6"),
+					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "sources.#", "25"),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_source.test_database_2", "schema_name"),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_2", "sources.#", "4"),
@@ -101,17 +101,10 @@ func testAccDatasourceSource(nameSpace string) string {
 		database_name = materialize_database.test_2.name
 		schema_name   = materialize_schema.test_2.name
 		cluster_name  = "quickstart"
-		load_generator_type = "KEY VALUE"
+		load_generator_type = "AUCTION"
 
-		key_value_options {
-			keys                   = 100
-			snapshot_rounds        = 5
-			transactional_snapshot = true
-			value_size             = 256
-			tick_interval          = "2s"
-			seed                   = 11
-			partitions             = 10
-			batch_size             = 10
+		auction_options {
+			tick_interval = "2s"
 		}
 	}
 

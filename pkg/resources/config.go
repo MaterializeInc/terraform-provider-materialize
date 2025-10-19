@@ -4,7 +4,6 @@ var loadGeneratorTypes = []string{
 	"AUCTION",
 	"MARKETING",
 	"TPCH",
-	"KEY VALUE",
 }
 
 // https://materialize.com/docs/sql/create-cluster-replica/#sizes

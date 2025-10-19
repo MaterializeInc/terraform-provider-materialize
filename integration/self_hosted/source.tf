@@ -20,17 +20,10 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   schema_name         = materialize_schema.schema.name
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
-  load_generator_type = "KEY VALUE"
+  load_generator_type = "AUCTION"
 
-  key_value_options {
-    keys                   = 100
-    snapshot_rounds        = 5
-    transactional_snapshot = true
-    value_size             = 256
-    tick_interval          = "2s"
-    seed                   = 11
-    partitions             = 10
-    batch_size             = 10
+  auction_options {
+    tick_interval = "500ms"
   }
 }
 
@@ -70,26 +63,19 @@ resource "materialize_source_load_generator" "load_generator_tpch" {
   }
 }
 
-resource "materialize_source_load_generator" "load_generator_key_value" {
-  name                = "load_gen_key_value"
+resource "materialize_source_load_generator" "load_generator_marketing" {
+  name                = "load_gen_marketing"
   schema_name         = materialize_schema.schema.name
   database_name       = materialize_database.database.name
   cluster_name        = materialize_cluster.cluster_source.name
-  load_generator_type = "KEY VALUE"
+  load_generator_type = "MARKETING"
 
-  key_value_options {
-    keys                   = 100
-    snapshot_rounds        = 5
-    transactional_snapshot = true
-    value_size             = 256
-    tick_interval          = "2s"
-    seed                   = 11
-    partitions             = 10
-    batch_size             = 10
+  marketing_options {
+    tick_interval = "500ms"
   }
 
   expose_progress {
-    name = "expose_load_gen_key_value"
+    name = "expose_load_gen_marketing"
   }
 }
 
