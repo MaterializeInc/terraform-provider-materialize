@@ -23,9 +23,14 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   load_generator_type = "KEY VALUE"
 
   key_value_options {
-    keys = 1000
-    snapshot_rounds = 1
-    tick_interval = "500ms"
+    keys                   = 100
+    snapshot_rounds        = 5
+    transactional_snapshot = true
+    value_size             = 256
+    tick_interval          = "2s"
+    seed                   = 11
+    partitions             = 10
+    batch_size             = 10
   }
 }
 

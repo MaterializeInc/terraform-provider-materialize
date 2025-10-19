@@ -312,11 +312,12 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
 		load_generator_type = "KEY VALUE"
-		
+
 		key_value_options {
 			keys = 100
 			snapshot_rounds = 1
 			tick_interval = "1s"
+		    value_size = 512
 		}
 	}
 

@@ -90,7 +90,7 @@ func testAccDatasourceSource(nameSpace string) string {
 		schema_name   = materialize_schema.test.name
 		cluster_name  = "quickstart"
 		load_generator_type = "MARKETING"
-		
+
 		marketing_options {
 			tick_interval = "1s"
 		}
@@ -102,11 +102,16 @@ func testAccDatasourceSource(nameSpace string) string {
 		schema_name   = materialize_schema.test_2.name
 		cluster_name  = "quickstart"
 		load_generator_type = "KEY VALUE"
-		
+
 		key_value_options {
-			keys = 100
-			snapshot_rounds = 1
-			tick_interval = "1s"
+			keys                   = 100
+			snapshot_rounds        = 5
+			transactional_snapshot = true
+			value_size             = 256
+			tick_interval          = "2s"
+			seed                   = 11
+			partitions             = 10
+			batch_size             = 10
 		}
 	}
 
