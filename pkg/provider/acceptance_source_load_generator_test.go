@@ -262,9 +262,14 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 		cluster_name = materialize_cluster.test.name
 		load_generator_type = "KEY VALUE"
 		key_value_options {
-			keys = 100
-			snapshot_rounds = 1
-			tick_interval = "1000ms"
+			keys                   = 100
+			snapshot_rounds        = 5
+			transactional_snapshot = true
+			value_size             = 256
+			tick_interval          = "2s"
+			seed                   = 11
+			partitions             = 10
+			batch_size             = 10
 		}
 		ownership_role = "%[5]s"
 		comment = "%[6]s"

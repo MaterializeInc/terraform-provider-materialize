@@ -200,11 +200,16 @@ func testAccSinkKafkaAvroResourceWithTopicOptions(sinkName string) string {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
 		load_generator_type = "KEY VALUE"
-		
+
 		key_value_options {
-			keys = 100
-			snapshot_rounds = 1
-			tick_interval = "1s"
+			keys                   = 100
+			snapshot_rounds        = 5
+			transactional_snapshot = true
+			value_size             = 256
+			tick_interval          = "2s"
+			seed                   = 11
+			partitions             = 10
+			batch_size             = 10
 		}
 	}
 
@@ -438,11 +443,16 @@ func testAccSinkKafkaAvroResource(sinkName string) string {
 		name                = "%[1]s_load_gen"
 		cluster_name        = materialize_cluster.test.name
 		load_generator_type = "KEY VALUE"
-		
+
 		key_value_options {
-			keys = 100
-			snapshot_rounds = 1
-			tick_interval = "1s"
+			keys                   = 100
+			snapshot_rounds        = 5
+			transactional_snapshot = true
+			value_size             = 256
+			tick_interval          = "2s"
+			seed                   = 11
+			partitions             = 10
+			batch_size             = 10
 		}
 	}
 
