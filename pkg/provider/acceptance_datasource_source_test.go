@@ -27,7 +27,7 @@ func TestAccDatasourceSource_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_schema", "sources.#", "25"),
 					resource.TestCheckResourceAttr("data.materialize_source.test_database_2", "database_name", nameSpace+"_2"),
 					resource.TestCheckNoResourceAttr("data.materialize_source.test_database_2", "schema_name"),
-					resource.TestCheckResourceAttr("data.materialize_source.test_database_2", "sources.#", "4"),
+					resource.TestCheckResourceAttr("data.materialize_source.test_database_2", "sources.#", "15"),
 					resource.TestCheckNoResourceAttr("data.materialize_source.test_all", "database_name"),
 					resource.TestCheckNoResourceAttr("data.materialize_source.test_all", "schema_name"),
 					// Cannot ensure the exact number of objects with parallel tests

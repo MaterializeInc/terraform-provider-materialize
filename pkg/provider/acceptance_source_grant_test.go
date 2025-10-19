@@ -102,7 +102,7 @@ resource "materialize_source_load_generator" "test" {
 	load_generator_type = "TPCH"
 
 	tpch_options {
-	  tick_interval = "500ms"
+	  tick_interval = "900ms"
 	  scale_factor = 0.01
 	}
 }

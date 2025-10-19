@@ -7,7 +7,7 @@ resource "materialize_source_load_generator" "load_generator" {
   load_generator_type = "TPCH"
 
   tpch_options {
-    tick_interval = "500ms"
+    tick_interval = "900ms"
     scale_factor  = 0.01
   }
   expose_progress {
@@ -26,7 +26,7 @@ resource "materialize_source_load_generator" "load_generator_us_west" {
   region              = "aws/us-west-2"
 
   tpch_options {
-    tick_interval = "500ms"
+    tick_interval = "900ms"
     scale_factor  = 0.01
   }
   expose_progress {
@@ -42,7 +42,7 @@ resource "materialize_source_load_generator" "load_generator_cluster" {
   load_generator_type = "AUCTION"
 
   auction_options {
-    tick_interval = "500ms"
+    tick_interval = "900ms"
   }
 }
 
@@ -56,7 +56,7 @@ resource "materialize_source_load_generator" "load_generator_cluster_us_west" {
   region              = "aws/us-west-2"
 
   auction_options {
-    tick_interval = "500ms"
+    tick_interval = "900ms"
   }
 }
 
@@ -69,7 +69,7 @@ resource "materialize_source_load_generator" "load_generator_auction" {
   region              = "aws/us-west-2"
 
   marketing_options {
-    tick_interval = "500ms"
+    tick_interval = "900ms"
   }
 }
 
@@ -81,7 +81,7 @@ resource "materialize_source_load_generator" "load_generator_marketing" {
   load_generator_type = "MARKETING"
 
   marketing_options {
-    tick_interval = "500ms"
+    tick_interval = "900ms"
   }
 
   expose_progress {
