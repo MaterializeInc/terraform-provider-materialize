@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-* Removed the `COUNTER` and `KEY VALUE` load generator types from the `materialize_source_load_generator` resource. These types are no longer supported in Materialize. [#748](https://github.com/MaterializeInc/terraform-provider-materialize/pull/748)
+* Removed the `COUNTER` and `KEY VALUE` load generator types from the `materialize_source_load_generator` resource. These load generators are no longer supported in Materialize. [#748](https://github.com/MaterializeInc/terraform-provider-materialize/pull/748)
 
   This change aligns the provider with recent updates to Materialize's new `CREATE TABLE ... FROM SOURCE` model, which simplifies how sources and tables are managed. The removed load generator types were legacy single-output generators that are no longer available in the product.
 
