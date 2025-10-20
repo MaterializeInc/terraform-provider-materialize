@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0 - 2025-10-20
+
+### Breaking Changes
+
+* Removed the `COUNTER` and `KEY VALUE` load generator types from the `materialize_source_load_generator` resource. These types are no longer supported in Materialize. [#748](https://github.com/MaterializeInc/terraform-provider-materialize/pull/748)
+
+  This change aligns the provider with recent updates to Materialize's new `CREATE TABLE ... FROM SOURCE` model, which simplifies how sources and tables are managed. The removed load generator types were legacy single-output generators that are no longer available in the product.
+
+  The rest of the load generator types (`AUCTION`, `MARKETING`, and `TPCH`) remain supported.
+
+### Misc
+
+* Routine dependency updates: [#749](https://github.com/MaterializeInc/terraform-provider-materialize/pull/749)
+* Removed invalid secrets examples from documentation [#745](https://github.com/MaterializeInc/terraform-provider-materialize/pull/745)
+
 ## 0.8.22 - 2025-09-18
 
 ### Features
