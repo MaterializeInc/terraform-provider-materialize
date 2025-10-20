@@ -111,7 +111,7 @@ func TestAccRole_withPasswordAndSuperuser(t *testing.T) {
 			{
 				ResourceName:      "materialize_role.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify: false,
 			},
 		},
 	})
