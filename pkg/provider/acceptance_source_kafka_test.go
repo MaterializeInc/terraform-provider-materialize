@@ -88,18 +88,18 @@ func TestAccSourceKafkaAvro_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "name", sourceName+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName+"_source")),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "database_name", sourceName+"_db"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "schema_name", sourceName+"_schema"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "qualified_sql_name", fmt.Sprintf(`"%s"."%s"."%s"`, sourceName+"_db", sourceName+"_schema", sourceName+"_source")),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "cluster_name", sourceName+"_cluster"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "topic", "terraform"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "envelope.0.none", "true"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.name", sourceName+"_conn"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.database_name", sourceName+"_db"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "kafka_connection.0.schema_name", sourceName+"_schema"),
 					resource.TestCheckResourceAttr("materialize_source_kafka.test", "format.0.avro.0.schema_registry_connection.0.name", sourceName+"_conn_schema"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "format.0.avro.0.schema_registry_connection.0.database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_kafka.test", "format.0.avro.0.schema_registry_connection.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "format.0.avro.0.schema_registry_connection.0.database_name", sourceName+"_db"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test", "format.0.avro.0.schema_registry_connection.0.schema_name", sourceName+"_schema"),
 				),
 			},
 			{
@@ -290,8 +290,19 @@ func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sou
 
 func testAccSourceKafkaResourceAvro(sourceName string) string {
 	return fmt.Sprintf(`
+	resource "materialize_database" "test" {
+		name = "%[1]s_db"
+	}
+
+	resource "materialize_schema" "test" {
+		name          = "%[1]s_schema"
+		database_name = materialize_database.test.name
+	}
+
 	resource "materialize_connection_kafka" "test" {
-		name = "%[1]s_conn"
+		name          = "%[1]s_conn"
+		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
 		kafka_broker {
 			broker = "redpanda:9092"
 		}
@@ -299,17 +310,21 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	}
 
 	resource "materialize_connection_confluent_schema_registry" "test" {
-		name = "%[1]s_conn_schema"
-		url  = "http://redpanda:8081"
+		name          = "%[1]s_conn_schema"
+		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
+		url           = "http://redpanda:8081"
 	}
 
 	resource "materialize_cluster" "test" {
-		name               = "%[1]s_cluster"
-		size               = "3xsmall"
+		name = "%[1]s_cluster"
+		size = "3xsmall"
 	}
 
 	resource "materialize_source_load_generator" "test" {
 		name                = "%[1]s_load_gen"
+		database_name       = materialize_database.test.name
+		schema_name         = materialize_schema.test.name
 		cluster_name        = materialize_cluster.test.name
 		load_generator_type = "AUCTION"
 
@@ -320,8 +335,10 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 
 	resource "materialize_sink_kafka" "test" {
 		name             = "%[1]s_sink"
+		database_name    = materialize_database.test.name
+		schema_name      = materialize_schema.test.name
 		topic            = "terraform"
-		cluster_name	 = materialize_cluster.test.name
+		cluster_name     = materialize_cluster.test.name
 		key              = ["id"]
 		key_not_enforced = true
 		from {
@@ -349,9 +366,11 @@ func testAccSourceKafkaResourceAvro(sourceName string) string {
 	}
 
 	resource "materialize_source_kafka" "test" {
-		name = "%[1]s_source"
-		cluster_name = materialize_cluster.test.name
-		topic = "terraform"
+		name          = "%[1]s_source"
+		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
+		cluster_name  = materialize_cluster.test.name
+		topic         = "terraform"
 		kafka_connection {
 			name          = materialize_connection_kafka.test.name
 			schema_name   = materialize_connection_kafka.test.schema_name
