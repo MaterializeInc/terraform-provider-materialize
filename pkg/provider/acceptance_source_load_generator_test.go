@@ -27,9 +27,9 @@ func TestAccSourceLoadGeneratorTpch_basic(t *testing.T) {
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					resource.TestMatchResourceAttr("materialize_source_load_generator.test", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceName),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", roleName+"_schema"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", roleName+"_db"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"%s"."%s"."%s"`, roleName+"_db", roleName+"_schema", sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "cluster_name", roleName+"_cluster"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "TPCH"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "tpch_options.0.tick_interval", "1000ms"),
@@ -150,9 +150,9 @@ func TestAccSourceLoadGeneratorAuction_withProgress(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", sourceName),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, sourceName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", sourceName+"_schema"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", sourceName+"_db"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"%s"."%s"."%s"`, sourceName+"_db", sourceName+"_schema", sourceName)),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "load_generator_type", "AUCTION"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "auction_options.0.tick_interval", "2s"),
 				),
@@ -192,9 +192,9 @@ func TestAccSourceLoadGenerator_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "name", newSourceName),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", "public"),
-					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, newSourceName)),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "database_name", roleName+"_db"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "schema_name", roleName+"_schema"),
+					resource.TestCheckResourceAttr("materialize_source_load_generator.test", "qualified_sql_name", fmt.Sprintf(`"%s"."%s"."%s"`, roleName+"_db", roleName+"_schema", newSourceName)),
 					testAccCheckSourceLoadGeneratorExists("materialize_source_load_generator.test_role"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "size", "2xsmall"),
 					resource.TestCheckResourceAttr("materialize_source_load_generator.test_role", "ownership_role", roleName),
@@ -229,19 +229,29 @@ func TestAccSourceLoadGenerator_disappears(t *testing.T) {
 
 func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size, sourceOwner, comment string) string {
 	return fmt.Sprintf(`
+	resource "materialize_database" "test" {
+		name = "%[1]s_db"
+	}
+
+	resource "materialize_schema" "test" {
+		name          = "%[1]s_schema"
+		database_name = materialize_database.test.name
+	}
+
 	resource "materialize_role" "test" {
 		name = "%[1]s"
 	}
 
 	resource "materialize_cluster" "test" {
-		name               = "%[1]s_cluster"
-		size               = "%[4]s"
+		name = "%[1]s_cluster"
+		size = "%[4]s"
 	}
 
 	resource "materialize_source_load_generator" "test" {
-		name = "%[2]s"
-		schema_name = "public"
-		cluster_name = materialize_cluster.test.name
+		name          = "%[2]s"
+		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
+		cluster_name  = materialize_cluster.test.name
 		load_generator_type = "TPCH"
 		tpch_options {
 			tick_interval = "1000ms"
@@ -250,9 +260,10 @@ func testAccSourceLoadGeneratorResource(roleName, sourceName, source2Name, size,
 	}
 
 	resource "materialize_source_load_generator" "test_role" {
-		name = "%[3]s"
-		schema_name = "public"
-		cluster_name = materialize_cluster.test.name
+		name          = "%[3]s"
+		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
+		cluster_name  = materialize_cluster.test.name
 		load_generator_type = "AUCTION"
 		auction_options {
 			tick_interval = "2s"
@@ -338,9 +349,20 @@ func testAccSourceLoadGeneratorTPCHResource(sourceName string) string {
 
 func testAccSourceLoadGeneratorAuctionWithProgressResource(sourceName string) string {
 	return fmt.Sprintf(`
+	resource "materialize_database" "test" {
+		name = "%[1]s_db"
+	}
+
+	resource "materialize_schema" "test" {
+		name          = "%[1]s_schema"
+		database_name = materialize_database.test.name
+	}
+
 	resource "materialize_source_load_generator" "test" {
-		name                = "%[1]s"
-		cluster_name        = "quickstart"
+		name          = "%[1]s"
+		database_name = materialize_database.test.name
+		schema_name   = materialize_schema.test.name
+		cluster_name  = "quickstart"
 		load_generator_type = "AUCTION"
 
 		auction_options {
