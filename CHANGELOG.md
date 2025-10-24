@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.1 - 2025-10-24
+
+### Features
+
+* Added support for `password` and `superuser` attributes in the `materialize_role` resource [#736](https://github.com/MaterializeInc/terraform-provider-materialize/pull/736). Both of the new attributes are available in self-managed Materialize with password authentication enabled.
+
+  Example usage:
+
+  ```hcl
+  resource "materialize_role" "example_role" {
+    name      = "admin_user"
+    password  = var.admin_password
+    superuser = true
+  }
+  ```
+
 ## 0.9.0 - 2025-10-20
 
 ### Breaking Changes
