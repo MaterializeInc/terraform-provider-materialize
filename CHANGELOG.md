@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.2 - 2025-11-6
+
+### Features
+
+* Added support for `M.1` cluster replica sizes.
+
+  See: https://materialize.com/blog/introducing-new-materialize-cloud-m.1-clusters/
+
 ## 0.9.1 - 2025-10-24
 
 ### Features
