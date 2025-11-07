@@ -137,3 +137,10 @@ output "qualified_kafka_password" {
 }
 
 data "materialize_secret" "all" {}
+
+resource "materialize_secret" "write_only_example" {
+  name             = "write_only_secret"
+  value_wo         = "ephemeral_secret_value"
+  value_wo_version = 1
+  comment          = "Example write-only secret"
+}

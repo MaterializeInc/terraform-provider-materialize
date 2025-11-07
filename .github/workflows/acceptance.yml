@@ -21,7 +21,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.8.2
+          terraform_version: 1.11.4
 
       - name: Docker Compose Up
         run: docker compose up --build -d

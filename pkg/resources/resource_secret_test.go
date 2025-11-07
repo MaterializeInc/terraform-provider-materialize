@@ -113,3 +113,59 @@ func TestResourceSecretDelete(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceSecretSchema_WriteOnly(t *testing.T) {
+	r := require.New(t)
+
+	// Test that the schema has the write-only fields
+	s := Secret().Schema
+
+	// Check value_wo field exists and is configured correctly
+	valueWo, ok := s["value_wo"]
+	r.True(ok, "value_wo field should exist")
+	r.Equal(schema.TypeString, valueWo.Type)
+	r.True(valueWo.Optional)
+	r.True(valueWo.Sensitive)
+	r.True(valueWo.WriteOnly, "value_wo should be WriteOnly")
+
+	// Check value_wo_version field exists
+	valueWoVersion, ok := s["value_wo_version"]
+	r.True(ok, "value_wo_version field should exist")
+	r.Equal(schema.TypeInt, valueWoVersion.Type)
+	r.True(valueWoVersion.Optional)
+
+	// Check value field is now optional (not required)
+	value, ok := s["value"]
+	r.True(ok, "value field should exist")
+	r.True(value.Optional, "value should be optional")
+	r.False(value.Required, "value should not be required")
+}
+
+func TestResourceSecretSchema_ExactlyOneOf(t *testing.T) {
+	// Test that value and value_wo cannot both be set
+	in := map[string]interface{}{
+		"name":          "secret",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"value":         "regular_value",
+		"value_wo":      "write_only_value",
+	}
+
+	// This should fail validation due to ExactlyOneOf constraint
+	d := schema.TestResourceDataRaw(t, Secret().Schema, in)
+
+	valueField := Secret().Schema["value"]
+	require.Contains(t, valueField.ExactlyOneOf, "value")
+	require.Contains(t, valueField.ExactlyOneOf, "value_wo")
+
+	valueWoField := Secret().Schema["value_wo"]
+	require.Contains(t, valueWoField.ExactlyOneOf, "value")
+	require.Contains(t, valueWoField.ExactlyOneOf, "value_wo")
+
+	// Verify RequiredWith constraint
+	require.Contains(t, valueWoField.RequiredWith, "value_wo_version")
+	require.Contains(t, Secret().Schema["value_wo_version"].RequiredWith, "value_wo")
+
+	// Clean up - this validates the data was created even though it would fail in real usage
+	require.NotNil(t, d)
+}
