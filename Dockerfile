@@ -1,6 +1,6 @@
 FROM golang:1.24-alpine
 
-COPY --from=hashicorp/terraform:1.8.2 /bin/terraform /bin/terraform
+COPY --from=hashicorp/terraform:1.11.4 /bin/terraform /bin/terraform
 
 WORKDIR /usr/src/app
 
