@@ -48,6 +48,46 @@ func TestAccSecret_basic(t *testing.T) {
 	})
 }
 
+func TestAccSecret_writeOnly(t *testing.T) {
+	secretName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSecretResourceWriteOnly(secretName, "sekret", 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecretExists("materialize_secret.test_wo"),
+					resource.TestMatchResourceAttr("materialize_secret.test_wo", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_secret.test_wo", "name", secretName),
+					resource.TestCheckResourceAttr("materialize_secret.test_wo", "database_name", "materialize"),
+					resource.TestCheckResourceAttr("materialize_secret.test_wo", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_secret.test_wo", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, secretName)),
+					resource.TestCheckResourceAttr("materialize_secret.test_wo", "value_wo_version", "1"),
+					// Verify that value_wo is NOT stored in state (write-only behavior)
+					resource.TestCheckNoResourceAttr("materialize_secret.test_wo", "value_wo"),
+				),
+			},
+			{
+				Config: testAccSecretResourceWriteOnly(secretName, "newsekret", 2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSecretExists("materialize_secret.test_wo"),
+					resource.TestCheckResourceAttr("materialize_secret.test_wo", "value_wo_version", "2"),
+					// Verify that value_wo is still NOT stored in state after update
+					resource.TestCheckNoResourceAttr("materialize_secret.test_wo", "value_wo"),
+				),
+			},
+			{
+				ResourceName:            "materialize_secret.test_wo",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"value_wo", "value_wo_version"},
+			},
+		},
+	})
+}
+
 func TestAccSecret_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	secretName := fmt.Sprintf("old_%s", slug)
@@ -133,6 +173,16 @@ func testAccSecretResource(roleName, secretName, secretValue, secret2Name, secre
 		depends_on = [materialize_role.test]
 	}
 	`, roleName, secretName, secretValue, secret2Name, secretOwner, comment)
+}
+
+func testAccSecretResourceWriteOnly(secretName, secretValue string, version int) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "test_wo" {
+		name = "%[1]s"
+		value_wo = "%[2]s"
+		value_wo_version = %[3]d
+	}
+	`, secretName, secretValue, version)
 }
 
 func testAccCheckSecretExists(name string) resource.TestCheckFunc {

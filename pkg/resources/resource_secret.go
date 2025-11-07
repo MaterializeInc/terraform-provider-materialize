@@ -8,6 +8,7 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -19,10 +20,26 @@ var secretSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("secret"),
 	"comment":            CommentSchema(false),
 	"value": {
-		Description: "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal.",
-		Type:        schema.TypeString,
-		Required:    true,
-		Sensitive:   true,
+		Description:  "The value for the secret. The value expression may not reference any relations, and must be a bytea string literal. Use value_wo for write-only ephemeral values that won't be stored in state.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Sensitive:    true,
+		ExactlyOneOf: []string{"value", "value_wo"},
+	},
+	"value_wo": {
+		Description:  "Write-only value for the secret that supports ephemeral values and won't be stored in Terraform state or plan. The value expression may not reference any relations, and must be a bytea string literal. Requires Terraform 1.11+. Must be used with value_wo_version.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Sensitive:    true,
+		WriteOnly:    true,
+		ExactlyOneOf: []string{"value", "value_wo"},
+		RequiredWith: []string{"value_wo_version"},
+	},
+	"value_wo_version": {
+		Description:  "Version number for the write-only value. Increment this to trigger an update of the secret value when using value_wo. Must be used with value_wo.",
+		Type:         schema.TypeInt,
+		Optional:     true,
+		RequiredWith: []string{"value_wo"},
 	},
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -104,6 +121,11 @@ func secretCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	if v, ok := d.GetOk("value"); ok {
 		b.Value(v.(string))
+	} else if valueWo, _ := d.GetRawConfigAt(cty.GetAttrPath("value_wo")); !valueWo.IsNull() {
+		if !valueWo.Type().Equals(cty.String) {
+			return diag.Errorf("error retrieving write-only argument: value_wo - retrieved config value is not a string")
+		}
+		b.Value(valueWo.AsString())
 	}
 
 	// create resource
@@ -168,6 +190,17 @@ func secretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		_, newValue := d.GetChange("value")
 		if err := b.UpdateValue(newValue.(string)); err != nil {
 			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("value_wo_version") {
+		if valueWo, _ := d.GetRawConfigAt(cty.GetAttrPath("value_wo")); !valueWo.IsNull() {
+			if !valueWo.Type().Equals(cty.String) {
+				return diag.Errorf("error retrieving write-only argument: value_wo - retrieved config value is not a string")
+			}
+			if err := b.UpdateValue(valueWo.AsString()); err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
