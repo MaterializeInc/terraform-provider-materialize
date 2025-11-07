@@ -8,6 +8,21 @@ var loadGeneratorTypes = []string{
 
 // https://materialize.com/docs/sql/create-cluster-replica/#sizes
 var replicaSizes = []string{
+	"M.1-128xlarge",
+	"M.1-64xlarge",
+	"M.1-32xlarge",
+	"M.1-16xlarge",
+	"M.1-8xlarge",
+	"M.1-4xlarge",
+	"M.1-3xlarge",
+	"M.1-2xlarge",
+	"M.1-1.5xlarge",
+	"M.1-large",
+	"M.1-medium",
+	"M.1-small",
+	"M.1-xsmall",
+	"M.1-micro",
+	"M.1-nano",
 	"3xsmall",
 	"2xsmall",
 	"xsmall",
