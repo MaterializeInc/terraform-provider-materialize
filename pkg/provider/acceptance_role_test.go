@@ -218,3 +218,50 @@ func testAccCheckAllRolesDestroyed(s *terraform.State) error {
 
 	return nil
 }
+
+func TestAccRole_withPasswordWo(t *testing.T) {
+	roleName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	password := "ephemeral_password_value"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRoleWithPasswordWo(roleName, password, 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+					resource.TestMatchResourceAttr("materialize_role.test", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_role.test", "name", roleName),
+					resource.TestCheckResourceAttr("materialize_role.test", "password_wo_version", "1"),
+					resource.TestCheckNoResourceAttr("materialize_role.test", "password_wo"),
+				),
+			},
+			{
+				Config: testAccRoleWithPasswordWo(roleName, password, 2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+					resource.TestCheckResourceAttr("materialize_role.test", "password_wo_version", "2"),
+					resource.TestCheckNoResourceAttr("materialize_role.test", "password_wo"),
+				),
+			},
+			{
+				ResourceName:            "materialize_role.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"password_wo", "password_wo_version"},
+			},
+		},
+	})
+}
+
+func testAccRoleWithPasswordWo(roleName, password string, version int) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "test" {
+	name = "%s"
+	password_wo = "%s"
+	password_wo_version = %d
+}
+`, roleName, password, version)
+}
