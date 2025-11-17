@@ -71,7 +71,7 @@ output "qualified_role" {
 data "materialize_role" "all" {}
 
 resource "materialize_role" "password_wo" {
-  name         = "password_wo"
-  password_wo  = "ephemeral_password_value"
+  name                = "password_wo"
+  password_wo         = "ephemeral_password_value"
   password_wo_version = 1
 }
