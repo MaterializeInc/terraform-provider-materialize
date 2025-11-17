@@ -37,6 +37,13 @@ var inRoleWithPasswordNoLogin = map[string]interface{}{
 	"login":    false,
 }
 
+var inRoleWithPasswordWo = map[string]interface{}{
+	"name":                "role",
+	"inherit":             true,
+	"password_wo":         "ephemeral_password_value",
+	"password_wo_version": 1,
+}
+
 func TestResourceRoleCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
@@ -174,4 +181,45 @@ func TestResourceRoleDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestResourceRoleUpdateWithPasswordWo(t *testing.T) {
+	r := require.New(t)
+	role := Role().Schema
+
+	passwordWo, ok := role["password_wo"]
+	r.True(ok, "password_wo should be set")
+	r.Equal(schema.TypeString, passwordWo.Type)
+	r.True(passwordWo.Optional)
+	r.True(passwordWo.Sensitive)
+	r.True(passwordWo.WriteOnly, "password_wo should be WriteOnly")
+
+	passwordWoVersion, ok := roleSchema["password_wo_version"]
+	r.True(ok, "password_wo_version should be set")
+	r.Equal(schema.TypeInt, passwordWoVersion.Type)
+	r.True(passwordWoVersion.Optional)
+
+	password, ok := role["password"]
+	r.True(ok, "password should be set")
+	r.Equal(schema.TypeString, password.Type)
+	r.True(password.Optional)
+	r.True(password.Sensitive)
+	r.False(password.WriteOnly, "password should not be WriteOnly")
+}
+
+func TestResourceRoleSchema_ExactlyOneOf(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordWo)
+	require.NotNil(t, d)
+
+	passwordField := Role().Schema["password"]
+	require.Contains(t, passwordField.ExactlyOneOf, "password")
+	require.Contains(t, passwordField.ExactlyOneOf, "password_wo")
+
+	passwordWoField := Role().Schema["password_wo"]
+	require.Contains(t, passwordWoField.ExactlyOneOf, "password")
+	require.Contains(t, passwordWoField.ExactlyOneOf, "password_wo")
+	require.Contains(t, passwordWoField.RequiredWith, "password_wo_version")
+
+	passwordWoVersionField := Role().Schema["password_wo_version"]
+	require.Contains(t, passwordWoVersionField.RequiredWith, "password_wo")
 }

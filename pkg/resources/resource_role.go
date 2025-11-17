@@ -8,6 +8,7 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,10 +23,26 @@ var roleSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"password": {
-		Description: "Password for the role. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication.",
-		Type:        schema.TypeString,
-		Optional:    true,
-		Sensitive:   true,
+		Description:  "Password for the role. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication. Use password_wo for write-only ephemeral values that won't be stored in state.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Sensitive:    true,
+		ExactlyOneOf: []string{"password", "password_wo"},
+	},
+	"password_wo": {
+		Description:  "Write-only password for the role that supports ephemeral values and won't be stored in Terraform state or plan. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication. Requires Terraform 1.11+. Must be used with password_wo_version.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Sensitive:    true,
+		WriteOnly:    true,
+		ExactlyOneOf: []string{"password", "password_wo"},
+		RequiredWith: []string{"password_wo_version"},
+	},
+	"password_wo_version": {
+		Description:  "Version number for the write-only password. Increment this to trigger an update of the password value when using password_wo. Must be used with password_wo.",
+		Type:         schema.TypeInt,
+		Optional:     true,
+		RequiredWith: []string{"password_wo"},
 	},
 	"superuser": {
 		Description: "Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.",
@@ -122,6 +139,11 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if v, ok := d.GetOk("password"); ok && v.(string) != "" {
 		b.Password(v.(string))
+	} else if valueWo, _ := d.GetRawConfigAt(cty.GetAttrPath("password_wo")); !valueWo.IsNull() {
+		if !valueWo.Type().Equals(cty.String) {
+			return diag.Errorf("error retrieving write-only argument: password_wo - retrieved config value is not a string")
+		}
+		b.Password(valueWo.AsString())
 	}
 
 	if v, ok := d.GetOk("superuser"); ok {
@@ -199,6 +221,17 @@ func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 		if err := b.Object(newComment.(string)); err != nil {
 			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("password_wo_version") {
+		if passwordWo, _ := d.GetRawConfigAt(cty.GetAttrPath("password_wo")); !passwordWo.IsNull() {
+			if !passwordWo.Type().Equals(cty.String) {
+				return diag.Errorf("error retrieving write-only argument: password_wo - retrieved config value is not a string")
+			}
+			if err := b.AlterPassword(passwordWo.AsString()); err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
