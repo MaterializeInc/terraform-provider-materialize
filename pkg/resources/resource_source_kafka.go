@@ -33,71 +33,94 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"include_key": {
-		Description: "Include a column containing the Kafka message key.",
+		Description: "(Deprecated) Include a column containing the Kafka message key. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_key` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_key_alias": {
-		Description: "Provide an alias for the key column.",
+		Description: "(Deprecated) Provide an alias for the key column. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_key_alias` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_headers": {
-		Description: "Include message headers.",
+		Description: "(Deprecated) Include message headers. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_headers` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 		Default:     false,
 	},
 	"include_headers_alias": {
-		Description: "Provide an alias for the headers column.",
+		Description: "(Deprecated) Provide an alias for the headers column. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_headers_alias` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_partition": {
-		Description: "Include a partition column containing the Kafka message partition",
+		Description: "(Deprecated) Include a partition column containing the Kafka message partition. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_partition` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_partition_alias": {
-		Description: "Provide an alias for the partition column.",
+		Description: "(Deprecated) Provide an alias for the partition column. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_partition_alias` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_offset": {
-		Description: "Include an offset column containing the Kafka message offset.",
+		Description: "(Deprecated) Include an offset column containing the Kafka message offset. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_offset` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_offset_alias": {
-		Description: "Provide an alias for the offset column.",
+		Description: "(Deprecated) Provide an alias for the offset column. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_offset_alias` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_timestamp": {
-		Description: "Include a timestamp column containing the Kafka message timestamp.",
+		Description: "(Deprecated) Include a timestamp column containing the Kafka message timestamp. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_timestamp` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_timestamp_alias": {
-		Description: "Provide an alias for the timestamp column.",
+		Description: "(Deprecated) Provide an alias for the timestamp column. Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `include_timestamp_alias` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
-	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
-	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
+	"format": func() *schema.Schema {
+		s := FormatSpecSchema("format", "(Deprecated) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Use `materialize_source_table_kafka` resources instead.", false)
+		s.Deprecated = "The `format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead."
+		return s
+	}(),
+	"key_format": func() *schema.Schema {
+		s := FormatSpecSchema("key_format", "(Deprecated) Set the key format explicitly. Use `materialize_source_table_kafka` resources instead.", false)
+		s.Deprecated = "The `key_format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead."
+		return s
+	}(),
+	"value_format": func() *schema.Schema {
+		s := FormatSpecSchema("value_format", "(Deprecated) Set the value format explicitly. Use `materialize_source_table_kafka` resources instead.", false)
+		s.Deprecated = "The `value_format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead."
+		return s
+	}(),
 	"envelope": {
-		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
+		Description: "(Deprecated) How Materialize should interpret records (e.g. append-only, upsert). Use `materialize_source_table_kafka` resources instead.",
+		Deprecated:  "The `envelope` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead.",
 		Type:        schema.TypeList,
 		MaxItems:    1,
 		Elem: &schema.Resource{
