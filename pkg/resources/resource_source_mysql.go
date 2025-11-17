@@ -27,19 +27,22 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	}),
 	"ignore_columns": {
-		Description: "Ignore specific columns when reading data from MySQL. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "(Deprecated) Ignore specific columns when reading data from MySQL. Use `materialize_source_table_mysql` resources instead.",
+		Deprecated:  "The `ignore_columns` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_mysql` resources with `exclude_columns` instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "(Deprecated) Decode data as text for specific columns that contain MySQL types that are unsupported in Materialize. Use `materialize_source_table_mysql` resources instead.",
+		Deprecated:  "The `text_columns` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_mysql` resources instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"table": {
-		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
+		Description: "(Deprecated) Specify the tables to be included in the source. If not specified, all tables are included. Use `materialize_source_table_mysql` resources instead.",
+		Deprecated:  "The `table` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_mysql` resources to create tables from MySQL sources instead.",
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Elem: &schema.Resource{

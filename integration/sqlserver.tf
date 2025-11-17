@@ -56,3 +56,21 @@ resource "materialize_source_sqlserver" "sqlserver_source_all" {
 
   exclude_columns = ["dbo.table3.data", "dbo.table1.about", "dbo.table2.about"]
 }
+
+# SQL Server Source Table
+resource "materialize_source_table_sqlserver" "sqlserver_table" {
+  name          = "sqlserver_table"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  source {
+    name          = materialize_source_sqlserver.sqlserver_source.name
+    schema_name   = materialize_source_sqlserver.sqlserver_source.schema_name
+    database_name = materialize_source_sqlserver.sqlserver_source.database_name
+  }
+
+  upstream_name        = "table1"
+  upstream_schema_name = "dbo"
+
+  exclude_columns = ["id", "about"]
+}
