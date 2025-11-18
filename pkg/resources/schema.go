@@ -79,12 +79,11 @@ func QualifiedNameSchema(resource string) *schema.Schema {
 
 func SizeSchema(resource string, required bool, forceNew bool) *schema.Schema {
 	return &schema.Schema{
-		Type:         schema.TypeString,
-		Description:  fmt.Sprintf("The size of the %s.", resource),
-		Required:     required,
-		Optional:     !required,
-		ForceNew:     forceNew,
-		ValidateFunc: validation.StringInSlice(replicaSizes, true),
+		Type:        schema.TypeString,
+		Description: fmt.Sprintf("The size of the %s.", resource),
+		Required:    required,
+		Optional:    !required,
+		ForceNew:    forceNew,
 	}
 }
 
