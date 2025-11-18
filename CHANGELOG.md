@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.4 - 2025-11-18
+
+### Features
+
+* Disabled the cluster replica size validation to allow for custom cluster replica sizes on self-managed instances [#764](https://github.com/MaterializeInc/terraform-provider-materialize/pull/764)
+
 ## 0.9.3 - 2025-11-17
 
 ### Features
