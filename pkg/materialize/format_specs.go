@@ -73,10 +73,14 @@ func GetFormatSpecStruc(v interface{}) SourceFormatSpecStruct {
 	}
 	if protobuf, ok := u["protobuf"]; ok && protobuf != nil && len(protobuf.([]interface{})) > 0 {
 		if csr, ok := protobuf.([]interface{})[0].(map[string]interface{})["schema_registry_connection"]; ok {
-			message := protobuf.([]interface{})[0].(map[string]interface{})["message_name"].(string)
-			format.Protobuf = &ProtobufFormatSpec{
-				SchemaRegistryConnection: GetIdentifierSchemaStruct(csr),
-				MessageName:              message,
+			protobufMap := protobuf.([]interface{})[0].(map[string]interface{})
+			if messageVal, ok := protobufMap["message"]; ok && messageVal != nil {
+				if message, ok := messageVal.(string); ok {
+					format.Protobuf = &ProtobufFormatSpec{
+						SchemaRegistryConnection: GetIdentifierSchemaStruct(csr),
+						MessageName:              message,
+					}
+				}
 			}
 		}
 	}
