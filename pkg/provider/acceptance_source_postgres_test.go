@@ -261,7 +261,7 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 			name 		= "%[3]s_table2"
 		}
 		text_columns = ["table1.id"]
-		exclude_columns = ["public.table2.data"]
+		exclude_columns = ["public.table2.updated_at"]
 	}
 
 	resource "materialize_source_postgres" "test_role" {
@@ -282,7 +282,7 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 			upstream_schema_name = "public"
 			name 		= "%[3]s_table_role_2"
 		}
-		exclude_columns = ["public.table1.metadata"]
+		exclude_columns = ["public.table2.updated_at"]
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 
