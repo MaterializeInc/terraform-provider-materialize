@@ -379,7 +379,7 @@ func testAccSourceTableSQLServerWithUnsupportedTypesResource(nameSpace string) s
 			upstream_name  = "table5"
 			upstream_schema_name = "dbo"
 		}
-		exclude_columns = ["dbo.table5.large_text", "dbo.table5.image_data", "dbo.table5.xml_data"]
+		exclude_columns = ["dbo.table5.large_text", "dbo.table5.image_data", "dbo.table5.xml_data", "dbo.table5.json_data"]
 	}
 
 	resource "materialize_source_table_sqlserver" "test_unsupported" {

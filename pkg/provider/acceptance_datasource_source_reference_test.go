@@ -25,7 +25,7 @@ func TestAccDataSourceSourceReference_basic(t *testing.T) {
 					// Check total references
 					resource.TestCheckResourceAttr("data.materialize_source_reference.kafka", "references.#", "1"),
 					resource.TestCheckResourceAttr("data.materialize_source_reference.postgres", "references.#", "8"),
-					resource.TestCheckResourceAttr("data.materialize_source_reference.mysql", "references.#", "4"),
+					resource.TestCheckResourceAttr("data.materialize_source_reference.mysql", "references.#", "10"),
 
 					// Check Postgres reference attributes
 					resource.TestCheckResourceAttr("data.materialize_source_reference.postgres", "references.0.namespace", "public"),
