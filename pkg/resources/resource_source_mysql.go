@@ -79,6 +79,13 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"all_tables": {
+		Description: "Include all tables in the source. If `table` is specified, this will be ignored.",
+		Deprecated:  "Use the new `materialize_source_table_mysql` resource instead.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
 		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
@@ -132,6 +139,10 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		tables := v.(*schema.Set).List()
 		t := materialize.GetTableStruct(tables)
 		b.Tables(t)
+	}
+
+	if v, ok := d.GetOk("all_tables"); ok && v.(bool) {
+		b.AllTables()
 	}
 
 	if v, ok := d.GetOk("ignore_columns"); ok && len(v.([]interface{})) > 0 {

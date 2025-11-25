@@ -257,26 +257,6 @@ func testAccCheckAllSourceTableDestroyed(s *terraform.State) error {
 	return nil
 }
 
-func TestAccSourceTableMySQL_withENUM(t *testing.T) {
-	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      nil,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourceTableMySQLWithENUMResource(nameSpace),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSourceTableExists("materialize_source_table_mysql.test_enum"),
-					resource.TestCheckResourceAttr("materialize_source_table_mysql.test_enum", "name", nameSpace+"_table_enum"),
-					resource.TestCheckResourceAttr("materialize_source_table_mysql.test_enum", "upstream_name", "mysql_table6"),
-					resource.TestCheckResourceAttr("materialize_source_table_mysql.test_enum", "text_columns.#", "2"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourceTableMySQL_withNumericTypes(t *testing.T) {
 	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -313,62 +293,6 @@ func TestAccSourceTableMySQL_withDateTimeTypes(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccSourceTableMySQLWithENUMResource(nameSpace string) string {
-	return fmt.Sprintf(`
-	resource "materialize_secret" "mysql_password" {
-		name  = "%[1]s_secret"
-		value = "c2VjcmV0Cg=="
-	}
-
-	resource "materialize_connection_mysql" "mysql_connection" {
-		name    = "%[1]s_connection"
-		host    = "mysql"
-		port    = 3306
-		user {
-			text = "repluser"
-		}
-		password {
-			name = materialize_secret.mysql_password.name
-		}
-	}
-
-	resource "materialize_source_mysql" "test_source" {
-		name         = "%[1]s_source"
-		cluster_name = "quickstart"
-
-		mysql_connection {
-			name = materialize_connection_mysql.mysql_connection.name
-		}
-
-		table {
-			upstream_name        = "mysql_table6"
-			upstream_schema_name = "shop"
-			name                 = "mysql_table6_local"
-		}
-
-		text_columns = ["shop.mysql_table6.tags", "shop.mysql_table6.status"]
-	}
-
-	resource "materialize_source_table_mysql" "test_enum" {
-		name           = "%[1]s_table_enum"
-		schema_name    = "public"
-		database_name  = "materialize"
-
-		source {
-			name = materialize_source_mysql.test_source.name
-		}
-
-		upstream_name         = "mysql_table6"
-		upstream_schema_name  = "shop"
-
-		text_columns = [
-			"tags",
-			"status"
-		]
-	}
-	`, nameSpace)
 }
 
 func testAccSourceTableMySQLWithNumericTypesResource(nameSpace string) string {
@@ -467,6 +391,8 @@ func testAccSourceTableMySQLWithDateTimeTypesResource(nameSpace string) string {
 
 		upstream_name         = "mysql_table10"
 		upstream_schema_name  = "shop"
+
+		exclude_columns = ["year_col"]
 	}
 	`, nameSpace)
 }

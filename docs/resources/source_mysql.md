@@ -52,6 +52,7 @@ resource "materialize_source_mysql" "test" {
 
 ### Optional
 
+- `all_tables` (Boolean, Deprecated) Include all tables in the source. If `table` is specified, this will be ignored.
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.

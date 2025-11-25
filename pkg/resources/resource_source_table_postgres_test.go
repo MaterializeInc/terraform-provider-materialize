@@ -38,7 +38,7 @@ func TestResourceSourceTablePostgresCreate(t *testing.T) {
 		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."source"
             \(REFERENCE "upstream_schema"."upstream_table"\)
-            WITH \(TEXT COLUMNS \("column1", "column2"\)\);`).
+            WITH \(TEXT COLUMNS \("column1", "column2"\), EXCLUDE COLUMNS \("exclude1", "exclude2"\)\);`).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

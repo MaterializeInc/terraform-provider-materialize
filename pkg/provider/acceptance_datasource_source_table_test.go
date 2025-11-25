@@ -61,10 +61,6 @@ resource "materialize_source_postgres" "test" {
 		name = materialize_connection_postgres.postgres_connection.name
 	}
 	publication = "mz_source"
-	table {
-		upstream_name  = "table2"
-		upstream_schema_name = "public"
-	}
 }
 
 resource "materialize_source_table_postgres" "test" {

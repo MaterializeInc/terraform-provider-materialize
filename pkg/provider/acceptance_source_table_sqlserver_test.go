@@ -282,7 +282,7 @@ func TestAccSourceTableSQLServer_withUnsupportedTypes(t *testing.T) {
 					testAccCheckSourceTableSQLServerExists("materialize_source_table_sqlserver.test_unsupported"),
 					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "name", nameSpace+"_table_unsupported"),
 					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "upstream_name", "table5"),
-					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "exclude_columns.#", "2"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "exclude_columns.#", "4"),
 				),
 			},
 		},
@@ -396,7 +396,9 @@ func testAccSourceTableSQLServerWithUnsupportedTypesResource(nameSpace string) s
 
 		exclude_columns = [
 			"large_text",
-			"image_data"
+			"image_data",
+			"xml_data",
+			"json_data"
 		]
 	}
 	`, nameSpace)
