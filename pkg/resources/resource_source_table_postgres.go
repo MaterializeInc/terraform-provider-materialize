@@ -42,6 +42,13 @@ var sourceTablePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"exclude_columns": {
+		Description: "Exclude specific columns when reading data from PostgreSQL.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
+	},
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -90,6 +97,14 @@ func sourceTablePostgresCreate(ctx context.Context, d *schema.ResourceData, meta
 			return diag.FromErr(err)
 		}
 		b.TextColumns(textColumns)
+	}
+
+	if v, ok := d.GetOk("exclude_columns"); ok && len(v.([]interface{})) > 0 {
+		columns, err := materialize.GetSliceValueString("exclude_columns", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		b.ExcludeColumns(columns)
 	}
 
 	if err := b.Create(); err != nil {

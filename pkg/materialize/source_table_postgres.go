@@ -85,7 +85,8 @@ func ScanSourceTablePostgres(conn *sqlx.DB, id string) (SourceTablePostgresParam
 // SourceTablePostgresBuilder for Postgres sources
 type SourceTablePostgresBuilder struct {
 	*SourceTableBuilder
-	textColumns []string
+	textColumns    []string
+	excludeColumns []string
 }
 
 func NewSourceTablePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTablePostgresBuilder {
@@ -96,6 +97,11 @@ func NewSourceTablePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *Source
 
 func (b *SourceTablePostgresBuilder) TextColumns(c []string) *SourceTablePostgresBuilder {
 	b.textColumns = c
+	return b
+}
+
+func (b *SourceTablePostgresBuilder) ExcludeColumns(c []string) *SourceTablePostgresBuilder {
+	b.excludeColumns = c
 	return b
 }
 
@@ -110,6 +116,15 @@ func (b *SourceTablePostgresBuilder) Create() error {
 			}
 			s := strings.Join(quotedCols, ", ")
 			options = append(options, fmt.Sprintf(`TEXT COLUMNS (%s)`, s))
+		}
+
+		if len(b.excludeColumns) > 0 {
+			var quotedCols []string
+			for _, col := range b.excludeColumns {
+				quotedCols = append(quotedCols, QuoteIdentifier(col))
+			}
+			s := strings.Join(quotedCols, ", ")
+			options = append(options, fmt.Sprintf(`EXCLUDE COLUMNS (%s)`, s))
 		}
 
 		if len(options) > 0 {

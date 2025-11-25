@@ -25,7 +25,7 @@ var inSourceTablePostgres = map[string]interface{}{
 	"upstream_name":        "upstream_table",
 	"upstream_schema_name": "upstream_schema",
 	"text_columns":         []interface{}{"column1", "column2"},
-	"ignore_columns":       []interface{}{"column3", "column4"},
+	"exclude_columns":       []interface{}{"exclude1", "exclude2"},
 }
 
 func TestResourceSourceTablePostgresCreate(t *testing.T) {
@@ -91,6 +91,91 @@ func TestResourceSourceTablePostgresUpdate(t *testing.T) {
 		testhelpers.MockSourceTablePostgresScan(mock, pp)
 
 		if err := sourceTablePostgresUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceSourceTablePostgresCreateWithExcludeColumns(t *testing.T) {
+	r := require.New(t)
+	in := map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
+		},
+		"upstream_name":        "upstream_table",
+		"upstream_schema_name": "upstream_schema",
+		"exclude_columns":       []interface{}{"exclude1", "exclude2"},
+	}
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
+            FROM SOURCE "materialize"."public"."source"
+            \(REFERENCE "upstream_schema"."upstream_table"\)
+            WITH \(EXCLUDE COLUMNS \("exclude1", "exclude2"\)\);`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		testhelpers.MockSourceTablePostgresScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
+
+		if err := sourceTablePostgresCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
+	r := require.New(t)
+	in := map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
+		},
+		"upstream_name":        "upstream_table",
+		"upstream_schema_name": "upstream_schema",
+		"text_columns":         []interface{}{"column1", "column2"},
+		"exclude_columns":       []interface{}{"exclude1", "exclude2"},
+	}
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
+            FROM SOURCE "materialize"."public"."source"
+            \(REFERENCE "upstream_schema"."upstream_table"\)
+            WITH \(TEXT COLUMNS \("column1", "column2"\), EXCLUDE COLUMNS \("exclude1", "exclude2"\)\);`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		testhelpers.MockSourceTablePostgresScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
+
+		if err := sourceTablePostgresCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 	})
