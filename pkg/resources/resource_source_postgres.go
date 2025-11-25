@@ -32,6 +32,12 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
+	"exclude_columns": {
+		Description: "Exclude specific columns when reading data from PostgreSQL. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+	},
 	"text_columns": {
 		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
 		Type:        schema.TypeList,
@@ -219,6 +225,14 @@ func sourcePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any)
 		tables := v.(*schema.Set).List()
 		t := materialize.GetTableStruct(tables)
 		b.Table(t)
+	}
+
+	if v, ok := d.GetOk("exclude_columns"); ok && len(v.([]interface{})) > 0 {
+		columns, err := materialize.GetSliceValueString("exclude_columns", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		b.ExcludeColumns(columns)
 	}
 
 	if v, ok := d.GetOk("expose_progress"); ok {

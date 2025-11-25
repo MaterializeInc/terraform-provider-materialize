@@ -30,6 +30,7 @@ func TestAccSourcePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "qualified_sql_name", fmt.Sprintf(`"%[1]s_database"."%[1]s_schema"."%[1]s_source"`, nameSpace)),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "size", "25cc"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "text_columns.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_postgres.test", "exclude_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.#", "2"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.upstream_name", "table1"),
 					resource.TestCheckResourceAttr("materialize_source_postgres.test", "table.0.name", fmt.Sprintf(`%s_table1`, nameSpace)),
@@ -205,6 +206,7 @@ func testAccSourcePostgresBasicResource(nameSpace string) string {
 			name				= "%[1]s_table2"
 		}
 		text_columns = ["table1.id"]
+		exclude_columns = ["public.table2.data"]
 	}
 	`, nameSpace)
 }
@@ -259,6 +261,7 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 			name 		= "%[3]s_table2"
 		}
 		text_columns = ["table1.id"]
+		exclude_columns = ["public.table2.data"]
 	}
 
 	resource "materialize_source_postgres" "test_role" {
@@ -279,6 +282,7 @@ func testAccSourcePostgresResource(roleName, secretName, connName, sourceName, s
 			upstream_schema_name = "public"
 			name 		= "%[3]s_table_role_2"
 		}
+		exclude_columns = ["public.table1.metadata"]
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 
@@ -357,6 +361,7 @@ func testAccSourcePostgresResourceUpdate(roleName, secretName, connName, sourceN
 			upstream_schema_name = "public"
 			name 		= "%[3]s_table_role_2"
 		}
+		exclude_columns = ["public.table1.metadata"]
 		ownership_role = "%[6]s"
 		comment = "%[7]s"
 

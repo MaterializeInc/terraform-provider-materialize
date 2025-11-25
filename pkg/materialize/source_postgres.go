@@ -14,6 +14,7 @@ type SourcePostgresBuilder struct {
 	postgresConnection IdentifierSchemaStruct
 	publication        string
 	textColumns        []string
+	excludeColumns     []string
 	table              []TableStruct
 	exposeProgress     IdentifierSchemaStruct
 }
@@ -50,6 +51,11 @@ func (b *SourcePostgresBuilder) TextColumns(t []string) *SourcePostgresBuilder {
 	return b
 }
 
+func (b *SourcePostgresBuilder) ExcludeColumns(e []string) *SourcePostgresBuilder {
+	b.excludeColumns = e
+	return b
+}
+
 func (b *SourcePostgresBuilder) Table(t []TableStruct) *SourcePostgresBuilder {
 	b.table = t
 	return b
@@ -76,6 +82,11 @@ func (b *SourcePostgresBuilder) Create() error {
 	if len(b.textColumns) > 0 {
 		s := strings.Join(b.textColumns, ", ")
 		p = p + fmt.Sprintf(`, TEXT COLUMNS (%s)`, s)
+	}
+
+	if len(b.excludeColumns) > 0 {
+		s := strings.Join(b.excludeColumns, ", ")
+		p = p + fmt.Sprintf(`, EXCLUDE COLUMNS (%s)`, s)
 	}
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
