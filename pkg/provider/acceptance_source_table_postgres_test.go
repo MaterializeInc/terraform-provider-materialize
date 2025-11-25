@@ -269,3 +269,213 @@ func testAccCheckAllSourceTablePostgresDestroyed(s *terraform.State) error {
 	}
 	return nil
 }
+
+func TestAccSourceTablePostgres_withJSONB(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTablePostgresWithJSONBResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTablePostgresExists("materialize_source_table_postgres.test_jsonb"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_jsonb", "name", nameSpace+"_table_jsonb"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_jsonb", "upstream_name", "table5"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_jsonb", "text_columns.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceTablePostgres_withSpecialCharacters(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTablePostgresWithSpecialCharsResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTablePostgresExists("materialize_source_table_postgres.test_special"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_special", "name", nameSpace+"_table_special"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_special", "upstream_name", "table6"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceTablePostgres_withNumericTypes(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTablePostgresWithNumericTypesResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTablePostgresExists("materialize_source_table_postgres.test_numeric"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_numeric", "name", nameSpace+"_table_numeric"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_numeric", "upstream_name", "table8"),
+				),
+			},
+		},
+	})
+}
+
+func testAccSourceTablePostgresWithJSONBResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "postgres_password" {
+		name  = "%[1]s_secret"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_postgres" "postgres_connection" {
+		name    = "%[1]s_connection"
+		host    = "postgres"
+		port    = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name = materialize_secret.postgres_password.name
+		}
+		database = "postgres"
+	}
+
+	resource "materialize_source_postgres" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		postgres_connection {
+			name = materialize_connection_postgres.postgres_connection.name
+		}
+		publication = "mz_source"
+		table {
+			upstream_name  = "table5"
+			upstream_schema_name = "public"
+		}
+	}
+
+	resource "materialize_source_table_postgres" "test_jsonb" {
+		name           = "%[1]s_table_jsonb"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_postgres.test_source.name
+		}
+
+		upstream_name         = "table5"
+		upstream_schema_name  = "public"
+
+		text_columns = [
+			"data",
+			"tags"
+		]
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTablePostgresWithSpecialCharsResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "postgres_password" {
+		name  = "%[1]s_secret"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_postgres" "postgres_connection" {
+		name    = "%[1]s_connection"
+		host    = "postgres"
+		port    = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name = materialize_secret.postgres_password.name
+		}
+		database = "postgres"
+	}
+
+	resource "materialize_source_postgres" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		postgres_connection {
+			name = materialize_connection_postgres.postgres_connection.name
+		}
+		publication = "mz_source"
+		table {
+			upstream_name  = "table6"
+			upstream_schema_name = "public"
+		}
+	}
+
+	resource "materialize_source_table_postgres" "test_special" {
+		name           = "%[1]s_table_special"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_postgres.test_source.name
+		}
+
+		upstream_name         = "table6"
+		upstream_schema_name  = "public"
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTablePostgresWithNumericTypesResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "postgres_password" {
+		name  = "%[1]s_secret"
+		value = "c2VjcmV0Cg=="
+	}
+
+	resource "materialize_connection_postgres" "postgres_connection" {
+		name    = "%[1]s_connection"
+		host    = "postgres"
+		port    = 5432
+		user {
+			text = "postgres"
+		}
+		password {
+			name = materialize_secret.postgres_password.name
+		}
+		database = "postgres"
+	}
+
+	resource "materialize_source_postgres" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		postgres_connection {
+			name = materialize_connection_postgres.postgres_connection.name
+		}
+		publication = "mz_source"
+		table {
+			upstream_name  = "table8"
+			upstream_schema_name = "public"
+		}
+	}
+
+	resource "materialize_source_table_postgres" "test_numeric" {
+		name           = "%[1]s_table_numeric"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_postgres.test_source.name
+		}
+
+		upstream_name         = "table8"
+		upstream_schema_name  = "public"
+	}
+	`, nameSpace)
+}

@@ -268,3 +268,289 @@ func testAccCheckAllSourceTableSQLServerDestroyed(s *terraform.State) error {
 	}
 	return nil
 }
+
+func TestAccSourceTableSQLServer_withUnsupportedTypes(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTableSQLServerWithUnsupportedTypesResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableSQLServerExists("materialize_source_table_sqlserver.test_unsupported"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "name", nameSpace+"_table_unsupported"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "upstream_name", "table5"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_unsupported", "exclude_columns.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceTableSQLServer_withNumericTypes(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTableSQLServerWithNumericTypesResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableSQLServerExists("materialize_source_table_sqlserver.test_numeric"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_numeric", "name", nameSpace+"_table_numeric"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_numeric", "upstream_name", "table8"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceTableSQLServer_withDateTimeTypes(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTableSQLServerWithDateTimeTypesResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableSQLServerExists("materialize_source_table_sqlserver.test_datetime"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_datetime", "name", nameSpace+"_table_datetime"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_datetime", "upstream_name", "table9"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceTableSQLServer_withTextTypes(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTableSQLServerWithTextTypesResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableSQLServerExists("materialize_source_table_sqlserver.test_text"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_text", "name", nameSpace+"_table_text"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_text", "upstream_name", "table10"),
+					resource.TestCheckResourceAttr("materialize_source_table_sqlserver.test_text", "exclude_columns.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func testAccSourceTableSQLServerWithUnsupportedTypesResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "sqlserver_password" {
+		name  = "%[1]s_secret"
+		value = "Password123!"
+	}
+
+	resource "materialize_connection_sqlserver" "sqlserver_connection" {
+		name    = "%[1]s_connection"
+		host    = "sqlserver"
+		port    = 1433
+		user {
+			text = "sa"
+		}
+		password {
+			name = materialize_secret.sqlserver_password.name
+		}
+		database = "testdb"
+		validate = false
+	}
+
+	resource "materialize_source_sqlserver" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		sqlserver_connection {
+			name = materialize_connection_sqlserver.sqlserver_connection.name
+		}
+		table {
+			upstream_name  = "table5"
+			upstream_schema_name = "dbo"
+		}
+		exclude_columns = ["dbo.table5.large_text", "dbo.table5.image_data", "dbo.table5.xml_data"]
+	}
+
+	resource "materialize_source_table_sqlserver" "test_unsupported" {
+		name           = "%[1]s_table_unsupported"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_sqlserver.test_source.name
+		}
+
+		upstream_name         = "table5"
+		upstream_schema_name  = "dbo"
+
+		exclude_columns = [
+			"large_text",
+			"image_data"
+		]
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTableSQLServerWithNumericTypesResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "sqlserver_password" {
+		name  = "%[1]s_secret"
+		value = "Password123!"
+	}
+
+	resource "materialize_connection_sqlserver" "sqlserver_connection" {
+		name    = "%[1]s_connection"
+		host    = "sqlserver"
+		port    = 1433
+		user {
+			text = "sa"
+		}
+		password {
+			name = materialize_secret.sqlserver_password.name
+		}
+		database = "testdb"
+		validate = false
+	}
+
+	resource "materialize_source_sqlserver" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		sqlserver_connection {
+			name = materialize_connection_sqlserver.sqlserver_connection.name
+		}
+		table {
+			upstream_name  = "table8"
+			upstream_schema_name = "dbo"
+		}
+	}
+
+	resource "materialize_source_table_sqlserver" "test_numeric" {
+		name           = "%[1]s_table_numeric"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_sqlserver.test_source.name
+		}
+
+		upstream_name         = "table8"
+		upstream_schema_name  = "dbo"
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTableSQLServerWithDateTimeTypesResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "sqlserver_password" {
+		name  = "%[1]s_secret"
+		value = "Password123!"
+	}
+
+	resource "materialize_connection_sqlserver" "sqlserver_connection" {
+		name    = "%[1]s_connection"
+		host    = "sqlserver"
+		port    = 1433
+		user {
+			text = "sa"
+		}
+		password {
+			name = materialize_secret.sqlserver_password.name
+		}
+		database = "testdb"
+		validate = false
+	}
+
+	resource "materialize_source_sqlserver" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		sqlserver_connection {
+			name = materialize_connection_sqlserver.sqlserver_connection.name
+		}
+		table {
+			upstream_name  = "table9"
+			upstream_schema_name = "dbo"
+		}
+	}
+
+	resource "materialize_source_table_sqlserver" "test_datetime" {
+		name           = "%[1]s_table_datetime"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_sqlserver.test_source.name
+		}
+
+		upstream_name         = "table9"
+		upstream_schema_name  = "dbo"
+	}
+	`, nameSpace)
+}
+
+func testAccSourceTableSQLServerWithTextTypesResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_secret" "sqlserver_password" {
+		name  = "%[1]s_secret"
+		value = "Password123!"
+	}
+
+	resource "materialize_connection_sqlserver" "sqlserver_connection" {
+		name    = "%[1]s_connection"
+		host    = "sqlserver"
+		port    = 1433
+		user {
+			text = "sa"
+		}
+		password {
+			name = materialize_secret.sqlserver_password.name
+		}
+		database = "testdb"
+		validate = false
+	}
+
+	resource "materialize_source_sqlserver" "test_source" {
+		name         = "%[1]s_source"
+		cluster_name = "quickstart"
+
+		sqlserver_connection {
+			name = materialize_connection_sqlserver.sqlserver_connection.name
+		}
+		table {
+			upstream_name  = "table10"
+			upstream_schema_name = "dbo"
+		}
+		exclude_columns = ["dbo.table10.text_col", "dbo.table10.nvarchar_max"]
+	}
+
+	resource "materialize_source_table_sqlserver" "test_text" {
+		name           = "%[1]s_table_text"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_sqlserver.test_source.name
+		}
+
+		upstream_name         = "table10"
+		upstream_schema_name  = "dbo"
+
+		exclude_columns = [
+			"text_col",
+			"nvarchar_max"
+		]
+	}
+	`, nameSpace)
+}
