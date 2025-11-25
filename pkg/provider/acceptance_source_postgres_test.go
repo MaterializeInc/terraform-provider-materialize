@@ -206,7 +206,7 @@ func testAccSourcePostgresBasicResource(nameSpace string) string {
 			name				= "%[1]s_table2"
 		}
 		text_columns = ["table1.id"]
-		exclude_columns = ["public.table2.data"]
+		exclude_columns = ["public.table2.updated_at"]
 	}
 	`, nameSpace)
 }
