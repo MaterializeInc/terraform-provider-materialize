@@ -90,3 +90,57 @@ func TestSourceDropSubsource(t *testing.T) {
 		}
 	})
 }
+
+func TestSourcePostgresWithExcludeColumnsCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', EXCLUDE COLUMNS \(public.users.image_data, public.posts.binary_data\)\) FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourcePostgresBuilder(db, sourcePostgres)
+		b.PostgresConnection(IdentifierSchemaStruct{Name: "pg_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.Publication("mz_source")
+		b.ExcludeColumns([]string{"public.users.image_data", "public.posts.binary_data"})
+		b.Table([]TableStruct{
+			{
+				UpstreamName:       "table_1",
+				UpstreamSchemaName: "schema1",
+				Name:               "s1_table_1",
+			},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSourcePostgresWithTextAndExcludeColumnsCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(public.users.description, public.posts.content\), EXCLUDE COLUMNS \(public.users.image_data, public.posts.binary_data\)\) FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1", "schema2"."table_2" AS "database"."schema"."s2_table_2"\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourcePostgresBuilder(db, sourcePostgres)
+		b.PostgresConnection(IdentifierSchemaStruct{Name: "pg_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.Publication("mz_source")
+		b.TextColumns([]string{"public.users.description", "public.posts.content"})
+		b.ExcludeColumns([]string{"public.users.image_data", "public.posts.binary_data"})
+		b.Table([]TableStruct{
+			{
+				UpstreamName:       "table_1",
+				UpstreamSchemaName: "schema1",
+				Name:               "s1_table_1",
+			},
+			{
+				UpstreamName:       "table_2",
+				UpstreamSchemaName: "schema2",
+				Name:               "s2_table_2",
+			},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
