@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.9.5 - 2025-11-26
+
+### Features
+
+* Added support for `EXCLUDE COLUMNS` attribute in the `materialize_source_postgres` resource. This allows excluding specific columns from tables in PostgreSQL sources, which is useful for filtering out large binary data or sensitive information that doesn't need to be replicated.
+
+  Example usage:
+
+  ```hcl
+  resource "materialize_source_postgres" "example" {
+    name         = "postgres_source"
+    publication  = "mz_source"
+
+    postgres_connection {
+      name = "postgres_connection"
+    }
+
+    exclude_columns = ["public.posts.binary_data"]
+
+    table {
+      upstream_name        = "posts"
+      upstream_schema_name = "public"
+      name                 = "posts"
+    }
+  }
+  ```
+
+### Misc
+
+* Routine dependency updates: Updated `golang.org/x/crypto` from 0.42.0 to 0.45.0
+
 ## 0.9.4 - 2025-11-18
 
 ### Features
