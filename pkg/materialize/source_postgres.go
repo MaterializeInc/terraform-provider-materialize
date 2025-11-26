@@ -91,26 +91,28 @@ func (b *SourcePostgresBuilder) Create() error {
 
 	q.WriteString(fmt.Sprintf(` (%s)`, p))
 
-	q.WriteString(` FOR TABLES (`)
-	for i, t := range b.table {
-		if t.UpstreamSchemaName == "" {
-			t.UpstreamSchemaName = b.SchemaName
+	if b.table != nil && len(b.table) > 0 {
+		q.WriteString(` FOR TABLES (`)
+		for i, t := range b.table {
+			if t.UpstreamSchemaName == "" {
+				t.UpstreamSchemaName = b.SchemaName
+			}
+			if t.Name == "" {
+				t.Name = t.UpstreamName
+			}
+			if t.SchemaName == "" {
+				t.SchemaName = b.SchemaName
+			}
+			if t.DatabaseName == "" {
+				t.DatabaseName = b.DatabaseName
+			}
+			q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
+			if i < len(b.table)-1 {
+				q.WriteString(`, `)
+			}
 		}
-		if t.Name == "" {
-			t.Name = t.UpstreamName
-		}
-		if t.SchemaName == "" {
-			t.SchemaName = b.SchemaName
-		}
-		if t.DatabaseName == "" {
-			t.DatabaseName = b.DatabaseName
-		}
-		q.WriteString(fmt.Sprintf(`%s.%s AS %s.%s.%s`, QuoteIdentifier(t.UpstreamSchemaName), QuoteIdentifier(t.UpstreamName), QuoteIdentifier(t.DatabaseName), QuoteIdentifier(t.SchemaName), QuoteIdentifier(t.Name)))
-		if i < len(b.table)-1 {
-			q.WriteString(`, `)
-		}
+		q.WriteString(`)`)
 	}
-	q.WriteString(`)`)
 
 	if b.exposeProgress.Name != "" {
 		q.WriteString(fmt.Sprintf(` EXPOSE PROGRESS AS %s`, b.exposeProgress.QualifiedName()))

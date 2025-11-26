@@ -210,6 +210,29 @@ resource "materialize_source_webhook" "example_webhook_source" {
   }
 }
 
+resource "materialize_source_table_webhook" "example_webhook_table" {
+  name          = "example_webhook_table"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  comment       = "source table webhook comment"
+  body_format   = "json"
+
+  include_headers {
+    all = true
+  }
+  check_options {
+    field {
+      body = true
+    }
+    alias = "bytes"
+  }
+  check_options {
+    field {
+      headers = true
+    }
+  }
+}
+
 resource "materialize_source_mysql" "test" {
   name         = "source_mysql"
   cluster_name = materialize_cluster.cluster_source.name

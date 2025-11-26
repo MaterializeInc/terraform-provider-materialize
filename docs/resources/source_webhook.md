@@ -54,18 +54,18 @@ resource "materialize_source_webhook" "example_webhook" {
 
 ### Required
 
-- `body_format` (String) The body format of the webhook.
 - `name` (String) The identifier for the source.
 
 ### Optional
 
-- `check_expression` (String) The check expression for the webhook.
-- `check_options` (Block List) The check options for the webhook. (see [below for nested schema](#nestedblock--check_options))
+- `body_format` (String, Deprecated) (Deprecated) The body format of the webhook. Use `materialize_source_table_webhook` resources instead.
+- `check_expression` (String, Deprecated) (Deprecated) The check expression for the webhook. Use `materialize_source_table_webhook` resources instead.
+- `check_options` (Block List, Deprecated) (Deprecated) The check options for the webhook. Use `materialize_source_table_webhook` resources instead. (see [below for nested schema](#nestedblock--check_options))
 - `cluster_name` (String) The cluster to maintain this source.
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `include_header` (Block List) Map a header value from a request into a column. (see [below for nested schema](#nestedblock--include_header))
-- `include_headers` (Block List, Max: 1) Include headers in the webhook. (see [below for nested schema](#nestedblock--include_headers))
+- `include_header` (Block List, Deprecated) (Deprecated) Map a header value from a request into a column. Use `materialize_source_table_webhook` resources instead. (see [below for nested schema](#nestedblock--include_header))
+- `include_headers` (Block List, Max: 1, Deprecated) (Deprecated) Include headers in the webhook. Use `materialize_source_table_webhook` resources instead. (see [below for nested schema](#nestedblock--include_headers))
 - `ownership_role` (String) The owernship role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.

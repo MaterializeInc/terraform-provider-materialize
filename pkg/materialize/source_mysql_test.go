@@ -21,6 +21,7 @@ func TestSourceMySQLAllTablesCreate(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewSourceMySQLBuilder(db, sourceMySQL)
+		b.AllTables()
 		b.MySQLConnection(IdentifierSchemaStruct{Name: "mysql_connection", SchemaName: "schema", DatabaseName: "database"})
 
 		if err := b.Create(); err != nil {
@@ -37,6 +38,7 @@ func TestSourceMySQLSpecificTablesCreate(t *testing.T) {
 
 		b := NewSourceMySQLBuilder(db, sourceMySQL)
 		b.MySQLConnection(IdentifierSchemaStruct{Name: "mysql_connection", SchemaName: "schema", DatabaseName: "database"})
+		b.AllTables()
 		b.Tables([]TableStruct{
 			{
 				UpstreamName:       "table_1",

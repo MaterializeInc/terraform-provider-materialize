@@ -39,13 +39,15 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "(Deprecated) Decode data as text for specific columns that contain PostgreSQL types that are unsupported in Materialize. Use `materialize_source_table_postgres` resources instead.",
+		Deprecated:  "The `text_columns` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_postgres` resources instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"table": {
-		Description: "Creates subsources for specific tables in the Postgres connection.",
+		Description: "(Deprecated) Creates subsources for specific tables in the Postgres connection. Use `materialize_source_table_postgres` resources instead.",
+		Deprecated:  "The `table` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_postgres` resources to create tables from Postgres sources instead.",
 		Type:        schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -80,8 +82,7 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 				},
 			},
 		},
-		Required: true,
-		MinItems: 1,
+		Optional: true,
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
