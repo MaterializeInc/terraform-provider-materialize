@@ -33,7 +33,8 @@ var sourcePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"exclude_columns": {
-		Description: "Exclude specific columns when reading data from PostgreSQL. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "(Deprecated) Exclude specific columns when reading data from PostgreSQL. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Deprecated:  "The `exclude_columns` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_postgres` resources instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,

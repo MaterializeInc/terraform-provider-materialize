@@ -5,15 +5,11 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 // Postgres specific params and query
 type SourceTablePostgresParams struct {
 	SourceTableParams
-	// Add upstream table and schema name once supported
-	IgnoreColumns pq.StringArray `db:"ignore_columns"`
-	TextColumns   pq.StringArray `db:"text_columns"`
 }
 
 var sourceTablePostgresQuery = `
