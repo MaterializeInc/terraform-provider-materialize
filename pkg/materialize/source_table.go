@@ -20,7 +20,6 @@ type SourceTableParams struct {
 	SourceType         sql.NullString `db:"source_type"`
 	UpstreamName       sql.NullString `db:"upstream_table_name"`
 	UpstreamSchemaName sql.NullString `db:"upstream_schema_name"`
-	TextColumns        pq.StringArray `db:"text_columns"`
 	Comment            sql.NullString `db:"comment"`
 	OwnerName          sql.NullString `db:"owner_name"`
 	Privileges         pq.StringArray `db:"privileges"`
