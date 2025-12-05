@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.10.0 - 2025-12-05
+
+### Breaking Changes
+
+* **Deprecated PostgreSQL source attributes**: The `table`, `text_columns`, and `exclude_columns` attributes in the `materialize_source_postgres` resource are now deprecated in favor of the new `materialize_source_table_postgres` resource. These attributes will be removed in a future release. Users should migrate to using `materialize_source_table_postgres` resources for more granular control over individual tables from PostgreSQL sources.
+
+### Features
+
+* **New `materialize_source_table_postgres` resource**: Added a dedicated resource for creating individual tables from PostgreSQL sources. This provides better control and management of source tables with support for per-table configuration options like `text_columns` and `exclude_columns`.
+
+  Example usage:
+
+  ```hcl
+  resource "materialize_source_table_postgres" "postgres_table" {
+    name          = "my_table"
+    schema_name   = "public"
+    database_name = "materialize"
+
+    source {
+      name          = materialize_source_postgres.example.name
+      schema_name   = materialize_source_postgres.example.schema_name
+      database_name = materialize_source_postgres.example.database_name
+    }
+
+    upstream_name        = "users"
+    upstream_schema_name = "public"
+
+    text_columns    = ["metadata"]
+    exclude_columns = ["binary_data"]
+
+    comment = "User table from PostgreSQL source"
+  }
+  ```
+
+  This new resource allows for:
+  - Individual management of source tables with their own lifecycle
+  - Per-table `text_columns` configuration for handling unsupported PostgreSQL types
+  - Per-table `exclude_columns` configuration for filtering out specific columns
+
 ## 0.9.5 - 2025-11-26
 
 ### Features
