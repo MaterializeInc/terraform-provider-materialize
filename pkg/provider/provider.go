@@ -133,6 +133,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_source_sqlserver":                     resources.SourceSQLServer(),
 			"materialize_source_webhook":                       resources.SourceWebhook(),
 			"materialize_source_grant":                         resources.GrantSource(),
+			"materialize_source_table_mysql":                   resources.SourceTableMySQL(),
 			"materialize_source_table_postgres":                resources.SourceTablePostgres(),
 			"materialize_system_parameter":                     resources.SystemParameter(),
 			"materialize_table":                                resources.Table(),
