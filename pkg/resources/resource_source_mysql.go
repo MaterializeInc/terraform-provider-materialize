@@ -80,8 +80,7 @@ var sourceMySQLSchema = map[string]*schema.Schema{
 		},
 	},
 	"all_tables": {
-		Description: "Include all tables in the source. If `table` is specified, this will be ignored.",
-		Deprecated:  "Use the new `materialize_source_table_mysql` resource instead.",
+		Description: "**IMPORTANT**: Include all tables in the source. If `table` is specified, this will be ignored. **We strongly recommend using `materialize_source_table_mysql` resources instead** for better control and management of individual tables. See the migration guide for details.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
