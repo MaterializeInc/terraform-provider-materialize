@@ -39,7 +39,8 @@ var sourceSQLServerSchema = map[string]*schema.Schema{
 		Optional:    true,
 	},
 	"table": {
-		Description: "Specify the tables to be included in the source. If not specified, all tables are included.",
+		Description: "(Deprecated) Specify the tables to be included in the source. If not specified, all tables are included. Use `materialize_source_table_sqlserver` resources instead.",
+		Deprecated:  "The `table` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_sqlserver` resources to create tables from SQL Server sources instead.",
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Computed:    true,
