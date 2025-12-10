@@ -27,13 +27,15 @@ var sourceSQLServerSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	}),
 	"exclude_columns": {
-		Description: "Exclude specific columns when reading data from SQL Server. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "(Deprecated) Exclude specific columns when reading data from SQL Server. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Deprecated:  "The `exclude_columns` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_sqlserver` resources instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
 	},
 	"text_columns": {
-		Description: "Decode data as text for specific columns that contain SQL Server types that are unsupported in Materialize. Can only be updated in place when also updating a corresponding `table` attribute.",
+		Description: "(Deprecated) Decode data as text for specific columns that contain SQL Server types that are unsupported in Materialize. Use `materialize_source_table_sqlserver` resources instead.",
+		Deprecated:  "The `text_columns` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_sqlserver` resources instead.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
