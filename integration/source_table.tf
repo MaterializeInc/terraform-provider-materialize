@@ -35,3 +35,22 @@ resource "materialize_source_table_mysql" "mysql_table" {
   exclude_columns = ["banned"]
   comment         = "MySQL source table integration test"
 }
+
+# SQL Server Source Table
+resource "materialize_source_table_sqlserver" "sqlserver_table_integration" {
+  name          = "sqlserver_source_table"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  source {
+    name          = materialize_source_sqlserver.sqlserver_source.name
+    schema_name   = materialize_source_sqlserver.sqlserver_source.schema_name
+    database_name = materialize_source_sqlserver.sqlserver_source.database_name
+  }
+
+  upstream_name        = "table1"
+  upstream_schema_name = "dbo"
+
+  exclude_columns = ["about"]
+  comment         = "SQL Server source table integration test"
+}
