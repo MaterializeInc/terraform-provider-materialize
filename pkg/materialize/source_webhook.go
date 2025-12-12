@@ -89,7 +89,9 @@ func (b *SourceWebhookBuilder) Create() error {
 	q.WriteString(fmt.Sprintf(`CREATE SOURCE %s`, b.QualifiedName()))
 	q.WriteString(fmt.Sprintf(` IN CLUSTER %s`, QuoteIdentifier(b.clusterName)))
 	q.WriteString(` FROM WEBHOOK`)
-	q.WriteString(fmt.Sprintf(` BODY FORMAT %s`, b.bodyFormat))
+	if b.bodyFormat != "" {
+		q.WriteString(fmt.Sprintf(` BODY FORMAT %s`, b.bodyFormat))
+	}
 
 	if len(b.includeHeader) > 0 {
 		for _, h := range b.includeHeader {
