@@ -94,3 +94,25 @@ resource "materialize_source_table_sqlserver" "sqlserver_table_integration" {
   exclude_columns = ["about"]
   comment         = "SQL Server source table integration test"
 }
+
+# Webhook Source Table
+resource "materialize_source_table_webhook" "webhook_table_integration" {
+  name          = "webhook_source_table"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  body_format = "json"
+
+  include_headers {
+    all = true
+  }
+
+  check_options {
+    field {
+      body = true
+    }
+    alias = "bytes"
+  }
+
+  comment = "Webhook source table integration test"
+}
