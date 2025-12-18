@@ -168,6 +168,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_scim_groups":       datasources.SCIMGroups(),
 			"materialize_scim_configs":      datasources.SCIMConfigs(),
 			"materialize_sso_config":        datasources.SSOConfig(),
+			"materialize_source_table":      datasources.SourceTable(),
 			"materialize_system_parameter":  datasources.SystemParameter(),
 			"materialize_table":             datasources.Table(),
 			"materialize_type":              datasources.Type(),
