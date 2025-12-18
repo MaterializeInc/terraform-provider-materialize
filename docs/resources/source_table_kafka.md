@@ -74,7 +74,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the source table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
-- `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
+- `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>`. (see [below for nested schema](#nestedblock--expose_progress))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
 - `include_headers_alias` (String) Provide an alias for the headers column.

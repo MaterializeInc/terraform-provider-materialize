@@ -172,7 +172,7 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 	},
 	"expose_progress": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "expose_progress",
-		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`.",
+		Description: "The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>`.",
 		Required:    false,
 		ForceNew:    true,
 	}),
