@@ -34,8 +34,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		Computed:    true,
 	},
 	"body_format": {
-		Description: "(Deprecated) The body format of the webhook. Use `materialize_source_table_webhook` resources instead.",
-		Deprecated:  "The `body_format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_webhook` resources instead.",
+		Description: "The body format of the webhook.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
@@ -46,8 +45,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		}, true),
 	},
 	"include_header": {
-		Description: "(Deprecated) Map a header value from a request into a column. Use `materialize_source_table_webhook` resources instead.",
-		Deprecated:  "The `include_header` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_webhook` resources instead.",
+		Description: "Map a header value from a request into a column.",
 		Type:        schema.TypeList,
 		Optional:    true,
 		Elem: &schema.Resource{
@@ -72,8 +70,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"include_headers": {
-		Description: "(Deprecated) Include headers in the webhook. Use `materialize_source_table_webhook` resources instead.",
-		Deprecated:  "The `include_headers` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_webhook` resources instead.",
+		Description: "Include headers in the webhook.",
 		Type:        schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -108,8 +105,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"check_options": {
-		Description: "(Deprecated) The check options for the webhook. Use `materialize_source_table_webhook` resources instead.",
-		Deprecated:  "The `check_options` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_webhook` resources instead.",
+		Description: "The check options for the webhook.",
 		Type:        schema.TypeList,
 		Optional:    true,
 		Elem: &schema.Resource{
@@ -156,8 +152,7 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"check_expression": {
-		Description: "(Deprecated) The check expression for the webhook. Use `materialize_source_table_webhook` resources instead.",
-		Deprecated:  "The `check_expression` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_webhook` resources instead.",
+		Description: "The check expression for the webhook.",
 		Type:        schema.TypeString,
 		Optional:    true,
 		ForceNew:    true,
@@ -168,7 +163,8 @@ var sourceWebhookSchema = map[string]*schema.Schema{
 
 func SourceWebhook() *schema.Resource {
 	return &schema.Resource{
-		Description: "A webhook source describes a webhook you want Materialize to read data from.",
+		Description:        "A webhook source describes a webhook you want Materialize to read data from. **Deprecated:** This resource is deprecated and will be removed in a future release. Use `materialize_source_table_webhook` instead.",
+		DeprecationMessage: "This resource is deprecated and will be removed in a future release. Use materialize_source_table_webhook instead.",
 
 		CreateContext: sourceWebhookCreate,
 		ReadContext:   sourceRead,
