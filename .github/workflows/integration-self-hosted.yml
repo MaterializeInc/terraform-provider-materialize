@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Docker Compose Up
-        run: docker compose up --build -d materialized materialized_init redpanda postgres localstack mysql provider
+        run: docker compose up --build -d materialized materialized_init redpanda postgres localstack mysql provider sqlserver
 
       - name: Terraform Init
         run: |
