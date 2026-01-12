@@ -394,6 +394,25 @@ resource "materialize_connection_aws" "aws_conn" {
   validate = false
 }
 
+resource "materialize_connection_sqlserver" "sqlserver_connection" {
+  name = "sqlserver_connection"
+  host = "sqlserver"
+  port = 1433
+
+  user {
+    text = "sa"
+  }
+
+  password {
+    name          = materialize_secret.sqlserver_password.name
+    schema_name   = materialize_secret.sqlserver_password.schema_name
+    database_name = materialize_secret.sqlserver_password.database_name
+  }
+
+  database = "testdb"
+  validate = false
+}
+
 resource "materialize_connection_grant" "connection_grant_usage" {
   role_name       = materialize_role.role_1.name
   privilege       = "USAGE"

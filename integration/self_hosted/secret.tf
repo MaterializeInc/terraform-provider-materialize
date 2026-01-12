@@ -39,6 +39,11 @@ resource "materialize_secret" "aws_password" {
   value         = "test"
 }
 
+resource "materialize_secret" "sqlserver_password" {
+  name  = "sqlserver_password"
+  value = "Password123!"
+}
+
 resource "materialize_secret_grant" "secret_grant_usage" {
   role_name     = materialize_role.role_1.name
   privilege     = "USAGE"
