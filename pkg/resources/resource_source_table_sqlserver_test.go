@@ -24,8 +24,8 @@ var inSourceTableSQLServer = map[string]interface{}{
 	},
 	"upstream_name":        "upstream_table",
 	"upstream_schema_name": "upstream_schema",
-	"text_columns":    []interface{}{"column1", "column2"},
-	"exclude_columns": []interface{}{"column3", "column4"},
+	"text_columns":         []interface{}{"column1", "column2"},
+	"exclude_columns":      []interface{}{"column3", "column4"},
 }
 
 func TestResourceSourceTableSQLServerCreate(t *testing.T) {
