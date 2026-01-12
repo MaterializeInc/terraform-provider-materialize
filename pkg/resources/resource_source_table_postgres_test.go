@@ -25,7 +25,7 @@ var inSourceTablePostgres = map[string]interface{}{
 	"upstream_name":        "upstream_table",
 	"upstream_schema_name": "upstream_schema",
 	"text_columns":         []interface{}{"column1", "column2"},
-	"exclude_columns":       []interface{}{"exclude1", "exclude2"},
+	"exclude_columns":      []interface{}{"exclude1", "exclude2"},
 }
 
 func TestResourceSourceTablePostgresCreate(t *testing.T) {
@@ -111,7 +111,7 @@ func TestResourceSourceTablePostgresCreateWithExcludeColumns(t *testing.T) {
 		},
 		"upstream_name":        "upstream_table",
 		"upstream_schema_name": "upstream_schema",
-		"exclude_columns":       []interface{}{"exclude1", "exclude2"},
+		"exclude_columns":      []interface{}{"exclude1", "exclude2"},
 	}
 	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, in)
 	r.NotNil(d)
@@ -154,7 +154,7 @@ func TestResourceSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T
 		"upstream_name":        "upstream_table",
 		"upstream_schema_name": "upstream_schema",
 		"text_columns":         []interface{}{"column1", "column2"},
-		"exclude_columns":       []interface{}{"exclude1", "exclude2"},
+		"exclude_columns":      []interface{}{"exclude1", "exclude2"},
 	}
 	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, in)
 	r.NotNil(d)

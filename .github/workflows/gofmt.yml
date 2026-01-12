@@ -1,0 +1,26 @@
+name: gofmt
+on:
+  pull_request:
+    paths:
+      - pkg/**
+      - main.go
+
+jobs:
+  gofmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Check Go formatting
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "The following files are not formatted correctly:"
+            gofmt -s -l .
+            echo "Please run 'gofmt -s -w .' to fix formatting issues."
+            exit 1
+          fi
