@@ -239,6 +239,39 @@ resource "materialize_source_kafka" "kafka_upsert_options_source" {
   include_key_alias       = "key_alias"
 }
 
+resource "materialize_source_sqlserver" "sqlserver_source" {
+  name         = "sqlserver_source"
+  cluster_name = "quickstart"
+
+  sqlserver_connection {
+    name          = materialize_connection_sqlserver.sqlserver_connection.name
+    schema_name   = materialize_connection_sqlserver.sqlserver_connection.schema_name
+    database_name = materialize_connection_sqlserver.sqlserver_connection.database_name
+  }
+
+  table {
+    upstream_name        = "table1"
+    upstream_schema_name = "dbo"
+    name                 = "sqlserver_table1"
+  }
+
+  exclude_columns = ["dbo.table1.about"]
+}
+
+# SQL Server Source for all tables
+resource "materialize_source_sqlserver" "sqlserver_source_all" {
+  name         = "sqlserver_source_all"
+  cluster_name = "quickstart"
+
+  sqlserver_connection {
+    name          = materialize_connection_sqlserver.sqlserver_connection.name
+    schema_name   = materialize_connection_sqlserver.sqlserver_connection.schema_name
+    database_name = materialize_connection_sqlserver.sqlserver_connection.database_name
+  }
+
+  exclude_columns = ["dbo.table3.data", "dbo.table1.about", "dbo.table2.about", "dbo.table5.large_text", "dbo.table5.image_data", "dbo.table5.xml_data", "dbo.table5.json_data", "dbo.table6.description", "dbo.table6.binary_data", "dbo.table10.text_col", "dbo.table10.nvarchar_max"]
+}
+
 output "qualified_load_generator" {
   value = materialize_source_load_generator.load_generator.qualified_sql_name
 }
