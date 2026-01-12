@@ -17,6 +17,16 @@ Compile the provider
 make install
 ```
 
+### Code Formatting
+
+Before submitting a pull request, ensure your Go code is properly formatted:
+
+```bash
+gofmt -s -w .
+```
+
+This will format all Go files in the project according to the standard Go formatting rules.
+
 ### Generating documentation
 
 The documentation is generated from the provider's schema. To generate the documentation, run:

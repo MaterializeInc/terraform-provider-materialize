@@ -3,8 +3,8 @@ package materialize
 import (
 	"testing"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
