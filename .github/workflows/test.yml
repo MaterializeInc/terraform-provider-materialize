@@ -35,31 +35,39 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
+          # Generate human-readable coverage report
           go tool cover -func=coverage.out -o=coverage.txt
 
-          # Extract overall coverage percentage
-          COVERAGE=$(tail -1 coverage.txt | awk '{print $NF}')
+          # Extract overall coverage
+          TOTAL_COV=$(tail -1 coverage.txt | awk '{print $NF}')
 
-          # Add to GitHub Actions summary
-          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Overall Coverage: $COVERAGE**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Coverage by Package" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -E "pkg/(clients|datasources|frontegg|materialize|provider|resources|utils)" coverage.txt | tail -10 >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Overall" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -1 coverage.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Build markdown report
+          {
+            echo "## Test Coverage Summary"
+            echo ""
+            echo "**Overall Coverage: $TOTAL_COV**"
+            echo ""
+            echo "### Coverage by Package"
+            echo ""
+            echo "| Package | Coverage |"
+            echo "|---------|----------|"
 
-          # Check if coverage meets minimum threshold (50%)
-          COVERAGE_NUM=$(echo $COVERAGE | sed 's/%//')
-          if (( $(echo "$COVERAGE_NUM < 50" | bc -l) )); then
-            echo "⚠️ Warning: Coverage is below 50% threshold" >> $GITHUB_STEP_SUMMARY
-          fi
+            # Calculate and display per-package coverage
+            for pkg in clients datasources frontegg materialize provider resources testhelpers utils; do
+              PKG_COV=$(grep "pkg/$pkg/" coverage.txt | awk '{gsub(/%/, "", $NF); sum+=$NF; count++} END {if(count>0) printf "%.1f%%", sum/count}')
+              [ -n "$PKG_COV" ] && [ "$PKG_COV" != "0.0%" ] && echo "| pkg/$pkg | $PKG_COV |"
+            done
+
+            echo ""
+
+            # Check against 50% threshold
+            COV_NUM=$(echo "$TOTAL_COV" | sed 's/%//')
+            if (( $(echo "$COV_NUM < 50" | bc -l) )); then
+              echo "⚠️ **Warning:** Coverage is below 50% threshold"
+            else
+              echo "✅ Coverage meets minimum threshold (50%)"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Archive Coverage Report
         uses: actions/upload-artifact@v4
