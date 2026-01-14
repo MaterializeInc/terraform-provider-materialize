@@ -52,8 +52,8 @@ jobs:
             echo "| Package | Coverage |"
             echo "|---------|----------|"
 
-            # Calculate and display per-package coverage
-            for pkg in clients datasources frontegg materialize provider resources testhelpers utils; do
+            # Calculate and display per-package coverage (excluding testhelpers)
+            for pkg in clients datasources frontegg materialize provider resources utils; do
               PKG_COV=$(grep "pkg/$pkg/" coverage.txt | awk '{gsub(/%/, "", $NF); sum+=$NF; count++} END {if(count>0) printf "%.1f%%", sum/count}')
               [ -n "$PKG_COV" ] && [ "$PKG_COV" != "0.0%" ] && echo "| pkg/$pkg | $PKG_COV |"
             done
