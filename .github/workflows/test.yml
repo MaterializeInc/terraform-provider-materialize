@@ -17,14 +17,14 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
-      - name: Run Tests
+      - name: Run Tests with Coverage
         run: |
           set -e
           retries=3
           count=0
           until [ $count -ge $retries ]
           do
-            go test -v -cover ./... && break
+            go test -v -coverprofile=coverage.out -covermode=atomic ./... && break
             count=$((count+1))
             echo "Retrying tests... Attempt $count of $retries"
           done
@@ -32,3 +32,40 @@ jobs:
             echo "Tests failed after $retries attempts."
             exit 1
           fi
+
+      - name: Generate Coverage Report
+        run: |
+          go tool cover -func=coverage.out -o=coverage.txt
+
+          # Extract overall coverage percentage
+          COVERAGE=$(tail -1 coverage.txt | awk '{print $NF}')
+
+          # Add to GitHub Actions summary
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall Coverage: $COVERAGE**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage by Package" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "pkg/(clients|datasources|frontegg|materialize|provider|resources|utils)" coverage.txt | tail -10 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Overall" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -1 coverage.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Check if coverage meets minimum threshold (50%)
+          COVERAGE_NUM=$(echo $COVERAGE | sed 's/%//')
+          if (( $(echo "$COVERAGE_NUM < 50" | bc -l) )); then
+            echo "⚠️ Warning: Coverage is below 50% threshold" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Archive Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.out
+            coverage.txt
+          retention-days: 30
