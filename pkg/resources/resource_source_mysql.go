@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"database/sql"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -170,25 +169,13 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 
 	// Handle ownership
-	if v, ok := d.GetOk("ownership_role"); ok {
-		ownership := materialize.NewOwnershipBuilder(metaDb, o)
-
-		if err := ownership.Alter(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
-			b.Drop()
-			return diag.FromErr(err)
-		}
+	if diags := applyOwnership(d, metaDb, o, b); diags != nil {
+		return diags
 	}
 
 	// Handle comments
-	if v, ok := d.GetOk("comment"); ok {
-		comment := materialize.NewCommentBuilder(metaDb, o)
-
-		if err := comment.Object(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
-			b.Drop()
-			return diag.FromErr(err)
-		}
+	if diags := applyComment(d, metaDb, o, b); diags != nil {
+		return diags
 	}
 
 	i, err := materialize.SourceId(metaDb, o)
