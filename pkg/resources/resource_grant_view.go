@@ -3,8 +3,6 @@ package resources
 import (
 	"context"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -50,75 +48,9 @@ func GrantView() *schema.Resource {
 }
 
 func grantViewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	roleName := d.Get("role_name").(string)
-	privilege := d.Get("privilege").(string)
-	viewName := d.Get("view_name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	obj := materialize.MaterializeObject{
-		ObjectType:   "VIEW",
-		Name:         viewName,
-		SchemaName:   schemaName,
-		DatabaseName: databaseName,
-	}
-
-	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	b := materialize.NewPrivilegeBuilder(metaDb, roleName, privilege, obj)
-
-	// grant resource
-	if err := b.Grant(); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// set grant id
-	roleId, err := materialize.RoleId(metaDb, roleName)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	i, err := materialize.ObjectId(metaDb, obj)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	key := b.GrantKey(string(region), i, roleId, privilege)
-	d.SetId(key)
-
-	return grantRead(ctx, d, meta)
+	return createGrant(ctx, d, meta, "VIEW", "view_name")
 }
 
 func grantViewDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	roleName := d.Get("role_name").(string)
-	privilege := d.Get("privilege").(string)
-	viewName := d.Get("view_name").(string)
-	schemaName := d.Get("schema_name").(string)
-	databaseName := d.Get("database_name").(string)
-
-	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	b := materialize.NewPrivilegeBuilder(
-		metaDb,
-		roleName,
-		privilege,
-		materialize.MaterializeObject{
-			ObjectType:   "VIEW",
-			Name:         viewName,
-			SchemaName:   schemaName,
-			DatabaseName: databaseName,
-		},
-	)
-
-	if err := b.Revoke(); err != nil {
-		return diag.FromErr(err)
-	}
-
-	return nil
+	return revokeGrant(d, meta, "VIEW", "view_name")
 }
