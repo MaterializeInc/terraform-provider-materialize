@@ -73,7 +73,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `headers` (String) The name of a column containing additional headers to add to each message emitted by the sink. The column must be of type map[text => text] or map[text => bytea].
 - `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
 - `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness.
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `partition_by` (String) A SQL expression used to partition the data in the Kafka sink. Can only be used with `ENVELOPE UPSERT`.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the sink schema in Materialize. Defaults to `public`.

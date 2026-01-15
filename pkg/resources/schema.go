@@ -63,7 +63,7 @@ func ClusterNameSchema() *schema.Schema {
 func OwnershipRoleSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeString,
-		Description: "The owernship role of the object.",
+		Description: "The ownership role of the object.",
 		Optional:    true,
 		Computed:    true,
 	}

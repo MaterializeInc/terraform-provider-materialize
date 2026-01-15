@@ -87,7 +87,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 - `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
 - `include_timestamp_alias` (String) Provide an alias for the timestamp column.
 - `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source table schema in Materialize. Defaults to `public`.
 - `topic` (String) The name of the Kafka topic in the Kafka cluster.

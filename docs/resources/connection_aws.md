@@ -43,7 +43,7 @@ resource "materialize_connection_aws" "example_connection" {
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `endpoint` (String) Override the default AWS endpoint URL.
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the connection schema in Materialize. Defaults to `public`.
 - `secret_access_key` (Block List, Max: 1) The secret access key corresponding to the specified access key ID. (see [below for nested schema](#nestedblock--secret_access_key))

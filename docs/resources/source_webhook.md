@@ -67,7 +67,7 @@ resource "materialize_source_webhook" "example_webhook" {
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `include_header` (Block List) Map a header value from a request into a column. (see [below for nested schema](#nestedblock--include_header))
 - `include_headers` (Block List, Max: 1) Include headers in the webhook. (see [below for nested schema](#nestedblock--include_headers))
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
 
