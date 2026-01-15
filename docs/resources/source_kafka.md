@@ -70,7 +70,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `include_timestamp` (Boolean, Deprecated) (Deprecated) Include a timestamp column containing the Kafka message timestamp. Use `materialize_source_table_kafka` resources instead.
 - `include_timestamp_alias` (String, Deprecated) (Deprecated) Provide an alias for the timestamp column. Use `materialize_source_table_kafka` resources instead.
 - `key_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the key format explicitly. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--key_format))
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
 - `start_offset` (List of Number) Read partitions from the specified offset.

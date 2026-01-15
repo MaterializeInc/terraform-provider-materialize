@@ -85,7 +85,7 @@ resource "materialize_connection_kafka" "example_kafka_connection_multiple_broke
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `kafka_broker` (Block List) The Kafka broker's configuration. (see [below for nested schema](#nestedblock--kafka_broker))
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `progress_topic` (String) The name of a topic that Kafka sinks can use to track internal consistency metadata.
 - `progress_topic_replication_factor` (Number) The replication factor to use when creating the Kafka progress topic (if the Kafka topic does not already exist).
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.

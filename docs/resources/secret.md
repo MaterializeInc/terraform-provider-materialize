@@ -32,7 +32,7 @@ resource "materialize_secret" "example_secret" {
 
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the secret database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the secret schema in Materialize. Defaults to `public`.
 - `value` (String, Sensitive) The value for the secret. The value expression may not reference any relations, and must be a bytea string literal. Use value_wo for write-only ephemeral values that won't be stored in state.

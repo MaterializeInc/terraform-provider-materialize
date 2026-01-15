@@ -48,7 +48,7 @@ resource "materialize_source_table_postgres" "postgres_table_from_source" {
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `exclude_columns` (List of String) Exclude specific columns when reading data from PostgreSQL.
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the table schema in Materialize. Defaults to `public`.
 - `text_columns` (List of String) Columns to be decoded as text.

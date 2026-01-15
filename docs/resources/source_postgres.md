@@ -94,7 +94,7 @@ resource "materialize_source_postgres" "with_options" {
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `exclude_columns` (List of String, Deprecated) (Deprecated) Exclude specific columns when reading data from PostgreSQL. Can only be updated in place when also updating a corresponding `table` attribute.
 - `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
-- `ownership_role` (String) The owernship role of the object.
+- `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
 - `table` (Block Set, Deprecated) (Deprecated) Creates subsources for specific tables in the Postgres connection. Use `materialize_source_table_postgres` resources instead. (see [below for nested schema](#nestedblock--table))
