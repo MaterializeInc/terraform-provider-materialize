@@ -1,5 +1,75 @@
 # Changelog
 
+## 0.11.0 - 2026-01-16
+
+### Breaking Changes
+
+* **Deprecated source `table` attributes**: The `table` attribute in the following source resources is now deprecated and optional: `materialize_source_mysql`, `materialize_source_sqlserver`, `materialize_source_kafka`, and `materialize_source_webhook`. These attributes will be removed in a future release. Users should migrate to using the new `materialize_source_table_*` resources for more granular control over individual tables from sources. See the migration guide for detailed instructions. Note that `materialize_source_postgres` was already deprecated in v0.10.0.
+
+### Features
+
+* **New `materialize_source_table_mysql` resource** [#773](https://github.com/MaterializeInc/terraform-provider-materialize/pull/773): Added a dedicated resource for creating individual tables from MySQL sources using the `CREATE TABLE ... FROM SOURCE ...` syntax.
+
+* **New `materialize_source_table_sqlserver` resource** [#776](https://github.com/MaterializeInc/terraform-provider-materialize/pull/776): Added a dedicated resource for creating individual tables from SQL Server sources using the `CREATE TABLE ... FROM SOURCE ...` syntax.
+
+* **New `materialize_source_table_kafka` resource** [#777](https://github.com/MaterializeInc/terraform-provider-materialize/pull/777): Added a dedicated resource for creating individual tables from Kafka sources using the `CREATE TABLE ... FROM SOURCE ...` syntax.
+
+* **New `materialize_source_table_webhook` resource** [#778](https://github.com/MaterializeInc/terraform-provider-materialize/pull/778): Added a dedicated resource for creating individual tables from Webhook sources using the `CREATE TABLE ... FROM WEBHOOK ...` syntax. This resolves issues [#602](https://github.com/MaterializeInc/terraform-provider-materialize/issues/602) and [#686](https://github.com/MaterializeInc/terraform-provider-materialize/issues/686).
+
+* **New data sources for source versioning** [#782](https://github.com/MaterializeInc/terraform-provider-materialize/pull/782), [#779](https://github.com/MaterializeInc/terraform-provider-materialize/pull/779):
+  * `materialize_source_table` - Data source for querying source tables
+  * `materialize_source_reference` - Data source for querying available source references from `mz_internal.available_source_references`
+
+* **Source reference management** [#779](https://github.com/MaterializeInc/terraform-provider-materialize/pull/779): Added support for `ALTER SOURCE ... REFRESH REFERENCES` to refresh available source references.
+
+  Example usage:
+
+  ```hcl
+  # Create a table from a MySQL source
+  resource "materialize_source_table_mysql" "example" {
+    name          = "orders_table"
+    schema_name   = "public"
+    database_name = "materialize"
+
+    source {
+      name          = materialize_source_mysql.example.name
+      schema_name   = materialize_source_mysql.example.schema_name
+      database_name = materialize_source_mysql.example.database_name
+    }
+
+    upstream_name        = "orders"
+    upstream_schema_name = "shop"
+
+    comment = "Orders table from MySQL source"
+  }
+
+  # Query available source references
+  data "materialize_source_reference" "available" {
+    source_name          = materialize_source_mysql.example.name
+    source_schema_name   = materialize_source_mysql.example.schema_name
+    source_database_name = materialize_source_mysql.example.database_name
+  }
+  ```
+
+  This source versioning model allows for:
+  - Individual management of source tables with their own lifecycle
+  - Better control over which tables are exposed from sources
+  - Support for the new `CREATE TABLE ... FROM SOURCE ...` syntax
+  - Compatibility with Materialize's source versioning features
+
+### Bug Fixes
+
+* Fixed typo in schema description: 'owernship' to 'ownership' [#794](https://github.com/MaterializeInc/terraform-provider-materialize/pull/794)
+
+### Misc
+
+* Added migration guide for source versioning [#775](https://github.com/MaterializeInc/terraform-provider-materialize/pull/775)
+* Added missing integration tests for source versioning [#784](https://github.com/MaterializeInc/terraform-provider-materialize/pull/784)
+* Refactored ownership and comment helpers to reduce code duplication [#788](https://github.com/MaterializeInc/terraform-provider-materialize/pull/788)
+* Added gofmt workflow and formatted Go code [#787](https://github.com/MaterializeInc/terraform-provider-materialize/pull/787)
+* Added code coverage reporting [#790](https://github.com/MaterializeInc/terraform-provider-materialize/pull/790)
+* Routine dependency updates: [#774](https://github.com/MaterializeInc/terraform-provider-materialize/pull/774)
+
 ## 0.10.0 - 2025-12-05
 
 ### Breaking Changes
