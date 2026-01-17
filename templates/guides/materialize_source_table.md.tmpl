@@ -304,6 +304,67 @@ This `ignore_changes` block tells Terraform to ignore changes to these attribute
 
 After importing, you may need to manually update these ignored attributes in your Terraform configuration to match the actual state in Materialize.
 
-## Future Improvements
+## Webhook Sources
 
-Webhooks sources have not yet been migrated to the new model. Once this changes, the migration process will be updated to include them.
+Webhook sources have a different migration path. In the new model, webhooks are defined as tables using `CREATE TABLE ... FROM WEBHOOK` instead of `CREATE SOURCE ... FROM WEBHOOK`. This change reflects the fact that webhooks don't behave like traditional sources - they write data directly to persist without running dataflows.
+
+In Terraform, use `materialize_table_from_webhook` instead of the legacy `materialize_source_webhook`.
+
+| Aspect | Legacy (`materialize_source_webhook`) | New (`materialize_table_from_webhook`) |
+|--------|--------------------------------------|----------------------------------------|
+| SQL Object | `CREATE SOURCE ... FROM WEBHOOK` | `CREATE TABLE ... FROM WEBHOOK` |
+| System Catalog | `mz_sources` | `mz_tables` |
+| Cluster | Required | Not supported |
+
+### Migration Options
+
+There is no automated migration on the database side yet. You have two options:
+
+#### Option 1: Wait for Automated Migration (Recommended)
+
+The recommended approach is to continue using `materialize_source_webhook` until an automated migration path becomes available on the database side. The legacy resource remains fully supported, and this option avoids downtime and data loss.
+
+Once automated migration is available, you'll be able to migrate over to the new `materialize_table_from_webhook` resource.
+
+#### Option 2: Recreate Using the New Resource
+
+If you can accept downtime and data loss, you can recreate the webhook using the new `materialize_table_from_webhook` resource:
+
+```hcl
+# New approach (no cluster required)
+resource "materialize_table_from_webhook" "example_webhook_table" {
+  name          = "example_webhook_table"
+  schema_name   = "public"
+  database_name = "materialize"
+  body_format   = "json"
+
+  include_header {
+    header = "x-event-type"
+    alias  = "event_type"
+  }
+
+  check_options {
+    field {
+      headers = true
+    }
+    field {
+      secret {
+        name = materialize_secret.webhook_secret.name
+      }
+      alias = "secret"
+    }
+  }
+  check_expression = "headers->'x-mz-api-key' = secret"
+}
+```
+
+**Warning:** This approach will result in:
+- Loss of all existing webhook data
+- Downtime while the webhook is recreated
+- Need to update webhook endpoint URLs
+
+Steps:
+1. Remove the existing `materialize_source_webhook` resource and run `terraform apply` to delete it
+2. Add the new `materialize_table_from_webhook` resource and run `terraform apply` to create it
+3. Update any downstream dependencies (views, materialized views) to reference the new table
+4. Update your webhook endpoint URL to point to the new table
