@@ -144,7 +144,7 @@ type TypeParams struct {
 	Category     sql.NullString `db:"category"`
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
-	Privileges   StringArray `db:"privileges"`
+	Privileges   StringArray    `db:"privileges"`
 }
 
 var typeQuery = NewBaseQuery(`

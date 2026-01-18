@@ -43,7 +43,7 @@ type DatabaseParams struct {
 	DatabaseName sql.NullString `db:"database_name"`
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
-	Privileges   StringArray `db:"privileges"`
+	Privileges   StringArray    `db:"privileges"`
 }
 
 var databaseQuery = NewBaseQuery(`

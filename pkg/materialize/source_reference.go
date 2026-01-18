@@ -12,7 +12,7 @@ type SourceReferenceParams struct {
 	Namespace        sql.NullString `db:"namespace"`
 	Name             sql.NullString `db:"name"`
 	UpdatedAt        sql.NullString `db:"updated_at"`
-	Columns          StringArray `db:"columns"`
+	Columns          StringArray    `db:"columns"`
 	SourceName       sql.NullString `db:"source_name"`
 	SourceSchemaName sql.NullString `db:"source_schema_name"`
 	SourceDBName     sql.NullString `db:"source_database_name"`

@@ -124,7 +124,7 @@ type SourceParams struct {
 	Comment                sql.NullString `db:"comment"`
 	OwnerName              sql.NullString `db:"owner_name"`
 	WebhookUrl             sql.NullString `db:"webhook_url"`
-	Privileges             StringArray `db:"privileges"`
+	Privileges             StringArray    `db:"privileges"`
 }
 
 var sourceQuery = NewBaseQuery(`
