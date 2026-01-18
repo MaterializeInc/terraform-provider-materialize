@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 // DDL
@@ -50,7 +49,7 @@ type SchemaParams struct {
 	DatabaseName sql.NullString `db:"database_name"`
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
-	Privileges   pq.StringArray `db:"privileges"`
+	Privileges   StringArray `db:"privileges"`
 }
 
 var schemaQuery = NewBaseQuery(`

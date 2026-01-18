@@ -6,7 +6,6 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 func TestNetworkPolicyCreate(t *testing.T) {
@@ -112,7 +111,7 @@ func TestNetworkPolicyScan(t *testing.T) {
 			"office_policy",
 			"Network policy for office locations",
 			"mz_system",
-			pq.StringArray{"s1=U/s1"},
+			StringArray{"s1=U/s1"},
 			`[{"rule_name":"new_york","rule_action":"allow","rule_direction":"ingress","rule_address":"1.2.3.4/28"},
 			  {"rule_name":"minnesota","rule_action":"allow","rule_direction":"ingress","rule_address":"2.3.4.5/32"}]`,
 		)

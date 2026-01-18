@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 // DDL
@@ -59,7 +58,7 @@ type ViewParams struct {
 	DatabaseName sql.NullString `db:"database_name"`
 	Comment      sql.NullString `db:"comment"`
 	OwnerName    sql.NullString `db:"owner_name"`
-	Privileges   pq.StringArray `db:"privileges"`
+	Privileges   StringArray `db:"privileges"`
 	CreateSQL    sql.NullString `db:"create_sql"`
 }
 
