@@ -6,7 +6,6 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 func TestSourceReferenceId(t *testing.T) {
@@ -42,7 +41,7 @@ func TestScanSourceReference(t *testing.T) {
 			WHERE sr\.source_id = 'test-source-id'`,
 		).
 			WillReturnRows(sqlmock.NewRows([]string{"source_id", "namespace", "name", "updated_at", "columns", "source_name", "source_schema_name", "source_database_name", "source_type"}).
-				AddRow("test-source-id", "test-namespace", "test-name", "2024-10-28", pq.StringArray{"col1", "col2"}, "source-name", "source-schema-name", "source-database-name", "source-type"))
+				AddRow("test-source-id", "test-namespace", "test-name", "2024-10-28", StringArray{"col1", "col2"}, "source-name", "source-schema-name", "source-database-name", "source-type"))
 
 		result, err := ScanSourceReference(db, "test-source-id")
 		if err != nil {
@@ -79,7 +78,7 @@ func TestListSourceReferences(t *testing.T) {
 			WHERE sr\.source_id = 'test-source-id'`,
 		).
 			WillReturnRows(sqlmock.NewRows([]string{"source_id", "namespace", "name", "updated_at", "columns", "source_name", "source_schema_name", "source_database_name", "source_type"}).
-				AddRow("test-source-id", "test-namespace", "test-name", "2024-10-28", pq.StringArray{"col1", "col2"}, "source-name", "source-schema-name", "source-database-name", "source-type"))
+				AddRow("test-source-id", "test-namespace", "test-name", "2024-10-28", StringArray{"col1", "col2"}, "source-name", "source-schema-name", "source-database-name", "source-type"))
 
 		result, err := ListSourceReferences(db, "test-source-id")
 		if err != nil {

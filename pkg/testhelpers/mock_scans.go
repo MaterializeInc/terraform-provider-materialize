@@ -1,14 +1,56 @@
 package testhelpers
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"strings"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/lib/pq"
+	"github.com/jackc/pgtype"
 )
 
-var defaultPrivilege = pq.StringArray{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1"}
+// StringArray is a local type alias to avoid import cycles with the materialize package.
+// It provides the same functionality as StringArray.
+type StringArray []string
+
+// Scan implements the sql.Scanner interface for StringArray.
+func (a *StringArray) Scan(src interface{}) error {
+	var textArray pgtype.TextArray
+	if err := textArray.Scan(src); err != nil {
+		return err
+	}
+
+	if textArray.Status != pgtype.Present {
+		*a = nil
+		return nil
+	}
+
+	elements := make([]string, len(textArray.Elements))
+	for i, elem := range textArray.Elements {
+		if elem.Status == pgtype.Present {
+			elements[i] = elem.String
+		}
+	}
+
+	*a = elements
+	return nil
+}
+
+// Value implements the driver.Valuer interface for StringArray.
+func (a StringArray) Value() (driver.Value, error) {
+	if a == nil {
+		return nil, nil
+	}
+
+	var textArray pgtype.TextArray
+	if err := textArray.Set([]string(a)); err != nil {
+		return nil, err
+	}
+
+	return textArray.Value()
+}
+
+var defaultPrivilege = StringArray{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1"}
 
 func mockQueryBuilder(query, predicate, order string) string {
 	q := strings.Builder{}
@@ -77,7 +119,7 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_clusters.id = comments.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	az := pq.StringArray{"use1-az1", "use1-az2", "use1-az3"}
+	az := StringArray{"use1-az1", "use1-az2", "use1-az3"}
 	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "availability_zones", "comment", "owner_name", "privileges"}).
 		AddRow("u1", "cluster", true, "small", 2, true, az, "comment", "joe", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
@@ -875,7 +917,7 @@ func MockSourceReferenceScan(mock sqlmock.Sqlmock, predicate string) {
 		"source_name", "source_schema_name", "source_database_name", "source_type",
 	}).AddRow(
 		"source-id", "namespace", "reference_name", "2023-10-01T12:34:56Z",
-		pq.StringArray{"column1", "column2"},
+		StringArray{"column1", "column2"},
 		"source_name", "source_schema_name", "source_database_name", "source_type",
 	)
 
@@ -1197,7 +1239,7 @@ func MockNetworkPolicyScan(mock sqlmock.Sqlmock, predicate string) {
 		"office_policy",
 		"Network policy for office locations",
 		"mz_system",
-		pq.StringArray{"s1=U/s1"},
+		StringArray{"s1=U/s1"},
 		`[{"rule_name":"minnesota","rule_action":"allow","rule_direction":"ingress","rule_address":"2.3.4.5/32"},
           {"rule_name":"new_york","rule_action":"allow","rule_direction":"ingress","rule_address":"1.2.3.4/28"}]`,
 	)
