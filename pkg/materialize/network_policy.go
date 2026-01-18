@@ -88,7 +88,7 @@ type NetworkPolicyParams struct {
 	PolicyName sql.NullString `db:"policy_name"`
 	Comment    sql.NullString `db:"comment"`
 	OwnerName  sql.NullString `db:"owner_name"`
-	Privileges StringArray `db:"privileges"`
+	Privileges StringArray    `db:"privileges"`
 	Rules      []NetworkPolicyRule
 }
 
@@ -97,7 +97,7 @@ type NetworkPolicyQueryResult struct {
 	PolicyName sql.NullString `db:"policy_name"`
 	Comment    sql.NullString `db:"comment"`
 	OwnerName  sql.NullString `db:"owner_name"`
-	Privileges StringArray `db:"privileges"`
+	Privileges StringArray    `db:"privileges"`
 	Rules      []byte         `db:"rules"`
 }
 

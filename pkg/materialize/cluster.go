@@ -310,10 +310,10 @@ type ClusterParams struct {
 	Size              sql.NullString `db:"size"`
 	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
 	Disk              sql.NullBool   `db:"disk"`
-	AvailabilityZones StringArray `db:"availability_zones"`
+	AvailabilityZones StringArray    `db:"availability_zones"`
 	Comment           sql.NullString `db:"comment"`
 	OwnerName         sql.NullString `db:"owner_name"`
-	Privileges        StringArray `db:"privileges"`
+	Privileges        StringArray    `db:"privileges"`
 }
 
 var clusterQuery = NewBaseQuery(`
