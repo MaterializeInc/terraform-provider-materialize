@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type SourceTableParams struct {
@@ -22,7 +21,7 @@ type SourceTableParams struct {
 	UpstreamSchemaName sql.NullString `db:"upstream_schema_name"`
 	Comment            sql.NullString `db:"comment"`
 	OwnerName          sql.NullString `db:"owner_name"`
-	Privileges         pq.StringArray `db:"privileges"`
+	Privileges         StringArray `db:"privileges"`
 }
 
 var sourceTableQuery = NewBaseQuery(`

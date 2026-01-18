@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type NetworkPolicyRule struct {
@@ -89,7 +88,7 @@ type NetworkPolicyParams struct {
 	PolicyName sql.NullString `db:"policy_name"`
 	Comment    sql.NullString `db:"comment"`
 	OwnerName  sql.NullString `db:"owner_name"`
-	Privileges pq.StringArray `db:"privileges"`
+	Privileges StringArray `db:"privileges"`
 	Rules      []NetworkPolicyRule
 }
 
@@ -98,7 +97,7 @@ type NetworkPolicyQueryResult struct {
 	PolicyName sql.NullString `db:"policy_name"`
 	Comment    sql.NullString `db:"comment"`
 	OwnerName  sql.NullString `db:"owner_name"`
-	Privileges pq.StringArray `db:"privileges"`
+	Privileges StringArray `db:"privileges"`
 	Rules      []byte         `db:"rules"`
 }
 

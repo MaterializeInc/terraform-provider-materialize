@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type TableStruct struct {
@@ -125,7 +124,7 @@ type SourceParams struct {
 	Comment                sql.NullString `db:"comment"`
 	OwnerName              sql.NullString `db:"owner_name"`
 	WebhookUrl             sql.NullString `db:"webhook_url"`
-	Privileges             pq.StringArray `db:"privileges"`
+	Privileges             StringArray `db:"privileges"`
 }
 
 var sourceQuery = NewBaseQuery(`

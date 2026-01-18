@@ -5,14 +5,13 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 // MySQL specific params and query
 type SourceTableMySQLParams struct {
 	SourceTableParams
-	ExcludeColumns pq.StringArray `db:"exclude_columns"`
-	TextColumns    pq.StringArray `db:"text_columns"`
+	ExcludeColumns StringArray `db:"exclude_columns"`
+	TextColumns    StringArray `db:"text_columns"`
 }
 
 var sourceTableMySQLQuery = `

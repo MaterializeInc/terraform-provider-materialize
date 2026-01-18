@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type MaterializedViewBuilder struct {
@@ -88,7 +87,7 @@ type MaterializedViewParams struct {
 	Cluster              sql.NullString `db:"cluster_name"`
 	Comment              sql.NullString `db:"comment"`
 	OwnerName            sql.NullString `db:"owner_name"`
-	Privileges           pq.StringArray `db:"privileges"`
+	Privileges           StringArray `db:"privileges"`
 	CreateSQL            sql.NullString `db:"create_sql"`
 }
 
