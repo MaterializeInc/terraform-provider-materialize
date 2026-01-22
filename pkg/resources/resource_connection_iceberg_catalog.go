@@ -48,7 +48,7 @@ var connectionIcebergCatalogSchema = map[string]*schema.Schema{
 
 func ConnectionIcebergCatalog() *schema.Resource {
 	return &schema.Resource{
-		Description: "An Iceberg catalog connection provides Materialize with access to an Iceberg catalog, such as AWS S3 Tables.",
+		Description: "An Iceberg catalog connection establishes a link to an Apache Iceberg catalog. You can use Iceberg catalog connections to create Iceberg sinks.",
 
 		CreateContext: connectionIcebergCatalogCreate,
 		ReadContext:   connectionIcebergCatalogRead,

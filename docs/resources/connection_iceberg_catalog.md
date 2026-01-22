@@ -3,12 +3,12 @@
 page_title: "materialize_connection_iceberg_catalog Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  An Iceberg catalog connection provides Materialize with access to an Iceberg catalog, such as AWS S3 Tables.
+  An Iceberg catalog connection establishes a link to an Apache Iceberg catalog. You can use Iceberg catalog connections to create Iceberg sinks.
 ---
 
 # materialize_connection_iceberg_catalog (Resource)
 
-An Iceberg catalog connection provides Materialize with access to an Iceberg catalog, such as AWS S3 Tables.
+An Iceberg catalog connection establishes a link to an Apache Iceberg catalog. You can use Iceberg catalog connections to create Iceberg sinks.
 
 
 
