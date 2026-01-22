@@ -88,12 +88,11 @@ func TestResourceConnectionIcebergCatalogUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// TODO: Only name rename is supported via ALTER; catalog_type, url, warehouse,
+		// and aws_connection are ForceNew and will recreate the resource.
+		// Error: "storage error: cannot be altered in the requested way (SQLSTATE XX000)"
+		// Once Materialize supports ALTER for these properties, add tests for in-place updates.
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "iceberg_conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(CATALOG TYPE = 's3tablesrest'\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(URL = 'https://s3tables.us-east-1.amazonaws.com/iceberg'\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(WAREHOUSE = 'arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket'\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(AWS CONNECTION = "materialize"."public"."aws_conn"\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params
 		pp := `WHERE mz_connections.id = 'u1'`
