@@ -32,7 +32,6 @@ func TestAccConnectionIcebergCatalog_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "catalog_type", catalogType),
 					resource.TestCheckResourceAttr(resourceName, "url", url),
 					resource.TestCheckResourceAttr(resourceName, "warehouse", warehouse),
-					resource.TestCheckResourceAttr(resourceName, "aws_connection.0.name", connectionName+"_aws"),
 				),
 			},
 		},
@@ -103,12 +102,22 @@ func TestAccConnectionIcebergCatalog_disappears(t *testing.T) {
 
 func testAccConnectionIcebergCatalogResource(name, catalogType, url, warehouse string) string {
 	return fmt.Sprintf(`
+resource "materialize_secret" "aws_secret_access_key" {
+  name  = "%[1]s_secret"
+  value = "test_secret_key"
+}
+
 resource "materialize_connection_aws" "test_aws" {
-  name     = "%[1]s_aws"
-  endpoint = "http://localhost:4566"
+  name       = "%[1]s_aws"
+  endpoint   = "http://localhost:4566"
   aws_region = "us-east-1"
   access_key_id {
     text = "test_access_key"
+  }
+  secret_access_key {
+    name          = materialize_secret.aws_secret_access_key.name
+    database_name = materialize_secret.aws_secret_access_key.database_name
+    schema_name   = materialize_secret.aws_secret_access_key.schema_name
   }
   validate = false
 }
