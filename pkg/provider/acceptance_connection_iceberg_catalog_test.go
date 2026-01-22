@@ -43,32 +43,34 @@ func TestAccConnectionIcebergCatalog_update(t *testing.T) {
 	initialConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	updatedConnectionName := initialConnectionName + "_updated"
 	catalogType := "s3tablesrest"
-	initialUrl := "https://s3tables.us-east-1.amazonaws.com/iceberg"
-	updatedUrl := "https://s3tables.us-west-2.amazonaws.com/iceberg"
-	initialWarehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
-	updatedWarehouse := "arn:aws:s3tables:us-west-2:123456789012:bucket/my-bucket-2"
+	url := "https://s3tables.us-east-1.amazonaws.com/iceberg"
+	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
 
+	// TODO: Only the connection name can be updated in-place via ALTER CONNECTION RENAME.
+	// Changes to catalog_type, url, warehouse, and aws_connection require resource recreation.
+	// Error: "storage error: cannot be altered in the requested way (SQLSTATE XX000)"
+	// Once Materialize supports ALTER for these properties, add test steps for in-place updates.
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckConnectionIcebergCatalogDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConnectionIcebergCatalogResource(initialConnectionName, catalogType, initialUrl, initialWarehouse),
+				Config: testAccConnectionIcebergCatalogResource(initialConnectionName, catalogType, url, warehouse),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectionIcebergCatalogExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", initialConnectionName),
-					resource.TestCheckResourceAttr(resourceName, "url", initialUrl),
-					resource.TestCheckResourceAttr(resourceName, "warehouse", initialWarehouse),
+					resource.TestCheckResourceAttr(resourceName, "url", url),
+					resource.TestCheckResourceAttr(resourceName, "warehouse", warehouse),
 				),
 			},
 			{
-				Config: testAccConnectionIcebergCatalogResource(updatedConnectionName, catalogType, updatedUrl, updatedWarehouse),
+				Config: testAccConnectionIcebergCatalogResource(updatedConnectionName, catalogType, url, warehouse),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectionIcebergCatalogExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", updatedConnectionName),
-					resource.TestCheckResourceAttr(resourceName, "url", updatedUrl),
-					resource.TestCheckResourceAttr(resourceName, "warehouse", updatedWarehouse),
+					resource.TestCheckResourceAttr(resourceName, "url", url),
+					resource.TestCheckResourceAttr(resourceName, "warehouse", warehouse),
 				),
 			},
 		},

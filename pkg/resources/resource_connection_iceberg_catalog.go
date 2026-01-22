@@ -21,25 +21,25 @@ var connectionIcebergCatalogSchema = map[string]*schema.Schema{
 		Description: "The type of Iceberg catalog. Currently only `s3tablesrest` (AWS S3 Tables) is supported.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    false,
+		ForceNew:    true,
 	},
 	"url": {
 		Description: "The URL of the Iceberg catalog endpoint. For AWS S3 Tables, use `https://s3tables.<region>.amazonaws.com/iceberg`.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    false,
+		ForceNew:    true,
 	},
 	"warehouse": {
 		Description: "The ARN of the S3 Tables bucket: `arn:aws:s3tables:<region>:<account-id>:bucket/<bucket-name>`.",
 		Type:        schema.TypeString,
 		Required:    true,
-		ForceNew:    false,
+		ForceNew:    true,
 	},
 	"aws_connection": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "aws_connection",
 		Description: "The name of an AWS connection to use for authentication.",
 		Required:    true,
-		ForceNew:    false,
+		ForceNew:    true,
 	}),
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
@@ -174,7 +174,6 @@ func connectionIcebergCatalogUpdate(ctx context.Context, d *schema.ResourceData,
 	connectionName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
-	validate := d.Get("validate").(bool)
 
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -191,53 +190,10 @@ func connectionIcebergCatalogUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	if d.HasChange("catalog_type") {
-		oldCatalogType, newCatalogType := d.GetChange("catalog_type")
-		b := materialize.NewConnection(metaDb, o)
-		options := map[string]interface{}{
-			"CATALOG TYPE": newCatalogType.(string),
-		}
-		if err := b.Alter(options, nil, false, validate); err != nil {
-			d.Set("catalog_type", oldCatalogType)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("url") {
-		oldUrl, newUrl := d.GetChange("url")
-		b := materialize.NewConnection(metaDb, o)
-		options := map[string]interface{}{
-			"URL": newUrl.(string),
-		}
-		if err := b.Alter(options, nil, false, validate); err != nil {
-			d.Set("url", oldUrl)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("warehouse") {
-		oldWarehouse, newWarehouse := d.GetChange("warehouse")
-		b := materialize.NewConnection(metaDb, o)
-		options := map[string]interface{}{
-			"WAREHOUSE": newWarehouse.(string),
-		}
-		if err := b.Alter(options, nil, false, validate); err != nil {
-			d.Set("warehouse", oldWarehouse)
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("aws_connection") {
-		oldAwsConnection, newAwsConnection := d.GetChange("aws_connection")
-		b := materialize.NewConnection(metaDb, o)
-		options := map[string]interface{}{
-			"AWS CONNECTION": materialize.GetIdentifierSchemaStruct(newAwsConnection),
-		}
-		if err := b.Alter(options, nil, false, validate); err != nil {
-			d.Set("aws_connection", oldAwsConnection)
-			return diag.FromErr(err)
-		}
-	}
+	// TODO: catalog_type, url, warehouse, and aws_connection cannot be altered and are marked
+	// with ForceNew: true, so changes to them will recreate the resource.
+	// Error: "storage error: cannot be altered in the requested way (SQLSTATE XX000)"
+	// Once Materialize supports ALTER for these properties, remove ForceNew and add ALTER logic here.
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
