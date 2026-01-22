@@ -394,6 +394,19 @@ resource "materialize_connection_aws" "aws_conn" {
   validate = false
 }
 
+resource "materialize_connection_iceberg_catalog" "iceberg_conn" {
+  name         = "iceberg_conn"
+  catalog_type = "s3tablesrest"
+  url          = "https://s3tables.us-east-1.amazonaws.com/iceberg"
+  warehouse    = "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
+  aws_connection {
+    name          = materialize_connection_aws.aws_conn.name
+    database_name = materialize_connection_aws.aws_conn.database_name
+    schema_name   = materialize_connection_aws.aws_conn.schema_name
+  }
+  validate = false
+}
+
 resource "materialize_connection_sqlserver" "sqlserver_connection" {
   name = "sqlserver_connection"
   host = "sqlserver"

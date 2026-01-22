@@ -1245,3 +1245,59 @@ func MockNetworkPolicyScan(mock sqlmock.Sqlmock, predicate string) {
 	)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
+
+func MockConnectionIcebergCatalogScan(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_connections.id,
+		mz_connections.name AS connection_name,
+		mz_schemas.name AS schema_name,
+		mz_databases.name AS database_name,
+		mz_iceberg_catalog_connections.catalog_type,
+		mz_iceberg_catalog_connections.url,
+		mz_iceberg_catalog_connections.warehouse,
+		mz_iceberg_catalog_connections.aws_connection_id,
+		comments.comment AS comment,
+		mz_roles.name AS owner_name
+	FROM mz_connections
+	JOIN mz_schemas
+		ON mz_connections.schema_id = mz_schemas.id
+	JOIN mz_databases
+		ON mz_schemas.database_id = mz_databases.id
+	LEFT JOIN mz_internal.mz_iceberg_catalog_connections
+		ON mz_connections.id = mz_iceberg_catalog_connections.id
+	JOIN mz_roles
+		ON mz_connections.owner_id = mz_roles.id
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'connection'
+	\) comments
+		ON mz_connections.id = comments.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	ir := mock.NewRows([]string{
+		"id",
+		"connection_name",
+		"schema_name",
+		"database_name",
+		"catalog_type",
+		"url",
+		"warehouse",
+		"aws_connection_id",
+		"comment",
+		"owner_name",
+	}).AddRow(
+		"u1",
+		"connection",
+		"schema",
+		"database",
+		"s3tablesrest",
+		"https://s3tables.us-east-1.amazonaws.com/iceberg",
+		"arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket",
+		"u2",
+		"comment",
+		"owner_name",
+	)
+	mock.ExpectQuery(q).WillReturnRows(ir)
+}
