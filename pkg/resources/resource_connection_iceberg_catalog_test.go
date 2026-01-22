@@ -69,16 +69,11 @@ func TestResourceConnectionIcebergCatalogRead(t *testing.T) {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
 
-		if d.Get("catalog_type").(string) != "s3tablesrest" {
-			t.Fatalf("unexpected catalog_type: %s", d.Get("catalog_type").(string))
-		}
-
-		if d.Get("url").(string) != "https://s3tables.us-east-1.amazonaws.com/iceberg" {
-			t.Fatalf("unexpected url: %s", d.Get("url").(string))
-		}
-
-		if d.Get("warehouse").(string) != "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket" {
-			t.Fatalf("unexpected warehouse: %s", d.Get("warehouse").(string))
+		// Note: catalog_type, url, warehouse, and aws_connection are maintained
+		// from Terraform state since mz_internal.mz_iceberg_catalog_connections
+		// does not exist yet. We verify base connection fields from the mock.
+		if d.Get("name").(string) != "connection" {
+			t.Fatalf("unexpected name: %s", d.Get("name").(string))
 		}
 	})
 }
