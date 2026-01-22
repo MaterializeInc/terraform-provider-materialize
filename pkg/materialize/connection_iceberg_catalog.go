@@ -84,16 +84,12 @@ func (b *ConnectionIcebergCatalogBuilder) Create() error {
 }
 
 type ConnectionIcebergCatalogParams struct {
-	ConnectionId    sql.NullString `db:"id"`
-	ConnectionName  sql.NullString `db:"connection_name"`
-	SchemaName      sql.NullString `db:"schema_name"`
-	DatabaseName    sql.NullString `db:"database_name"`
-	CatalogType     sql.NullString `db:"catalog_type"`
-	Url             sql.NullString `db:"url"`
-	Warehouse       sql.NullString `db:"warehouse"`
-	AwsConnectionId sql.NullString `db:"aws_connection_id"`
-	Comment         sql.NullString `db:"comment"`
-	OwnerName       sql.NullString `db:"owner_name"`
+	ConnectionId   sql.NullString `db:"id"`
+	ConnectionName sql.NullString `db:"connection_name"`
+	SchemaName     sql.NullString `db:"schema_name"`
+	DatabaseName   sql.NullString `db:"database_name"`
+	Comment        sql.NullString `db:"comment"`
+	OwnerName      sql.NullString `db:"owner_name"`
 }
 
 var connectionIcebergCatalogQuery = NewBaseQuery(`
@@ -102,10 +98,6 @@ var connectionIcebergCatalogQuery = NewBaseQuery(`
 		mz_connections.name AS connection_name,
 		mz_schemas.name AS schema_name,
 		mz_databases.name AS database_name,
-		mz_iceberg_catalog_connections.catalog_type,
-		mz_iceberg_catalog_connections.url,
-		mz_iceberg_catalog_connections.warehouse,
-		mz_iceberg_catalog_connections.aws_connection_id,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name
 	FROM mz_connections
@@ -113,8 +105,6 @@ var connectionIcebergCatalogQuery = NewBaseQuery(`
 		ON mz_connections.schema_id = mz_schemas.id
 	JOIN mz_databases
 		ON mz_schemas.database_id = mz_databases.id
-	LEFT JOIN mz_internal.mz_iceberg_catalog_connections
-		ON mz_connections.id = mz_iceberg_catalog_connections.id
 	JOIN mz_roles
 		ON mz_connections.owner_id = mz_roles.id
 	LEFT JOIN (

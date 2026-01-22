@@ -60,20 +60,19 @@ func TestScanConnectionIcebergCatalog(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if params.CatalogType.String != "s3tablesrest" {
-			t.Fatalf("Expected catalog_type to be s3tablesrest, got %s", params.CatalogType.String)
+		// Note: catalog_type, url, warehouse, and aws_connection_id are not
+		// available from the database yet (mz_internal.mz_iceberg_catalog_connections
+		// does not exist). We only verify base connection fields.
+		if params.ConnectionName.String != "connection" {
+			t.Fatalf("Expected connection_name to be connection, got %s", params.ConnectionName.String)
 		}
 
-		if params.Url.String != "https://s3tables.us-east-1.amazonaws.com/iceberg" {
-			t.Fatalf("Expected url to be https://s3tables.us-east-1.amazonaws.com/iceberg, got %s", params.Url.String)
+		if params.SchemaName.String != "schema" {
+			t.Fatalf("Expected schema_name to be schema, got %s", params.SchemaName.String)
 		}
 
-		if params.Warehouse.String != "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket" {
-			t.Fatalf("Expected warehouse to be arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket, got %s", params.Warehouse.String)
-		}
-
-		if params.AwsConnectionId.String != "u2" {
-			t.Fatalf("Expected aws_connection_id to be u2, got %s", params.AwsConnectionId.String)
+		if params.DatabaseName.String != "database" {
+			t.Fatalf("Expected database_name to be database, got %s", params.DatabaseName.String)
 		}
 	})
 }

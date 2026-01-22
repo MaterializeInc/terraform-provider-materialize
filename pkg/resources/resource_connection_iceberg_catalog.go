@@ -92,17 +92,9 @@ func connectionIcebergCatalogRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("catalog_type", s.CatalogType.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("url", s.Url.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("warehouse", s.Warehouse.String); err != nil {
-		return diag.FromErr(err)
-	}
+	// Note: catalog_type, url, warehouse, and aws_connection are not returned
+	// from the database catalog yet (mz_internal.mz_iceberg_catalog_connections
+	// does not exist). These values are maintained from Terraform state.
 
 	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
 		return diag.FromErr(err)
