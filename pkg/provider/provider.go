@@ -126,6 +126,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_secret":                               resources.Secret(),
 			"materialize_secret_grant":                         resources.GrantSecret(),
 			"materialize_secret_grant_default_privilege":       resources.GrantSecretDefaultPrivilege(),
+			"materialize_sink_iceberg":                         resources.SinkIceberg(),
 			"materialize_sink_kafka":                           resources.SinkKafka(),
 			"materialize_source_kafka":                         resources.SourceKafka(),
 			"materialize_source_load_generator":                resources.SourceLoadgen(),
