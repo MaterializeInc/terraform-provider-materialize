@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -51,7 +50,7 @@ func ConnectionIcebergCatalog() *schema.Resource {
 		Description: "An Iceberg catalog connection establishes a link to an Apache Iceberg catalog. You can use Iceberg catalog connections to create Iceberg sinks.",
 
 		CreateContext: connectionIcebergCatalogCreate,
-		ReadContext:   connectionIcebergCatalogRead,
+		ReadContext:   connectionRead,
 		UpdateContext: connectionIcebergCatalogUpdate,
 		DeleteContext: connectionDelete,
 
@@ -61,55 +60,6 @@ func ConnectionIcebergCatalog() *schema.Resource {
 
 		Schema: connectionIcebergCatalogSchema,
 	}
-}
-
-func connectionIcebergCatalogRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	i := d.Id()
-
-	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	s, err := materialize.ScanConnectionIcebergCatalog(metaDb, utils.ExtractId(i))
-	if err == sql.ErrNoRows {
-		d.SetId("")
-		return nil
-	} else if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
-
-	if err := d.Set("name", s.ConnectionName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Note: catalog_type, url, warehouse, and aws_connection are not returned
-	// from the database catalog yet (mz_internal.mz_iceberg_catalog_connections
-	// does not exist). These values are maintained from Terraform state.
-
-	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	b := materialize.Connection{ConnectionName: s.ConnectionName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
-	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("comment", s.Comment.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	return nil
 }
 
 func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -167,7 +117,7 @@ func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData,
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return connectionIcebergCatalogRead(ctx, d, meta)
+	return connectionRead(ctx, d, meta)
 }
 
 func connectionIcebergCatalogUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -212,5 +162,5 @@ func connectionIcebergCatalogUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	return connectionIcebergCatalogRead(ctx, d, meta)
+	return connectionRead(ctx, d, meta)
 }

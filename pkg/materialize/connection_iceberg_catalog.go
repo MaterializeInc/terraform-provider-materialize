@@ -1,7 +1,6 @@
 package materialize
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -81,46 +80,4 @@ func (b *ConnectionIcebergCatalogBuilder) Create() error {
 	q.WriteString(`;`)
 
 	return b.ddl.exec(q.String())
-}
-
-type ConnectionIcebergCatalogParams struct {
-	ConnectionId   sql.NullString `db:"id"`
-	ConnectionName sql.NullString `db:"connection_name"`
-	SchemaName     sql.NullString `db:"schema_name"`
-	DatabaseName   sql.NullString `db:"database_name"`
-	Comment        sql.NullString `db:"comment"`
-	OwnerName      sql.NullString `db:"owner_name"`
-}
-
-var connectionIcebergCatalogQuery = NewBaseQuery(`
-	SELECT
-		mz_connections.id,
-		mz_connections.name AS connection_name,
-		mz_schemas.name AS schema_name,
-		mz_databases.name AS database_name,
-		comments.comment AS comment,
-		mz_roles.name AS owner_name
-	FROM mz_connections
-	JOIN mz_schemas
-		ON mz_connections.schema_id = mz_schemas.id
-	JOIN mz_databases
-		ON mz_schemas.database_id = mz_databases.id
-	JOIN mz_roles
-		ON mz_connections.owner_id = mz_roles.id
-	LEFT JOIN (
-		SELECT id, comment
-		FROM mz_internal.mz_comments
-		WHERE object_type = 'connection'
-	) comments
-		ON mz_connections.id = comments.id`)
-
-func ScanConnectionIcebergCatalog(conn *sqlx.DB, id string) (ConnectionIcebergCatalogParams, error) {
-	q := connectionIcebergCatalogQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
-
-	var c ConnectionIcebergCatalogParams
-	if err := conn.Get(&c, q); err != nil {
-		return c, err
-	}
-
-	return c, nil
 }

@@ -3,6 +3,7 @@ package provider
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -15,6 +16,10 @@ import (
 
 // Initialize a topic used by Kafka Testacc against the docker compose
 func addTestTopic() error {
+	// Skip if not running acceptance tests to avoid hanging on docker commands
+	if os.Getenv("TF_ACC") == "" {
+		return nil
+	}
 	cmd := exec.Command("docker", "exec", "redpanda", "rpk", "topic", "create", "terraform")
 	_, err := cmd.Output()
 	if err != nil {
