@@ -38,9 +38,9 @@ func TestResourceConnectionIcebergCatalogCreate(t *testing.T) {
 		ip := `WHERE mz_connections.name = 'iceberg_conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
 		testhelpers.MockConnectionScan(mock, ip)
 
-		// Query Params
+		// Query Params (uses generic connection scan)
 		pp := `WHERE mz_connections.id = 'u1'`
-		testhelpers.MockConnectionIcebergCatalogScan(mock, pp)
+		testhelpers.MockConnectionScan(mock, pp)
 
 		if err := connectionIcebergCatalogCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -57,11 +57,11 @@ func TestResourceConnectionIcebergCatalogRead(t *testing.T) {
 	d.SetId("u1")
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-		// Query Params
+		// Query Params (uses generic connection scan)
 		pp := `WHERE mz_connections.id = 'u1'`
-		testhelpers.MockConnectionIcebergCatalogScan(mock, pp)
+		testhelpers.MockConnectionScan(mock, pp)
 
-		if err := connectionIcebergCatalogRead(context.TODO(), d, db); err != nil {
+		if err := connectionRead(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
 
@@ -94,9 +94,9 @@ func TestResourceConnectionIcebergCatalogUpdate(t *testing.T) {
 		// Once Materialize supports ALTER for these properties, add tests for in-place updates.
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "iceberg_conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		// Query Params
+		// Query Params (uses generic connection scan)
 		pp := `WHERE mz_connections.id = 'u1'`
-		testhelpers.MockConnectionIcebergCatalogScan(mock, pp)
+		testhelpers.MockConnectionScan(mock, pp)
 
 		if err := connectionIcebergCatalogUpdate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)

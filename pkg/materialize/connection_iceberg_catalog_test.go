@@ -47,32 +47,3 @@ func TestConnectionIcebergCatalogCreateWithValidation(t *testing.T) {
 		}
 	})
 }
-
-func TestScanConnectionIcebergCatalog(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		// Mock the scan query response
-		pp := `WHERE mz_connections.id = 'u1'`
-		testhelpers.MockConnectionIcebergCatalogScan(mock, pp)
-
-		// Test ScanConnectionIcebergCatalog
-		params, err := ScanConnectionIcebergCatalog(db, "u1")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		// Note: catalog_type, url, warehouse, and aws_connection_id are not
-		// available from the database yet (mz_internal.mz_iceberg_catalog_connections
-		// does not exist). We only verify base connection fields.
-		if params.ConnectionName.String != "connection" {
-			t.Fatalf("Expected connection_name to be connection, got %s", params.ConnectionName.String)
-		}
-
-		if params.SchemaName.String != "schema" {
-			t.Fatalf("Expected schema_name to be schema, got %s", params.SchemaName.String)
-		}
-
-		if params.DatabaseName.String != "database" {
-			t.Fatalf("Expected database_name to be database, got %s", params.DatabaseName.String)
-		}
-	})
-}

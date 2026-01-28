@@ -156,7 +156,7 @@ func testAccCheckConnectionIcebergCatalogExists(resourceName string) resource.Te
 			return fmt.Errorf("error getting DB client: %s", err)
 		}
 
-		_, err = materialize.ScanConnectionIcebergCatalog(db, utils.ExtractId(rs.Primary.ID))
+		_, err = materialize.ScanConnection(db, utils.ExtractId(rs.Primary.ID))
 		if err != nil {
 			return fmt.Errorf("connection Iceberg Catalog (%s) not found", rs.Primary.ID)
 		}
@@ -202,7 +202,7 @@ func testAccCheckConnectionIcebergCatalogDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err := materialize.ScanConnectionIcebergCatalog(db, utils.ExtractId(rs.Primary.ID))
+		_, err := materialize.ScanConnection(db, utils.ExtractId(rs.Primary.ID))
 		if err == nil {
 			return fmt.Errorf("connection Iceberg Catalog %s still exists", rs.Primary.ID)
 		}
