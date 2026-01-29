@@ -88,11 +88,54 @@ func TestResourceConnectionIcebergCatalogUpdate(t *testing.T) {
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-		// TODO: Only name rename is supported via ALTER; catalog_type, url, warehouse,
-		// and aws_connection are ForceNew and will recreate the resource.
+		// Name rename
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "iceberg_conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// AWS connection can now be altered in-place
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."old_conn" SET \(AWS CONNECTION = "materialize"."public"."aws_conn"\) WITH \(validate false\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// TODO: catalog_type, url, and warehouse are ForceNew and will recreate the resource.
 		// Error: "storage error: cannot be altered in the requested way (SQLSTATE XX000)"
 		// Once Materialize supports ALTER for these properties, add tests for in-place updates.
+
+		// Query Params (uses generic connection scan)
+		pp := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionScan(mock, pp)
+
+		if err := connectionIcebergCatalogUpdate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceConnectionIcebergCatalogUpdateAwsConnection(t *testing.T) {
+	r := require.New(t)
+
+	// Create test data with new aws_connection value
+	updatedData := map[string]interface{}{
+		"name":           "iceberg_conn",
+		"schema_name":    "schema",
+		"database_name":  "database",
+		"catalog_type":   "s3tablesrest",
+		"url":            "https://s3tables.us-east-1.amazonaws.com/iceberg",
+		"warehouse":      "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket",
+		"aws_connection": []interface{}{map[string]interface{}{"name": "new_aws_conn", "schema_name": "public", "database_name": "materialize"}},
+		"validate":       true,
+	}
+
+	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, updatedData)
+	d.SetId("u1")
+
+	// Simulate that aws_connection changed from old value
+	d.Set("aws_connection", []interface{}{map[string]interface{}{"name": "old_aws_conn", "schema_name": "public", "database_name": "materialize"}})
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Name is detected as changed (artifact of test setup), expect rename first
 		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."" RENAME TO "iceberg_conn";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Expect ALTER for aws_connection change (no WITH clause when validate = true, that's the default)
+		mock.ExpectExec(`ALTER CONNECTION "database"."schema"."iceberg_conn" SET \(AWS CONNECTION = "materialize"."public"."new_aws_conn"\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Params (uses generic connection scan)
 		pp := `WHERE mz_connections.id = 'u1'`
