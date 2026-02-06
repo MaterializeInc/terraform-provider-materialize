@@ -16,8 +16,8 @@ func TestAccConnectionIcebergCatalog_basic(t *testing.T) {
 	resourceName := "materialize_connection_iceberg_catalog.test"
 	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	catalogType := "s3tablesrest"
-	url := "https://s3tables.us-east-1.amazonaws.com/iceberg"
-	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
+	url := "http://minio:9000/iceberg-test"
+	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/iceberg-test"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -43,8 +43,8 @@ func TestAccConnectionIcebergCatalog_update(t *testing.T) {
 	initialConnectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	updatedConnectionName := initialConnectionName + "_updated"
 	catalogType := "s3tablesrest"
-	url := "https://s3tables.us-east-1.amazonaws.com/iceberg"
-	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
+	url := "http://minio:9000/iceberg-test"
+	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/iceberg-test"
 
 	// TODO: Only the connection name can be updated in-place via ALTER CONNECTION RENAME.
 	// Changes to catalog_type, url, warehouse, and aws_connection require resource recreation.
@@ -81,8 +81,8 @@ func TestAccConnectionIcebergCatalog_disappears(t *testing.T) {
 	resourceName := "materialize_connection_iceberg_catalog.test"
 	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	catalogType := "s3tablesrest"
-	url := "https://s3tables.us-east-1.amazonaws.com/iceberg"
-	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
+	url := "http://minio:9000/iceberg-test"
+	warehouse := "arn:aws:s3tables:us-east-1:123456789012:bucket/iceberg-test"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -106,15 +106,15 @@ func testAccConnectionIcebergCatalogResource(name, catalogType, url, warehouse s
 	return fmt.Sprintf(`
 resource "materialize_secret" "aws_secret_access_key" {
   name  = "%[1]s_secret"
-  value = "test_secret_key"
+  value = "minio123"
 }
 
 resource "materialize_connection_aws" "test_aws" {
   name       = "%[1]s_aws"
-  endpoint   = "http://localhost:4566"
+  endpoint   = "http://minio:9000"
   aws_region = "us-east-1"
   access_key_id {
-    text = "test_access_key"
+    text = "minio"
   }
   secret_access_key {
     name          = materialize_secret.aws_secret_access_key.name
