@@ -3,7 +3,6 @@ package provider
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -13,25 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// NOTE: These acceptance tests require real AWS S3 Tables/Iceberg infrastructure.
-// The CREATE SINK command will attempt to connect to the Iceberg catalog and register
-// the sink, which requires actual AWS S3 Tables access.
-//
-// To run these tests, set the following environment variables:
-// - MZ_ICEBERG_ACC_TEST=true
-// - Configure AWS credentials with S3 Tables access
-//
-// These tests are skipped by default in CI.
-
-func testAccSkipIfNoIcebergInfrastructure(t *testing.T) {
-	if os.Getenv("MZ_ICEBERG_ACC_TEST") == "" {
-		t.Skip("Skipping Iceberg sink acceptance tests: MZ_ICEBERG_ACC_TEST not set. " +
-			"These tests require real AWS S3 Tables infrastructure.")
-	}
-}
-
 func TestAccSinkIceberg_basic(t *testing.T) {
-	testAccSkipIfNoIcebergInfrastructure(t)
 	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -62,7 +43,6 @@ func TestAccSinkIceberg_basic(t *testing.T) {
 }
 
 func TestAccSinkIceberg_update(t *testing.T) {
-	testAccSkipIfNoIcebergInfrastructure(t)
 	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	initialSinkName := nameSpace + "_sink"
 	updatedSinkName := nameSpace + "_sink_updated"
@@ -91,7 +71,6 @@ func TestAccSinkIceberg_update(t *testing.T) {
 }
 
 func TestAccSinkIceberg_disappears(t *testing.T) {
-	testAccSkipIfNoIcebergInfrastructure(t)
 	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -120,15 +99,15 @@ func testAccSinkIcebergResourceWithName(nameSpace, sinkName string) string {
 	return fmt.Sprintf(`
 resource "materialize_secret" "aws_secret" {
   name  = "%[1]s_aws_secret"
-  value = "test_secret_key"
+  value = "minio123"
 }
 
 resource "materialize_connection_aws" "test_aws" {
   name       = "%[1]s_aws_conn"
-  endpoint   = "http://localhost:4566"
+  endpoint   = "http://minio:9000"
   aws_region = "us-east-1"
   access_key_id {
-    text = "test_access_key"
+    text = "minio"
   }
   secret_access_key {
     name          = materialize_secret.aws_secret.name
@@ -141,8 +120,8 @@ resource "materialize_connection_aws" "test_aws" {
 resource "materialize_connection_iceberg_catalog" "test_catalog" {
   name         = "%[1]s_iceberg_catalog"
   catalog_type = "s3tablesrest"
-  url          = "https://s3tables.us-east-1.amazonaws.com/iceberg"
-  warehouse    = "arn:aws:s3tables:us-east-1:123456789012:bucket/test-bucket"
+  url          = "http://minio:9000/iceberg-test"
+  warehouse    = "arn:aws:s3tables:us-east-1:123456789012:bucket/iceberg-test"
   aws_connection {
     name          = materialize_connection_aws.test_aws.name
     database_name = materialize_connection_aws.test_aws.database_name

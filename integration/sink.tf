@@ -123,6 +123,53 @@ resource "materialize_sink_kafka" "sink_kafka_headers" {
   }
 }
 
+resource "materialize_table" "iceberg_sink_table" {
+  name          = "iceberg_sink_table"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+
+  column {
+    name = "id"
+    type = "int4"
+  }
+  column {
+    name = "value"
+    type = "text"
+  }
+}
+
+resource "materialize_sink_iceberg" "sink_iceberg" {
+  name          = "sink_iceberg"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  cluster_name  = materialize_cluster.cluster_sink.name
+
+  from {
+    name          = materialize_table.iceberg_sink_table.name
+    database_name = materialize_table.iceberg_sink_table.database_name
+    schema_name   = materialize_table.iceberg_sink_table.schema_name
+  }
+
+  iceberg_catalog_connection {
+    name          = materialize_connection_iceberg_catalog.iceberg_conn.name
+    database_name = materialize_connection_iceberg_catalog.iceberg_conn.database_name
+    schema_name   = materialize_connection_iceberg_catalog.iceberg_conn.schema_name
+  }
+
+  namespace = "my_namespace"
+  table     = "my_table"
+
+  aws_connection {
+    name          = materialize_connection_aws.minio_conn.name
+    database_name = materialize_connection_aws.minio_conn.database_name
+    schema_name   = materialize_connection_aws.minio_conn.schema_name
+  }
+
+  key              = ["id"]
+  key_not_enforced = true
+  commit_interval  = "10s"
+}
+
 output "qualified_sink_kafka" {
   value = materialize_sink_kafka.sink_kafka.qualified_sql_name
 }

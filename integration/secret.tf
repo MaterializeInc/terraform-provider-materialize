@@ -83,6 +83,13 @@ resource "materialize_secret" "aws_password" {
   value         = "test"
 }
 
+resource "materialize_secret" "minio_password" {
+  name          = "minio_password"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  value         = "minio123"
+}
+
 # Create in separate region
 resource "materialize_secret" "aws_password_us_west" {
   name          = "aws_password"
