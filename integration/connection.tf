@@ -523,15 +523,30 @@ resource "materialize_connection_aws" "aws_conn" {
   validate = false
 }
 
+resource "materialize_connection_aws" "minio_conn" {
+  name       = "minio_conn"
+  endpoint   = "http://minio:9000"
+  aws_region = "us-east-1"
+  access_key_id {
+    text = "minio"
+  }
+  secret_access_key {
+    name          = materialize_secret.minio_password.name
+    database_name = materialize_secret.minio_password.database_name
+    schema_name   = materialize_secret.minio_password.schema_name
+  }
+  validate = false
+}
+
 resource "materialize_connection_iceberg_catalog" "iceberg_conn" {
   name         = "iceberg_conn"
   catalog_type = "s3tablesrest"
-  url          = "https://s3tables.us-east-1.amazonaws.com/iceberg"
-  warehouse    = "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket"
+  url          = "http://minio:9000/iceberg-test"
+  warehouse    = "arn:aws:s3tables:us-east-1:123456789012:bucket/iceberg-test"
   aws_connection {
-    name          = materialize_connection_aws.aws_conn.name
-    database_name = materialize_connection_aws.aws_conn.database_name
-    schema_name   = materialize_connection_aws.aws_conn.schema_name
+    name          = materialize_connection_aws.minio_conn.name
+    database_name = materialize_connection_aws.minio_conn.database_name
+    schema_name   = materialize_connection_aws.minio_conn.schema_name
   }
   validate = false
 }
