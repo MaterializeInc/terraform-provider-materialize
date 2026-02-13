@@ -43,16 +43,16 @@ var roleSchema = map[string]*schema.Schema{
 		RequiredWith: []string{"password_wo"},
 	},
 	"superuser": {
-		Description: "Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.",
+		Description: "Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled.",
 		Type:        schema.TypeBool,
 		Optional:    true,
-		Default:     false,
+		Computed:    true,
 	},
 	"login": {
-		Description: "Whether the role can log in. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.",
+		Description: "Whether the role can log in. Only available in self-hosted Materialize environments with password authentication enabled.",
 		Type:        schema.TypeBool,
 		Optional:    true,
-		Default:     false,
+		Computed:    true,
 	},
 	"region": RegionSchema(),
 }
