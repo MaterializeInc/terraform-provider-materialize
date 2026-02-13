@@ -36,12 +36,12 @@ resource "materialize_role" "admin_user" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `comment` (String) Comment on an object in the database.
-- `login` (Boolean) Whether the role can log in. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.
+- `login` (Boolean) Whether the role can log in. Only available in self-hosted Materialize environments with password authentication enabled.
 - `password` (String, Sensitive) Password for the role. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication. Use password_wo for write-only ephemeral values that won't be stored in state.
 - `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Write-only password for the role that supports ephemeral values and won't be stored in Terraform state or plan. Only available in self-hosted Materialize environments with password authentication enabled. Required for password-based authentication. Requires Terraform 1.11+. Must be used with password_wo_version.
 - `password_wo_version` (Number) Version number for the write-only password. Increment this to trigger an update of the password value when using password_wo. Must be used with password_wo.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
-- `superuser` (Boolean) Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled. Defaults to `false`.
+- `superuser` (Boolean) Whether the role is a superuser. Only available in self-hosted Materialize environments with password authentication enabled.
 
 ### Read-Only
 
