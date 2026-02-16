@@ -28,6 +28,26 @@ func TestAccDatasourceRole_basic(t *testing.T) {
 	})
 }
 
+func TestAccDatasourceRole_withPattern(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDatasourceRoleWithPattern(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					// Should match exactly 2 roles with pattern
+					resource.TestCheckResourceAttr("data.materialize_role.test_pattern", "roles.#", "2"),
+					// Verify the pattern filter is set
+					resource.TestCheckResourceAttr("data.materialize_role.test_pattern", "like_pattern", fmt.Sprintf("%s_b%%", nameSpace)),
+				),
+			},
+		},
+	})
+}
+
 func testAccDatasourceRole(nameSpace string) string {
 	return fmt.Sprintf(`
 	resource "materialize_role" "a" {
@@ -52,6 +72,31 @@ func testAccDatasourceRole(nameSpace string) string {
 			materialize_role.b,
 			materialize_role.c,
 			materialize_role.d,
+		]
+	}
+	`, nameSpace)
+}
+
+func testAccDatasourceRoleWithPattern(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_role" "b1" {
+		name         = "%[1]s_b1"
+	}
+
+	resource "materialize_role" "b2" {
+		name         = "%[1]s_b2"
+	}
+
+	resource "materialize_role" "c" {
+		name         = "%[1]s_c"
+	}
+
+	data "materialize_role" "test_pattern" {
+		like_pattern = "%[1]s_b%%"
+		depends_on   = [
+			materialize_role.b1,
+			materialize_role.b2,
+			materialize_role.c,
 		]
 	}
 	`, nameSpace)

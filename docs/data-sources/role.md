@@ -21,6 +21,7 @@ data "materialize_role" "all" {}
 
 ### Optional
 
+- `like_pattern` (String) Filter roles by name using SQL LIKE pattern (e.g., 'prod_%', '%_admin')
 - `region` (String) The region in which the resource is located.
 
 ### Read-Only

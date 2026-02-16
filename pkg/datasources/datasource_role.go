@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -14,6 +15,11 @@ func Role() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: roleRead,
 		Schema: map[string]*schema.Schema{
+			"like_pattern": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Filter roles by name using SQL LIKE pattern (e.g., 'prod_%', '%_admin')",
+			},
 			"roles": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -37,13 +43,15 @@ func Role() *schema.Resource {
 }
 
 func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	likePattern := d.Get("like_pattern").(string)
+
 	var diags diag.Diagnostics
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	dataSource, err := materialize.ListRoles(metaDb)
+	dataSource, err := materialize.ListRoles(metaDb, likePattern)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -62,6 +70,10 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(string(region), "roles"))
+	idSuffix := "roles"
+	if likePattern != "" {
+		idSuffix = fmt.Sprintf("roles|%s", likePattern)
+	}
+	d.SetId(utils.TransformIdWithRegion(string(region), idSuffix))
 	return diags
 }
