@@ -63,3 +63,20 @@ output "qualified_role" {
 }
 
 data "materialize_role" "all" {}
+
+data "materialize_role" "role_prefix" {
+  like_pattern = "role-%"
+  depends_on = [
+    materialize_role.role_1,
+    materialize_role.role_2,
+  ]
+}
+
+data "materialize_role" "self_hosted_roles" {
+  like_pattern = "self_hosted_%"
+  depends_on = [
+    materialize_role.self_hosted_admin,
+    materialize_role.self_hosted_user,
+    materialize_role.self_hosted_login_user,
+  ]
+}

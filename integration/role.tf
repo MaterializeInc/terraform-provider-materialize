@@ -70,6 +70,21 @@ output "qualified_role" {
 
 data "materialize_role" "all" {}
 
+data "materialize_role" "role_prefix" {
+  like_pattern = "role-%"
+  depends_on = [
+    materialize_role.role_1,
+    materialize_role.role_2,
+  ]
+}
+
+data "materialize_role" "grantee_only" {
+  like_pattern = "grantee"
+  depends_on = [
+    materialize_role.grantee,
+  ]
+}
+
 resource "materialize_role" "password_wo" {
   name                = "password_wo"
   password_wo         = "ephemeral_password_value"

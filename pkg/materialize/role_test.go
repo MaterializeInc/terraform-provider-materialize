@@ -164,3 +164,23 @@ func TestRoleDrop(t *testing.T) {
 		}
 	})
 }
+
+func TestListRolesWithoutPattern(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		testhelpers.MockRoleScan(mock, "")
+
+		if _, err := ListRoles(db, ""); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestListRolesWithPattern(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		testhelpers.MockRoleScan(mock, "WHERE mz_roles.name LIKE 'prod_%'")
+
+		if _, err := ListRoles(db, "prod_%"); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
