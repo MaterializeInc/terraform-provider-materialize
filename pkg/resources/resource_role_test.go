@@ -52,7 +52,7 @@ func TestResourceRoleCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT;`,
+			`CREATE ROLE "role" WITH INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -77,7 +77,7 @@ func TestResourceRoleCreateWithLogin(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH LOGIN;`,
+			`CREATE ROLE "role" WITH INHERIT LOGIN;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -102,7 +102,7 @@ func TestResourceRoleCreateWithPasswordAndLogin(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH LOGIN PASSWORD 'password123';`,
+			`CREATE ROLE "role" WITH INHERIT LOGIN PASSWORD 'password123';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
@@ -127,7 +127,7 @@ func TestResourceRoleCreateWithPasswordNoLogin(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH PASSWORD 'password123';`,
+			`CREATE ROLE "role" WITH INHERIT PASSWORD 'password123';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id

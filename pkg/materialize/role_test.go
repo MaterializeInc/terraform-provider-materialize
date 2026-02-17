@@ -13,7 +13,7 @@ import (
 func TestRoleCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT;`,
+			`CREATE ROLE "role" WITH INHERIT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -42,7 +42,7 @@ func TestRoleAlter(t *testing.T) {
 func TestRoleCreateWithSuperuser(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT SUPERUSER;`,
+			`CREATE ROLE "role" WITH INHERIT SUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -59,7 +59,7 @@ func TestRoleCreateWithSuperuser(t *testing.T) {
 func TestRoleCreateWithNoSuperuser(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT NOSUPERUSER;`,
+			`CREATE ROLE "role" WITH INHERIT NOSUPERUSER;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -76,7 +76,7 @@ func TestRoleCreateWithNoSuperuser(t *testing.T) {
 func TestRoleCreateWithLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH LOGIN;`,
+			`CREATE ROLE "role" WITH INHERIT LOGIN;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -93,7 +93,7 @@ func TestRoleCreateWithLogin(t *testing.T) {
 func TestRoleCreateWithPasswordAndLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH LOGIN PASSWORD 'password123';`,
+			`CREATE ROLE "role" WITH INHERIT LOGIN PASSWORD 'password123';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -111,7 +111,7 @@ func TestRoleCreateWithPasswordAndLogin(t *testing.T) {
 func TestRoleCreateWithPasswordNoLogin(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
-			`CREATE ROLE "role" INHERIT WITH PASSWORD 'password123';`,
+			`CREATE ROLE "role" WITH INHERIT PASSWORD 'password123';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "role"}
@@ -119,6 +119,40 @@ func TestRoleCreateWithPasswordNoLogin(t *testing.T) {
 		b.Inherit()
 		b.Password("password123")
 		b.Login(false)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleCreateWithAllOptions(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role" WITH INHERIT LOGIN PASSWORD 'password123' SUPERUSER;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
+		b.Inherit()
+		b.Password("password123")
+		b.Login(true)
+		b.Superuser(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestRoleCreateNoOptions(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE ROLE "role";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "role"}
+		b := NewRoleBuilder(db, o)
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
