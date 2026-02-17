@@ -54,35 +54,33 @@ func (b *RoleBuilder) Create() error {
 	q := strings.Builder{}
 	q.WriteString(fmt.Sprintf(`CREATE ROLE %s`, b.QualifiedName()))
 
-	var p []string
+	var options []string
 
 	// NOINHERIT currently not supported
 	// https://materialize.com/docs/sql/create-role/#details
 	if b.inherit {
-		p = append(p, ` INHERIT`)
+		options = append(options, "INHERIT")
+	}
+
+	if b.login {
+		options = append(options, "LOGIN")
 	}
 
 	if b.password != "" {
-		if b.login {
-			p = append(p, fmt.Sprintf(` WITH LOGIN PASSWORD %s`, QuoteString(b.password)))
-		} else {
-			p = append(p, fmt.Sprintf(` WITH PASSWORD %s`, QuoteString(b.password)))
-		}
-	} else if b.login {
-		p = append(p, ` WITH LOGIN`)
+		options = append(options, fmt.Sprintf("PASSWORD %s", QuoteString(b.password)))
 	}
 
 	if b.superuserSet {
 		if b.superuser {
-			p = append(p, ` SUPERUSER`)
+			options = append(options, "SUPERUSER")
 		} else {
-			p = append(p, ` NOSUPERUSER`)
+			options = append(options, "NOSUPERUSER")
 		}
 	}
 
-	if len(p) > 0 {
-		f := strings.Join(p, "")
-		q.WriteString(f)
+	if len(options) > 0 {
+		q.WriteString(` WITH `)
+		q.WriteString(strings.Join(options, " "))
 	}
 
 	q.WriteString(`;`)
