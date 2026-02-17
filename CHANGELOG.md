@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.11.1 - 2026-02-17
+
+### Features
+
+* **New `materialize_connection_iceberg_catalog` resource** [#810](https://github.com/MaterializeInc/terraform-provider-materialize/pull/810): Added a dedicated resource for creating Iceberg catalog connections. Fixes [#808](https://github.com/MaterializeInc/terraform-provider-materialize/issues/808).
+
+* **New `materialize_sink_iceberg` resource** [#814](https://github.com/MaterializeInc/terraform-provider-materialize/pull/814): Added a dedicated resource for creating Iceberg catalog sinks. Fixes [#809](https://github.com/MaterializeInc/terraform-provider-materialize/issues/809).
+
+* **Wildcard filter support for role data source** [#820](https://github.com/MaterializeInc/terraform-provider-materialize/pull/820): Added `like_pattern` parameter to the role data source for wildcard filtering of roles. Fixes [#821](https://github.com/MaterializeInc/terraform-provider-materialize/issues/821).
+
+### Bug Fixes
+
+* Fixed role login/superuser drift by using `Computed` instead of `Default` for email roles [#818](https://github.com/MaterializeInc/terraform-provider-materialize/pull/818)
+
+### Misc
+
+* Added webhook tables to migration guide [#805](https://github.com/MaterializeInc/terraform-provider-materialize/pull/805)
+* Refactored grant helpers to reduce code duplication [#792](https://github.com/MaterializeInc/terraform-provider-materialize/pull/792)
+* Standardized on single PostgreSQL driver (`pgx`) [#807](https://github.com/MaterializeInc/terraform-provider-materialize/pull/807)
+* Routine dependency updates: [#816](https://github.com/MaterializeInc/terraform-provider-materialize/pull/816), [#817](https://github.com/MaterializeInc/terraform-provider-materialize/pull/817)
+
 ## 0.11.0 - 2026-01-16
 
 ### Breaking Changes
