@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -17,7 +18,13 @@ var schemaSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("schema"),
 	"comment":            CommentSchema(false),
 	"ownership_role":     OwnershipRoleSchema(),
-	"region":             RegionSchema(),
+	"identify_by_name": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "Use the schema name as the resource identifier in your state file, rather than the internal schema ID. Useful when schemas are recreated outside of Terraform (e.g. blue/green deployments), so the resource can be managed consistently when the ID changes.",
+	},
+	"region": RegionSchema(),
 }
 
 func Schema() *schema.Resource {
@@ -30,7 +37,7 @@ func Schema() *schema.Resource {
 		DeleteContext: schemaDelete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: schemaImport,
 		},
 
 		Schema: schemaSchema,
@@ -38,12 +45,17 @@ func Schema() *schema.Resource {
 }
 
 func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	i := d.Id()
+	fullId := d.Id()
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	s, err := materialize.ScanSchema(metaDb, utils.ExtractId(i))
+
+	idType := utils.ExtractIdType(fullId)
+	value := utils.ExtractId(fullId)
+	useNameAsId := d.Get("identify_by_name").(bool)
+
+	s, err := materialize.ScanSchema(metaDb, value, idType == "name")
 	if err == sql.ErrNoRows {
 		d.SetId("")
 		return nil
@@ -51,25 +63,28 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
+	if useNameAsId {
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", s.DatabaseName.String+"|"+s.SchemaName.String))
+	} else {
+		d.SetId(utils.TransformIdWithRegion(string(region), s.SchemaId.String))
+	}
 
+	if err := d.Set("identify_by_name", useNameAsId); err != nil {
+		return diag.FromErr(err)
+	}
 	if err := d.Set("name", s.SchemaName.String); err != nil {
 		return diag.FromErr(err)
 	}
-
 	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
 		return diag.FromErr(err)
 	}
-
 	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
 		return diag.FromErr(err)
 	}
-
 	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String)
 	if err := d.Set("qualified_sql_name", qn); err != nil {
 		return diag.FromErr(err)
 	}
-
 	if err := d.Set("comment", s.Comment.String); err != nil {
 		return diag.FromErr(err)
 	}
@@ -104,11 +119,16 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	// set id
-	i, err := materialize.SchemaId(metaDb, o)
-	if err != nil {
-		return diag.FromErr(err)
+	identifyByName := d.Get("identify_by_name").(bool)
+	if identifyByName {
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", databaseName+"|"+schemaName))
+	} else {
+		schemaId, err := materialize.SchemaId(metaDb, o)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(utils.TransformIdWithRegion(string(region), schemaId))
 	}
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return schemaRead(ctx, d, meta)
 }
@@ -117,12 +137,35 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 
-	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewOwnershipBuilder(metaDb, o)
+
+	if d.HasChange("identify_by_name") {
+		_, newIdentifyByName := d.GetChange("identify_by_name")
+		identifyByName := newIdentifyByName.(bool)
+
+		fullId := d.Id()
+		currentValue := utils.ExtractId(fullId)
+
+		var newId string
+		if identifyByName {
+			newId = utils.TransformIdWithTypeAndRegion(string(region), "name", databaseName+"|"+schemaName)
+		} else {
+			schemaId, err := materialize.SchemaId(metaDb, o)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			newId = utils.TransformIdWithRegion(string(region), schemaId)
+		}
+
+		if currentValue != utils.ExtractId(newId) {
+			d.SetId(newId)
+		}
+	}
 
 	if d.HasChange("ownership_role") {
 		_, newRole := d.GetChange("ownership_role")
@@ -150,6 +193,38 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	return schemaRead(ctx, d, meta)
+}
+
+func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err != nil {
+		return nil, err
+	}
+
+	fullId := d.Id()
+	idType := utils.ExtractIdType(fullId)
+	value := utils.ExtractId(fullId)
+	identifyByName := idType == "name"
+
+	s, err := materialize.ScanSchema(metaDb, value, identifyByName)
+	if err != nil {
+		return nil, fmt.Errorf("error importing schema %s: %w", fullId, err)
+	}
+
+	d.Set("identify_by_name", identifyByName)
+	if identifyByName {
+		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", s.DatabaseName.String+"|"+s.SchemaName.String))
+	} else {
+		d.SetId(utils.TransformIdWithRegion(string(region), s.SchemaId.String))
+	}
+	d.Set("name", s.SchemaName.String)
+	d.Set("database_name", s.DatabaseName.String)
+	d.Set("ownership_role", s.OwnerName.String)
+	d.Set("comment", s.Comment.String)
+	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String)
+	d.Set("qualified_sql_name", qn)
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

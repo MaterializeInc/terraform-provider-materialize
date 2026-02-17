@@ -3,6 +3,7 @@ package materialize
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -87,9 +88,21 @@ func SchemaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	return c.SchemaId.String, nil
 }
 
-func ScanSchema(conn *sqlx.DB, id string) (SchemaParams, error) {
-	p := map[string]string{
-		"mz_schemas.id": id,
+func ScanSchema(conn *sqlx.DB, identifier string, byName bool) (SchemaParams, error) {
+	var p map[string]string
+	if byName {
+		parts := strings.SplitN(identifier, "|", 2)
+		if len(parts) != 2 {
+			return SchemaParams{}, fmt.Errorf("schema name identifier must be database|schema, got %q", identifier)
+		}
+		p = map[string]string{
+			"mz_databases.name": parts[0],
+			"mz_schemas.name":   parts[1],
+		}
+	} else {
+		p = map[string]string{
+			"mz_schemas.id": identifier,
+		}
 	}
 	q := schemaQuery.QueryPredicate(p)
 
