@@ -128,7 +128,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Role, Name: roleName}
 	b := materialize.NewRoleBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("inherit"); ok && v.(bool) {
@@ -178,7 +178,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	roleName := d.Get("name").(string)
 
-	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Role, Name: roleName}
 
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -241,7 +241,7 @@ func roleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "ROLE", Name: roleName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Role, Name: roleName}
 	b := materialize.NewRoleBuilder(metaDb, o)
 
 	if err := b.Drop(); err != nil {

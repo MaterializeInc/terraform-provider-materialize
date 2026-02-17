@@ -89,7 +89,7 @@ func TestAccNetworkPolicy_disappears(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_network_policy.test", "name", policyName),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "NETWORK POLICY",
+							ObjectType: materialize.NetworkPolicy,
 							Name:       policyName,
 						},
 					),

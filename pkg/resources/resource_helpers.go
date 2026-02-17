@@ -52,7 +52,7 @@ func applyComment(d *schema.ResourceData, metaDb *sqlx.DB, o materialize.Materia
 
 // createGrant creates a grant for a given object type.
 // This is the common pattern used across all grant resources (cluster, database, schema, etc.).
-func createGrant(ctx context.Context, d *schema.ResourceData, meta interface{}, objectType, objectNameField string) diag.Diagnostics {
+func createGrant(ctx context.Context, d *schema.ResourceData, meta interface{}, objectType materialize.EntityType, objectNameField string) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 	objectName := d.Get(objectNameField).(string)
@@ -64,14 +64,14 @@ func createGrant(ctx context.Context, d *schema.ResourceData, meta interface{}, 
 
 	// Add schema and database qualifiers if they exist in the resource,
 	// but only if the grant is not ON a database or schema itself
-	if objectType != "DATABASE" && objectType != "SCHEMA" {
+	if objectType != materialize.Database && objectType != materialize.Schema {
 		if v, ok := d.GetOk("schema_name"); ok {
 			obj.SchemaName = v.(string)
 		}
 		if v, ok := d.GetOk("database_name"); ok {
 			obj.DatabaseName = v.(string)
 		}
-	} else if objectType == "SCHEMA" {
+	} else if objectType == materialize.Schema {
 		// Schema grants need database qualifier but not schema qualifier
 		if v, ok := d.GetOk("database_name"); ok {
 			obj.DatabaseName = v.(string)
@@ -109,7 +109,7 @@ func createGrant(ctx context.Context, d *schema.ResourceData, meta interface{}, 
 
 // revokeGrant revokes a grant for a given object type.
 // This is the common pattern used across all grant resources (cluster, database, schema, etc.).
-func revokeGrant(d *schema.ResourceData, meta interface{}, objectType, objectNameField string) diag.Diagnostics {
+func revokeGrant(d *schema.ResourceData, meta interface{}, objectType materialize.EntityType, objectNameField string) diag.Diagnostics {
 	roleName := d.Get("role_name").(string)
 	privilege := d.Get("privilege").(string)
 	objectName := d.Get(objectNameField).(string)
@@ -121,14 +121,14 @@ func revokeGrant(d *schema.ResourceData, meta interface{}, objectType, objectNam
 
 	// Add schema and database qualifiers if they exist in the resource,
 	// but only if the grant is not ON a database or schema itself
-	if objectType != "DATABASE" && objectType != "SCHEMA" {
+	if objectType != materialize.Database && objectType != materialize.Schema {
 		if v, ok := d.GetOk("schema_name"); ok {
 			obj.SchemaName = v.(string)
 		}
 		if v, ok := d.GetOk("database_name"); ok {
 			obj.DatabaseName = v.(string)
 		}
-	} else if objectType == "SCHEMA" {
+	} else if objectType == materialize.Schema {
 		// Schema grants need database qualifier but not schema qualifier
 		if v, ok := d.GetOk("database_name"); ok {
 			obj.DatabaseName = v.(string)
@@ -151,7 +151,7 @@ func revokeGrant(d *schema.ResourceData, meta interface{}, objectType, objectNam
 
 // createDefaultPrivilegeGrant creates a default privilege grant for a given object type.
 // This is the common pattern used across all default privilege grant resources.
-func createDefaultPrivilegeGrant(ctx context.Context, d *schema.ResourceData, meta interface{}, objectType string) diag.Diagnostics {
+func createDefaultPrivilegeGrant(ctx context.Context, d *schema.ResourceData, meta interface{}, objectType materialize.EntityType) diag.Diagnostics {
 	granteeName := d.Get("grantee_name").(string)
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)
@@ -179,7 +179,7 @@ func createDefaultPrivilegeGrant(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	key := b.GrantKey(string(region), objectType, gId, tId, "", "", privilege)
+	key := b.GrantKey(string(region), string(objectType), gId, tId, "", "", privilege)
 	d.SetId(key)
 
 	return grantDefaultPrivilegeRead(ctx, d, meta)
@@ -187,7 +187,7 @@ func createDefaultPrivilegeGrant(ctx context.Context, d *schema.ResourceData, me
 
 // revokeDefaultPrivilegeGrant revokes a default privilege grant for a given object type.
 // This is the common pattern used across all default privilege grant resources.
-func revokeDefaultPrivilegeGrant(d *schema.ResourceData, meta interface{}, objectType string) diag.Diagnostics {
+func revokeDefaultPrivilegeGrant(d *schema.ResourceData, meta interface{}, objectType materialize.EntityType) diag.Diagnostics {
 	granteeName := d.Get("grantee_name").(string)
 	targetName := d.Get("target_role_name").(string)
 	privilege := d.Get("privilege").(string)

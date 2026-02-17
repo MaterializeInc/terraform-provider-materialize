@@ -91,7 +91,7 @@ func TestAccConnConfluentSchemaRegistry_disappears(t *testing.T) {
 					testAccCheckConnConfluentSchemaRegistryExists("materialize_connection_confluent_schema_registry.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "CONNECTION",
+							ObjectType: materialize.BaseConnection,
 							Name:       connectionName,
 						},
 					),

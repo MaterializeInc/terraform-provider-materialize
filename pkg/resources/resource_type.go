@@ -164,7 +164,7 @@ func typeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.BaseType, Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewTypeBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("row_properties"); ok {
@@ -216,7 +216,7 @@ func typeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "TYPE", Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.BaseType, Name: typeName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewOwnershipBuilder(metaDb, o)
 
 	if d.HasChange("ownership_role") {

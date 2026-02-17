@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -37,9 +38,9 @@ func GrantDatabase() *schema.Resource {
 }
 
 func grantDatabaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return createGrant(ctx, d, meta, "DATABASE", "database_name")
+	return createGrant(ctx, d, meta, materialize.Database, "database_name")
 }
 
 func grantDatabaseDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return revokeGrant(d, meta, "DATABASE", "database_name")
+	return revokeGrant(d, meta, materialize.Database, "database_name")
 }

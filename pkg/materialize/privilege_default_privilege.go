@@ -12,13 +12,13 @@ type DefaultPrivilegeBuilder struct {
 	ddl          Builder
 	granteeRole  MaterializeRole
 	targetRole   MaterializeRole
-	objectType   string
+	objectType   EntityType
 	privilege    string
 	schemaName   string
 	databaseName string
 }
 
-func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType, grantee, target, privilege string) *DefaultPrivilegeBuilder {
+func NewDefaultPrivilegeBuilder(conn *sqlx.DB, objectType EntityType, grantee, target, privilege string) *DefaultPrivilegeBuilder {
 	return &DefaultPrivilegeBuilder{
 		ddl:         Builder{conn, Privilege},
 		objectType:  objectType,

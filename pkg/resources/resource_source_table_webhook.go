@@ -174,7 +174,7 @@ func sourceTableWebhookCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Table, Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSourceTableWebhookBuilder(metaDb, o)
 
 	b.BodyFormat(d.Get("body_format").(string))
@@ -334,11 +334,11 @@ func sourceTableWebhookUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "TABLE", Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Table, Name: tableName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.MaterializeObject{ObjectType: "TABLE", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: materialize.Table, Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewSourceTableBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)

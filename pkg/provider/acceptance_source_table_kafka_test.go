@@ -97,7 +97,7 @@ func TestAccSourceTableKafka_disappears(t *testing.T) {
 					testAccCheckSourceTableExists("materialize_source_table_kafka.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "TABLE",
+							ObjectType: materialize.Table,
 							Name:       nameSpace + "_table",
 						},
 					),

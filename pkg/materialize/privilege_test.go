@@ -50,11 +50,11 @@ func TestMapGrantPrivileges(t *testing.T) {
 }
 
 func TestObjectCompatibility(t *testing.T) {
-	if objectCompatibility("CLUSTER") != "CLUSTER" {
+	if objectCompatibility(Cluster) != Cluster {
 		t.Fatal("expected cluster object compatibility to be 'CLUSTER")
 	}
 
-	if objectCompatibility("SOURCE") != "TABLE" {
+	if objectCompatibility(BaseSource) != Table {
 		t.Fatal("expected source object compatibility to be 'TABLE")
 	}
 }
@@ -63,7 +63,7 @@ func TestPrivilegeGrant(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`GRANT CREATE ON DATABASE "materialize" TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: "DATABASE", Name: "materialize"})
+		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: Database, Name: "materialize"})
 		if err := b.Grant(); err != nil {
 			t.Fatal(err)
 		}
@@ -74,7 +74,7 @@ func TestPrivilegeRevoke(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: "DATABASE", Name: "materialize"})
+		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: Database, Name: "materialize"})
 		if err := b.Revoke(); err != nil {
 			t.Fatal(err)
 		}
@@ -87,7 +87,7 @@ func TestScanPrivileges(t *testing.T) {
 		ip := `WHERE mz_databases.id = 'u1'`
 		testhelpers.MockDatabaseScan(mock, ip)
 
-		o, err := ScanPrivileges(db, "DATABASE", "u1")
+		o, err := ScanPrivileges(db, Database, "u1")
 		if err != nil {
 			t.Fatal(err)
 		}

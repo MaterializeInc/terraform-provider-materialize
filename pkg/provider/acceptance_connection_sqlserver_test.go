@@ -101,7 +101,7 @@ func TestAccConnectionSQLServer_disappears(t *testing.T) {
 					testAccCheckConnectionSQLServerExists("materialize_connection_sqlserver.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "CONNECTION",
+							ObjectType: materialize.BaseConnection,
 							Name:       connectionName,
 						},
 					),

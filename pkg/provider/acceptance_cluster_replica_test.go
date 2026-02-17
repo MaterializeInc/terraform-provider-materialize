@@ -86,7 +86,7 @@ func TestAccClusterReplica_disappears(t *testing.T) {
 					testAccCheckClusterReplicaExists("materialize_cluster_replica.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType:  "CLUSTER REPLICA",
+							ObjectType:  materialize.ClusterReplica,
 							Name:        replicaName,
 							ClusterName: clusterName,
 						},

@@ -190,7 +190,7 @@ func sourceWebhookCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "SOURCE", Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.BaseSource, Name: sourceName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSourceWebhookBuilder(metaDb, o)
 
 	b.ClusterName(clusterName).

@@ -99,7 +99,7 @@ func TestAccSourceTablePostgres_disappears(t *testing.T) {
 					testAccCheckSourceTablePostgresExists("materialize_source_table_postgres.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "TABLE",
+							ObjectType: materialize.Table,
 							Name:       nameSpace + "_table",
 						},
 					),

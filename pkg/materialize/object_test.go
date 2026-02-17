@@ -27,7 +27,7 @@ func TestObjectName(t *testing.T) {
 
 func TestObjectId(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		o := MaterializeObject{ObjectType: "DATABASE", Name: "materialize"}
+		o := MaterializeObject{ObjectType: Database, Name: "materialize"}
 
 		// Query Id
 		ip := `WHERE mz_databases.name = 'materialize'`

@@ -5,7 +5,7 @@ import "github.com/jmoiron/sqlx"
 // Any Materialize Database Object. Will contain name and optionally database and schema
 // Cluster name only applies to cluster replicas
 type MaterializeObject struct {
-	ObjectType   string
+	ObjectType   EntityType
 	Name         string
 	SchemaName   string
 	DatabaseName string
@@ -59,38 +59,38 @@ func ObjectId(conn *sqlx.DB, object MaterializeObject) (string, error) {
 	var i string
 	var e error
 
-	switch t := object.ObjectType; t {
-	case "DATABASE":
+	switch object.ObjectType {
+	case Database:
 		i, e = DatabaseId(conn, object)
 
-	case "SCHEMA":
+	case Schema:
 		i, e = SchemaId(conn, object)
 
-	case "TABLE":
+	case Table:
 		i, e = TableId(conn, object)
 
-	case "VIEW":
+	case View:
 		i, e = ViewId(conn, object)
 
-	case "MATERIALIZED VIEW":
+	case MaterializedView:
 		i, e = MaterializedViewId(conn, object)
 
-	case "TYPE":
+	case BaseType:
 		i, e = TypeId(conn, object)
 
-	case "SOURCE":
+	case BaseSource:
 		i, e = SourceId(conn, object)
 
-	case "CONNECTION":
+	case BaseConnection:
 		i, e = ConnectionId(conn, object)
 
-	case "SECRET":
+	case Secret:
 		i, e = SecretId(conn, object)
 
-	case "CLUSTER":
+	case Cluster:
 		i, e = ClusterId(conn, object)
 
-	case "NETWORK POLICY":
+	case NetworkPolicy:
 		i, e = NetworkPolicyId(conn, object)
 	}
 

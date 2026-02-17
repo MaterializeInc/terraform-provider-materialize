@@ -16,7 +16,7 @@ func validPrivileges(objType string) schema.SchemaValidateFunc {
 			return warnings, errors
 		}
 
-		allowedP := materialize.ObjectPermissions[objType].Permissions
+		allowedP := materialize.ObjectPermissions[materialize.EntityType(objType)].Permissions
 		for _, p := range allowedP {
 
 			privilege := materialize.Permissions[p]
@@ -27,7 +27,7 @@ func validPrivileges(objType string) schema.SchemaValidateFunc {
 		}
 
 		var f []string
-		for _, p := range materialize.ObjectPermissions[objType].Permissions {
+		for _, p := range materialize.ObjectPermissions[materialize.EntityType(objType)].Permissions {
 			f = append(f, fmt.Sprintf(`'%s'`, materialize.Permissions[p]))
 		}
 		fs := strings.Join(f[:], ", ")

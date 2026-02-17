@@ -107,7 +107,7 @@ func viewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "VIEW", Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.View, Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewViewBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("statement"); ok && v.(string) != "" {
@@ -148,11 +148,11 @@ func viewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "VIEW", Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.View, Name: viewName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newViewName := d.GetChange("name")
-		o := materialize.MaterializeObject{ObjectType: "VIEW", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: materialize.View, Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewViewBuilder(metaDb, o)
 
 		if err := b.Rename(newViewName.(string)); err != nil {

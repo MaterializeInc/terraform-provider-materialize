@@ -101,7 +101,7 @@ func TestAccConnPostgres_disappears(t *testing.T) {
 					testAccCheckConnPostgresExists("materialize_connection_postgres.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "CONNECTION",
+							ObjectType: materialize.BaseConnection,
 							Name:       connectionName,
 						},
 					),

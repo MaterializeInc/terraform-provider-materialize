@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,9 +34,9 @@ func GrantTypeDefaultPrivilege() *schema.Resource {
 }
 
 func grantTypeDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return createDefaultPrivilegeGrant(ctx, d, meta, "TYPE")
+	return createDefaultPrivilegeGrant(ctx, d, meta, materialize.BaseType)
 }
 
 func grantTypeDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return revokeDefaultPrivilegeGrant(d, meta, "TYPE")
+	return revokeDefaultPrivilegeGrant(d, meta, materialize.BaseType)
 }

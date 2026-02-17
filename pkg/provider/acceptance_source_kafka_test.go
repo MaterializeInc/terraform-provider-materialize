@@ -215,7 +215,7 @@ func TestAccSourceKafka_disappears(t *testing.T) {
 					testAccCheckSourceKafkaExists("materialize_source_kafka.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "SOURCE",
+							ObjectType: materialize.BaseSource,
 							Name:       sourceName,
 						},
 					),

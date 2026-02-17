@@ -103,7 +103,7 @@ func clusterReplicaCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	o := materialize.MaterializeObject{
-		ObjectType:  "CLUSTER REPLICA",
+		ObjectType:  materialize.ClusterReplica,
 		Name:        replicaName,
 		ClusterName: clusterName,
 	}
@@ -164,7 +164,7 @@ func clusterReplicaUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 	o := materialize.MaterializeObject{
-		ObjectType:  "CLUSTER REPLICA",
+		ObjectType:  materialize.ClusterReplica,
 		Name:        replicaName,
 		ClusterName: clusterName,
 	}
