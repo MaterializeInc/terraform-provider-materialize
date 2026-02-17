@@ -86,7 +86,10 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		}
 	}
 
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
@@ -177,7 +180,10 @@ func userUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	if d.HasChange("roles") {
 		roleNames := convertToStringSlice(d.Get("roles").([]interface{}))
-		roleMap := providerMeta.FronteggRoles
+		roleMap, err := providerMeta.GetFronteggRoles(ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		var roleIDs []string
 		for _, roleName := range roleNames {
@@ -188,7 +194,7 @@ func userUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 			}
 		}
 
-		err := frontegg.UpdateUserRoles(ctx, client, userID, email, roleIDs)
+		err = frontegg.UpdateUserRoles(ctx, client, userID, email, roleIDs)
 		if err != nil {
 			return diag.FromErr(err)
 		}

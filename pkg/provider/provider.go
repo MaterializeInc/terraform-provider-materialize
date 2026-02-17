@@ -311,13 +311,9 @@ func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) 
 
 	log.Printf("[DEBUG] Initialized DB clients for regions: %v\n", dbClients)
 
-	// Fetch Frontegg roles and store them in the provider meta
-	fronteggRoles, err := frontegg.ListFronteggRoles(ctx, fronteggClient)
-	if err != nil {
-		return nil, diag.Errorf("Unable to fetch Frontegg roles: %s", err)
-	}
-
 	// Construct and return the provider meta with all clients initialized.
+	// Frontegg roles are lazily fetched when needed by SSO resources,
+	// allowing non-admin users to use the provider for other resources.
 	providerMeta := &utils.ProviderMeta{
 		Mode:           utils.ModeSaaS,
 		DB:             dbClients,
@@ -325,7 +321,9 @@ func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) 
 		CloudAPI:       cloudAPIClient,
 		DefaultRegion:  clients.Region(defaultRegion),
 		RegionsEnabled: regionsEnabled,
-		FronteggRoles:  fronteggRoles,
+		FronteggRolesFetcher: func(ctx context.Context) (map[string]string, error) {
+			return frontegg.ListFronteggRoles(ctx, fronteggClient)
+		},
 	}
 
 	return providerMeta, nil

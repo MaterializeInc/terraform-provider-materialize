@@ -60,7 +60,10 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 	ssoConfigID := d.Get("sso_config_id").(string)
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
@@ -104,7 +107,10 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	var roleNames []string
 	for _, roleID := range roleIDs {

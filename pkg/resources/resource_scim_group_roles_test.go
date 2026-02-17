@@ -84,6 +84,10 @@ func TestScimGroupRoleResourceDelete(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
+			FronteggRoles: map[string]string{
+				"Admin":  "1",
+				"Member": "2",
+			},
 		}
 
 		d := schema.TestResourceDataRaw(t, ScimGroupRoleSchema, nil)

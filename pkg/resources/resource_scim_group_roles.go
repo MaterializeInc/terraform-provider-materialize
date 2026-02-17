@@ -192,7 +192,10 @@ func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta inter
 
 // Helper function to expand a set of role names to a list of role IDs
 func getRoleIDsByName(ctx context.Context, providerMeta *utils.ProviderMeta, roleNames []string) ([]string, error) {
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
