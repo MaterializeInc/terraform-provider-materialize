@@ -78,7 +78,7 @@ func databaseCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "DATABASE", Name: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Database, Name: databaseName}
 	b := materialize.NewDatabaseBuilder(metaDb, o)
 
 	// create resource
@@ -119,7 +119,7 @@ func databaseUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "DATABASE", Name: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Database, Name: databaseName}
 	b := materialize.NewOwnershipBuilder(metaDb, o)
 
 	if d.HasChange("ownership_role") {

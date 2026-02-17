@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -49,9 +50,9 @@ func GrantMaterializedView() *schema.Resource {
 }
 
 func grantMaterializedViewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return createGrant(ctx, d, meta, "MATERIALIZED VIEW", "materialized_view_name")
+	return createGrant(ctx, d, meta, materialize.MaterializedView, "materialized_view_name")
 }
 
 func grantMaterializedViewDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return revokeGrant(d, meta, "MATERIALIZED VIEW", "materialized_view_name")
+	return revokeGrant(d, meta, materialize.MaterializedView, "materialized_view_name")
 }

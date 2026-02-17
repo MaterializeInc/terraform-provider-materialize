@@ -174,7 +174,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Index, Name: indexName}
 	b := materialize.NewIndexBuilder(
 		metaDb,
 		o,
@@ -247,7 +247,7 @@ func indexCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 func indexUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	indexName := d.Get("name").(string)
-	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: indexName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Index, Name: indexName}
 
 	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
@@ -275,7 +275,7 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	o := materialize.MaterializeObject{ObjectType: "INDEX", Name: name}
+	o := materialize.MaterializeObject{ObjectType: materialize.Index, Name: name}
 	b := materialize.NewIndexBuilder(
 		metaDb,
 		o,

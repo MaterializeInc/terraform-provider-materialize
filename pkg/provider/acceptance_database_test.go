@@ -98,7 +98,7 @@ func TestAccDatabase_disappears(t *testing.T) {
 					testAccCheckDatabaseExists("materialize_database.test_role"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "DATABASE",
+							ObjectType: materialize.Database,
 							Name:       databaseName,
 						},
 					),

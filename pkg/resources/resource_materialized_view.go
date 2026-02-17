@@ -126,7 +126,7 @@ func materializedViewCreate(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "MATERIALIZED VIEW", Name: materializedViewName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.MaterializedView, Name: materializedViewName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewMaterializedViewBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("cluster_name"); ok && v.(string) != "" {
@@ -179,11 +179,11 @@ func materializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "MATERIALIZED VIEW", Name: materializedViewName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.MaterializedView, Name: materializedViewName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newMaterializedViewName := d.GetChange("name")
-		o := materialize.MaterializeObject{ObjectType: "MATERIALIZED VIEW", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: materialize.MaterializedView, Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewMaterializedViewBuilder(metaDb, o)
 		if err := b.Rename(newMaterializedViewName.(string)); err != nil {
 			return diag.FromErr(err)

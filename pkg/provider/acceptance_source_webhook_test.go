@@ -173,7 +173,7 @@ func TestAccSourceWebhook_disappears(t *testing.T) {
 					testAccCheckSourceWebhookExists("materialize_source_webhook.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "SOURCE",
+							ObjectType: materialize.BaseSource,
 							Name:       sourceName,
 						},
 					),

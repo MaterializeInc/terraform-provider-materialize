@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -49,9 +50,9 @@ func GrantConnection() *schema.Resource {
 }
 
 func grantConnectionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return createGrant(ctx, d, meta, "CONNECTION", "connection_name")
+	return createGrant(ctx, d, meta, materialize.BaseConnection, "connection_name")
 }
 
 func grantConnectionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return revokeGrant(d, meta, "CONNECTION", "connection_name")
+	return revokeGrant(d, meta, materialize.BaseConnection, "connection_name")
 }

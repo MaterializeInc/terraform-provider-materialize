@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,9 +34,9 @@ func GrantSecretDefaultPrivilege() *schema.Resource {
 }
 
 func grantSecretDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return createDefaultPrivilegeGrant(ctx, d, meta, "SECRET")
+	return createDefaultPrivilegeGrant(ctx, d, meta, materialize.Secret)
 }
 
 func grantSecretDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return revokeDefaultPrivilegeGrant(d, meta, "SECRET")
+	return revokeDefaultPrivilegeGrant(d, meta, materialize.Secret)
 }

@@ -133,7 +133,7 @@ func TestAccSourceSQLServer_disappears(t *testing.T) {
 					testAccCheckSourceSQLServerExists("materialize_source_sqlserver.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "SOURCE",
+							ObjectType: materialize.BaseSource,
 							Name:       sourceName,
 						},
 					),

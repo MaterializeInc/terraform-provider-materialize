@@ -23,7 +23,7 @@ func TestAccDatasourceView_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccAddColumnComment(
 						materialize.MaterializeObject{
-							ObjectType:   "VIEW",
+							ObjectType:   materialize.View,
 							Name:         nameSpace + "_c",
 							DatabaseName: nameSpace,
 							SchemaName:   nameSpace,

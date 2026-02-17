@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,9 +34,9 @@ func GrantTableDefaultPrivilege() *schema.Resource {
 }
 
 func grantTableDefaultPrivilegeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return createDefaultPrivilegeGrant(ctx, d, meta, "TABLE")
+	return createDefaultPrivilegeGrant(ctx, d, meta, materialize.Table)
 }
 
 func grantTableDefaultPrivilegeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return revokeDefaultPrivilegeGrant(d, meta, "TABLE")
+	return revokeDefaultPrivilegeGrant(d, meta, materialize.Table)
 }

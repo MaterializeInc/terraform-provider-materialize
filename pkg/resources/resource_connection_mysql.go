@@ -96,7 +96,7 @@ func connectionMySQLCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.BaseConnection, Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewConnectionMySQLBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("host"); ok {

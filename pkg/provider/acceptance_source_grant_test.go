@@ -25,7 +25,7 @@ func TestAccGrantSource_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
 						materialize.MaterializeObject{
-							ObjectType:   "SOURCE",
+							ObjectType:   materialize.BaseSource,
 							Name:         sourceName,
 							SchemaName:   schemaName,
 							DatabaseName: databaseName,
@@ -50,7 +50,7 @@ func TestAccGrantSource_disappears(t *testing.T) {
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	o := materialize.MaterializeObject{
-		ObjectType:   "SOURCE",
+		ObjectType:   materialize.BaseSource,
 		Name:         sourceName,
 		SchemaName:   schemaName,
 		DatabaseName: databaseName,

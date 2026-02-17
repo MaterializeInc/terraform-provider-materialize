@@ -100,7 +100,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Schema, Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewSchemaBuilder(metaDb, o)
 
 	// create resource
@@ -141,7 +141,7 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Schema, Name: schemaName, DatabaseName: databaseName}
 	b := materialize.NewOwnershipBuilder(metaDb, o)
 
 	if d.HasChange("identify_by_name") {
@@ -185,7 +185,7 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.MaterializeObject{ObjectType: "SCHEMA", Name: oldName.(string), DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: materialize.Schema, Name: oldName.(string), DatabaseName: databaseName}
 		b := materialize.NewSchemaBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)

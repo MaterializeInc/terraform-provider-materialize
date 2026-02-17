@@ -71,7 +71,7 @@ func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.BaseConnection, Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 	b := materialize.NewConnectionIcebergCatalogBuilder(metaDb, o)
 
 	if v, ok := d.GetOk("catalog_type"); ok {
@@ -129,11 +129,11 @@ func connectionIcebergCatalogUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
+	o := materialize.MaterializeObject{ObjectType: materialize.BaseConnection, Name: connectionName, SchemaName: schemaName, DatabaseName: databaseName}
 
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		o := materialize.MaterializeObject{ObjectType: "CONNECTION", Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
+		o := materialize.MaterializeObject{ObjectType: materialize.BaseConnection, Name: oldName.(string), SchemaName: schemaName, DatabaseName: databaseName}
 		b := materialize.NewConnectionIcebergCatalogBuilder(metaDb, o)
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)

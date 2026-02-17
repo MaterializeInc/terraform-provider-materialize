@@ -6,7 +6,7 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 )
 
-func randomPrivilege(objectType string) string {
+func randomPrivilege(objectType materialize.EntityType) string {
 	p := materialize.ObjectPermissions[objectType].Permissions
 	n := rand.Intn(len(p))
 	i := p[n]

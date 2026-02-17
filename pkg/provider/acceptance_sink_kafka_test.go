@@ -177,7 +177,7 @@ func TestAccSinkKafka_disappears(t *testing.T) {
 					testAccCheckSinkKafkaExists("materialize_sink_kafka.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "SINK",
+							ObjectType: materialize.BaseSink,
 							Name:       sinkName,
 						},
 					),

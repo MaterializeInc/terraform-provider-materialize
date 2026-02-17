@@ -155,7 +155,7 @@ func TestAccTable_disappears(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_table.test", "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, tableName)),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "TABLE",
+							ObjectType: materialize.Table,
 							Name:       tableName,
 						},
 					),

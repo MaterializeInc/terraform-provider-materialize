@@ -83,7 +83,7 @@ func TestAccSourceTableWebhook_disappears(t *testing.T) {
 					testAccCheckSourceTableWebhookExists("materialize_source_table_webhook.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "TABLE",
+							ObjectType: materialize.Table,
 							Name:       nameSpace + "_table",
 						},
 					),

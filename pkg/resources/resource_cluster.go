@@ -196,7 +196,7 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Cluster, Name: clusterName}
 	b := materialize.NewClusterBuilder(metaDb, o)
 
 	// managed cluster options
@@ -274,7 +274,7 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	o := materialize.MaterializeObject{ObjectType: "CLUSTER", Name: clusterName}
+	o := materialize.MaterializeObject{ObjectType: materialize.Cluster, Name: clusterName}
 
 	if d.HasChange("identify_by_name") {
 		_, newIdentifyByName := d.GetChange("identify_by_name")

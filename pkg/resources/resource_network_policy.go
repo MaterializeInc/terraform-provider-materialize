@@ -137,7 +137,7 @@ func networkPolicyCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	o := materialize.MaterializeObject{
-		ObjectType: "NETWORK POLICY",
+		ObjectType: materialize.NetworkPolicy,
 		Name:       name,
 	}
 
@@ -192,7 +192,7 @@ func networkPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	o := materialize.MaterializeObject{
-		ObjectType: "NETWORK POLICY",
+		ObjectType: materialize.NetworkPolicy,
 		Name:       name,
 	}
 

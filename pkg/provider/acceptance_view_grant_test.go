@@ -25,7 +25,7 @@ func TestAccGrantView_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
 						materialize.MaterializeObject{
-							ObjectType:   "VIEW",
+							ObjectType:   materialize.View,
 							Name:         viewName,
 							SchemaName:   schemaName,
 							DatabaseName: databaseName,
@@ -50,7 +50,7 @@ func TestAccGrantView_disappears(t *testing.T) {
 	databaseName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	o := materialize.MaterializeObject{
-		ObjectType:   "VIEW",
+		ObjectType:   materialize.View,
 		Name:         viewName,
 		SchemaName:   schemaName,
 		DatabaseName: databaseName,

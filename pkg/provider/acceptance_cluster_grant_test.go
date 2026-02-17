@@ -23,7 +23,7 @@ func TestAccGrantCluster_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGrantExists(
 						materialize.MaterializeObject{
-							ObjectType: "CLUSTER",
+							ObjectType: materialize.Cluster,
 							Name:       clusterName,
 						}, "materialize_cluster_grant.cluster_grant", roleName, privilege),
 					resource.TestMatchResourceAttr("materialize_cluster_grant.cluster_grant", "id", terraformGrantIdRegex),
@@ -42,7 +42,7 @@ func TestAccGrantCluster_disappears(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 
 	o := materialize.MaterializeObject{
-		ObjectType: "CLUSTER",
+		ObjectType: materialize.Cluster,
 		Name:       clusterName,
 	}
 

@@ -97,7 +97,7 @@ func TestAccSourceTableMySQL_disappears(t *testing.T) {
 					testAccCheckSourceTableExists("materialize_source_table_mysql.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "TABLE",
+							ObjectType: materialize.Table,
 							Name:       nameSpace + "_table",
 						},
 					),

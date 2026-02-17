@@ -69,7 +69,7 @@ func TestAccSourceMySQL_disappears(t *testing.T) {
 					testAccCheckSourceMySQLExists("materialize_source_mysql.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "SOURCE",
+							ObjectType: materialize.BaseSource,
 							Name:       sourceName + "_source",
 						},
 					),

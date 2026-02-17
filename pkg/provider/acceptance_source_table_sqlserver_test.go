@@ -97,7 +97,7 @@ func TestAccSourceTableSQLServer_disappears(t *testing.T) {
 					testAccCheckSourceTableSQLServerExists("materialize_source_table_sqlserver.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "TABLE",
+							ObjectType: materialize.Table,
 							Name:       nameSpace + "_table",
 						},
 					),

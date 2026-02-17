@@ -425,7 +425,7 @@ func TestAccConnKafka_disappears(t *testing.T) {
 					testAccCheckConnKafkaExists("materialize_connection_kafka.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "CONNECTION",
+							ObjectType: materialize.BaseConnection,
 							Name:       connectionName,
 						},
 					),

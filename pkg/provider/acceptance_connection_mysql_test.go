@@ -92,7 +92,7 @@ func TestAccConnectionMySQL_disappears(t *testing.T) {
 					testAccCheckConnectionMySQLExists("materialize_connection_mysql.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "CONNECTION",
+							ObjectType: materialize.BaseConnection,
 							Name:       connectionName,
 						},
 					),

@@ -25,44 +25,44 @@ type ObjectType struct {
 }
 
 // https://materialize.com/docs/sql/grant-privilege/#details
-var ObjectPermissions = map[string]ObjectType{
-	"DATABASE": {
+var ObjectPermissions = map[EntityType]ObjectType{
+	Database: {
 		Permissions: []string{"U", "C"},
 	},
-	"SCHEMA": {
+	Schema: {
 		Permissions: []string{"U", "C"},
 	},
-	"TABLE": {
+	Table: {
 		Permissions: []string{"a", "r", "w", "d"},
 	},
-	"VIEW": {
+	View: {
 		Permissions: []string{"r"},
 	},
-	"MATERIALIZED VIEW": {
+	MaterializedView: {
 		Permissions: []string{"r"},
 	},
-	"INDEX": {
+	Index: {
 		Permissions: []string{},
 	},
-	"TYPE": {
+	BaseType: {
 		Permissions: []string{"U"},
 	},
-	"SOURCE": {
+	BaseSource: {
 		Permissions: []string{"r"},
 	},
-	"SINK": {
+	BaseSink: {
 		Permissions: []string{},
 	},
-	"CONNECTION": {
+	BaseConnection: {
 		Permissions: []string{"U"},
 	},
-	"SECRET": {
+	Secret: {
 		Permissions: []string{"U"},
 	},
-	"CLUSTER": {
+	Cluster: {
 		Permissions: []string{"U", "C"},
 	},
-	"SYSTEM": {
+	System: {
 		Permissions: []string{"R", "B", "N", "P"},
 	},
 }
@@ -156,15 +156,13 @@ func NewPrivilegeBuilder(conn *sqlx.DB, role, privilege string, obj MaterializeO
 }
 
 // https://materialize.com/docs/sql/grant-privilege/#compatibility
-func objectCompatibility(objectType string) string {
-	compatibility := []string{"SOURCE", "VIEW", "MATERIALIZED VIEW"}
-
-	for _, c := range compatibility {
-		if c == objectType {
-			return "TABLE"
-		}
+func objectCompatibility(objectType EntityType) EntityType {
+	switch objectType {
+	case BaseSource, View, MaterializedView:
+		return Table
+	default:
+		return objectType
 	}
-	return objectType
 }
 
 func (b *PrivilegeBuilder) Grant() error {
@@ -183,62 +181,62 @@ func (b *PrivilegeBuilder) GrantKey(region, objectId, roleId, privilege string) 
 	return fmt.Sprintf(`%[1]s:GRANT|%[2]s|%[3]s|%[4]s|%[5]s`, region, b.object.ObjectType, objectId, roleId, privilege)
 }
 
-func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) ([]string, error) {
+func ScanPrivileges(conn *sqlx.DB, objectType EntityType, objectId string) ([]string, error) {
 	var p []string
 	var e error
 
-	switch t := objectType; t {
-	case "DATABASE":
+	switch objectType {
+	case Database:
 		params, err := ScanDatabase(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "SCHEMA":
+	case Schema:
 		params, err := ScanSchema(conn, objectId, false)
 		p = params.Privileges
 		e = err
 
-	case "TABLE":
+	case Table:
 		params, err := ScanTable(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "VIEW":
+	case View:
 		params, err := ScanView(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "MATERIALIZED VIEW":
+	case MaterializedView:
 		params, err := ScanMaterializedView(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "TYPE":
+	case BaseType:
 		params, err := ScanType(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "SOURCE":
+	case BaseSource:
 		params, err := ScanSource(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "CONNECTION":
+	case BaseConnection:
 		params, err := ScanConnection(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "SECRET":
+	case Secret:
 		params, err := ScanSecret(conn, objectId)
 		p = params.Privileges
 		e = err
 
-	case "CLUSTER":
+	case Cluster:
 		params, err := ScanCluster(conn, objectId, false)
 		p = params.Privileges
 		e = err
 
-	case "NETWORK POLICY":
+	case NetworkPolicy:
 		params, err := ScanNetworkPolicy(conn, objectId)
 		p = params.Privileges
 		e = err

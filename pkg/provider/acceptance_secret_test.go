@@ -141,7 +141,7 @@ func TestAccSecret_disappears(t *testing.T) {
 					testAccCheckSecretExists("materialize_secret.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "SECRET",
+							ObjectType: materialize.Secret,
 							Name:       secretName,
 						},
 					),

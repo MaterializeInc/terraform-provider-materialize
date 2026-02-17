@@ -76,7 +76,7 @@ func TestAccRole_disappears(t *testing.T) {
 					testAccCheckRoleExists("materialize_role.test"),
 					testAccCheckObjectDisappears(
 						materialize.MaterializeObject{
-							ObjectType: "ROLE",
+							ObjectType: materialize.Role,
 							Name:       roleName,
 						},
 					),

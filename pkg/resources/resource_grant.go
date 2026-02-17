@@ -49,7 +49,7 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return nil
 	}
 
-	p, err := materialize.ScanPrivileges(metaDb, key.objectType, key.objectId)
+	p, err := materialize.ScanPrivileges(metaDb, materialize.EntityType(key.objectType), key.objectId)
 	if err == sql.ErrNoRows {
 		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
