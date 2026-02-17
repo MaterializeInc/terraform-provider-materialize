@@ -138,7 +138,7 @@ func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("Schema not found: %s", name)
 		}
-		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID), false)
 		return err
 	}
 }
@@ -155,7 +155,7 @@ func testAccCheckAllSchemasDestroyed(s *terraform.State) error {
 			continue
 		}
 
-		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID))
+		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID), false)
 		if err == nil {
 			return fmt.Errorf("Schema %v still exists", utils.ExtractId(r.Primary.ID))
 		} else if err != sql.ErrNoRows {

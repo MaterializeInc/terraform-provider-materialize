@@ -194,7 +194,7 @@ func ScanPrivileges(conn *sqlx.DB, objectType, objectId string) ([]string, error
 		e = err
 
 	case "SCHEMA":
-		params, err := ScanSchema(conn, objectId)
+		params, err := ScanSchema(conn, objectId, false)
 		p = params.Privileges
 		e = err
 
