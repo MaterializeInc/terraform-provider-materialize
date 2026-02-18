@@ -1,0 +1,29 @@
+# Pre-commit hooks to enforce formatting and docs generation
+# See https://pre-commit.com for more information
+# Installation: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: local
+    hooks:
+      # Run go generate to ensure documentation is up to date
+      - id: make-docs
+        name: Generate documentation
+        entry: bash -c 'make docs'
+        language: system
+        pass_filenames: false
+        files: \.(go|tf)$
+
+      # Format Go code
+      - id: gofmt
+        name: Format Go code
+        entry: gofmt -s -w
+        language: system
+        files: \.go$
+
+      # Format and check Terraform files
+      - id: terraform-fmt
+        name: Format Terraform files
+        entry: bash -c 'terraform fmt -recursive -check -diff'
+        language: system
+        pass_filenames: false
+        files: \.tf$

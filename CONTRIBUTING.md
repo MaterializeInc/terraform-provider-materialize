@@ -17,6 +17,29 @@ Compile the provider
 make install
 ```
 
+### Setting up Pre-commit Hooks (Recommended)
+
+To automatically enforce formatting and documentation generation before each commit, install and configure pre-commit hooks:
+
+```bash
+# Install pre-commit (requires Python)
+pip install pre-commit
+
+# Install the git hook scripts
+pre-commit install
+```
+
+The pre-commit hooks will automatically run the following checks before each commit:
+- `make docs` - ensures generated documentation is up-to-date
+- `gofmt -s -w .` - formats Go code
+- `terraform fmt -recursive -check -diff` - validates Terraform formatting
+
+You can also run the hooks manually at any time:
+
+```bash
+pre-commit run --all-files
+```
+
 ### Code Formatting
 
 Before submitting a pull request, ensure your Go code is properly formatted:
