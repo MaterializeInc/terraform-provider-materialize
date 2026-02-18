@@ -22,6 +22,12 @@ resource "materialize_schema" "schema" {
   comment       = "schema comment"
 }
 
+resource "materialize_schema" "schema_by_name" {
+  name             = "schema_by_name"
+  database_name    = materialize_database.database.name
+  identify_by_name = true
+}
+
 resource "materialize_schema_grant" "schema_grant_usage" {
   role_name     = materialize_role.role_1.name
   privilege     = "USAGE"

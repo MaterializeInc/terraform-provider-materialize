@@ -46,6 +46,12 @@ resource "materialize_schema" "schema" {
   comment       = "schema comment"
 }
 
+resource "materialize_schema" "schema_by_name" {
+  name             = "schema_by_name"
+  database_name    = materialize_database.database.name
+  identify_by_name = true
+}
+
 # Create in separate region
 resource "materialize_schema" "schema_us_west" {
   name          = "example_schema"

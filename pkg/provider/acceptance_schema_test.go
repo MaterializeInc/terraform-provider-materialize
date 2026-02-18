@@ -36,9 +36,39 @@ func TestAccSchema_basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "materialize_schema.test",
+				ResourceName:            "materialize_schema.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"identify_by_name"},
+			},
+		},
+	})
+}
+
+func TestAccSchema_identifyByName(t *testing.T) {
+	schemaName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllSchemasDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSchemaResourceWithNameAsId(schemaName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaExists("materialize_schema.test_name_as_id"),
+					resource.TestCheckResourceAttr("materialize_schema.test_name_as_id", "name", schemaName),
+					resource.TestCheckResourceAttr("materialize_schema.test_name_as_id", "identify_by_name", "true"),
+					resource.TestCheckResourceAttr("materialize_schema.test_name_as_id", "id", "aws/us-east-1:name:materialize|"+schemaName),
+					resource.TestCheckResourceAttr("materialize_schema.test_name_as_id", "database_name", "materialize"),
+				),
+			},
+			{
+				ResourceName:      "materialize_schema.test_name_as_id",
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"identify_by_name",
+				},
 			},
 		},
 	})
@@ -127,6 +157,16 @@ func testAccSchemaResource(roleName, schemaName, schema2Name, schemaOwner, comme
 	`, roleName, schemaName, schema2Name, schemaOwner, comment)
 }
 
+func testAccSchemaResourceWithNameAsId(schemaName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_schema" "test_name_as_id" {
+		name             = "%[1]s"
+		database_name    = "materialize"
+		identify_by_name = true
+	}
+	`, schemaName)
+}
+
 func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		meta := testAccProvider.Meta()
@@ -138,7 +178,11 @@ func testAccCheckSchemaExists(name string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("Schema not found: %s", name)
 		}
-		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID), false)
+		identifyByName := false
+		if r.Primary.Attributes["identify_by_name"] == "true" {
+			identifyByName = true
+		}
+		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID), identifyByName)
 		return err
 	}
 }
