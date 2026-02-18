@@ -7,7 +7,7 @@ import (
 )
 
 func randomPrivilege(objectType materialize.EntityType) string {
-	p := materialize.ObjectPermissions[objectType].Permissions
+	p := materialize.GetObjectPermissions(objectType)
 	n := rand.Intn(len(p))
 	i := p[n]
 	return materialize.Permissions[i]
