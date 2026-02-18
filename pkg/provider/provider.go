@@ -38,7 +38,7 @@ func Provider(version string) *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", "require"),
 				Description: "For testing purposes, the SSL mode to use.",
 			},
-			// TODO: Switch name to Admin Endpoint for consistency
+			// TODO: Switch name to Admin Endpoint for consistency.
 			"endpoint": {
 				Type:        schema.TypeString,
 				Optional:    true,

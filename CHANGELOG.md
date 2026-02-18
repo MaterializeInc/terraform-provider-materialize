@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.11.2 - 2026-02-18
+
+### Features
+
+* **Schema `identify_by_name` support** [#824](https://github.com/MaterializeInc/terraform-provider-materialize/pull/824): Added `identify_by_name` parameter to the schema resource to prevent Terraform drift after blue-green deployments. When enabled, schemas are identified by name instead of ID, keeping the resource stable across replacements when the logical schema remains the same.
+
+### Bug Fixes
+
+* Fixed `CREATE ROLE` SQL clause ordering to place all options after a single `WITH` keyword [#823](https://github.com/MaterializeInc/terraform-provider-materialize/pull/823). Previously, the provider generated invalid SQL when using `INHERIT` with `WITH LOGIN/PASSWORD`, producing `CREATE ROLE ... INHERIT WITH LOGIN ...` instead of the correct `CREATE ROLE ... WITH INHERIT LOGIN ...`. Fixes [#780](https://github.com/MaterializeInc/terraform-provider-materialize/issues/780).
+
+### Misc
+
+* Lazy-load Frontegg roles to allow non-admin users to use the provider [#826](https://github.com/MaterializeInc/terraform-provider-materialize/pull/826). Previously, the provider fetched Frontegg roles during initialization, requiring Organization Admin permissions. Roles are now fetched lazily only when needed by SSO-related resources, allowing Organization Members to manage clusters, sources, and other database objects without admin permissions.
+
 ## 0.11.1 - 2026-02-17
 
 ### Features
