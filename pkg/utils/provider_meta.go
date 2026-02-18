@@ -56,11 +56,8 @@ type ProviderMeta struct {
 	// This allows lazy loading of roles only when SSO resources need them.
 	FronteggRolesFetcher func(ctx context.Context) (map[string]string, error)
 
-	// fronteggRolesOnce ensures roles are only fetched once
-	fronteggRolesOnce sync.Once
-
-	// fronteggRolesErr stores any error from fetching roles
-	fronteggRolesErr error
+	// fronteggRolesMu protects lazy loading of FronteggRoles
+	fronteggRolesMu sync.Mutex
 }
 
 func (p *ProviderMeta) IsSelfHosted() bool {
@@ -76,25 +73,32 @@ func (p *ProviderMeta) IsSaaS() bool {
 // This allows non-admin users to use the provider for resources that don't
 // require SSO/role management capabilities.
 func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string]string, error) {
-	// If roles are already loaded, return them
+	// Fast path: if roles are already loaded, return them without locking
 	if p.FronteggRoles != nil {
 		return p.FronteggRoles, nil
 	}
 
 	// If no fetcher is configured, return an error
 	if p.FronteggRolesFetcher == nil {
-		return nil, fmt.Errorf("Frontegg roles fetcher not configured")
+		return nil, fmt.Errorf("frontegg roles fetcher not configured")
 	}
 
-	// Lazily fetch roles using sync.Once for thread safety
-	p.fronteggRolesOnce.Do(func() {
-		p.FronteggRoles, p.fronteggRolesErr = p.FronteggRolesFetcher(ctx)
-	})
+	// Slow path: acquire lock and double-check
+	p.fronteggRolesMu.Lock()
+	defer p.fronteggRolesMu.Unlock()
 
-	if p.fronteggRolesErr != nil {
-		return nil, fmt.Errorf("unable to fetch Frontegg roles: %w. This operation requires Organization Admin permissions", p.fronteggRolesErr)
+	// Double-check after acquiring lock
+	if p.FronteggRoles != nil {
+		return p.FronteggRoles, nil
 	}
 
+	// Fetch roles - only cache on success to allow retries on transient failures
+	roles, err := p.FronteggRolesFetcher(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch Frontegg roles: %w. This operation requires Organization Admin permissions", err)
+	}
+
+	p.FronteggRoles = roles
 	return p.FronteggRoles, nil
 }
 
