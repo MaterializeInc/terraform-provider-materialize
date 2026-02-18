@@ -69,7 +69,10 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 	group := d.Get("group").(string)
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
@@ -108,7 +111,10 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	for _, group := range *groups {
 		if group.ID == groupID {
@@ -151,7 +157,10 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	groupID := d.Id()
 	roleNames := convertToStringSlice(d.Get("roles").(*schema.Set).List())
 
-	roleMap := providerMeta.FronteggRoles
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	var roleIDs []string
 	for _, roleName := range roleNames {

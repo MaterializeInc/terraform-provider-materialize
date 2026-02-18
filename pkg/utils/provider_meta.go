@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -45,9 +47,17 @@ type ProviderMeta struct {
 	// for use. This can be used to quickly check the availability in different regions.
 	RegionsEnabled map[clients.Region]bool
 
-	// Frontegg Roles is a map that associates each Frontegg role with its corresponding ID.
+	// FronteggRoles is a map that associates each Frontegg role with its corresponding ID.
 	// This is used to map role names to role IDs when creating/updating users.
+	// This field is lazily loaded - use GetFronteggRoles() to access it.
 	FronteggRoles map[string]string
+
+	// FronteggRolesFetcher is a function to fetch Frontegg roles on demand.
+	// This allows lazy loading of roles only when SSO resources need them.
+	FronteggRolesFetcher func(ctx context.Context) (map[string]string, error)
+
+	// fronteggRolesMu protects lazy loading of FronteggRoles
+	fronteggRolesMu sync.Mutex
 }
 
 func (p *ProviderMeta) IsSelfHosted() bool {
@@ -57,6 +67,39 @@ func (p *ProviderMeta) IsSelfHosted() bool {
 func (p *ProviderMeta) IsSaaS() bool {
 	// Empty string or explicit ModeSaaS both indicate SaaS mode
 	return p.Mode == "" || p.Mode == ModeSaaS
+}
+
+// GetFronteggRoles lazily fetches and returns the Frontegg roles map.
+// This allows non-admin users to use the provider for resources that don't
+// require SSO/role management capabilities.
+func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string]string, error) {
+	// Fast path: if roles are already loaded, return them without locking
+	if p.FronteggRoles != nil {
+		return p.FronteggRoles, nil
+	}
+
+	// If no fetcher is configured, return an error
+	if p.FronteggRolesFetcher == nil {
+		return nil, fmt.Errorf("frontegg roles fetcher not configured")
+	}
+
+	// Slow path: acquire lock and double-check
+	p.fronteggRolesMu.Lock()
+	defer p.fronteggRolesMu.Unlock()
+
+	// Double-check after acquiring lock
+	if p.FronteggRoles != nil {
+		return p.FronteggRoles, nil
+	}
+
+	// Fetch roles - only cache on success to allow retries on transient failures
+	roles, err := p.FronteggRolesFetcher(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch Frontegg roles: %w. This operation requires Organization Admin permissions", err)
+	}
+
+	p.FronteggRoles = roles
+	return p.FronteggRoles, nil
 }
 
 // ValidateSaaSOnly validates that a resource is only used in SaaS mode and returns

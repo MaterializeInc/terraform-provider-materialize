@@ -129,7 +129,10 @@ func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			return diag.Errorf("at least one role is required for a service-type app password")
 		}
 
-		roleMap := providerMeta.FronteggRoles
+		roleMap, err := providerMeta.GetFronteggRoles(ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		var roleIDs []string
 		for _, role := range roles {
@@ -207,7 +210,10 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 		// We don't update secret and password because those fields can only be
 		// determined at creation time.
 	} else {
-		roleMap := providerMeta.FronteggRoles
+		roleMap, err := providerMeta.GetFronteggRoles(ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		roleReverseMap := make(map[string]string)
 		for roleName, roleId := range roleMap {

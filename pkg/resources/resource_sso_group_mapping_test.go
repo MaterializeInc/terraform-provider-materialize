@@ -66,6 +66,10 @@ func TestSSORoleGroupMappingRead(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
+			FronteggRoles: map[string]string{
+				"Admin":  "1",
+				"Member": "2",
+			},
 		}
 
 		// Set the initial state with "group" and "roles"
