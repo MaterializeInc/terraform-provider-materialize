@@ -1,7 +1,55 @@
 version: 2
 updates:
+  # Go module dependencies
   - package-ecosystem: gomod
     directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "22:00"
+    cooldown:
+      default-days: 3
+
+  # GitHub Actions dependencies
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "22:00"
+    cooldown:
+      default-days: 3
+
+  # Docker dependencies
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "22:00"
+    cooldown:
+      default-days: 3
+
+  - package-ecosystem: docker
+    directory: /integration/postgres
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "22:00"
+    cooldown:
+      default-days: 3
+
+  - package-ecosystem: docker
+    directory: /integration/sqlserver
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "22:00"
+    cooldown:
+      default-days: 3
+
+  - package-ecosystem: docker
+    directory: /mocks/cloud
     schedule:
       interval: weekly
       day: sunday
