@@ -190,6 +190,12 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if err := b.Rename(newName.(string)); err != nil {
 			return diag.FromErr(err)
 		}
+
+		// Update the ID after rename when using name-based identification,
+		// otherwise schemaRead would look up the old name and fail.
+		if d.Get("identify_by_name").(bool) {
+			d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", databaseName+"|"+newName.(string)))
+		}
 	}
 
 	return schemaRead(ctx, d, meta)
@@ -211,18 +217,18 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return nil, fmt.Errorf("error importing schema %s: %w", fullId, err)
 	}
 
-	d.Set("identify_by_name", identifyByName)
 	if identifyByName {
 		d.SetId(utils.TransformIdWithTypeAndRegion(string(region), "name", s.DatabaseName.String+"|"+s.SchemaName.String))
 	} else {
 		d.SetId(utils.TransformIdWithRegion(string(region), s.SchemaId.String))
 	}
+
+	d.Set("identify_by_name", identifyByName)
 	d.Set("name", s.SchemaName.String)
 	d.Set("database_name", s.DatabaseName.String)
 	d.Set("ownership_role", s.OwnerName.String)
 	d.Set("comment", s.Comment.String)
-	qn := materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String)
-	d.Set("qualified_sql_name", qn)
+	d.Set("qualified_sql_name", materialize.QualifiedName(s.DatabaseName.String, s.SchemaName.String))
 
 	return []*schema.ResourceData{d}, nil
 }
