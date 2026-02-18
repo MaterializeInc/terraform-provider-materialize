@@ -20,51 +20,50 @@ var Permissions = map[string]string{
 	"P": "CREATENETWORKPOLICY",
 }
 
-type ObjectType struct {
-	Permissions []string
-}
-
+// GetObjectPermissions returns the allowed permissions for a given entity type.
+// This function uses an exhaustive switch to ensure all entity types are handled at compile time.
 // https://materialize.com/docs/sql/grant-privilege/#details
-var ObjectPermissions = map[EntityType]ObjectType{
-	Database: {
-		Permissions: []string{"U", "C"},
-	},
-	Schema: {
-		Permissions: []string{"U", "C"},
-	},
-	Table: {
-		Permissions: []string{"a", "r", "w", "d"},
-	},
-	View: {
-		Permissions: []string{"r"},
-	},
-	MaterializedView: {
-		Permissions: []string{"r"},
-	},
-	Index: {
-		Permissions: []string{},
-	},
-	BaseType: {
-		Permissions: []string{"U"},
-	},
-	BaseSource: {
-		Permissions: []string{"r"},
-	},
-	BaseSink: {
-		Permissions: []string{},
-	},
-	BaseConnection: {
-		Permissions: []string{"U"},
-	},
-	Secret: {
-		Permissions: []string{"U"},
-	},
-	Cluster: {
-		Permissions: []string{"U", "C"},
-	},
-	System: {
-		Permissions: []string{"R", "B", "N", "P"},
-	},
+func GetObjectPermissions(entityType EntityType) []string {
+	switch entityType {
+	case Database:
+		return []string{"U", "C"}
+	case Schema:
+		return []string{"U", "C"}
+	case Table:
+		return []string{"a", "r", "w", "d"}
+	case View:
+		return []string{"r"}
+	case MaterializedView:
+		return []string{"r"}
+	case Index:
+		return []string{}
+	case BaseType:
+		return []string{"U"}
+	case BaseSource:
+		return []string{"r"}
+	case BaseSink:
+		return []string{}
+	case BaseConnection:
+		return []string{"U"}
+	case Secret:
+		return []string{"U"}
+	case Cluster:
+		return []string{"U", "C"}
+	case ClusterReplica:
+		return []string{}
+	case System:
+		return []string{"R", "B", "N", "P"}
+	case NetworkPolicy:
+		return []string{}
+	case Role:
+		return []string{}
+	case Privilege:
+		return []string{}
+	case Ownership:
+		return []string{}
+	default:
+		return []string{}
+	}
 }
 
 // Converts a privilege abbrevation to name
