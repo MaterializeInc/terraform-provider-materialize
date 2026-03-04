@@ -28,6 +28,18 @@ func addTestTopic() error {
 	return nil
 }
 
+func addTestTopicWithName(name string) error {
+	if os.Getenv("TF_ACC") == "" {
+		return nil
+	}
+	cmd := exec.Command("docker", "exec", "redpanda", "rpk", "topic", "create", name)
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func TestAccSourceKafka_basic(t *testing.T) {
 	addTestTopic()
 	sourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)

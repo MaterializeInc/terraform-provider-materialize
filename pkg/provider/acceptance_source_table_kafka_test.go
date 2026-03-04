@@ -84,6 +84,26 @@ func TestAccSourceTableKafka_update(t *testing.T) {
 	})
 }
 
+func TestAccSourceTableKafka_dashedTopic(t *testing.T) {
+	addTestTopicWithName("terraform-dashed-topic")
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceTableKafkaDashedTopicResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceTableExists("materialize_source_table_kafka.test_dashed"),
+					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_dashed", "name", nameSpace+"_table_dashed"),
+					resource.TestCheckResourceAttr("materialize_source_table_kafka.test_dashed", "topic", "terraform-dashed-topic"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceTableKafka_disappears(t *testing.T) {
 	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -226,4 +246,42 @@ func testAccSourceTableKafkaResource(nameSpace, upstreamName, ownershipRole, com
 		depends_on = [materialize_role.test_role]
 	}
 	`, nameSpace, upstreamName, ownershipRole, comment)
+}
+
+func testAccSourceTableKafkaDashedTopicResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "kafka_connection" {
+		name = "%[1]s_connection_kafka"
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		security_protocol = "PLAINTEXT"
+	}
+
+	resource "materialize_source_kafka" "test_source_kafka_dashed" {
+		name         = "%[1]s_source_kafka_dashed"
+		cluster_name = "quickstart"
+		topic        = "terraform-dashed-topic"
+
+		kafka_connection {
+			name = materialize_connection_kafka.kafka_connection.name
+		}
+	}
+
+	resource "materialize_source_table_kafka" "test_dashed" {
+		name           = "%[1]s_table_dashed"
+		schema_name    = "public"
+		database_name  = "materialize"
+
+		source {
+			name = materialize_source_kafka.test_source_kafka_dashed.name
+		}
+
+		topic = "terraform-dashed-topic"
+
+		value_format {
+			json = true
+		}
+	}
+	`, nameSpace)
 }

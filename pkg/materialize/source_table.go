@@ -166,7 +166,12 @@ func (b *SourceTableBuilder) BaseCreate(sourceType string, additionalOptions fun
 		if b.upstreamSchemaName != "" {
 			q.WriteString(fmt.Sprintf(`%s.`, QuoteIdentifier(b.upstreamSchemaName)))
 		}
-		q.WriteString(QuoteIdentifier(b.upstreamName))
+		// Kafka topic names are string literals, not SQL identifiers
+		if sourceType == "kafka" {
+			q.WriteString(QuoteString(b.upstreamName))
+		} else {
+			q.WriteString(QuoteIdentifier(b.upstreamName))
+		}
 
 		q.WriteString(")")
 	}

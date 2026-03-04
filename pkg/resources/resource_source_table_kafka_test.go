@@ -65,7 +65,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             FORMAT JSON
             INCLUDE KEY AS "message_key", HEADERS AS "message_headers", PARTITION AS "message_partition"
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "decoding_error"\)\);`,
@@ -184,7 +184,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_avro"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."sr_conn"
             ENVELOPE DEBEZIUM;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -224,7 +224,7 @@ func TestResourceSourceTableKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             FORMAT JSON
             INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "decoding_error"\)\);`,
@@ -262,7 +262,7 @@ func TestResourceSourceTableKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             FORMAT JSON
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "decoding_error"\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -314,7 +314,7 @@ func TestResourceSourceTableKafkaCreateWithCSVFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_csv"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             FORMAT CSV WITH HEADER \( column1, column2, column3 \) DELIMITER ',';`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -375,7 +375,7 @@ func TestResourceSourceTableKafkaCreateWithKeyAndValueFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_key_value"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             KEY FORMAT JSON
             VALUE FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."sr_conn";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -438,7 +438,7 @@ func TestResourceSourceTableKafkaCreateWithProtobufFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table_protobuf"
             FROM SOURCE "materialize"."public"."kafka_source"
-            \(REFERENCE "topic"\)
+            \(REFERENCE 'topic'\)
             FORMAT PROTOBUF MESSAGE 'MyMessage' USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."sr_conn"
             ENVELOPE NONE;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
