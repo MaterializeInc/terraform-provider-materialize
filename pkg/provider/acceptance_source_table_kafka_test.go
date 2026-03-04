@@ -279,7 +279,7 @@ func testAccSourceTableKafkaDashedTopicResource(nameSpace string) string {
 
 		topic = "terraform-dashed-topic"
 
-		value_format {
+		format {
 			json = true
 		}
 	}

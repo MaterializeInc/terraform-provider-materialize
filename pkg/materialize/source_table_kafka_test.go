@@ -13,7 +13,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE 'topic'\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY AS "message_key", HEADERS AS "message_headers", PARTITION AS "message_partition"
             ENVELOPE UPSERT
@@ -45,7 +45,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE 'topic'\)
+            \(REFERENCE "topic"\)
             FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "database"."schema"."schema_registry"
             KEY STRATEGY EXTRACT
             VALUE STRATEGY EXTRACT
@@ -78,7 +78,7 @@ func TestResourceSourceTableKafkaCreateWithDashedTopic(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE 'tidb-cloud-kouzoh-eagle-insight-jp-dbz-eagle-insight-eagle-insight-ads'\)
+            \(REFERENCE "tidb-cloud-kouzoh-eagle-insight-jp-dbz-eagle-insight-eagle-insight-ads"\)
             FORMAT JSON
             ENVELOPE NONE;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -101,7 +101,7 @@ func TestResourceSourceTableKafkaCreateWithUpsertOptions(t *testing.T) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
-            \(REFERENCE 'topic'\)
+            \(REFERENCE "topic"\)
             FORMAT JSON
             INCLUDE KEY, HEADERS, PARTITION, OFFSET, TIMESTAMP
             ENVELOPE UPSERT \(VALUE DECODING ERRORS = \(INLINE AS "my_error_col"\)\)
