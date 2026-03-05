@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func withRequiredWith(s *schema.Schema, requiredWith []string) *schema.Schema {
+	s.RequiredWith = requiredWith
+	return s
+}
+
 var sourceTableKafkaSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source table", true, false),
 	"schema_name":        SchemaNameSchema("source table", false),
@@ -92,8 +97,8 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
-	"key_format":   FormatSpecSchema("key_format", "Set the key format explicitly.", false),
-	"value_format": FormatSpecSchema("value_format", "Set the value format explicitly.", false),
+	"key_format":   withRequiredWith(FormatSpecSchema("key_format", "Set the key format explicitly.", false), []string{"value_format"}),
+	"value_format": withRequiredWith(FormatSpecSchema("value_format", "Set the value format explicitly.", false), []string{"key_format"}),
 	"envelope": {
 		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
 		Type:        schema.TypeList,
