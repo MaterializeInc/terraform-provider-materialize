@@ -382,7 +382,7 @@ resource "materialize_connection_mysql" "mysql_ssl_connection" {
 
 resource "materialize_connection_aws" "aws_conn" {
   name     = "aws_conn"
-  endpoint = "http://localhost:4566"
+  endpoint = "http://localhost:4567"
   access_key_id {
     text = "test"
   }
