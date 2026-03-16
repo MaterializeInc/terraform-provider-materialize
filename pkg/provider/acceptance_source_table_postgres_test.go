@@ -26,14 +26,14 @@ func TestAccSourceTablePostgres_basic(t *testing.T) {
 					resource.TestMatchResourceAttr("materialize_source_table_postgres.test_postgres", "id", terraformObjectIdRegex),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "name", nameSpace+"_table_postgres"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "database_name", "materialize"),
-					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "schema_name", nameSpace+"_schema"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "text_columns.0", "updated_at"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "upstream_name", "table2"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "upstream_schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.0.name", nameSpace+"_source_postgres"),
-					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.0.schema_name", nameSpace+"_schema"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.0.database_name", "materialize"),
 				),
 			},
@@ -64,7 +64,7 @@ func TestAccSourceTablePostgres_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "comment", ""),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.name", nameSpace+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.schema_name", nameSpace+"_schema"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.database_name", "materialize"),
 				),
 			},
@@ -79,7 +79,7 @@ func TestAccSourceTablePostgres_update(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "comment", "Updated comment"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.name", nameSpace+"_source"),
-					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.schema_name", "public"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test", "source.0.schema_name", nameSpace+"_schema"),
 				),
 			},
 		},
@@ -113,6 +113,11 @@ func TestAccSourceTablePostgres_disappears(t *testing.T) {
 
 func testAccSourceTablePostgresBasicResource(nameSpace string) string {
 	return fmt.Sprintf(`
+	resource "materialize_schema" "test_schema" {
+		name          = "%[1]s_schema"
+		database_name = "materialize"
+	}
+
 	resource "materialize_secret" "postgres_password" {
 		name  = "%[1]s_secret_postgres"
 		value = "c2VjcmV0Cg=="
@@ -133,6 +138,7 @@ func testAccSourceTablePostgresBasicResource(nameSpace string) string {
 
 	resource "materialize_source_postgres" "test_source_postgres" {
 		name         = "%[1]s_source_postgres"
+		schema_name  = materialize_schema.test_schema.name
 		cluster_name = "quickstart"
 
 		postgres_connection {
@@ -147,11 +153,13 @@ func testAccSourceTablePostgresBasicResource(nameSpace string) string {
 
 	resource "materialize_source_table_postgres" "test_postgres" {
 		name           = "%[1]s_table_postgres"
-		schema_name    = "public"
+		schema_name    = materialize_schema.test_schema.name
 		database_name  = "materialize"
 
 		source {
-			name = materialize_source_postgres.test_source_postgres.name
+			name          = materialize_source_postgres.test_source_postgres.name
+			schema_name   = materialize_schema.test_schema.name
+			database_name = "materialize"
 		}
 
 		upstream_name         = "table2"
@@ -166,6 +174,11 @@ func testAccSourceTablePostgresBasicResource(nameSpace string) string {
 
 func testAccSourceTablePostgresResource(nameSpace, upstreamName, ownershipRole, comment string) string {
 	return fmt.Sprintf(`
+	resource "materialize_schema" "test_schema" {
+		name          = "%[1]s_schema"
+		database_name = "materialize"
+	}
+
 	resource "materialize_secret" "postgres_password" {
 		name  = "%[1]s_secret"
 		value = "c2VjcmV0Cg=="
@@ -188,6 +201,7 @@ func testAccSourceTablePostgresResource(nameSpace, upstreamName, ownershipRole, 
 
 	resource "materialize_source_postgres" "test_source" {
 		name         = "%[1]s_source"
+		schema_name  = materialize_schema.test_schema.name
 		cluster_name = "quickstart"
 
 		postgres_connection {
@@ -208,12 +222,12 @@ func testAccSourceTablePostgresResource(nameSpace, upstreamName, ownershipRole, 
 
 	resource "materialize_source_table_postgres" "test" {
 		name           = "%[1]s_table"
-		schema_name    = "public"
+		schema_name    = materialize_schema.test_schema.name
 		database_name  = "materialize"
 
 		source {
 			name          = materialize_source_postgres.test_source.name
-			schema_name   = "public"
+			schema_name   = materialize_schema.test_schema.name
 			database_name = "materialize"
 		}
 
@@ -330,6 +344,11 @@ func TestAccSourceTablePostgres_withNumericTypes(t *testing.T) {
 
 func testAccSourceTablePostgresWithJSONBResource(nameSpace string) string {
 	return fmt.Sprintf(`
+	resource "materialize_schema" "test_schema" {
+		name          = "%[1]s_schema"
+		database_name = "materialize"
+	}
+
 	resource "materialize_secret" "postgres_password" {
 		name  = "%[1]s_secret"
 		value = "c2VjcmV0Cg=="
@@ -350,6 +369,7 @@ func testAccSourceTablePostgresWithJSONBResource(nameSpace string) string {
 
 	resource "materialize_source_postgres" "test_source" {
 		name         = "%[1]s_source"
+		schema_name  = materialize_schema.test_schema.name
 		cluster_name = "quickstart"
 
 		postgres_connection {
@@ -364,11 +384,13 @@ func testAccSourceTablePostgresWithJSONBResource(nameSpace string) string {
 
 	resource "materialize_source_table_postgres" "test_jsonb" {
 		name           = "%[1]s_table_jsonb"
-		schema_name    = "public"
+		schema_name    = materialize_schema.test_schema.name
 		database_name  = "materialize"
 
 		source {
-			name = materialize_source_postgres.test_source.name
+			name          = materialize_source_postgres.test_source.name
+			schema_name   = materialize_schema.test_schema.name
+			database_name = "materialize"
 		}
 
 		upstream_name         = "table5"
@@ -384,6 +406,11 @@ func testAccSourceTablePostgresWithJSONBResource(nameSpace string) string {
 
 func testAccSourceTablePostgresWithSpecialCharsResource(nameSpace string) string {
 	return fmt.Sprintf(`
+	resource "materialize_schema" "test_schema" {
+		name          = "%[1]s_schema"
+		database_name = "materialize"
+	}
+
 	resource "materialize_secret" "postgres_password" {
 		name  = "%[1]s_secret"
 		value = "c2VjcmV0Cg=="
@@ -404,6 +431,7 @@ func testAccSourceTablePostgresWithSpecialCharsResource(nameSpace string) string
 
 	resource "materialize_source_postgres" "test_source" {
 		name         = "%[1]s_source"
+		schema_name  = materialize_schema.test_schema.name
 		cluster_name = "quickstart"
 
 		postgres_connection {
@@ -418,11 +446,13 @@ func testAccSourceTablePostgresWithSpecialCharsResource(nameSpace string) string
 
 	resource "materialize_source_table_postgres" "test_special" {
 		name           = "%[1]s_table_special"
-		schema_name    = "public"
+		schema_name    = materialize_schema.test_schema.name
 		database_name  = "materialize"
 
 		source {
-			name = materialize_source_postgres.test_source.name
+			name          = materialize_source_postgres.test_source.name
+			schema_name   = materialize_schema.test_schema.name
+			database_name = "materialize"
 		}
 
 		upstream_name         = "table6"
@@ -433,6 +463,11 @@ func testAccSourceTablePostgresWithSpecialCharsResource(nameSpace string) string
 
 func testAccSourceTablePostgresWithNumericTypesResource(nameSpace string) string {
 	return fmt.Sprintf(`
+	resource "materialize_schema" "test_schema" {
+		name          = "%[1]s_schema"
+		database_name = "materialize"
+	}
+
 	resource "materialize_secret" "postgres_password" {
 		name  = "%[1]s_secret"
 		value = "c2VjcmV0Cg=="
@@ -453,6 +488,7 @@ func testAccSourceTablePostgresWithNumericTypesResource(nameSpace string) string
 
 	resource "materialize_source_postgres" "test_source" {
 		name         = "%[1]s_source"
+		schema_name  = materialize_schema.test_schema.name
 		cluster_name = "quickstart"
 
 		postgres_connection {
@@ -467,11 +503,13 @@ func testAccSourceTablePostgresWithNumericTypesResource(nameSpace string) string
 
 	resource "materialize_source_table_postgres" "test_numeric" {
 		name           = "%[1]s_table_numeric"
-		schema_name    = "public"
+		schema_name    = materialize_schema.test_schema.name
 		database_name  = "materialize"
 
 		source {
-			name = materialize_source_postgres.test_source.name
+			name          = materialize_source_postgres.test_source.name
+			schema_name   = materialize_schema.test_schema.name
+			database_name = "materialize"
 		}
 
 		upstream_name         = "table8"
