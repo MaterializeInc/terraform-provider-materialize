@@ -33,6 +33,27 @@ func TestProvider_impl(t *testing.T) {
 	var _ *schema.Provider = Provider("test")
 }
 
+func TestProviderOptionsSchema(t *testing.T) {
+	p := Provider("test")
+	s, ok := p.Schema["options"]
+	if !ok {
+		t.Fatal("provider schema missing `options` field")
+	}
+	if s.Type != schema.TypeMap {
+		t.Fatalf("expected options Type == TypeMap, got %v", s.Type)
+	}
+	if !s.Optional {
+		t.Fatal("expected options to be Optional")
+	}
+	elem, ok := s.Elem.(*schema.Schema)
+	if !ok {
+		t.Fatalf("expected options Elem to be *schema.Schema, got %T", s.Elem)
+	}
+	if elem.Type != schema.TypeString {
+		t.Fatalf("expected options Elem Type == TypeString, got %v", elem.Type)
+	}
+}
+
 var testAccProvider = Provider("test")
 var testAccProviderFactories = map[string]func() (*schema.Provider, error){
 	"materialize": func() (*schema.Provider, error) { return testAccProvider, nil },

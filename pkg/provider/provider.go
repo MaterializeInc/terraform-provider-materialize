@@ -81,6 +81,12 @@ func Provider(version string) *schema.Provider {
 				Description: "The Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", "materialize"),
 			},
+			"options": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Additional Postgres connection options forwarded as `--key=value` flags in the `options` connection string parameter. Note: `transaction_isolation` defaults to `strict serializable` (required by Materialize) unless overridden here.",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"materialize_app_password":                         resources.AppPassword(),
@@ -201,6 +207,7 @@ func configureSelfHosted(ctx context.Context, d *schema.ResourceData, version st
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 	sslmode := d.Get("sslmode").(string)
+	options := optionsFromResourceData(d)
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
 	// Initialize single DB client for self-hosted
@@ -213,6 +220,7 @@ func configureSelfHosted(ctx context.Context, d *schema.ResourceData, version st
 		application_name,
 		version,
 		sslmode,
+		options,
 	)
 	if diags.HasError() {
 		return nil, diags
@@ -234,6 +242,20 @@ func configureSelfHosted(ctx context.Context, d *schema.ResourceData, version st
 	return providerMeta, nil
 }
 
+func optionsFromResourceData(d *schema.ResourceData) map[string]string {
+	raw, ok := d.Get("options").(map[string]interface{})
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(raw))
+	for k, v := range raw {
+		if s, ok := v.(string); ok {
+			out[k] = s
+		}
+	}
+	return out
+}
+
 func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
 	password := d.Get("password").(string)
 	database := d.Get("database").(string)
@@ -242,6 +264,7 @@ func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) 
 	cloudEndpoint := d.Get("cloud_endpoint").(string)
 	defaultRegion := clients.Region(d.Get("default_region").(string))
 	baseEndpoint := d.Get("base_endpoint").(string)
+	options := optionsFromResourceData(d)
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
 	err := utils.SetDefaultRegion(string(defaultRegion))
@@ -295,7 +318,7 @@ func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) 
 		user := fronteggClient.Email
 
 		// Instantiate a new DB client for the region
-		dbClient, diags := clients.NewDBClient(host, user, password, port, database, application_name, version, sslmode)
+		dbClient, diags := clients.NewDBClient(host, user, password, port, database, application_name, version, sslmode, options)
 		if diags.HasError() {
 			log.Printf("[ERROR] Error initializing DB client for region %s: %v\n", provider.ID, diags)
 			continue
