@@ -45,6 +45,30 @@ provider "materialize" {
 }
 
 # =============================================================================
+# Self-Hosted Materialize with OIDC/SSO Authentication
+# =============================================================================
+# Use this configuration when Self-Managed Materialize is deployed with
+# `authenticatorKind: Oidc`. The `oidc_auth_enabled=true` connection option is
+# REQUIRED — without it, Materialize falls back to password authentication.
+#
+# The `password` field should be an OIDC ID token obtained from your identity
+# provider; the `username` should be the value of the JWT claim configured via
+# `oidc_authentication_claim` (e.g. the user's email).
+#
+# See https://materialize.com/docs/security/self-managed/sso/ for details.
+#
+provider "materialize" {
+  host     = "materialized"
+  port     = 6875
+  username = var.oidc_username # e.g. alice@your-org.com
+  password = var.oidc_id_token # OIDC ID token from your IdP
+  database = "materialize"
+  options = {
+    oidc_auth_enabled = "true"
+  }
+}
+
+# =============================================================================
 # Migration Note
 # =============================================================================
 # Switching between SaaS and self-hosted modes requires careful state file
@@ -79,6 +103,32 @@ These organization and identity management resources depend on Frontegg (Materia
 * `username` (String, Optional) The database username (self-hosted only). Can also come from the `MZ_USER` environment variable. Defaults to `materialize`.
 * `database` (String, Optional) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
 * `sslmode` (String, Optional) SSL mode (self-hosted only). Can also come from the `MZ_SSLMODE` environment variable. Defaults to `require`.
+* `options` (Map of String, Optional) Additional Postgres connection options forwarded in the `options` connection string parameter as `--key=value` flags. Useful for session-level settings such as `cluster`, `search_path`, or `oidc_auth_enabled` (required for OIDC/SSO authentication). The `transaction_isolation` and `application_name` keys are reserved and managed by the provider.
+
+## Authenticating via OIDC/SSO (self-hosted)
+
+When Self-Managed Materialize is configured for [OIDC authentication](https://materialize.com/docs/security/self-managed/sso/),
+connect by passing `oidc_auth_enabled = "true"` via the `options` map and using
+an OIDC ID token as the password:
+
+```terraform
+provider "materialize" {
+  host     = "materialized"
+  port     = 6875
+  username = var.oidc_username # e.g. the value of the `oidc_authentication_claim`
+  password = var.oidc_id_token # an OIDC ID token from your IdP
+  database = "materialize"
+  options = {
+    oidc_auth_enabled = "true"
+  }
+}
+```
+
+**Token lifetime:** Materialize validates the OIDC token at connection time
+only. If a single `terraform apply` outlives the token's expiry and the
+provider needs to reconnect, authentication will fail. Use a token with a
+lifetime comfortably longer than your longest apply, or plan to rerun with a
+fresh token.
 
 ## Order precedence
 

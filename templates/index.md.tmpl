@@ -41,6 +41,32 @@ These organization and identity management resources depend on Frontegg (Materia
 * `username` (String, Optional) The database username (self-hosted only). Can also come from the `MZ_USER` environment variable. Defaults to `materialize`.
 * `database` (String, Optional) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
 * `sslmode` (String, Optional) SSL mode (self-hosted only). Can also come from the `MZ_SSLMODE` environment variable. Defaults to `require`.
+* `options` (Map of String, Optional) Additional Postgres connection options forwarded in the `options` connection string parameter as `--key=value` flags. Useful for session-level settings such as `cluster`, `search_path`, or `oidc_auth_enabled` (required for OIDC/SSO authentication). The `transaction_isolation` and `application_name` keys are reserved and managed by the provider.
+
+## Authenticating via OIDC/SSO (self-hosted)
+
+When Self-Managed Materialize is configured for [OIDC authentication](https://materialize.com/docs/security/self-managed/sso/),
+connect by passing `oidc_auth_enabled = "true"` via the `options` map and using
+an OIDC ID token as the password:
+
+```terraform
+provider "materialize" {
+  host     = "materialized"
+  port     = 6875
+  username = var.oidc_username # e.g. the value of the `oidc_authentication_claim`
+  password = var.oidc_id_token # an OIDC ID token from your IdP
+  database = "materialize"
+  options = {
+    oidc_auth_enabled = "true"
+  }
+}
+```
+
+**Token lifetime:** Materialize validates the OIDC token at connection time
+only. If a single `terraform apply` outlives the token's expiry and the
+provider needs to reconnect, authentication will fail. Use a token with a
+lifetime comfortably longer than your longest apply, or plan to rerun with a
+fresh token.
 
 ## Order precedence
 

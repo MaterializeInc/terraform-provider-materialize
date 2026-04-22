@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -51,6 +52,106 @@ func TestProviderOptionsSchema(t *testing.T) {
 	}
 	if elem.Type != schema.TypeString {
 		t.Fatalf("expected options Elem Type == TypeString, got %v", elem.Type)
+	}
+	if s.ValidateDiagFunc == nil {
+		t.Fatal("expected options to have a ValidateDiagFunc")
+	}
+}
+
+func TestValidateProviderOptions(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   map[string]interface{}
+		wantErr bool
+		errSub  string
+	}{
+		{
+			name:  "valid keys pass",
+			input: map[string]interface{}{"cluster": "quickstart", "search_path": "public"},
+		},
+		{
+			name:  "nil input",
+			input: nil,
+		},
+		{
+			name:  "empty map",
+			input: map[string]interface{}{},
+		},
+		{
+			name:  "oidc option passes",
+			input: map[string]interface{}{"oidc_auth_enabled": "true"},
+		},
+		{
+			name:    "transaction_isolation is reserved",
+			input:   map[string]interface{}{"transaction_isolation": "serializable"},
+			wantErr: true,
+			errSub:  "transaction_isolation",
+		},
+		{
+			name:    "application_name is reserved",
+			input:   map[string]interface{}{"application_name": "custom"},
+			wantErr: true,
+			errSub:  "application_name",
+		},
+		{
+			name:    "invalid key with space",
+			input:   map[string]interface{}{"bad key": "v"},
+			wantErr: true,
+			errSub:  "invalid option key",
+		},
+		{
+			name:    "invalid key starting with digit",
+			input:   map[string]interface{}{"1abc": "v"},
+			wantErr: true,
+			errSub:  "invalid option key",
+		},
+		{
+			name:    "empty key",
+			input:   map[string]interface{}{"": "v"},
+			wantErr: true,
+			errSub:  "invalid option key",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			diags := validateProviderOptions(tc.input, nil)
+			hasErr := diags.HasError()
+			if hasErr != tc.wantErr {
+				t.Fatalf("got diags=%v, wantErr=%v", diags, tc.wantErr)
+			}
+			if tc.wantErr && tc.errSub != "" {
+				found := false
+				for _, d := range diags {
+					if strings.Contains(d.Summary, tc.errSub) || strings.Contains(d.Detail, tc.errSub) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Fatalf("expected a diagnostic mentioning %q, got %v", tc.errSub, diags)
+				}
+			}
+		})
+	}
+}
+
+func TestOptionsFromResourceData(t *testing.T) {
+	s := Provider("test").Schema
+	r := schema.TestResourceDataRaw(t, s, map[string]interface{}{
+		"options": map[string]interface{}{
+			"cluster":           "quickstart",
+			"oidc_auth_enabled": "true",
+		},
+	})
+	got := optionsFromResourceData(r)
+	if got["cluster"] != "quickstart" || got["oidc_auth_enabled"] != "true" {
+		t.Fatalf("unexpected options map: %v", got)
+	}
+
+	empty := schema.TestResourceDataRaw(t, s, map[string]interface{}{})
+	if optionsFromResourceData(empty) != nil {
+		t.Fatal("expected nil options when map is unset")
 	}
 }
 

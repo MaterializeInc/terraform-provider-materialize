@@ -31,6 +31,30 @@ provider "materialize" {
 }
 
 # =============================================================================
+# Self-Hosted Materialize with OIDC/SSO Authentication
+# =============================================================================
+# Use this configuration when Self-Managed Materialize is deployed with
+# `authenticatorKind: Oidc`. The `oidc_auth_enabled=true` connection option is
+# REQUIRED — without it, Materialize falls back to password authentication.
+#
+# The `password` field should be an OIDC ID token obtained from your identity
+# provider; the `username` should be the value of the JWT claim configured via
+# `oidc_authentication_claim` (e.g. the user's email).
+#
+# See https://materialize.com/docs/security/self-managed/sso/ for details.
+#
+provider "materialize" {
+  host     = "materialized"
+  port     = 6875
+  username = var.oidc_username # e.g. alice@your-org.com
+  password = var.oidc_id_token # OIDC ID token from your IdP
+  database = "materialize"
+  options = {
+    oidc_auth_enabled = "true"
+  }
+}
+
+# =============================================================================
 # Migration Note
 # =============================================================================
 # Switching between SaaS and self-hosted modes requires careful state file
