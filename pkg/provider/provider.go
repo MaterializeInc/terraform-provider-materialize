@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
@@ -22,6 +23,9 @@ import (
 // Accepting them via `options` would either conflict with a dedicated schema
 // field (application_name) or break Materialize outright (transaction_isolation
 // must remain `strict serializable`).
+//
+// Keys here MUST be lowercase. Postgres GUC names are case-insensitive, so the
+// validator lowercases incoming keys before looking them up.
 var reservedOptionKeys = map[string]string{
 	"transaction_isolation": "Materialize requires `transaction_isolation=strict serializable`; overriding it will break the provider.",
 	"application_name":      "`application_name` is set by the provider.",
@@ -36,7 +40,7 @@ func validateProviderOptions(v interface{}, p cty.Path) diag.Diagnostics {
 		return diags
 	}
 	for k, val := range raw {
-		if reason, reserved := reservedOptionKeys[k]; reserved {
+		if reason, reserved := reservedOptionKeys[strings.ToLower(k)]; reserved {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("option %q is reserved", k),

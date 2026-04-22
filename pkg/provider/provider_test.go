@@ -94,6 +94,18 @@ func TestValidateProviderOptions(t *testing.T) {
 			errSub:  "application_name",
 		},
 		{
+			name:    "reserved key check is case-insensitive",
+			input:   map[string]interface{}{"Transaction_Isolation": "serializable"},
+			wantErr: true,
+			errSub:  "Transaction_Isolation",
+		},
+		{
+			name:    "reserved key check catches uppercase application_name",
+			input:   map[string]interface{}{"APPLICATION_NAME": "custom"},
+			wantErr: true,
+			errSub:  "APPLICATION_NAME",
+		},
+		{
 			name:    "invalid key with space",
 			input:   map[string]interface{}{"bad key": "v"},
 			wantErr: true,
