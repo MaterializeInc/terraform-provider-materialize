@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/datasources"
@@ -11,10 +12,55 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/resources"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
+
+// reservedOptionKeys are connection parameters the provider manages itself.
+// Accepting them via `options` would either conflict with a dedicated schema
+// field (application_name) or break Materialize outright (transaction_isolation
+// must remain `strict serializable`).
+var reservedOptionKeys = map[string]string{
+	"transaction_isolation": "Materialize requires `transaction_isolation=strict serializable`; overriding it will break the provider.",
+	"application_name":      "`application_name` is set by the provider.",
+}
+
+var optionKeyPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+func validateProviderOptions(v interface{}, p cty.Path) diag.Diagnostics {
+	var diags diag.Diagnostics
+	raw, ok := v.(map[string]interface{})
+	if !ok {
+		return diags
+	}
+	for k, val := range raw {
+		if reason, reserved := reservedOptionKeys[k]; reserved {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("option %q is reserved", k),
+				Detail:   reason,
+			})
+			continue
+		}
+		if !optionKeyPattern.MatchString(k) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("invalid option key %q", k),
+				Detail:   "Option keys must start with a letter or underscore and contain only letters, digits, or underscores.",
+			})
+		}
+		if _, ok := val.(string); !ok && val != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("invalid option value for %q", k),
+				Detail:   "Option values must be strings.",
+			})
+		}
+	}
+	return diags
+}
 
 func Provider(version string) *schema.Provider {
 	return &schema.Provider{
@@ -82,10 +128,11 @@ func Provider(version string) *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", "materialize"),
 			},
 			"options": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Additional Postgres connection options forwarded as `--key=value` flags in the `options` connection string parameter. Note: `transaction_isolation` defaults to `strict serializable` (required by Materialize) unless overridden here.",
+				Type:             schema.TypeMap,
+				Optional:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				ValidateDiagFunc: validateProviderOptions,
+				Description:      "Additional Postgres connection options forwarded in the `options` connection string parameter as `--key=value` flags. Useful for session-level settings such as `cluster`, `search_path`, or `oidc_auth_enabled` (required for OIDC/SSO authentication). The `transaction_isolation` and `application_name` keys are reserved and managed by the provider.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

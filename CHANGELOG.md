@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+* **Provider `options` configuration** [#859](https://github.com/MaterializeInc/terraform-provider-materialize/pull/859): Added an `options` map to the provider schema that forwards arbitrary Postgres connection options (such as `cluster`, `search_path`, or `oidc_auth_enabled`) through the `options` parameter of the connection string. This unblocks connecting to Self-Managed Materialize with [OIDC/SSO authentication](https://materialize.com/docs/security/self-managed/sso/), which requires `oidc_auth_enabled=true`. The `transaction_isolation` and `application_name` keys are reserved and managed by the provider.
+
 ## 0.11.2 - 2026-02-18
 
 ### Features
