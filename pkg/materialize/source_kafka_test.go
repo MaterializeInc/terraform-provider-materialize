@@ -38,6 +38,25 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 	})
 }
 
+func TestResourceSourceKafkaCreateWithoutTopic(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source"
+            FROM KAFKA CONNECTION "database"."schema"."kafka_connection"
+            EXPOSE PROGRESS AS "database"."schema"."progress";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSourceKafkaBuilder(db, o)
+		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_connection", DatabaseName: "database", SchemaName: "schema"})
+		b.ExposeProgress(IdentifierSchemaStruct{Name: "progress", DatabaseName: "database", SchemaName: "schema"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestResourceSourceKafkaCreateWithUpsertOptions(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
