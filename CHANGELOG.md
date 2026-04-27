@@ -1,10 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.11.3 - 2026-04-27
 
 ### Features
 
 * **Provider `options` configuration** [#859](https://github.com/MaterializeInc/terraform-provider-materialize/pull/859): Added an `options` map to the provider schema that forwards arbitrary Postgres connection options (such as `cluster`, `search_path`, or `oidc_auth_enabled`) through the `options` parameter of the connection string. This unblocks connecting to Self-Managed Materialize with [OIDC/SSO authentication](https://materialize.com/docs/security/self-managed/sso/), which requires `oidc_auth_enabled=true`. The `transaction_isolation` and `application_name` keys are reserved and managed by the provider.
+
+### Bug Fixes
+
+* Added validation that `key_format` and `value_format` must be used together on `materialize_source_table_kafka` [#846](https://github.com/MaterializeInc/terraform-provider-materialize/pull/846).
+
+### Misc
+
+* Refactored Materialize SQL keywords into shared `EntityType` constants [#825](https://github.com/MaterializeInc/terraform-provider-materialize/pull/825).
+* Added pre-commit hooks for formatting and docs generation [#828](https://github.com/MaterializeInc/terraform-provider-materialize/pull/828).
+* Expanded Dependabot to include GitHub Actions and Docker dependencies [#829](https://github.com/MaterializeInc/terraform-provider-materialize/pull/829).
+* Replaced deprecated `archives.format` with `format_overrides` in GoReleaser config [#830](https://github.com/MaterializeInc/terraform-provider-materialize/pull/830).
+* Updated CODEOWNERS to reflect new ownership [#840](https://github.com/MaterializeInc/terraform-provider-materialize/pull/840).
+* Removed unused localstack service from the local development setup [#851](https://github.com/MaterializeInc/terraform-provider-materialize/pull/851).
+* Bumped Go version to 1.25 [#855](https://github.com/MaterializeInc/terraform-provider-materialize/pull/855).
+* Fixed flaky Postgres acceptance tests [#856](https://github.com/MaterializeInc/terraform-provider-materialize/pull/856).
+* Fixed CI by bumping `tfplugindocs` to v0.25.0 (resolving an expired HashiCorp GPG signing key) and setting `binlog_row_metadata=full` for the MySQL integration container [#861](https://github.com/MaterializeInc/terraform-provider-materialize/pull/861).
+* Fixed flaky `TestAccDataSourceSourceTable_basic` test [#862](https://github.com/MaterializeInc/terraform-provider-materialize/pull/862).
+* Routine dependency updates: [#831](https://github.com/MaterializeInc/terraform-provider-materialize/pull/831), [#832](https://github.com/MaterializeInc/terraform-provider-materialize/pull/832), [#833](https://github.com/MaterializeInc/terraform-provider-materialize/pull/833), [#834](https://github.com/MaterializeInc/terraform-provider-materialize/pull/834), [#835](https://github.com/MaterializeInc/terraform-provider-materialize/pull/835), [#838](https://github.com/MaterializeInc/terraform-provider-materialize/pull/838), [#839](https://github.com/MaterializeInc/terraform-provider-materialize/pull/839), [#841](https://github.com/MaterializeInc/terraform-provider-materialize/pull/841), [#842](https://github.com/MaterializeInc/terraform-provider-materialize/pull/842), [#848](https://github.com/MaterializeInc/terraform-provider-materialize/pull/848), [#849](https://github.com/MaterializeInc/terraform-provider-materialize/pull/849), [#852](https://github.com/MaterializeInc/terraform-provider-materialize/pull/852), [#853](https://github.com/MaterializeInc/terraform-provider-materialize/pull/853), [#857](https://github.com/MaterializeInc/terraform-provider-materialize/pull/857), [#858](https://github.com/MaterializeInc/terraform-provider-materialize/pull/858), [#863](https://github.com/MaterializeInc/terraform-provider-materialize/pull/863), [#864](https://github.com/MaterializeInc/terraform-provider-materialize/pull/864).
 
 ## 0.11.2 - 2026-02-18
 
