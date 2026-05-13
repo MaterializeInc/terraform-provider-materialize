@@ -289,6 +289,45 @@ func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 	})
 }
 
+func TestResourceSourceKafkaCreateWithoutTopic(t *testing.T) {
+	r := require.New(t)
+
+	inSourceKafkaNoTopic := map[string]interface{}{
+		"name":             "source_no_topic",
+		"schema_name":      "schema",
+		"database_name":    "database",
+		"cluster_name":     "cluster",
+		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+	}
+
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaNoTopic)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE SOURCE "database"."schema"."source_no_topic"
+			IN CLUSTER "cluster" FROM KAFKA CONNECTION "materialize"."public"."kafka_conn";`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sources.name = 'source_no_topic'`
+		testhelpers.MockSourceScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockSourceScan(mock, pp)
+
+		// Query Subsources
+		ps := `WHERE filter_id = 'u1' AND type = 'source'`
+		testhelpers.MockSubsourceScan(mock, ps)
+
+		if err := sourceKafkaCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestResourceSourceKafkaCreateTextFormat(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaText)

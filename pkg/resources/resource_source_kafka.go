@@ -26,9 +26,9 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	}),
 	"topic": {
-		Description: "The Kafka topic you want to subscribe to.",
+		Description: "The Kafka topic you want to subscribe to. If not specified, topics are specified at the table level using materialize_source_table_kafka resources.",
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 	},
 	"include_key": {
