@@ -13,7 +13,7 @@ jobs:
   self-hosted:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Docker Compose Up
         run: docker compose up --build -d materialized materialized_init redpanda postgres mysql provider sqlserver
