@@ -171,10 +171,12 @@ func TestResourceRoleCreateIfNotExistsAdoptsExisting(t *testing.T) {
 		probe := `WHERE mz_roles.name = 'role'`
 		testhelpers.MockRoleScan(mock, probe)
 
-		// Adopt: converge configured attributes via ALTER (no CREATE ROLE)
+		// Adopt: converge configured attributes via ALTER (no CREATE ROLE).
+		// Note: login/superuser are read from the raw config, which
+		// schema.TestResourceDataRaw does not populate, so only the password
+		// ALTER (read via GetOk) is exercised here. The login=false demotion
+		// path is covered by the acceptance tests, which have a real raw config.
 		mock.ExpectExec(`ALTER ROLE "role" WITH PASSWORD 'password123';`).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(`ALTER ROLE "role" LOGIN;`).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Final read by id

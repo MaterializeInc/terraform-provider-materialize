@@ -210,6 +210,20 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	return roleRead(ctx, d, meta)
 }
 
+// configBool reports whether a boolean attribute was explicitly set in the
+// configuration and, if so, its value. It reads the raw config so that an
+// explicit `false` is distinguished from an unset (null) value — unlike
+// d.GetOk, which treats the zero value (false) as unset. It is panic-safe when
+// the raw config is unavailable or not a known bool (e.g. under
+// schema.TestResourceDataRaw), returning set=false in that case.
+func configBool(d *schema.ResourceData, key string) (value bool, set bool) {
+	v, err := d.GetRawConfigAt(cty.GetAttrPath(key))
+	if err != nil || v.IsNull() || !v.IsKnown() || v.Type() != cty.Bool {
+		return false, false
+	}
+	return v.True(), true
+}
+
 // roleAdopt reconciles a pre-existing role into Terraform state by applying the
 // configured attributes via ALTER ROLE. It is used by roleCreate when
 // create_if_not_exists is set and the role already exists in the catalog. Note
@@ -228,14 +242,19 @@ func roleAdopt(d *schema.ResourceData, metaDb *sqlx.DB, b *materialize.RoleBuild
 		}
 	}
 
-	if v, ok := d.GetOk("login"); ok {
-		if err := b.AlterLogin(v.(bool)); err != nil {
+	// Read login/superuser from the raw config rather than GetOk: both are bools
+	// whose zero value is false, and GetOk treats false as "unset". On adopt the
+	// existing role may already be LOGIN/SUPERUSER, so an explicit `false` must
+	// be honored to demote it. A null (unset) value is left untouched, since the
+	// attribute is Computed and managed by the catalog in that case.
+	if login, set := configBool(d, "login"); set {
+		if err := b.AlterLogin(login); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	if v, ok := d.GetOk("superuser"); ok {
-		if err := b.AlterSuperuser(v.(bool)); err != nil {
+	if superuser, set := configBool(d, "superuser"); set {
+		if err := b.AlterSuperuser(superuser); err != nil {
 			return diag.FromErr(err)
 		}
 	}

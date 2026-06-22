@@ -222,6 +222,60 @@ func TestAccRole_createIfNotExistsAdoptsExisting(t *testing.T) {
 	})
 }
 
+// TestAccRole_createIfNotExistsDemotesOnAdopt verifies that adopting a role
+// honors an explicit login = false, demoting a role that currently has LOGIN.
+// This guards the raw-config read in roleAdopt: the previous GetOk-based code
+// treated false as "unset" and would have silently left the role as LOGIN.
+func TestAccRole_createIfNotExistsDemotesOnAdopt(t *testing.T) {
+	seedName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	adoptName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllRolesDestroyed,
+		Steps: []resource.TestStep{
+			// Step 1 configures the provider so Meta() is available in PreConfig.
+			{
+				Config: testAccRoleResource(seedName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+				),
+			},
+			// Step 2 pre-creates a role WITH LOGIN out-of-band, then adopts it
+			// with login = false and asserts it was demoted.
+			{
+				PreConfig: func() {
+					db, _, err := utils.GetDBClientFromMeta(testAccProvider.Meta(), nil)
+					if err != nil {
+						t.Fatalf("error getting DB client: %s", err)
+					}
+					o := materialize.MaterializeObject{ObjectType: materialize.Role, Name: adoptName}
+					if err := materialize.NewRoleBuilder(db, o).Login(true).Create(); err != nil {
+						t.Fatalf("failed to pre-create role: %s", err)
+					}
+				},
+				Config: testAccRoleCreateIfNotExistsLogin(adoptName, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.adopted"),
+					resource.TestCheckResourceAttr("materialize_role.adopted", "name", adoptName),
+					resource.TestCheckResourceAttr("materialize_role.adopted", "login", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRoleCreateIfNotExistsLogin(roleName string, login bool) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "adopted" {
+	name                 = "%s"
+	login                = %t
+	create_if_not_exists = true
+}
+`, roleName, login)
+}
+
 func testAccRoleCreateIfNotExists(roleName, password string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "adopted" {
