@@ -90,3 +90,12 @@ resource "materialize_role" "password_wo" {
   password_wo         = "ephemeral_password_value"
   password_wo_version = 1
 }
+
+# create_if_not_exists adopts a role that already exists (e.g. one
+# auto-provisioned by SSO/OIDC on first login) instead of failing. Here the
+# role does not yet exist, so it is created normally.
+resource "materialize_role" "create_if_not_exists" {
+  name                 = "create-if-not-exists"
+  comment              = "adopt-or-create role"
+  create_if_not_exists = true
+}

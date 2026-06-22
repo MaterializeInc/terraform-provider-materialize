@@ -1,6 +1,7 @@
 package testhelpers
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"strings"
@@ -470,6 +471,31 @@ func MockRoleScan(mock sqlmock.Sqlmock, predicate string) {
 	ir := mock.NewRows([]string{"id", "role_name", "inherit", "superuser", "login", "comment"}).
 		AddRow("u1", "joe", true, false, false, "")
 	mock.ExpectQuery(q).WillReturnRows(ir)
+}
+
+// MockRoleScanNoRows mocks a role lookup that finds no matching role, returning
+// sql.ErrNoRows. Useful for exercising the create_if_not_exists path where the
+// role does not yet exist in the catalog.
+func MockRoleScanNoRows(mock sqlmock.Sqlmock, predicate string) {
+	b := `
+	SELECT
+		mz_roles.id,
+		mz_roles.name AS role_name,
+		mz_roles.inherit,
+		pg_roles.rolsuper AS superuser,
+		pg_roles.rolcanlogin AS login,
+		comments.comment AS comment
+	FROM mz_roles
+	LEFT JOIN pg_roles ON mz_roles.name = pg_roles.rolname
+	LEFT JOIN \(
+		SELECT id, comment
+		FROM mz_internal.mz_comments
+		WHERE object_type = 'role'
+	\) comments
+		ON mz_roles.id = comments.id`
+
+	q := mockQueryBuilder(b, predicate, "")
+	mock.ExpectQuery(q).WillReturnError(sql.ErrNoRows)
 }
 
 func MockRoleGrantScan(mock sqlmock.Sqlmock) {

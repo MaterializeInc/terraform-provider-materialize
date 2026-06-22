@@ -44,6 +44,19 @@ var inRoleWithPasswordWo = map[string]interface{}{
 	"password_wo_version": 1,
 }
 
+var inRoleAdoptExisting = map[string]interface{}{
+	"name":                 "role",
+	"login":                true,
+	"password":             "password123",
+	"create_if_not_exists": true,
+}
+
+var inRoleCreateIfNotExistsNew = map[string]interface{}{
+	"name":                 "role",
+	"inherit":              true,
+	"create_if_not_exists": true,
+}
+
 func TestResourceRoleCreate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
@@ -142,6 +155,78 @@ func TestResourceRoleCreateWithPasswordNoLogin(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+// When create_if_not_exists is set and the role already exists (e.g. an
+// SSO/OIDC role auto-provisioned on first login), roleCreate must adopt it
+// instead of issuing CREATE ROLE, then converge the configured attributes via
+// ALTER ROLE.
+func TestResourceRoleCreateIfNotExistsAdoptsExisting(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleAdoptExisting)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Probe: role already exists
+		probe := `WHERE mz_roles.name = 'role'`
+		testhelpers.MockRoleScan(mock, probe)
+
+		// Adopt: converge configured attributes via ALTER (no CREATE ROLE)
+		mock.ExpectExec(`ALTER ROLE "role" WITH PASSWORD 'password123';`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`ALTER ROLE "role" LOGIN;`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Final read by id
+		pp := `WHERE mz_roles.id = 'u1'`
+		testhelpers.MockRoleScan(mock, pp)
+
+		if err := roleCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Equal("aws/us-east-1:u1", d.Id())
+	})
+}
+
+// When create_if_not_exists is set but the role does not yet exist, roleCreate
+// must fall through to the normal CREATE ROLE path.
+func TestResourceRoleCreateIfNotExistsCreatesWhenAbsent(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleCreateIfNotExistsNew)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Probe: role does not exist
+		probe := `WHERE mz_roles.name = 'role'`
+		testhelpers.MockRoleScanNoRows(mock, probe)
+
+		// Falls through to normal create
+		mock.ExpectExec(`CREATE ROLE "role" WITH INHERIT;`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id after create
+		testhelpers.MockRoleScan(mock, probe)
+
+		// Final read by id
+		pp := `WHERE mz_roles.id = 'u1'`
+		testhelpers.MockRoleScan(mock, pp)
+
+		if err := roleCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceRoleCreateIfNotExistsSchema(t *testing.T) {
+	r := require.New(t)
+
+	f, ok := Role().Schema["create_if_not_exists"]
+	r.True(ok, "create_if_not_exists should be set")
+	r.Equal(schema.TypeBool, f.Type)
+	r.True(f.Optional)
+	r.False(f.Computed)
+	r.Equal(false, f.Default)
 }
 
 // Confirm id is updated with region for 0.4.0
