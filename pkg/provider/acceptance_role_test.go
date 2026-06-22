@@ -173,6 +173,66 @@ func TestAccRole_withLoginAndPassword(t *testing.T) {
 	})
 }
 
+// TestAccRole_createIfNotExistsAdoptsExisting simulates an externally
+// provisioned role (e.g. an SSO/OIDC user whose role is auto-created on first
+// login) that exists in Materialize but not in Terraform state, and verifies
+// that a materialize_role resource with create_if_not_exists = true adopts it
+// instead of failing with "role already exists".
+func TestAccRole_createIfNotExistsAdoptsExisting(t *testing.T) {
+	seedName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	adoptName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	password := "adopt_password_123"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllRolesDestroyed,
+		Steps: []resource.TestStep{
+			// Step 1 configures the provider so Meta() is available to the next
+			// step's PreConfig.
+			{
+				Config: testAccRoleResource(seedName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.test"),
+				),
+			},
+			// Step 2 creates the role out-of-band, then adopts it.
+			{
+				PreConfig: func() {
+					db, _, err := utils.GetDBClientFromMeta(testAccProvider.Meta(), nil)
+					if err != nil {
+						t.Fatalf("error getting DB client: %s", err)
+					}
+					o := materialize.MaterializeObject{ObjectType: materialize.Role, Name: adoptName}
+					if err := materialize.NewRoleBuilder(db, o).Create(); err != nil {
+						t.Fatalf("failed to pre-create role: %s", err)
+					}
+				},
+				Config: testAccRoleCreateIfNotExists(adoptName, password),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleExists("materialize_role.adopted"),
+					resource.TestMatchResourceAttr("materialize_role.adopted", "id", terraformObjectIdRegex),
+					resource.TestCheckResourceAttr("materialize_role.adopted", "name", adoptName),
+					resource.TestCheckResourceAttr("materialize_role.adopted", "create_if_not_exists", "true"),
+					resource.TestCheckResourceAttr("materialize_role.adopted", "login", "true"),
+					resource.TestCheckResourceAttr("materialize_role.adopted", "password", password),
+				),
+			},
+		},
+	})
+}
+
+func testAccRoleCreateIfNotExists(roleName, password string) string {
+	return fmt.Sprintf(`
+resource "materialize_role" "adopted" {
+	name                 = "%s"
+	login                = true
+	password             = "%s"
+	create_if_not_exists = true
+}
+`, roleName, password)
+}
+
 func testAccRoleResource(roleName string) string {
 	return fmt.Sprintf(`
 resource "materialize_role" "test" {

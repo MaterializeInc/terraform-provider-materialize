@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/jmoiron/sqlx"
 )
 
 var roleSchema = map[string]*schema.Schema{
@@ -53,6 +54,12 @@ var roleSchema = map[string]*schema.Schema{
 		Type:        schema.TypeBool,
 		Optional:    true,
 		Computed:    true,
+	},
+	"create_if_not_exists": {
+		Description: "If `true`, adopt a pre-existing role with the same name instead of failing when it already exists. Materialize has no `CREATE ROLE IF NOT EXISTS`, so this is useful when roles may be auto-provisioned by an external system (for example, an SSO/OIDC user whose role is created on first login). When the role already exists, Terraform takes over managing it and applies the configured attributes. Note that Terraform will then drop the role on destroy.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
 	},
 	"region": RegionSchema(),
 }
@@ -117,6 +124,14 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 		return diag.FromErr(err)
 	}
 
+	// create_if_not_exists is a create-time behavior with no representation in
+	// the catalog. Preserve the configured value (defaulting to false on
+	// import, where there is no prior state) so plans and imports round-trip
+	// cleanly instead of showing spurious drift.
+	if err := d.Set("create_if_not_exists", d.Get("create_if_not_exists")); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -130,6 +145,26 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	o := materialize.MaterializeObject{ObjectType: materialize.Role, Name: roleName}
 	b := materialize.NewRoleBuilder(metaDb, o)
+
+	// When create_if_not_exists is set, adopt a role that already exists (for
+	// example, one auto-provisioned by SSO/OIDC on first login) instead of
+	// failing with "role already exists". Materialize has no
+	// CREATE ROLE IF NOT EXISTS, so we probe the catalog and, if the role is
+	// present, reconcile it into state by applying the configured attributes.
+	if d.Get("create_if_not_exists").(bool) {
+		existingID, err := materialize.RoleId(metaDb, roleName)
+		if err != nil && err != sql.ErrNoRows {
+			return diag.FromErr(err)
+		}
+		if err == nil && existingID != "" {
+			log.Printf("[DEBUG] role %q already exists (id %s), adopting into state", roleName, existingID)
+			if diags := roleAdopt(d, metaDb, b, o); diags != nil {
+				return diags
+			}
+			d.SetId(utils.TransformIdWithRegion(string(region), existingID))
+			return roleRead(ctx, d, meta)
+		}
+	}
 
 	if v, ok := d.GetOk("inherit"); ok && v.(bool) {
 		b.Inherit()
@@ -173,6 +208,46 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	return roleRead(ctx, d, meta)
+}
+
+// roleAdopt reconciles a pre-existing role into Terraform state by applying the
+// configured attributes via ALTER ROLE. It is used by roleCreate when
+// create_if_not_exists is set and the role already exists in the catalog. Note
+// that inherit cannot be altered (Materialize roles are always INHERIT), so it
+// is intentionally not reconciled here.
+func roleAdopt(d *schema.ResourceData, metaDb *sqlx.DB, b *materialize.RoleBuilder, o materialize.MaterializeObject) diag.Diagnostics {
+	var password string
+	if v, ok := d.GetOk("password"); ok && v.(string) != "" {
+		password = v.(string)
+	} else if valueWo, ok := d.GetOk("password_wo"); ok && valueWo.(string) != "" {
+		password = valueWo.(string)
+	}
+	if password != "" {
+		if err := b.AlterPassword(password); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if v, ok := d.GetOk("login"); ok {
+		if err := b.AlterLogin(v.(bool)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if v, ok := d.GetOk("superuser"); ok {
+		if err := b.AlterSuperuser(v.(bool)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if v, ok := d.GetOk("comment"); ok {
+		comment := materialize.NewCommentBuilder(metaDb, o)
+		if err := comment.Object(v.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return nil
 }
 
 func roleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
