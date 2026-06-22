@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.11.4 - 2026-06-22
+
+### Features
+
+* **`create_if_not_exists` for `materialize_role`** [#877](https://github.com/MaterializeInc/terraform-provider-materialize/pull/877): Added an opt-in `create_if_not_exists` argument to `materialize_role` that adopts a role already present in the catalog (for example, one auto-provisioned by SSO/OIDC on first login) instead of failing with `role already exists`, since Materialize has no `CREATE ROLE IF NOT EXISTS`. When the role exists, Terraform takes over managing it and converges the configured attributes; otherwise it creates the role normally.
+
+### Bug Fixes
+
+* Fixed the `password` and `sslmode` schema descriptions [#865](https://github.com/MaterializeInc/terraform-provider-materialize/pull/865).
+
+### Misc
+
+* Routine dependency updates: [#867](https://github.com/MaterializeInc/terraform-provider-materialize/pull/867), [#868](https://github.com/MaterializeInc/terraform-provider-materialize/pull/868), [#869](https://github.com/MaterializeInc/terraform-provider-materialize/pull/869), [#876](https://github.com/MaterializeInc/terraform-provider-materialize/pull/876).
+
 ## 0.11.3 - 2026-04-27
 
 ### Features
