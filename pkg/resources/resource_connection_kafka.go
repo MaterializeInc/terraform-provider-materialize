@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -72,11 +73,16 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 					Description: "The wildcard pattern matched against an advertised broker's `host:port`. May only use `*` as a leading and/or trailing wildcard, e.g. `*.use1-az1.*`.",
 					Type:        schema.TypeString,
 					Required:    true,
+					ValidateFunc: validation.StringMatch(
+						regexp.MustCompile(`^\*?[^*]*\*?$`),
+						"pattern may only contain `*` as a leading and/or trailing wildcard",
+					),
 				},
 				"target_group_port": {
-					Description: "The port of the AWS PrivateLink service to connect to. Defaults to the broker's port.",
-					Type:        schema.TypeInt,
-					Optional:    true,
+					Description:  "The port of the AWS PrivateLink service to connect to. Defaults to the broker's port.",
+					Type:         schema.TypeInt,
+					Optional:     true,
+					ValidateFunc: validation.IsPortNumber,
 				},
 				"availability_zone": {
 					Description: "The ID of the availability zone of the AWS PrivateLink service in which the matched brokers are accessible.",

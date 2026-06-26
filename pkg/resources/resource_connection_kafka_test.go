@@ -240,6 +240,24 @@ func TestResourceConnectionKafkaCreateWithBrokerMatchingRules(t *testing.T) {
 	})
 }
 
+func TestBrokerMatchingRulePatternValidation(t *testing.T) {
+	validateFunc := ConnectionKafka().Schema["broker_matching_rule"].Elem.(*schema.Resource).Schema["pattern"].ValidateFunc
+
+	valid := []string{"*.use1-az1.*", "*az1", "az1*", "exact-match", "*", "**", "*:9092"}
+	for _, p := range valid {
+		if _, errs := validateFunc(p, "pattern"); len(errs) > 0 {
+			t.Errorf("expected pattern %q to be valid, got: %v", p, errs)
+		}
+	}
+
+	invalid := []string{"a*b", "*a*b*", "us*az*", "a*b*c"}
+	for _, p := range invalid {
+		if _, errs := validateFunc(p, "pattern"); len(errs) == 0 {
+			t.Errorf("expected pattern %q to be invalid (interior wildcard)", p)
+		}
+	}
+}
+
 // TestResourceConnectionKafkaUpdateBrokerMatchingRules verifies that changing
 // broker_matching_rule rebuilds the full BROKERS clause (static brokers + rules)
 // in a single ALTER ... SET statement and resets the conflicting AWS PRIVATELINK.
