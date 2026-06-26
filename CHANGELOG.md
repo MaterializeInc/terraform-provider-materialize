@@ -4,7 +4,7 @@
 
 ### Features
 
-* **Wildcard broker matching rules for Kafka PrivateLink connections** [#881](https://github.com/MaterializeInc/terraform-provider-materialize/pull/881): Added a `broker_matching_rule` block to `materialize_connection_kafka` that emits `MATCHING '<pattern>' USING AWS PRIVATELINK ...` rules inside the `BROKERS (...)` clause. This lets Materialize route dynamically discovered brokers (e.g. Confluent Cloud) through the correct per-availability-zone PrivateLink endpoint without listing every broker, using a static `kafka_broker` to bootstrap. Requires the `enable_kafka_broker_matching_rules` feature to be enabled in your Materialize region.
+* **Wildcard broker matching rules for Kafka PrivateLink connections** [#881](https://github.com/MaterializeInc/terraform-provider-materialize/pull/881): Added a `broker_matching_rule` block to `materialize_connection_kafka` for per-availability-zone PrivateLink routing of dynamically discovered brokers (e.g. Confluent Cloud), gated server-side by the `enable_kafka_broker_matching_rules` feature.
 
 ## 0.11.4 - 2026-06-22
 
