@@ -192,6 +192,57 @@ resource "materialize_connection_kafka" "kafka_top_level_privatelink" {
   validate = false
 }
 
+resource "materialize_connection_kafka" "kafka_broker_matching_rules" {
+  name = "kafka_broker_matching_rules"
+  # Reuses the privatelink_conn created during docker compose setup (dropping it
+  # would crash the container). Its declared AZs are use1-az2 and use1-az6, so
+  # the matching rules below must reference those same zones.
+  kafka_broker {
+    broker = "redpanda:9092"
+    privatelink_connection {
+      name          = "privatelink_conn"
+      database_name = "materialize"
+      schema_name   = "public"
+    }
+  }
+
+  broker_matching_rule {
+    pattern           = "*.use1-az2.*"
+    availability_zone = "use1-az2"
+    privatelink_connection {
+      name          = "privatelink_conn"
+      database_name = "materialize"
+      schema_name   = "public"
+    }
+  }
+
+  broker_matching_rule {
+    pattern           = "*.use1-az6.*"
+    target_group_port = 9092
+    availability_zone = "use1-az6"
+    privatelink_connection {
+      name          = "privatelink_conn"
+      database_name = "materialize"
+      schema_name   = "public"
+    }
+  }
+
+  security_protocol = "SASL_SSL"
+  sasl_mechanisms   = "SCRAM-SHA-256"
+
+  sasl_username {
+    text = "sasl_username"
+  }
+
+  sasl_password {
+    name          = materialize_secret.kafka_password.name
+    database_name = materialize_secret.kafka_password.database_name
+    schema_name   = materialize_secret.kafka_password.schema_name
+  }
+
+  validate = false
+}
+
 resource "materialize_connection_confluent_schema_registry" "schema_registry" {
   name    = "schema_registry_connection"
   comment = "connection schema registry comment"
