@@ -59,11 +59,44 @@ var connectionKafkaSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"broker_matching_rule": {
+		Description:   "Wildcard `MATCHING` rules that route dynamically discovered Kafka brokers through an AWS PrivateLink connection (e.g. Confluent Cloud). Requires at least one static `kafka_broker` for bootstrapping. Requires the `enable_kafka_broker_matching_rules` feature to be enabled in your Materialize region.",
+		Type:          schema.TypeList,
+		Optional:      true,
+		ConflictsWith: []string{"aws_privatelink"},
+		RequiredWith:  []string{"kafka_broker"},
+		ForceNew:      false,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"pattern": {
+					Description: "The wildcard pattern matched against an advertised broker's `host:port`. May only use `*` as a leading and/or trailing wildcard, e.g. `*.use1-az1.*`.",
+					Type:        schema.TypeString,
+					Required:    true,
+				},
+				"target_group_port": {
+					Description: "The port of the AWS PrivateLink service to connect to. Defaults to the broker's port.",
+					Type:        schema.TypeInt,
+					Optional:    true,
+				},
+				"availability_zone": {
+					Description: "The ID of the availability zone of the AWS PrivateLink service in which the matched brokers are accessible.",
+					Type:        schema.TypeString,
+					Optional:    true,
+				},
+				"privatelink_connection": IdentifierSchema(IdentifierSchemaParams{
+					Elem:        "privatelink_connection",
+					Description: "The AWS PrivateLink connection name in Materialize through which matched brokers are routed.",
+					Required:    true,
+					ForceNew:    false,
+				}),
+			},
+		},
+	},
 	"aws_privatelink": {
 		Description:   "AWS PrivateLink configuration. Conflicts with `kafka_broker`.",
 		Type:          schema.TypeList,
 		Optional:      true,
-		ConflictsWith: []string{"kafka_broker"},
+		ConflictsWith: []string{"kafka_broker", "broker_matching_rule"},
 		AtLeastOneOf:  []string{"kafka_broker", "aws_privatelink"},
 		MinItems:      1,
 		MaxItems:      1,
@@ -184,6 +217,11 @@ func connectionKafkaCreate(ctx context.Context, d *schema.ResourceData, meta int
 		b.KafkaBrokers(brokers)
 	}
 
+	if v, ok := d.GetOk("broker_matching_rule"); ok {
+		rules := materialize.GetKafkaBrokerMatchingRulesStruct(v)
+		b.KafkaBrokerMatchingRules(rules)
+	}
+
 	if v, ok := d.GetOk("aws_privatelink"); ok {
 		privatelink := materialize.GetAwsPrivateLinkConnectionStruct(v)
 		b.KafkaAwsPrivateLink(privatelink)
@@ -302,10 +340,14 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 	}
 
-	if d.HasChange("kafka_broker") {
-		_, newBrokers := d.GetChange("kafka_broker")
-		kafkaBrokers := materialize.GetKafkaBrokersStruct(newBrokers)
+	if d.HasChange("kafka_broker") || d.HasChange("broker_matching_rule") {
+		// BROKERS is a single combined clause built from both the static
+		// kafka_broker entries and the broker_matching_rule wildcard rules, so
+		// rebuild it from current state whenever either of them changes.
+		kafkaBrokers := materialize.GetKafkaBrokersStruct(d.Get("kafka_broker"))
 		b.KafkaBrokers(kafkaBrokers)
+		matchingRules := materialize.GetKafkaBrokerMatchingRulesStruct(d.Get("broker_matching_rule"))
+		b.KafkaBrokerMatchingRules(matchingRules)
 		builderBrokersString := b.BuildBrokersString()
 
 		if builderBrokersString != "" {
@@ -326,7 +368,7 @@ func connectionKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		if awsPrivateLinkString != "" {
 			options["AWS PRIVATELINK"] = materialize.RawSQL(awsPrivateLinkString)
 			addResetOption("BROKERS")
-		} else if !d.HasChange("kafka_broker") {
+		} else if !d.HasChange("kafka_broker") && !d.HasChange("broker_matching_rule") {
 			addResetOption("AWS PRIVATELINK")
 		}
 	}
