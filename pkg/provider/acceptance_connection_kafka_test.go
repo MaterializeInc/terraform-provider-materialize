@@ -156,6 +156,101 @@ func TestAccConnKafkaAwsPrivatelink_basic(t *testing.T) {
 	})
 }
 
+func TestAccConnKafkaBrokerMatchingRules_basic(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resourceName := "materialize_connection_kafka.kafka_matching_rules"
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnKafkaBrokerMatchingRulesResource(connectionName, "use1-az2", "use1-az6"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", connectionName),
+					resource.TestCheckResourceAttr(resourceName, "qualified_sql_name", fmt.Sprintf(`"materialize"."public"."%s"`, connectionName)),
+					resource.TestCheckResourceAttr(resourceName, "kafka_broker.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "kafka_broker.0.broker", "b-1.hostname-1:9096"),
+					resource.TestCheckResourceAttr(resourceName, "kafka_broker.0.privatelink_connection.0.name", "privatelink_conn"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.pattern", "*.use1-az2.*"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.availability_zone", "use1-az2"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.privatelink_connection.0.name", "privatelink_conn"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.1.pattern", "*.use1-az6.*"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.1.availability_zone", "use1-az6"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func TestAccConnKafkaBrokerMatchingRules_update(t *testing.T) {
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resourceName := "materialize_connection_kafka.kafka_matching_rules"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			// Start with a single matching rule.
+			{
+				Config: testAccConnKafkaSingleMatchingRuleResource(connectionName, "use1-az2", 0),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.availability_zone", "use1-az2"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.pattern", "*.use1-az2.*"),
+				),
+			},
+			// Update a single value on the existing rule (availability zone).
+			{
+				Config: testAccConnKafkaSingleMatchingRuleResource(connectionName, "use1-az6", 0),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.availability_zone", "use1-az6"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.pattern", "*.use1-az6.*"),
+				),
+			},
+			// Update two values on the existing rule (availability zone + add port).
+			{
+				Config: testAccConnKafkaSingleMatchingRuleResource(connectionName, "use1-az2", 9001),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.availability_zone", "use1-az2"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.target_group_port", "9001"),
+				),
+			},
+			// Add a second rule.
+			{
+				Config: testAccConnKafkaBrokerMatchingRulesResource(connectionName, "use1-az2", "use1-az6"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.0.availability_zone", "use1-az2"),
+					resource.TestCheckResourceAttr(resourceName, "broker_matching_rule.1.availability_zone", "use1-az6"),
+				),
+			},
+			// Remove all matching rules, leaving only the static broker.
+			{
+				Config: testAccConnKafkaNoMatchingRuleResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnKafkaExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "kafka_broker.#", "1"),
+					resource.TestCheckNoResourceAttr(resourceName, "broker_matching_rule.#"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccConnKafka_update(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha)
 	connectionName := fmt.Sprintf("old_%s", slug)
@@ -560,6 +655,92 @@ func testAccConnKafkaAwsPrivatelinkResource(connectionName string) string {
 			  	name          = "privatelink_conn"
 			  	database_name = "materialize"
 			  	schema_name   = "public"
+			}
+		}
+		validate = false
+	}
+	`, connectionName)
+}
+
+// Static broker plus two AZ-pinned MATCHING rules routed through PrivateLink.
+func testAccConnKafkaBrokerMatchingRulesResource(connectionName, az1, az2 string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "kafka_matching_rules" {
+		name = "%[1]s"
+		kafka_broker {
+			broker = "b-1.hostname-1:9096"
+			privatelink_connection {
+				name          = "privatelink_conn"
+				database_name = "materialize"
+				schema_name   = "public"
+			}
+		}
+		broker_matching_rule {
+			pattern           = "*.%[2]s.*"
+			availability_zone = "%[2]s"
+			privatelink_connection {
+				name          = "privatelink_conn"
+				database_name = "materialize"
+				schema_name   = "public"
+			}
+		}
+		broker_matching_rule {
+			pattern           = "*.%[3]s.*"
+			availability_zone = "%[3]s"
+			privatelink_connection {
+				name          = "privatelink_conn"
+				database_name = "materialize"
+				schema_name   = "public"
+			}
+		}
+		validate = false
+	}
+	`, connectionName, az1, az2)
+}
+
+// Static broker plus a single MATCHING rule. When port > 0 a target_group_port
+// is included, allowing tests to exercise one- and two-attribute updates.
+func testAccConnKafkaSingleMatchingRuleResource(connectionName, az string, port int) string {
+	portAttr := ""
+	if port > 0 {
+		portAttr = fmt.Sprintf("\n\t\t\ttarget_group_port = %d", port)
+	}
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "kafka_matching_rules" {
+		name = "%[1]s"
+		kafka_broker {
+			broker = "b-1.hostname-1:9096"
+			privatelink_connection {
+				name          = "privatelink_conn"
+				database_name = "materialize"
+				schema_name   = "public"
+			}
+		}
+		broker_matching_rule {
+			pattern           = "*.%[2]s.*"
+			availability_zone = "%[2]s"%[3]s
+			privatelink_connection {
+				name          = "privatelink_conn"
+				database_name = "materialize"
+				schema_name   = "public"
+			}
+		}
+		validate = false
+	}
+	`, connectionName, az, portAttr)
+}
+
+// Only a static PrivateLink broker, no MATCHING rules.
+func testAccConnKafkaNoMatchingRuleResource(connectionName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "kafka_matching_rules" {
+		name = "%[1]s"
+		kafka_broker {
+			broker = "b-1.hostname-1:9096"
+			privatelink_connection {
+				name          = "privatelink_conn"
+				database_name = "materialize"
+				schema_name   = "public"
 			}
 		}
 		validate = false

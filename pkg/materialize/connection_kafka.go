@@ -15,6 +15,15 @@ type KafkaBroker struct {
 	SSHTunnel             IdentifierSchemaStruct
 }
 
+// KafkaBrokerMatchingRule represents a wildcard `MATCHING` rule that routes
+// dynamically discovered Kafka brokers through an AWS PrivateLink connection.
+type KafkaBrokerMatchingRule struct {
+	Pattern               string
+	TargetGroupPort       int
+	AvailabilityZone      string
+	PrivateLinkConnection IdentifierSchemaStruct
+}
+
 func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
 	var brokers []KafkaBroker
 	for _, broker := range v.([]interface{}) {
@@ -36,6 +45,27 @@ func GetKafkaBrokersStruct(v interface{}) []KafkaBroker {
 		})
 	}
 	return brokers
+}
+
+func GetKafkaBrokerMatchingRulesStruct(v interface{}) []KafkaBrokerMatchingRule {
+	var rules []KafkaBrokerMatchingRule
+	if v == nil {
+		return rules
+	}
+	for _, rule := range v.([]interface{}) {
+		b := rule.(map[string]interface{})
+		privateLinkConn := IdentifierSchemaStruct{}
+		if b["privatelink_connection"] != nil && len(b["privatelink_connection"].([]interface{})) > 0 {
+			privateLinkConn = GetIdentifierSchemaStruct(b["privatelink_connection"].([]interface{}))
+		}
+		rules = append(rules, KafkaBrokerMatchingRule{
+			Pattern:               b["pattern"].(string),
+			TargetGroupPort:       b["target_group_port"].(int),
+			AvailabilityZone:      b["availability_zone"].(string),
+			PrivateLinkConnection: privateLinkConn,
+		})
+	}
+	return rules
 }
 
 type awsPrivateLinkConnection struct {
@@ -67,6 +97,7 @@ func GetAwsPrivateLinkConnectionStruct(v interface{}) awsPrivateLinkConnection {
 type ConnectionKafkaBuilder struct {
 	Connection
 	kafkaBrokers                        []KafkaBroker
+	kafkaBrokerMatchingRules            []KafkaBrokerMatchingRule
 	kafkaSecurityProtocol               string
 	kafkaProgressTopic                  string
 	kafkaProgressTopicReplicationFactor int
@@ -91,6 +122,11 @@ func NewConnectionKafkaBuilder(conn *sqlx.DB, obj MaterializeObject) *Connection
 
 func (b *ConnectionKafkaBuilder) KafkaBrokers(kafkaBrokers []KafkaBroker) *ConnectionKafkaBuilder {
 	b.kafkaBrokers = kafkaBrokers
+	return b
+}
+
+func (b *ConnectionKafkaBuilder) KafkaBrokerMatchingRules(rules []KafkaBrokerMatchingRule) *ConnectionKafkaBuilder {
+	b.kafkaBrokerMatchingRules = rules
 	return b
 }
 
@@ -233,7 +269,34 @@ func (b *ConnectionKafkaBuilder) Create() error {
 	return b.ddl.exec(q.String())
 }
 
-// BuildBrokersString returns a string of Kafka brokers DDL
+// buildAwsPrivateLinkBrokerClause builds the ` USING AWS PRIVATELINK <conn> (PORT x, AVAILABILITY ZONE 'az')`
+// suffix shared by static brokers and `MATCHING` rules.
+func buildAwsPrivateLinkBrokerClause(conn IdentifierSchemaStruct, targetGroupPort int, availabilityZone string) string {
+	p := strings.Builder{}
+	p.WriteString(fmt.Sprintf(` USING AWS PRIVATELINK %s`,
+		QualifiedName(
+			conn.DatabaseName,
+			conn.SchemaName,
+			conn.Name,
+		),
+	))
+
+	options := []string{}
+	if targetGroupPort != 0 {
+		options = append(options, fmt.Sprintf(`PORT %d`, targetGroupPort))
+	}
+	if availabilityZone != "" {
+		options = append(options, fmt.Sprintf(`AVAILABILITY ZONE %s`, QuoteString(availabilityZone)))
+	}
+	if len(options) > 0 {
+		p.WriteString(fmt.Sprintf(` (%s)`, strings.Join(options, ", ")))
+	}
+	return p.String()
+}
+
+// BuildBrokersString returns a string of Kafka brokers DDL. Static brokers are
+// emitted first, followed by any wildcard `MATCHING` rules used to route
+// dynamically discovered brokers through AWS PrivateLink.
 func (b *ConnectionKafkaBuilder) BuildBrokersString() string {
 	var brokersStrings = []string{}
 	for _, broker := range b.kafkaBrokers {
@@ -251,29 +314,18 @@ func (b *ConnectionKafkaBuilder) BuildBrokersString() string {
 		}
 
 		if broker.PrivateLinkConnection.Name != "" {
-			p := strings.Builder{}
-			p.WriteString(fmt.Sprintf(` USING AWS PRIVATELINK %s`,
-				QualifiedName(
-					broker.PrivateLinkConnection.DatabaseName,
-					broker.PrivateLinkConnection.SchemaName,
-					broker.PrivateLinkConnection.Name,
-				),
-			))
-			fb.WriteString(p.String())
-
-			options := []string{}
-			if broker.TargetGroupPort != 0 {
-				options = append(options, fmt.Sprintf(`PORT %d`, broker.TargetGroupPort))
-			}
-			if broker.AvailabilityZone != "" {
-				options = append(options, fmt.Sprintf(`AVAILABILITY ZONE %s`, QuoteString(broker.AvailabilityZone)))
-			}
-			if len(options) > 0 {
-				fb.WriteString(fmt.Sprintf(` (%s)`, strings.Join(options, ", ")))
-			}
+			fb.WriteString(buildAwsPrivateLinkBrokerClause(broker.PrivateLinkConnection, broker.TargetGroupPort, broker.AvailabilityZone))
 		}
 		brokersStrings = append(brokersStrings, fb.String())
 	}
+
+	for _, rule := range b.kafkaBrokerMatchingRules {
+		fb := strings.Builder{}
+		fb.WriteString(fmt.Sprintf(`MATCHING %s`, QuoteString(rule.Pattern)))
+		fb.WriteString(buildAwsPrivateLinkBrokerClause(rule.PrivateLinkConnection, rule.TargetGroupPort, rule.AvailabilityZone))
+		brokersStrings = append(brokersStrings, fb.String())
+	}
+
 	return strings.Join(brokersStrings, ", ")
 }
 
