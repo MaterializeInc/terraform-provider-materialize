@@ -322,7 +322,9 @@ func (b *ConnectionKafkaBuilder) BuildBrokersString() string {
 	for _, rule := range b.kafkaBrokerMatchingRules {
 		fb := strings.Builder{}
 		fb.WriteString(fmt.Sprintf(`MATCHING %s`, QuoteString(rule.Pattern)))
-		fb.WriteString(buildAwsPrivateLinkBrokerClause(rule.PrivateLinkConnection, rule.TargetGroupPort, rule.AvailabilityZone))
+		if rule.PrivateLinkConnection.Name != "" {
+			fb.WriteString(buildAwsPrivateLinkBrokerClause(rule.PrivateLinkConnection, rule.TargetGroupPort, rule.AvailabilityZone))
+		}
 		brokersStrings = append(brokersStrings, fb.String())
 	}
 
