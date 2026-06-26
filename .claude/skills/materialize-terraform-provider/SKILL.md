@@ -279,7 +279,7 @@ resource "materialize_materialized_view" "analytics" {
 
 **Object-level grant resources** (all follow the same pattern):
 
-`materialize_cluster_grant`, `materialize_database_grant`, `materialize_schema_grant`, `materialize_table_grant`, `materialize_view_grant`, `materialize_materialized_view_grant`, `materialize_source_grant`, `materialize_sink_grant`, `materialize_connection_grant`, `materialize_secret_grant`, `materialize_type_grant`, `materialize_role_grant`
+`materialize_cluster_grant`, `materialize_database_grant`, `materialize_schema_grant`, `materialize_table_grant`, `materialize_view_grant`, `materialize_materialized_view_grant`, `materialize_source_grant`, `materialize_connection_grant`, `materialize_secret_grant`, `materialize_type_grant`, `materialize_role_grant`
 
 Each grant resource requires `role_name`, `privilege`, and the object reference.
 
