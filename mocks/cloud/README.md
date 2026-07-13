@@ -4,7 +4,7 @@ This mock service provides a configurable API for simulating the Materialize clo
 
 ## Prerequisites
 
-- Go 1.25 or later
+- Go 1.26 or later
 - Docker
 
 ## Configuration
