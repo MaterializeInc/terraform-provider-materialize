@@ -17,27 +17,31 @@
     "external": {
       "addr": "0.0.0.0:7876",
       "authenticator_kind": "None",
-      "allowed_roles": "NormalAndInternal",
       "enable_tls": false,
       "routes": {
-        "base": true,
-        "webhook": true,
-        "internal": false,
-        "metrics": false,
-        "profiling": false
+        "base": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "webhook": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "internal": { "enabled": false },
+        "metrics": { "enabled": false },
+        "profiling": { "enabled": false },
+        "mcp_agent": { "enabled": false },
+        "mcp_developer": { "enabled": false },
+        "console_config": { "enabled": false }
       }
     },
     "internal": {
       "addr": "0.0.0.0:7878",
       "authenticator_kind": "None",
-      "allowed_roles": "NormalAndInternal",
       "enable_tls": false,
       "routes": {
-        "base": true,
-        "webhook": true,
-        "internal": true,
-        "metrics": true,
-        "profiling": true
+        "base": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "webhook": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "internal": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "metrics": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "profiling": { "enabled": true, "allowed_roles": "NormalAndInternal" },
+        "mcp_agent": { "enabled": false },
+        "mcp_developer": { "enabled": false },
+        "console_config": { "enabled": false }
       }
     }
   }
