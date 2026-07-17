@@ -227,6 +227,46 @@ func TestAccSourceKafka_disappears(t *testing.T) {
 	})
 }
 
+func TestAccSourceKafka_noTopic(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceKafkaNoTopicResource(nameSpace),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSourceKafkaExists("materialize_source_kafka.test_no_topic"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test_no_topic", "name", nameSpace+"_source_no_topic"),
+					resource.TestCheckResourceAttr("materialize_source_kafka.test_no_topic", "topic", ""),
+				),
+			},
+		},
+	})
+}
+
+func testAccSourceKafkaNoTopicResource(nameSpace string) string {
+	return fmt.Sprintf(`
+	resource "materialize_connection_kafka" "kafka_connection" {
+		name = "%[1]s_connection_kafka"
+		kafka_broker {
+			broker = "redpanda:9092"
+		}
+		security_protocol = "PLAINTEXT"
+	}
+
+	resource "materialize_source_kafka" "test_no_topic" {
+		name         = "%[1]s_source_no_topic"
+		cluster_name = "quickstart"
+
+		kafka_connection {
+			name = materialize_connection_kafka.kafka_connection.name
+		}
+	}
+	`, nameSpace)
+}
+
 func testAccSourceKafkaResource(roleName, connName, sourceName, source2Name, sourceOwner, comment string) string {
 	return fmt.Sprintf(`
 	resource "materialize_role" "test" {

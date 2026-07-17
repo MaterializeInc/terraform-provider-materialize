@@ -49,7 +49,6 @@ resource "materialize_source_kafka" "example_source_kafka" {
 
 - `kafka_connection` (Block List, Min: 1, Max: 1) The Kafka connection to use in the source. (see [below for nested schema](#nestedblock--kafka_connection))
 - `name` (String) The identifier for the source.
-- `topic` (String) The Kafka topic you want to subscribe to.
 
 ### Optional
 
@@ -75,6 +74,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
+- `topic` (String) The Kafka topic you want to subscribe to. If not specified, topics are specified at the table level using materialize_source_table_kafka resources.
 - `value_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the value format explicitly. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only
