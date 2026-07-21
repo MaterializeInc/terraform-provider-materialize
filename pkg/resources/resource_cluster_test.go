@@ -59,7 +59,8 @@ func TestResourceClusterCreate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
-		testhelpers.MockClusterAutoScalingScan(mock, "", "")
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockClusterAutoScalingScan(mock, "", 0)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -101,7 +102,8 @@ func TestResourceClusterAutoScalingCreate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
-		testhelpers.MockClusterAutoScalingScan(mock, "800cc", "15s")
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockClusterAutoScalingScan(mock, "800cc", 15)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
@@ -159,7 +161,8 @@ func TestResourceClusterReadIdMigration(t *testing.T) {
 				// Query Params
 				pp := `WHERE mz_clusters.id = '` + tc.mockId + `'`
 				testhelpers.MockClusterScan(mock, pp)
-				testhelpers.MockClusterAutoScalingScan(mock, "", "")
+				testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+				testhelpers.MockClusterAutoScalingScan(mock, "", 0)
 
 				if err := clusterRead(context.TODO(), d, db); err != nil {
 					t.Fatal(err)
@@ -204,7 +207,8 @@ func TestResourceClusterZeroReplicationCreate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
-		testhelpers.MockClusterAutoScalingScan(mock, "", "")
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockClusterAutoScalingScan(mock, "", 0)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
