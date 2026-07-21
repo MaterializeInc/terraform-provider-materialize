@@ -62,6 +62,17 @@ resource "materialize_cluster" "scheduling_cluster_us_west" {
   }
 }
 
+resource "materialize_cluster" "autoscaling_cluster" {
+  name = "autoscaling_cluster"
+  size = "25cc"
+  auto_scaling_strategy {
+    on_hydration {
+      hydration_size  = "50cc"
+      linger_duration = "15s"
+    }
+  }
+}
+
 resource "materialize_cluster" "no_replication" {
   name               = "no_replication"
   size               = "25cc"

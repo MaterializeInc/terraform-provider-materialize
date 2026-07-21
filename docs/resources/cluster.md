@@ -27,6 +27,7 @@ resource "materialize_cluster" "example_cluster" {
 
 ### Optional
 
+- `auto_scaling_strategy` (Block List, Max: 1) Lets the cluster temporarily burst to a larger size while it has un-hydrated objects, to speed up hydration. Only available on managed clusters and cannot be combined with a non-default `scheduling`. (see [below for nested schema](#nestedblock--auto_scaling_strategy))
 - `availability_zones` (List of String) The specific availability zones of the cluster.
 - `comment` (String) Comment on an object in the database.
 - `disk` (Boolean, Deprecated) **Deprecated**. This attribute is maintained for backward compatibility with existing configurations. New users should use 'cc' sizes for disk access.
@@ -43,6 +44,26 @@ resource "materialize_cluster" "example_cluster" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--auto_scaling_strategy"></a>
+### Nested Schema for `auto_scaling_strategy`
+
+Required:
+
+- `on_hydration` (Block List, Min: 1, Max: 1) Burst to a larger size while the cluster has un-hydrated objects. (see [below for nested schema](#nestedblock--auto_scaling_strategy--on_hydration))
+
+<a id="nestedblock--auto_scaling_strategy--on_hydration"></a>
+### Nested Schema for `auto_scaling_strategy.on_hydration`
+
+Required:
+
+- `hydration_size` (String) The size to burst to while the cluster has un-hydrated objects. Must differ from the cluster's steady `size`.
+
+Optional:
+
+- `linger_duration` (String) How long the burst replica lingers after the steady-size replicas hydrate, before it is removed. Defaults to `0s`.
+
+
 
 <a id="nestedblock--scheduling"></a>
 ### Nested Schema for `scheduling`

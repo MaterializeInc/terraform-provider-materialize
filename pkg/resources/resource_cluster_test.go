@@ -59,10 +59,56 @@ func TestResourceClusterCreate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
+		testhelpers.MockClusterAutoScalingScan(mock, "", "")
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
+	})
+}
+
+func TestResourceClusterAutoScalingCreate(t *testing.T) {
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"name": "cluster",
+		"size": "3xsmall",
+		"auto_scaling_strategy": []interface{}{
+			map[string]interface{}{
+				"on_hydration": []interface{}{
+					map[string]interface{}{
+						"hydration_size":  "800cc",
+						"linger_duration": "15s",
+					},
+				},
+			},
+		},
+	}
+	d := schema.TestResourceDataRaw(t, Cluster().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`
+			CREATE CLUSTER "cluster" \(SIZE '3xsmall',
+			INTROSPECTION INTERVAL = '1s',
+			AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc', LINGER DURATION = '15s'\)\)\);
+		`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_clusters.name = 'cluster'`
+		testhelpers.MockClusterScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_clusters.id = 'u1'`
+		testhelpers.MockClusterScan(mock, pp)
+		testhelpers.MockClusterAutoScalingScan(mock, "800cc", "15s")
+
+		if err := clusterCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		strategy := d.Get("auto_scaling_strategy").([]interface{})
+		r.Len(strategy, 1)
 	})
 }
 
@@ -113,6 +159,7 @@ func TestResourceClusterReadIdMigration(t *testing.T) {
 				// Query Params
 				pp := `WHERE mz_clusters.id = '` + tc.mockId + `'`
 				testhelpers.MockClusterScan(mock, pp)
+				testhelpers.MockClusterAutoScalingScan(mock, "", "")
 
 				if err := clusterRead(context.TODO(), d, db); err != nil {
 					t.Fatal(err)
@@ -157,6 +204,7 @@ func TestResourceClusterZeroReplicationCreate(t *testing.T) {
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
 		testhelpers.MockClusterScan(mock, pp)
+		testhelpers.MockClusterAutoScalingScan(mock, "", "")
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
