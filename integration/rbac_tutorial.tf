@@ -4,7 +4,7 @@ resource "materialize_role" "dev_role" {
 }
 
 resource "materialize_role" "user" {
-  name = "user"
+  name = "app_user"
 }
 
 # Step 4. Grant privileges to the role
