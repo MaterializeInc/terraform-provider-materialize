@@ -364,6 +364,42 @@ func (b *ClusterBuilder) AlterClusterResetAutoScaling() error {
 	return b.ddl.exec(q)
 }
 
+// ClusterReconfigParams holds the target configuration of an in-flight graceful
+// resize, read from mz_internal.mz_cluster_reconfigurations.
+type ClusterReconfigParams struct {
+	Size              sql.NullString `db:"size"`
+	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
+}
+
+// ScanClusterPendingReconfiguration returns the target of an in-flight graceful
+// resize, if one is in progress. As of Materialize v26.34, a bare
+// `ALTER CLUSTER ... SET (SIZE = ...)` resizes gracefully in the background and
+// returns immediately; until it commits, mz_clusters keeps reporting the old
+// configuration. Callers use the returned target so the read reflects the
+// intended end-state instead of perpetually diffing against the pre-resize
+// values. Best-effort and version-safe: on older Materialize versions without
+// the reconfigurations view (where resizing was synchronous), it reports no
+// in-flight reconfiguration.
+func ScanClusterPendingReconfiguration(conn *sqlx.DB, clusterId string) (ClusterReconfigParams, bool, error) {
+	var p ClusterReconfigParams
+	q := `
+		SELECT
+			target->>'size' AS size,
+			(target->>'replication_factor')::bigint AS replication_factor
+		FROM mz_internal.mz_cluster_reconfigurations
+		WHERE cluster_id = $1 AND status = 'in-progress'`
+
+	if err := conn.Get(&p, q, clusterId); err != nil {
+		if err == sql.ErrNoRows {
+			return p, false, nil
+		}
+		log.Printf("[DEBUG] could not read pending reconfiguration for cluster %s: %s", clusterId, err)
+		return p, false, nil
+	}
+
+	return p, true, nil
+}
+
 func (b *ClusterBuilder) GenSchedulingConfigSql(s SchedulingConfig) string {
 	statement := "SCHEDULE = "
 	if !s.IsSet || !s.OnRefresh.Enabled {
@@ -445,10 +481,12 @@ func ScanCluster(conn *sqlx.DB, identifier string, byName bool) (ClusterParams, 
 }
 
 // AutoScalingStrategyParams holds the configured autoscaling strategy read back
-// from mz_internal.mz_cluster_auto_scaling_strategies.
+// from mz_internal.mz_cluster_auto_scaling_strategies. In the catalog the
+// linger duration is stored as a {"secs": <int>, "nanos": <int>} object, so we
+// read the seconds component and render it as a "<n>s" duration string.
 type AutoScalingStrategyParams struct {
-	HydrationSize  sql.NullString `db:"hydration_size"`
-	LingerDuration sql.NullString `db:"linger_duration"`
+	HydrationSize sql.NullString `db:"hydration_size"`
+	LingerSeconds sql.NullInt64  `db:"linger_seconds"`
 }
 
 // ScanClusterAutoScalingStrategy reads the configured ON HYDRATION autoscaling
@@ -461,7 +499,7 @@ func ScanClusterAutoScalingStrategy(conn *sqlx.DB, clusterId string) (AutoScalin
 	q := `
 		SELECT
 			strategy->'on_hydration'->>'hydration_size' AS hydration_size,
-			strategy->'on_hydration'->>'linger_duration' AS linger_duration
+			(strategy->'on_hydration'->'linger_duration'->>'secs')::bigint AS linger_seconds
 		FROM mz_internal.mz_cluster_auto_scaling_strategies
 		WHERE cluster_id = $1`
 

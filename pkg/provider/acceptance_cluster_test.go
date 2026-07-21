@@ -316,9 +316,9 @@ func TestAccClusterWithAutoScaling(t *testing.T) {
 			},
 			{
 				// Update the hydration size
-				Config: testAccClusterWithAutoScalingConfig(clusterName, size, "100cc", "15s"),
+				Config: testAccClusterWithAutoScalingConfig(clusterName, size, "2xsmall", "15s"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "auto_scaling_strategy.0.on_hydration.0.hydration_size", "100cc"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "auto_scaling_strategy.0.on_hydration.0.hydration_size", "2xsmall"),
 				),
 			},
 			{

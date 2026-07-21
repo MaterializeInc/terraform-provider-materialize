@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -98,10 +99,11 @@ var clusterSchema = map[string]*schema.Schema{
 								Description: "The size to burst to while the cluster has un-hydrated objects. Must differ from the cluster's steady `size`.",
 							},
 							"linger_duration": {
-								Type:         schema.TypeString,
-								Optional:     true,
-								Description:  "How long the burst replica lingers after the steady-size replicas hydrate, before it is removed. Defaults to `0s`.",
-								ValidateFunc: validation.StringMatch(regexp.MustCompile("^\\d+[smh]{1}$"), "Must be a valid duration in the form of <int><unit> ex: 1s, 10m"),
+								Type:             schema.TypeString,
+								Optional:         true,
+								Description:      "How long the burst replica lingers after the steady-size replicas hydrate, before it is removed. Defaults to `0s`.",
+								ValidateFunc:     validation.StringMatch(regexp.MustCompile("^\\d+[smh]{1}$"), "Must be a valid duration in the form of <int><unit> ex: 1s, 10m"),
+								DiffSuppressFunc: suppressEquivalentDuration,
 							},
 						},
 					},
@@ -198,11 +200,31 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("replication_factor", s.ReplicationFactor.Int64); err != nil {
+	// If a graceful resize is in flight, mz_clusters still reports the old
+	// size/replication factor until it commits. Reflect the target so Terraform
+	// sees the intended end-state rather than perpetually diffing against the
+	// pre-resize values. The resize proceeds in the background; users who want
+	// apply to block on it use the `wait_until_ready` option instead.
+	size := s.Size.String
+	replicationFactor := s.ReplicationFactor.Int64
+	pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, s.ClusterId.String)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if inFlight {
+		if pending.Size.Valid {
+			size = pending.Size.String
+		}
+		if pending.ReplicationFactor.Valid {
+			replicationFactor = pending.ReplicationFactor.Int64
+		}
+	}
+
+	if err := d.Set("replication_factor", replicationFactor); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("size", s.Size.String); err != nil {
+	if err := d.Set("size", size); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -231,6 +253,42 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
+// parseDurationSeconds converts a "<int><unit>" duration (s/m/h), or an empty
+// string, into a number of seconds. An empty string means 0s (the default).
+func parseDurationSeconds(v string) (int64, bool) {
+	if v == "" {
+		return 0, true
+	}
+	unit := v[len(v)-1]
+	n, err := strconv.ParseInt(v[:len(v)-1], 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	switch unit {
+	case 's':
+		return n, true
+	case 'm':
+		return n * 60, true
+	case 'h':
+		return n * 3600, true
+	default:
+		return 0, false
+	}
+}
+
+// suppressEquivalentDuration treats durations that resolve to the same number
+// of seconds as equal (e.g. "1m" == "60s", "" == "0s"). Materialize normalizes
+// the linger duration to seconds, so without this the read-back would perpetually
+// diff against a config that used a different unit.
+func suppressEquivalentDuration(k, old, new string, d *schema.ResourceData) bool {
+	o, ok1 := parseDurationSeconds(old)
+	n, ok2 := parseDurationSeconds(new)
+	if !ok1 || !ok2 {
+		return false
+	}
+	return o == n
+}
+
 // flattenAutoScalingStrategy converts a scanned strategy into the nested TF
 // block shape, or an empty list when no strategy is configured.
 func flattenAutoScalingStrategy(s materialize.AutoScalingStrategyParams) []interface{} {
@@ -241,8 +299,11 @@ func flattenAutoScalingStrategy(s materialize.AutoScalingStrategyParams) []inter
 	onHydration := map[string]interface{}{
 		"hydration_size": s.HydrationSize.String,
 	}
-	if s.LingerDuration.Valid {
-		onHydration["linger_duration"] = s.LingerDuration.String
+	if s.LingerSeconds.Valid {
+		// The catalog stores the linger duration as seconds; render it in the
+		// "<n>s" form. The schema's DiffSuppressFunc treats this as equivalent
+		// to any other unit the user configured (e.g. "1m" == "60s").
+		onHydration["linger_duration"] = fmt.Sprintf("%ds", s.LingerSeconds.Int64)
 	}
 
 	return []interface{}{

@@ -128,18 +128,35 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 
 // MockClusterAutoScalingScan mocks the best-effort read of a cluster's
 // autoscaling strategy. Pass an empty hydrationSize to simulate no configured
-// strategy (no rows).
-func MockClusterAutoScalingScan(mock sqlmock.Sqlmock, hydrationSize, lingerDuration string) {
+// strategy (no rows); lingerSeconds is the linger duration in seconds.
+func MockClusterAutoScalingScan(mock sqlmock.Sqlmock, hydrationSize string, lingerSeconds int64) {
 	q := `
 		SELECT
 			strategy->'on_hydration'->>'hydration_size' AS hydration_size,
-			strategy->'on_hydration'->>'linger_duration' AS linger_duration
+			\(strategy->'on_hydration'->'linger_duration'->>'secs'\)::bigint AS linger_seconds
 		FROM mz_internal.mz_cluster_auto_scaling_strategies
 		WHERE cluster_id = \$1`
 
-	rows := mock.NewRows([]string{"hydration_size", "linger_duration"})
+	rows := mock.NewRows([]string{"hydration_size", "linger_seconds"})
 	if hydrationSize != "" {
-		rows.AddRow(hydrationSize, lingerDuration)
+		rows.AddRow(hydrationSize, lingerSeconds)
+	}
+	mock.ExpectQuery(q).WillReturnRows(rows)
+}
+
+// MockClusterReconfigurationScan mocks the read of an in-flight graceful resize.
+// Pass an empty size to simulate no in-progress reconfiguration (no rows).
+func MockClusterReconfigurationScan(mock sqlmock.Sqlmock, size string, replicationFactor int64) {
+	q := `
+		SELECT
+			target->>'size' AS size,
+			\(target->>'replication_factor'\)::bigint AS replication_factor
+		FROM mz_internal.mz_cluster_reconfigurations
+		WHERE cluster_id = \$1 AND status = 'in-progress'`
+
+	rows := mock.NewRows([]string{"size", "replication_factor"})
+	if size != "" {
+		rows.AddRow(size, replicationFactor)
 	}
 	mock.ExpectQuery(q).WillReturnRows(rows)
 }
