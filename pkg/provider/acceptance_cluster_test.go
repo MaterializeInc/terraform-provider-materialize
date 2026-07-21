@@ -293,6 +293,45 @@ func TestAccClusterWithScheduling(t *testing.T) {
 	})
 }
 
+func TestAccClusterWithAutoScaling(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	size := "25cc"
+	hydrationSize := "50cc"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllClusterDestroyed,
+		Steps: []resource.TestStep{
+			{
+				// Create with an autoscaling strategy
+				Config: testAccClusterWithAutoScalingConfig(clusterName, size, hydrationSize, "15s"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists("materialize_cluster.test_autoscaling"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "name", clusterName),
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "size", size),
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "auto_scaling_strategy.0.on_hydration.0.hydration_size", hydrationSize),
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "auto_scaling_strategy.0.on_hydration.0.linger_duration", "15s"),
+				),
+			},
+			{
+				// Update the hydration size
+				Config: testAccClusterWithAutoScalingConfig(clusterName, size, "100cc", "15s"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "auto_scaling_strategy.0.on_hydration.0.hydration_size", "100cc"),
+				),
+			},
+			{
+				// Remove the strategy (RESET) by dropping the block from the same resource
+				Config: testAccClusterWithAutoScalingConfig(clusterName, size, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_autoscaling", "auto_scaling_strategy.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccCluster_identifyByName(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	resource.ParallelTest(t, resource.TestCase{
@@ -522,6 +561,28 @@ resource "materialize_cluster" "test_scheduling" {
     }
 }
 `, clusterName, size, onRefreshStr, rehydrationTimeEstimate)
+}
+
+func testAccClusterWithAutoScalingConfig(clusterName, size, hydrationSize, lingerDuration string) string {
+	strategy := ""
+	if hydrationSize != "" {
+		lingerLine := ""
+		if lingerDuration != "" {
+			lingerLine = fmt.Sprintf("\n            linger_duration = \"%s\"", lingerDuration)
+		}
+		strategy = fmt.Sprintf(`
+    auto_scaling_strategy {
+        on_hydration {
+            hydration_size  = "%s"%s
+        }
+    }`, hydrationSize, lingerLine)
+	}
+	return fmt.Sprintf(`
+resource "materialize_cluster" "test_autoscaling" {
+    name = "%s"
+    size = "%s"%s
+}
+`, clusterName, size, strategy)
 }
 
 func testAccClusterResourceWithNameAsId(clusterName, clusterSize, clusterReplicationFactor string) string {

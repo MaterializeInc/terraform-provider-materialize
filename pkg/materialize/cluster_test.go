@@ -125,6 +125,93 @@ func TestClusterWithSchedulingCreate(t *testing.T) {
 	})
 }
 
+func TestClusterWithAutoScalingCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `CREATE CLUSTER "cluster" \(SIZE 'xsmall', AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc', LINGER DURATION = '15s'\)\)\);`
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+
+		b.AutoScalingStrategy([]interface{}{
+			map[string]interface{}{
+				"on_hydration": []interface{}{
+					map[string]interface{}{
+						"hydration_size":  "800cc",
+						"linger_duration": "15s",
+					},
+				},
+			},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestClusterWithAutoScalingNoLingerCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `CREATE CLUSTER "cluster" \(SIZE 'xsmall', AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc'\)\)\);`
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.Size("xsmall")
+
+		b.AutoScalingStrategy([]interface{}{
+			map[string]interface{}{
+				"on_hydration": []interface{}{
+					map[string]interface{}{
+						"hydration_size": "800cc",
+					},
+				},
+			},
+		})
+
+		if err := b.Create(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestClusterAutoScalingUpdate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		expectedSQL := `ALTER CLUSTER "cluster" SET \(AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc'\)\)\);`
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+		b.SetAutoScalingStrategy([]interface{}{
+			map[string]interface{}{
+				"on_hydration": []interface{}{
+					map[string]interface{}{
+						"hydration_size": "800cc",
+					},
+				},
+			},
+		})
+
+		if err := b.AlterCluster(ReconfigurationOptions{}); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestClusterAutoScalingReset(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER CLUSTER "cluster" RESET \(AUTO SCALING STRATEGY\);`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "cluster"}
+		b := NewClusterBuilder(db, o)
+
+		if err := b.AlterClusterResetAutoScaling(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
 func TestClusterUpdate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `ALTER CLUSTER "cluster" SET \(SIZE 'xsmall', REPLICATION FACTOR 2\);`

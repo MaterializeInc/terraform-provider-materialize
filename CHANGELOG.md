@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.6 - 2026-07-21
+
+### Features
+
+* **Cluster autoscaling (hydration burst)** [#892](https://github.com/MaterializeInc/terraform-provider-materialize/pull/892): Added an `auto_scaling_strategy` block to `materialize_cluster` so managed clusters can burst to a larger `hydration_size` while they have un-hydrated objects, then return to their steady size. Supports create, alter, reset, and best-effort read-back from `mz_internal.mz_cluster_auto_scaling_strategies`.
+
 ## 0.11.5 - 2026-06-26
 
 ### Features

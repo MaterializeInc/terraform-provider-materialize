@@ -76,6 +76,39 @@ var clusterSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"auto_scaling_strategy": {
+		Type:          schema.TypeList,
+		Optional:      true,
+		MaxItems:      1,
+		Description:   "Lets the cluster temporarily burst to a larger size while it has un-hydrated objects, to speed up hydration. Only available on managed clusters and cannot be combined with a non-default `scheduling`.",
+		RequiredWith:  []string{"size"},
+		ConflictsWith: []string{"scheduling"},
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"on_hydration": {
+					Type:        schema.TypeList,
+					Required:    true,
+					MaxItems:    1,
+					Description: "Burst to a larger size while the cluster has un-hydrated objects.",
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"hydration_size": {
+								Type:        schema.TypeString,
+								Required:    true,
+								Description: "The size to burst to while the cluster has un-hydrated objects. Must differ from the cluster's steady `size`.",
+							},
+							"linger_duration": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								Description:  "How long the burst replica lingers after the steady-size replicas hydrate, before it is removed. Defaults to `0s`.",
+								ValidateFunc: validation.StringMatch(regexp.MustCompile("^\\d+[smh]{1}$"), "Must be a valid duration in the form of <int><unit> ex: 1s, 10m"),
+							},
+						},
+					},
+				},
+			},
+		},
+	},
 	"identify_by_name": {
 		Type:        schema.TypeBool,
 		Optional:    true,
@@ -186,7 +219,37 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
+	// Best-effort read of the autoscaling strategy; keyed on the cluster id.
+	strategy, err := materialize.ScanClusterAutoScalingStrategy(metaDb, s.ClusterId.String)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("auto_scaling_strategy", flattenAutoScalingStrategy(strategy)); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
+}
+
+// flattenAutoScalingStrategy converts a scanned strategy into the nested TF
+// block shape, or an empty list when no strategy is configured.
+func flattenAutoScalingStrategy(s materialize.AutoScalingStrategyParams) []interface{} {
+	if !s.HydrationSize.Valid || s.HydrationSize.String == "" {
+		return []interface{}{}
+	}
+
+	onHydration := map[string]interface{}{
+		"hydration_size": s.HydrationSize.String,
+	}
+	if s.LingerDuration.Valid {
+		onHydration["linger_duration"] = s.LingerDuration.String
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"on_hydration": []interface{}{onHydration},
+		},
+	}
 }
 
 func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -230,6 +293,10 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 		if v, ok := d.GetOk("scheduling"); ok {
 			b.Scheduling(v.([]interface{}))
+		}
+
+		if v, ok := d.GetOk("auto_scaling_strategy"); ok {
+			b.AutoScalingStrategy(v.([]interface{}))
 		}
 	}
 
@@ -369,6 +436,23 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		}
 	}
 
+	if d.HasChange("auto_scaling_strategy") {
+		_, n := d.GetChange("auto_scaling_strategy")
+		config := materialize.GetAutoScalingConfig(n)
+		if config.IsSet {
+			// Set on the builder so it is emitted via GenerateClusterOptions
+			// under the AlterCluster path below.
+			b.SetAutoScalingStrategy(n)
+			changed = true
+		} else {
+			// Block removed: reset independently of the reconfig flow,
+			// mirroring how scheduling is handled.
+			if err := b.AlterClusterResetAutoScaling(); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
 	if changed {
 		_, reconfigOptsRaw := d.GetChange("wait_until_ready")
 		reconfigOpts := b.GetReconfigOpts(reconfigOptsRaw)
@@ -437,6 +521,12 @@ func clusterImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 	d.Set("disk", true)
 	d.Set("availability_zones", s.AvailabilityZones)
 	d.Set("comment", s.Comment.String)
+
+	strategy, err := materialize.ScanClusterAutoScalingStrategy(metaDb, s.ClusterId.String)
+	if err != nil {
+		return nil, err
+	}
+	d.Set("auto_scaling_strategy", flattenAutoScalingStrategy(strategy))
 
 	return []*schema.ResourceData{d}, nil
 }

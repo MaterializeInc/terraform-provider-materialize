@@ -126,6 +126,24 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
+// MockClusterAutoScalingScan mocks the best-effort read of a cluster's
+// autoscaling strategy. Pass an empty hydrationSize to simulate no configured
+// strategy (no rows).
+func MockClusterAutoScalingScan(mock sqlmock.Sqlmock, hydrationSize, lingerDuration string) {
+	q := `
+		SELECT
+			strategy->'on_hydration'->>'hydration_size' AS hydration_size,
+			strategy->'on_hydration'->>'linger_duration' AS linger_duration
+		FROM mz_internal.mz_cluster_auto_scaling_strategies
+		WHERE cluster_id = \$1`
+
+	rows := mock.NewRows([]string{"hydration_size", "linger_duration"})
+	if hydrationSize != "" {
+		rows.AddRow(hydrationSize, lingerDuration)
+	}
+	mock.ExpectQuery(q).WillReturnRows(rows)
+}
+
 func MockConnectionScan(mock sqlmock.Sqlmock, predicate string) {
 	b := `
 	SELECT

@@ -3,6 +3,7 @@ package materialize
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -25,6 +26,7 @@ type ClusterBuilder struct {
 	introspectionInterval  string
 	introspectionDebugging bool
 	schedulingConfig       SchedulingConfig
+	autoScalingConfig      AutoScalingConfig
 }
 
 func NewClusterBuilder(conn *sqlx.DB, obj MaterializeObject) *ClusterBuilder {
@@ -87,6 +89,52 @@ func GetSchedulingConfig(v interface{}) SchedulingConfig {
 
 	if rehydrationTimeEstimate, ok := onRefreshMap["rehydration_time_estimate"].(string); ok {
 		config.OnRefresh.RehydrationTimeEstimate = rehydrationTimeEstimate
+	}
+
+	return config
+}
+
+type AutoScalingConfig struct {
+	IsSet          bool
+	HydrationSize  string
+	LingerDuration string
+}
+
+// GetAutoScalingConfig parses the auto_scaling_strategy TF block into an
+// AutoScalingConfig. An empty/absent block yields IsSet: false.
+func GetAutoScalingConfig(v interface{}) AutoScalingConfig {
+	if v == nil {
+		return AutoScalingConfig{}
+	}
+
+	configSlice, ok := v.([]interface{})
+	if !ok || len(configSlice) == 0 {
+		return AutoScalingConfig{}
+	}
+
+	configMap, ok := configSlice[0].(map[string]interface{})
+	if !ok {
+		return AutoScalingConfig{}
+	}
+
+	onHydrationSlice, ok := configMap["on_hydration"].([]interface{})
+	if !ok || len(onHydrationSlice) == 0 {
+		return AutoScalingConfig{}
+	}
+
+	onHydrationMap, ok := onHydrationSlice[0].(map[string]interface{})
+	if !ok {
+		return AutoScalingConfig{}
+	}
+
+	config := AutoScalingConfig{IsSet: true}
+
+	if hydrationSize, ok := onHydrationMap["hydration_size"].(string); ok {
+		config.HydrationSize = hydrationSize
+	}
+
+	if lingerDuration, ok := onHydrationMap["linger_duration"].(string); ok {
+		config.LingerDuration = lingerDuration
 	}
 
 	return config
@@ -159,6 +207,11 @@ func (b *ClusterBuilder) Scheduling(v []interface{}) *ClusterBuilder {
 	return b
 }
 
+func (b *ClusterBuilder) AutoScalingStrategy(v []interface{}) *ClusterBuilder {
+	b.autoScalingConfig = GetAutoScalingConfig(v)
+	return b
+}
+
 func (b *ClusterBuilder) GenerateClusterOptions() string {
 	var p []string
 	if b.size != "" {
@@ -200,6 +253,10 @@ func (b *ClusterBuilder) GenerateClusterOptions() string {
 		// We skip setting this in alter cluster because it
 		// will be handled independently
 		p = append(p, b.GenSchedulingConfigSql(b.schedulingConfig))
+	}
+
+	if b.autoScalingConfig.IsSet {
+		p = append(p, b.GenAutoScalingStrategySql(b.autoScalingConfig))
 	}
 
 	if len(p) > 0 {
@@ -286,6 +343,27 @@ func (b *ClusterBuilder) SetSchedulingConfig(s interface{}) {
 	b.schedulingConfig = GetSchedulingConfig(s)
 }
 
+func (b *ClusterBuilder) SetAutoScalingStrategy(s interface{}) {
+	b.autoScalingConfig = GetAutoScalingConfig(s)
+}
+
+func (b *ClusterBuilder) GenAutoScalingStrategySql(s AutoScalingConfig) string {
+	var opts []string
+	opts = append(opts, fmt.Sprintf("HYDRATION SIZE = %s", QuoteString(s.HydrationSize)))
+	if s.LingerDuration != "" {
+		opts = append(opts, fmt.Sprintf("LINGER DURATION = %s", QuoteString(s.LingerDuration)))
+	}
+	return fmt.Sprintf("AUTO SCALING STRATEGY = (ON HYDRATION (%s))", strings.Join(opts, ", "))
+}
+
+// AlterClusterResetAutoScaling removes the autoscaling strategy from a cluster.
+// Handled independently of the reconfig/AlterCluster flow, mirroring
+// AlterClusterScheduling.
+func (b *ClusterBuilder) AlterClusterResetAutoScaling() error {
+	q := fmt.Sprintf(`ALTER CLUSTER %s RESET (AUTO SCALING STRATEGY);`, b.QualifiedName())
+	return b.ddl.exec(q)
+}
+
 func (b *ClusterBuilder) GenSchedulingConfigSql(s SchedulingConfig) string {
 	statement := "SCHEDULE = "
 	if !s.IsSet || !s.OnRefresh.Enabled {
@@ -364,6 +442,39 @@ func ScanCluster(conn *sqlx.DB, identifier string, byName bool) (ClusterParams, 
 	}
 
 	return c, nil
+}
+
+// AutoScalingStrategyParams holds the configured autoscaling strategy read back
+// from mz_internal.mz_cluster_auto_scaling_strategies.
+type AutoScalingStrategyParams struct {
+	HydrationSize  sql.NullString `db:"hydration_size"`
+	LingerDuration sql.NullString `db:"linger_duration"`
+}
+
+// ScanClusterAutoScalingStrategy reads the configured ON HYDRATION autoscaling
+// strategy for a cluster. It is best-effort: the backing catalog view is in
+// public preview and may not exist on older Materialize versions, and clusters
+// without a strategy have no row. In both cases it returns an empty result and
+// no error so it never breaks the main cluster read.
+func ScanClusterAutoScalingStrategy(conn *sqlx.DB, clusterId string) (AutoScalingStrategyParams, error) {
+	var s AutoScalingStrategyParams
+	q := `
+		SELECT
+			strategy->'on_hydration'->>'hydration_size' AS hydration_size,
+			strategy->'on_hydration'->>'linger_duration' AS linger_duration
+		FROM mz_internal.mz_cluster_auto_scaling_strategies
+		WHERE cluster_id = $1`
+
+	if err := conn.Get(&s, q, clusterId); err != nil {
+		if err == sql.ErrNoRows {
+			return AutoScalingStrategyParams{}, nil
+		}
+		// View may not exist on older versions; degrade gracefully.
+		log.Printf("[DEBUG] could not read auto scaling strategy for cluster %s: %s", clusterId, err)
+		return AutoScalingStrategyParams{}, nil
+	}
+
+	return s, nil
 }
 
 func ListClusters(conn *sqlx.DB) ([]ClusterParams, error) {
