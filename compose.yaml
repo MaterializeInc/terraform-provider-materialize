@@ -177,17 +177,15 @@ services:
       MSSQL_USER: ${SQLSERVER_USER:-sa}
     healthcheck:
       test: |
-        if [ -f "/opt/mssql-tools18/bin/sqlcmd" ]; then
-          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
-        elif [ -f "/opt/mssql-tools/bin/sqlcmd" ]; then
-          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$${SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
-        else
-          exit 1
-        fi
+        SQLCMD=/opt/mssql-tools18/bin/sqlcmd
+        [ -f "$$SQLCMD" ] || SQLCMD=/opt/mssql-tools/bin/sqlcmd
+        [ -f "$$SQLCMD" ] || exit 1
+        "$$SQLCMD" -S localhost -U sa -P "$${SA_PASSWORD}" -C -b -Q \
+          "USE testdb; SET NOCOUNT ON; IF (SELECT COUNT(*) FROM sys.tables WHERE is_tracked_by_cdc = 1) < 10 RAISERROR('bootstrap incomplete', 16, 1);" || exit 1
       interval: 10s
       timeout: 10s
-      retries: 15
-      start_period: 60s
+      retries: 20
+      start_period: 120s
 
   provider:
     build:
@@ -196,6 +194,7 @@ services:
     depends_on:
       materialized: {condition: service_healthy}
       redpanda: {condition: service_healthy}
+      sqlserver: {condition: service_healthy}
     volumes:
       - ./integration:/usr/src/app/integration
     environment:
