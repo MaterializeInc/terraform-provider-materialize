@@ -42,15 +42,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Run the bootstrap script
+# Run the bootstrap script. We intentionally do NOT pass -b here: the bootstrap
+# is not idempotent (re-running sp_cdc_enable_table on an already-CDC-enabled
+# table raises Msg 22926), so -b combined with `restart: always` would crash-loop
+# on any restart. Readiness is instead gated by the healthcheck, which verifies
+# CDC is actually enabled on all fixture tables before the container is marked
+# healthy (and thus before dependents like Terraform run).
 echo "Running bootstrap script..."
 $SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -i /docker-entrypoint-initdb.d/sqlserver_bootstrap.sql -C -t 30
 
 if [ $? -eq 0 ]; then
-    echo "Bootstrap script completed successfully"
+    echo "Bootstrap script completed"
 else
-    echo "Error: Bootstrap script failed"
-    exit 1
+    echo "Warning: bootstrap script reported a non-zero exit; the healthcheck will gate readiness on CDC state"
 fi
 
 # Keep the container running
