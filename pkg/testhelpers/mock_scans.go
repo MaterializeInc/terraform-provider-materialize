@@ -654,6 +654,7 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		mz_connections.name as connection_name,
 		conn_schemas.name as connection_schema_name,
 		conn_databases.name as connection_database_name,
+		mz_sources.cluster_id AS cluster_id,
 		mz_clusters.name as cluster_name,
 		comments.comment AS comment,
 		mz_roles.name AS owner_name,

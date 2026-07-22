@@ -8,7 +8,7 @@
 
 ### Bug Fixes
 
-* Fixed `materialize_cluster` size/replication-factor drift under Materialize v26.34+ [#892](https://github.com/MaterializeInc/terraform-provider-materialize/pull/892): resizes are now graceful and proceed in the background, so the read reflects the target of an in-flight resize instead of the stale pre-resize values. Apply stays non-blocking; use `wait_until_ready` to block on completion.
+* Fixed cluster and source size/replication-factor drift under Materialize v26.34+ [#892](https://github.com/MaterializeInc/terraform-provider-materialize/pull/892): resizes are now graceful and proceed in the background, so `materialize_cluster` and `materialize_source_*` reads reflect the target of an in-flight resize instead of the stale pre-resize values. Apply stays non-blocking; use `wait_until_ready` to block on completion.
 
 ## 0.11.5 - 2026-06-26
 

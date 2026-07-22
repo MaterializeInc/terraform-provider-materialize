@@ -120,6 +120,7 @@ type SourceParams struct {
 	ConnectionName         sql.NullString `db:"connection_name"`
 	ConnectionSchemaName   sql.NullString `db:"connection_schema_name"`
 	ConnectionDatabaseName sql.NullString `db:"connection_database_name"`
+	ClusterId              sql.NullString `db:"cluster_id"`
 	ClusterName            sql.NullString `db:"cluster_name"`
 	Comment                sql.NullString `db:"comment"`
 	OwnerName              sql.NullString `db:"owner_name"`
@@ -139,6 +140,7 @@ var sourceQuery = NewBaseQuery(`
 			mz_connections.name as connection_name,
 			conn_schemas.name as connection_schema_name,
 			conn_databases.name as connection_database_name,
+			mz_sources.cluster_id AS cluster_id,
 			mz_clusters.name as cluster_name,
 			comments.comment AS comment,
 			mz_roles.name AS owner_name,
