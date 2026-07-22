@@ -40,7 +40,22 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("size", s.Size.String); err != nil {
+	// A source's size is backed by its linked cluster. As of Materialize
+	// v26.34 a resize is graceful and proceeds in the background, so
+	// mz_clusters still reports the old size until it commits. Reflect the
+	// in-flight target so Terraform sees the intended end-state instead of
+	// perpetually diffing against the pre-resize value.
+	size := s.Size.String
+	if s.ClusterId.Valid {
+		pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, s.ClusterId.String)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if inFlight && pending.Size.Valid {
+			size = pending.Size.String
+		}
+	}
+	if err := d.Set("size", size); err != nil {
 		return diag.FromErr(err)
 	}
 
