@@ -88,7 +88,7 @@ func Provider(version string) *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("MZ_SSLMODE", "require"),
 				Description: "SSL mode to use when connecting to Materialize (self-hosted only). Can also come from the `MZ_SSLMODE` environment variable. Defaults to `require`.",
 			},
-			// TODO: Switch name to Admin Endpoint for consistency
+			// TODO: Switch name to Admin Endpoint for consistency.
 			"endpoint": {
 				Type:        schema.TypeString,
 				Optional:    true,
