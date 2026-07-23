@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.11.6 - Unreleased
+## 0.11.6 - 2026-07-24
 
 ### Features
 
@@ -9,6 +9,12 @@
 ### Bug Fixes
 
 * Fixed cluster and source size/replication-factor drift under Materialize v26.34+ [#892](https://github.com/MaterializeInc/terraform-provider-materialize/pull/892): resizes are now graceful and proceed in the background, so `materialize_cluster` and `materialize_source_*` reads reflect the target of an in-flight resize instead of the stale pre-resize values. Apply stays non-blocking; use `wait_until_ready` to block on completion.
+
+### Misc
+
+* Bumped the Go toolchain to 1.26 [#887](https://github.com/MaterializeInc/terraform-provider-materialize/pull/887).
+* Hardened the integration suite for Materialize v26.34: renamed the reserved `user` role fixture [#893](https://github.com/MaterializeInc/terraform-provider-materialize/pull/893), fixed the flaky SQL Server CDC bootstrap race [#895](https://github.com/MaterializeInc/terraform-provider-materialize/pull/895), and updated listener configs for the per-route-group `allowed_roles` schema [#889](https://github.com/MaterializeInc/terraform-provider-materialize/pull/889).
+* Routine dependency updates: [#883](https://github.com/MaterializeInc/terraform-provider-materialize/pull/883), [#884](https://github.com/MaterializeInc/terraform-provider-materialize/pull/884), [#885](https://github.com/MaterializeInc/terraform-provider-materialize/pull/885), [#886](https://github.com/MaterializeInc/terraform-provider-materialize/pull/886), [#888](https://github.com/MaterializeInc/terraform-provider-materialize/pull/888), [#890](https://github.com/MaterializeInc/terraform-provider-materialize/pull/890), [#891](https://github.com/MaterializeInc/terraform-provider-materialize/pull/891).
 
 ## 0.11.5 - 2026-06-26
 
