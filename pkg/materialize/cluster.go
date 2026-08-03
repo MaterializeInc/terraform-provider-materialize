@@ -2,6 +2,7 @@ package materialize
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -377,9 +378,9 @@ type ClusterReconfigParams struct {
 // returns immediately; until it commits, mz_clusters keeps reporting the old
 // configuration. Callers use the returned target so the read reflects the
 // intended end-state instead of perpetually diffing against the pre-resize
-// values. Best-effort and version-safe: on older Materialize versions without
-// the reconfigurations view (where resizing was synchronous), it reports no
-// in-flight reconfiguration.
+// values. Version-safe: on older Materialize versions without the
+// reconfigurations view (where resizing was synchronous), it reports no
+// in-flight reconfiguration. Any other failure is returned to the caller.
 func ScanClusterPendingReconfiguration(conn *sqlx.DB, clusterId string) (ClusterReconfigParams, bool, error) {
 	var p ClusterReconfigParams
 	q := `
@@ -390,11 +391,14 @@ func ScanClusterPendingReconfiguration(conn *sqlx.DB, clusterId string) (Cluster
 		WHERE cluster_id = $1 AND status = 'in-progress'`
 
 	if err := conn.Get(&p, q, clusterId); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return p, false, nil
 		}
-		log.Printf("[DEBUG] could not read pending reconfiguration for cluster %s: %s", clusterId, err)
-		return p, false, nil
+		if isUndefinedObject(err) {
+			log.Printf("[DEBUG] reconfigurations view unavailable for cluster %s: %s", clusterId, err)
+			return p, false, nil
+		}
+		return p, false, err
 	}
 
 	return p, true, nil
@@ -490,10 +494,10 @@ type AutoScalingStrategyParams struct {
 }
 
 // ScanClusterAutoScalingStrategy reads the configured ON HYDRATION autoscaling
-// strategy for a cluster. It is best-effort: the backing catalog view is in
-// public preview and may not exist on older Materialize versions, and clusters
-// without a strategy have no row. In both cases it returns an empty result and
-// no error so it never breaks the main cluster read.
+// strategy for a cluster. The backing catalog view is in public preview and may
+// not exist on older Materialize versions, and clusters without a strategy have
+// no row; both cases return an empty result and no error. Any other failure is
+// returned so a transient error is not mistaken for "no strategy configured".
 func ScanClusterAutoScalingStrategy(conn *sqlx.DB, clusterId string) (AutoScalingStrategyParams, error) {
 	var s AutoScalingStrategyParams
 	q := `
@@ -504,12 +508,14 @@ func ScanClusterAutoScalingStrategy(conn *sqlx.DB, clusterId string) (AutoScalin
 		WHERE cluster_id = $1`
 
 	if err := conn.Get(&s, q, clusterId); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return AutoScalingStrategyParams{}, nil
 		}
-		// View may not exist on older versions; degrade gracefully.
-		log.Printf("[DEBUG] could not read auto scaling strategy for cluster %s: %s", clusterId, err)
-		return AutoScalingStrategyParams{}, nil
+		if isUndefinedObject(err) {
+			log.Printf("[DEBUG] auto scaling strategies view unavailable for cluster %s: %s", clusterId, err)
+			return AutoScalingStrategyParams{}, nil
+		}
+		return AutoScalingStrategyParams{}, err
 	}
 
 	return s, nil

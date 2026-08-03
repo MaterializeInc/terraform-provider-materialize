@@ -2,11 +2,30 @@ package materialize
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 )
+
+// isUndefinedObject reports whether err is Postgres undefined_table or
+// undefined_column. Materialize versions that predate a catalog view the
+// provider reads fail this way, which lets callers degrade gracefully without
+// also swallowing genuine query failures.
+func isUndefinedObject(err error) bool {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+	switch pgErr.SQLState() {
+	case "42P01", "42703":
+		return true
+	default:
+		return false
+	}
+}
 
 func QuoteString(input string) string {
 	return "'" + strings.Replace(input, "'", "''", -1) + "'"

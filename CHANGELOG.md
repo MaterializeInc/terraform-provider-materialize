@@ -7,6 +7,7 @@
 * Fixed `snapshot = false` being ignored on `materialize_sink_kafka` [#898](https://github.com/MaterializeInc/terraform-provider-materialize/pull/898): the value is now passed through to `CREATE SINK` instead of falling back to the server default of `SNAPSHOT = true`.
 * Stopped the debug log from including the app password and access token when the Frontegg token is refreshed [#899](https://github.com/MaterializeInc/terraform-provider-materialize/pull/899).
 * Fixed a leaked HTTP connection on every failed Frontegg API call, and app passwords that are not exactly 64 hexadecimal characters are now rejected with a clear error instead of failing authentication later [#899](https://github.com/MaterializeInc/terraform-provider-materialize/pull/899).
+* Fixed transient query failures being reported as an absent `auto_scaling_strategy` or an absent in-flight resize on `materialize_cluster` and `materialize_source_*` reads [#900](https://github.com/MaterializeInc/terraform-provider-materialize/pull/900). Only a genuinely missing catalog view (older Materialize versions) is now treated as "not configured".
 
 ### Misc
 
