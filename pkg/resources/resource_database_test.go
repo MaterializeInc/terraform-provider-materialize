@@ -2,6 +2,8 @@ package resources
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -87,4 +89,35 @@ func TestResourceDatabaseDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+// The reads match "not found" with errors.Is, so an ErrNoRows that arrives
+// wrapped still drops the resource from state instead of failing the plan. The
+// bare case is the control: both must behave the same way.
+func TestResourceDatabaseReadNotFound(t *testing.T) {
+	tests := []struct {
+		name    string
+		scanErr error
+	}{
+		{"bare", sql.ErrNoRows},
+		{"wrapped", fmt.Errorf("scanning database: %w", sql.ErrNoRows)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := require.New(t)
+
+			d := schema.TestResourceDataRaw(t, Database().Schema, map[string]interface{}{"name": "database"})
+			r.NotNil(d)
+			d.SetId("aws/us-east-1:u1")
+
+			testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(`WHERE mz_databases.id = 'u1'`).WillReturnError(tt.scanErr)
+
+				diags := databaseRead(context.TODO(), d, db)
+				r.Nil(diags, "a missing database should not be reported as an error")
+				r.Empty(d.Id(), "a missing database should be removed from state")
+			})
+		})
+	}
 }

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -16,6 +17,24 @@ type Droppable interface {
 	Drop() error
 }
 
+// rollbackCreate drops an object that was created but could not be fully
+// configured, and returns cause as the resource error. A drop that itself fails
+// is surfaced as a warning so the leftover object does not go unnoticed.
+func rollbackCreate(builder Droppable, o materialize.MaterializeObject, stage string, cause error) diag.Diagnostics {
+	log.Printf("[DEBUG] resource failed %s, dropping object: %s", stage, o.Name)
+
+	diags := diag.FromErr(cause)
+	if err := builder.Drop(); err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  fmt.Sprintf("Could not drop %q after a failed %s", o.Name, stage),
+			Detail:   fmt.Sprintf("The object may still exist in Materialize and need to be dropped manually: %s", err),
+		})
+	}
+
+	return diags
+}
+
 // applyOwnership applies ownership to a newly created resource.
 // If the operation fails, it drops the resource and returns an error.
 // This is a common pattern across connection, source, table, view, and other resources.
@@ -24,9 +43,7 @@ func applyOwnership(d *schema.ResourceData, metaDb *sqlx.DB, o materialize.Mater
 		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 
 		if err := ownership.Alter(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
-			builder.Drop()
-			return diag.FromErr(err)
+			return rollbackCreate(builder, o, "ownership", err)
 		}
 	}
 
@@ -41,9 +58,7 @@ func applyComment(d *schema.ResourceData, metaDb *sqlx.DB, o materialize.Materia
 		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
-			builder.Drop()
-			return diag.FromErr(err)
+			return rollbackCreate(builder, o, "comment", err)
 		}
 	}
 

@@ -36,7 +36,11 @@ func User() *schema.Resource {
 }
 
 func userDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*utils.ProviderMeta).Frontegg
+	providerMeta, err := utils.GetProviderMeta(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	client := providerMeta.Frontegg
 
 	email := d.Get("email").(string)
 

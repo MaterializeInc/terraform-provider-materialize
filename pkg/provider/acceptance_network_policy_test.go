@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -156,7 +157,7 @@ func testAccCheckAllNetworkPoliciesDestroyed(s *terraform.State) error {
 		_, err := materialize.ScanNetworkPolicy(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
 			return fmt.Errorf("Network Policy %v still exists", utils.ExtractId(r.Primary.ID))
-		} else if err != sql.ErrNoRows {
+		} else if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

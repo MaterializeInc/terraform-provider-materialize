@@ -3,8 +3,8 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -94,7 +94,7 @@ func networkPolicyRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	policy, err := materialize.ScanNetworkPolicy(metaDb, utils.ExtractId(i))
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -167,9 +167,7 @@ func networkPolicyCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if v, ok := d.GetOk("comment"); ok {
 		comment := materialize.NewCommentBuilder(metaDb, o)
 		if err := comment.Object(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
-			b.Drop()
-			return diag.FromErr(err)
+			return rollbackCreate(b, o, "comment", err)
 		}
 	}
 

@@ -3,7 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
-	"log"
+	"errors"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -115,9 +115,7 @@ func sourceTablePostgresCreate(ctx context.Context, d *schema.ResourceData, meta
 	if v, ok := d.GetOk("ownership_role"); ok {
 		ownership := materialize.NewOwnershipBuilder(metaDb, o)
 		if err := ownership.Alter(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed ownership, dropping object: %s", o.Name)
-			b.Drop()
-			return diag.FromErr(err)
+			return rollbackCreate(b, o, "ownership", err)
 		}
 	}
 
@@ -125,9 +123,7 @@ func sourceTablePostgresCreate(ctx context.Context, d *schema.ResourceData, meta
 	if v, ok := d.GetOk("comment"); ok {
 		comment := materialize.NewCommentBuilder(metaDb, o)
 		if err := comment.Object(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
-			b.Drop()
-			return diag.FromErr(err)
+			return rollbackCreate(b, o, "comment", err)
 		}
 	}
 
@@ -191,7 +187,7 @@ func sourceTablePostgresRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	t, err := materialize.ScanSourceTablePostgres(metaDb, utils.ExtractId(i))
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
