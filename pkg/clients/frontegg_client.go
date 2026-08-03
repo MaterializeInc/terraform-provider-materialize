@@ -316,7 +316,8 @@ func HandleAPIError(resp *http.Response) error {
 
 // IsNotFoundError checks if the error is a 404 Not Found error
 func IsNotFoundError(err error) bool {
-	if fronteggErr, ok := err.(*FronteggAPIError); ok {
+	var fronteggErr *FronteggAPIError
+	if errors.As(err, &fronteggErr) {
 		return fronteggErr.StatusCode == http.StatusNotFound
 	}
 	return false

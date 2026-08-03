@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -197,7 +198,7 @@ func testAccCheckAllIndexDestroyed(s *terraform.State) error {
 		_, err := materialize.ScanIndex(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
 			return fmt.Errorf("index %v still exists", utils.ExtractId(r.Primary.ID))
-		} else if err != sql.ErrNoRows {
+		} else if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

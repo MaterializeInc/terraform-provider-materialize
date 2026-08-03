@@ -127,7 +127,10 @@ For more information on provider configuration, see: https://registry.terraform.
 var DefaultRegion string
 
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
-	providerMeta := meta.(*ProviderMeta)
+	providerMeta, ok := meta.(*ProviderMeta)
+	if !ok {
+		return nil, fmt.Errorf("unexpected provider meta type %T", meta)
+	}
 
 	// Only refresh token for SaaS mode
 	if providerMeta.Mode == ModeSaaS && providerMeta.Frontegg != nil {

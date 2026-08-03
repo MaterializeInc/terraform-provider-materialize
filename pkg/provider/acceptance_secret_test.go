@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -216,7 +217,7 @@ func testAccCheckAllSecretsDestroyed(s *terraform.State) error {
 		_, err := materialize.ScanSecret(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
 			return fmt.Errorf("secret %v still exists", utils.ExtractId(r.Primary.ID))
-		} else if err != sql.ErrNoRows {
+		} else if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

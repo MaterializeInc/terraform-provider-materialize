@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -56,7 +57,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	privileges, err := materialize.ScanDefaultPrivilege(metaDb, key.objectType, key.granteeId, key.targetRoleId, key.databaseId, key.schemaId)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		log.Printf("[WARN] grant (%s) not found, removing from state file", d.Id())
 		d.SetId("")
 		return nil

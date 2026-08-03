@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -75,7 +76,7 @@ func grantRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	// Scan role members
 	roles, err := materialize.ScanRolePrivilege(metaDb, key.roleId, key.memberId)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {

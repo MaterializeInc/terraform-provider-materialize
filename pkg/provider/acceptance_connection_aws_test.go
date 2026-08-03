@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -228,7 +229,7 @@ func testAccCheckConnectionAwsDestroyed(s *terraform.State) error {
 			return fmt.Errorf("Connection AWS %s still exists", rs.Primary.ID)
 		}
 
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

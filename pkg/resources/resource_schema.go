@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -56,7 +57,7 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	useNameAsId := d.Get("identify_by_name").(bool)
 
 	s, err := materialize.ScanSchema(metaDb, value, idType == "name")
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
