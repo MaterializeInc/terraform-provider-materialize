@@ -84,6 +84,66 @@ func TestSinkKafkaSnapshotCreate(t *testing.T) {
 	})
 }
 
+func TestSinkKafkaSnapshotDisabledCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."sink"
+			FROM "database"."schema"."src"
+			INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'testdrive-snk1-seed'\)
+			FORMAT AVRO USING CONFLUENT SCHEMA REGISTRY CONNECTION "materialize"."public"."csr_conn"
+			ENVELOPE DEBEZIUM
+			WITH \(SNAPSHOT = false\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkKafkaBuilder(db, o)
+		b.From(IdentifierSchemaStruct{Name: "src", SchemaName: "schema", DatabaseName: "database"})
+		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"})
+		b.Topic("testdrive-snk1-seed")
+		b.Format(
+			SinkFormatSpecStruct{
+				Avro: &SinkAvroFormatSpec{
+					SchemaRegistryConnection: IdentifierSchemaStruct{
+						Name:         "csr_conn",
+						DatabaseName: "materialize",
+						SchemaName:   "public",
+					},
+				},
+			},
+		)
+		b.Snapshot(false)
+		b.Envelope(KafkaSinkEnvelopeStruct{Debezium: true})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+// A builder that never had Snapshot called should not emit the option at all,
+// leaving the server default in place.
+func TestSinkKafkaSnapshotUnsetCreate(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."sink"
+			FROM "database"."schema"."src"
+			INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'testdrive-snk1-seed'\)
+			ENVELOPE DEBEZIUM;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkKafkaBuilder(db, o)
+		b.From(IdentifierSchemaStruct{Name: "src", SchemaName: "schema", DatabaseName: "database"})
+		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"})
+		b.Topic("testdrive-snk1-seed")
+		b.Envelope(KafkaSinkEnvelopeStruct{Debezium: true})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestSinkKafkaSizeSnapshotCreate(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(

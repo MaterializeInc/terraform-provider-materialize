@@ -119,7 +119,7 @@ func TestResourceSinkKafkaCreate(t *testing.T) {
             VALUE DOC ON COLUMN "database"."public"."item"."c1" = 'comment on column only in value schema',
             KEY COMPATIBILITY LEVEL 'BACKWARD',
             VALUE COMPATIBILITY LEVEL 'FORWARD'\)
-            ENVELOPE UPSERT;`,
+            ENVELOPE UPSERT WITH \(SNAPSHOT = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Query Id
