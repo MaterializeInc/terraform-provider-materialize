@@ -24,6 +24,6 @@ func (b *OwnershipBuilder) Object(o MaterializeObject) *OwnershipBuilder {
 }
 
 func (b *OwnershipBuilder) Alter(roleName string) error {
-	q := fmt.Sprintf(`ALTER %s %s OWNER TO "%s";`, b.object.ObjectType, b.object.QualifiedName(), roleName)
+	q := fmt.Sprintf(`ALTER %s %s OWNER TO %s;`, b.object.ObjectType, b.object.QualifiedName(), QuoteIdentifier(roleName))
 	return b.ddl.exec(q)
 }

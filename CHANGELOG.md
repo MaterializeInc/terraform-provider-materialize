@@ -8,6 +8,7 @@
 * Stopped the debug log from including the app password and access token when the Frontegg token is refreshed [#899](https://github.com/MaterializeInc/terraform-provider-materialize/pull/899).
 * Fixed a leaked HTTP connection on every failed Frontegg API call, and app passwords that are not exactly 64 hexadecimal characters are now rejected with a clear error instead of failing authentication later [#899](https://github.com/MaterializeInc/terraform-provider-materialize/pull/899).
 * Fixed transient query failures being reported as an absent `auto_scaling_strategy` or an absent in-flight resize on `materialize_cluster` and `materialize_source_*` reads [#900](https://github.com/MaterializeInc/terraform-provider-materialize/pull/900). Only a genuinely missing catalog view (older Materialize versions) is now treated as "not configured".
+* Fixed identifiers and literals that were hand-quoted when generating SQL [#901](https://github.com/MaterializeInc/terraform-provider-materialize/pull/901), so ownership roles, system parameters, default privilege database and schema qualifiers, resize sizes, CSV delimiters and Protobuf message names now escape correctly instead of producing invalid statements.
 
 ### Misc
 

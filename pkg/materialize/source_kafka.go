@@ -245,7 +245,7 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.format.Protobuf != nil {
 		if b.format.Protobuf.SchemaRegistryConnection.Name != "" && b.format.Protobuf.MessageName != "" {
-			q.WriteString(fmt.Sprintf(` FORMAT PROTOBUF MESSAGE '%s' USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.format.Protobuf.MessageName, QualifiedName(b.format.Protobuf.SchemaRegistryConnection.DatabaseName, b.format.Protobuf.SchemaRegistryConnection.SchemaName, b.format.Protobuf.SchemaRegistryConnection.Name)))
+			q.WriteString(fmt.Sprintf(` FORMAT PROTOBUF MESSAGE %s USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteString(b.format.Protobuf.MessageName), QualifiedName(b.format.Protobuf.SchemaRegistryConnection.DatabaseName, b.format.Protobuf.SchemaRegistryConnection.SchemaName, b.format.Protobuf.SchemaRegistryConnection.Name)))
 		}
 
 		if b.format.Protobuf.SchemaRegistryConnection.Name != "" {
@@ -263,7 +263,7 @@ func (b *SourceKafkaBuilder) Create() error {
 		}
 
 		if b.format.Csv.DelimitedBy != "" {
-			q.WriteString(fmt.Sprintf(` DELIMITER '%s'`, b.format.Csv.DelimitedBy))
+			q.WriteString(fmt.Sprintf(` DELIMITER %s`, QuoteString(b.format.Csv.DelimitedBy)))
 		}
 	}
 
@@ -293,7 +293,7 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.keyFormat.Protobuf != nil {
 		if b.keyFormat.Protobuf.SchemaRegistryConnection.Name != "" && b.keyFormat.Protobuf.MessageName != "" {
-			q.WriteString(fmt.Sprintf(` KEY FORMAT PROTOBUF MESSAGE '%s' USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.keyFormat.Protobuf.MessageName, QualifiedName(b.keyFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.keyFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.keyFormat.Protobuf.SchemaRegistryConnection.Name)))
+			q.WriteString(fmt.Sprintf(` KEY FORMAT PROTOBUF MESSAGE %s USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteString(b.keyFormat.Protobuf.MessageName), QualifiedName(b.keyFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.keyFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.keyFormat.Protobuf.SchemaRegistryConnection.Name)))
 		}
 
 		if b.keyFormat.Protobuf.SchemaRegistryConnection.Name != "" {
@@ -311,7 +311,7 @@ func (b *SourceKafkaBuilder) Create() error {
 		}
 
 		if b.keyFormat.Csv.DelimitedBy != "" {
-			q.WriteString(fmt.Sprintf(` DELIMITER '%s'`, b.keyFormat.Csv.DelimitedBy))
+			q.WriteString(fmt.Sprintf(` DELIMITER %s`, QuoteString(b.keyFormat.Csv.DelimitedBy)))
 		}
 	}
 
@@ -341,7 +341,7 @@ func (b *SourceKafkaBuilder) Create() error {
 
 	if b.valueFormat.Protobuf != nil {
 		if b.valueFormat.Protobuf.SchemaRegistryConnection.Name != "" && b.valueFormat.Protobuf.MessageName != "" {
-			q.WriteString(fmt.Sprintf(` VALUE FORMAT PROTOBUF MESSAGE '%s' USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, b.valueFormat.Protobuf.MessageName, QualifiedName(b.valueFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.valueFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.valueFormat.Protobuf.SchemaRegistryConnection.Name)))
+			q.WriteString(fmt.Sprintf(` VALUE FORMAT PROTOBUF MESSAGE %s USING CONFLUENT SCHEMA REGISTRY CONNECTION %s`, QuoteString(b.valueFormat.Protobuf.MessageName), QualifiedName(b.valueFormat.Protobuf.SchemaRegistryConnection.DatabaseName, b.valueFormat.Protobuf.SchemaRegistryConnection.SchemaName, b.valueFormat.Protobuf.SchemaRegistryConnection.Name)))
 		}
 
 		if b.valueFormat.Protobuf.SchemaRegistryConnection.Name != "" {
@@ -359,7 +359,7 @@ func (b *SourceKafkaBuilder) Create() error {
 		}
 
 		if b.valueFormat.Csv.DelimitedBy != "" {
-			q.WriteString(fmt.Sprintf(` DELIMITER '%s'`, b.valueFormat.Csv.DelimitedBy))
+			q.WriteString(fmt.Sprintf(` DELIMITER %s`, QuoteString(b.valueFormat.Csv.DelimitedBy)))
 		}
 	}
 

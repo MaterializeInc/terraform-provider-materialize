@@ -51,11 +51,9 @@ func (b *DefaultPrivilegeBuilder) baseQuery(action string) error {
 
 	// object location
 	if b.schemaName != "" && b.databaseName != "" {
-		q.WriteString(fmt.Sprintf(` IN SCHEMA "%[1]s"."%[2]s"`, b.databaseName, b.schemaName))
+		q.WriteString(fmt.Sprintf(` IN SCHEMA %s`, QualifiedName(b.databaseName, b.schemaName)))
 	} else if b.databaseName != "" {
-		q.WriteString(fmt.Sprintf(` IN DATABASE "%s"`, b.databaseName))
-	} else {
-
+		q.WriteString(fmt.Sprintf(` IN DATABASE %s`, QuoteIdentifier(b.databaseName)))
 	}
 
 	var grantDirection string

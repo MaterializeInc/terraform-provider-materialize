@@ -21,12 +21,12 @@ func NewSystemParameterBuilder(conn *sqlx.DB, paramName, paramValue string) *Sys
 }
 
 func (b *SystemParameterBuilder) Set() error {
-	q := fmt.Sprintf(`ALTER SYSTEM SET "%s" TO '%s';`, b.paramName, b.paramValue)
+	q := fmt.Sprintf(`ALTER SYSTEM SET %s TO %s;`, QuoteIdentifier(b.paramName), QuoteString(b.paramValue))
 	return b.ddl.exec(q)
 }
 
 func (b *SystemParameterBuilder) Reset() error {
-	q := fmt.Sprintf(`ALTER SYSTEM RESET "%s";`, b.paramName)
+	q := fmt.Sprintf(`ALTER SYSTEM RESET %s;`, QuoteIdentifier(b.paramName))
 	return b.ddl.exec(q)
 }
 

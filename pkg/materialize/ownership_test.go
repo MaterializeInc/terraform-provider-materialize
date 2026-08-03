@@ -26,3 +26,23 @@ func TestOwnershipAlter(t *testing.T) {
 		}
 	})
 }
+
+// A role name containing a double quote must be escaped rather than closing the
+// identifier early.
+func TestOwnershipAlterQuotesRoleName(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "we""ird";`).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{
+			ObjectType:   Table,
+			DatabaseName: "database",
+			SchemaName:   "schema",
+			Name:         "table",
+		}
+		b := NewOwnershipBuilder(db, o)
+
+		if err := b.Alter(`we"ird`); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
