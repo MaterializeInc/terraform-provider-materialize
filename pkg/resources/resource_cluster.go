@@ -241,7 +241,8 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	// Best-effort read of the autoscaling strategy; keyed on the cluster id.
+	// Returns an empty strategy on Materialize versions without the backing
+	// view; genuine query failures surface as an error.
 	strategy, err := materialize.ScanClusterAutoScalingStrategy(metaDb, s.ClusterId.String)
 	if err != nil {
 		return diag.FromErr(err)

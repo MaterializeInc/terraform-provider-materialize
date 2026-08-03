@@ -1,10 +1,12 @@
 package materialize
 
 import (
+	"errors"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
+	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -240,6 +242,58 @@ func TestClusterUpdateWithWaitUntilReady(t *testing.T) {
 
 		if err := b.AlterCluster(ReconfigurationOptions{enabled: true, timeout: "10s", on_timeout: "COMMIT"}); err != nil {
 			t.Fatalf("Expected no error, got %v", err)
+		}
+	})
+}
+
+func TestScanClusterAutoScalingStrategyMissingView(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`FROM mz_internal.mz_cluster_auto_scaling_strategies`).
+			WillReturnError(&pgconn.PgError{Code: "42P01", Message: "unknown catalog item"})
+
+		s, err := ScanClusterAutoScalingStrategy(db, "u1")
+		if err != nil {
+			t.Fatalf("Expected a missing view to degrade gracefully, got %v", err)
+		}
+		if s.HydrationSize.Valid {
+			t.Fatal("Expected an empty strategy")
+		}
+	})
+}
+
+func TestScanClusterAutoScalingStrategyQueryError(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`FROM mz_internal.mz_cluster_auto_scaling_strategies`).
+			WillReturnError(errors.New("connection reset by peer"))
+
+		if _, err := ScanClusterAutoScalingStrategy(db, "u1"); err == nil {
+			t.Fatal("Expected a transient failure to be returned, not swallowed")
+		}
+	})
+}
+
+func TestScanClusterPendingReconfigurationMissingView(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
+			WillReturnError(&pgconn.PgError{Code: "42P01", Message: "unknown catalog item"})
+
+		_, inFlight, err := ScanClusterPendingReconfiguration(db, "u1")
+		if err != nil {
+			t.Fatalf("Expected a missing view to degrade gracefully, got %v", err)
+		}
+		if inFlight {
+			t.Fatal("Expected no in-flight reconfiguration")
+		}
+	})
+}
+
+func TestScanClusterPendingReconfigurationQueryError(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
+			WillReturnError(errors.New("connection reset by peer"))
+
+		if _, _, err := ScanClusterPendingReconfiguration(db, "u1"); err == nil {
+			t.Fatal("Expected a transient failure to be returned, not swallowed")
 		}
 	})
 }
