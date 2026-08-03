@@ -1,0 +1,40 @@
+name: lint
+on:
+  pull_request:
+    paths:
+      - pkg/**
+      - main.go
+      - go.mod
+      - .golangci.yml
+      - .github/workflows/lint.yml
+
+jobs:
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+  golangci-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      # The codebase still has a backlog of findings, so only issues introduced
+      # by the pull request fail the job. Drop this once the backlog is cleared.
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          only-new-issues: true

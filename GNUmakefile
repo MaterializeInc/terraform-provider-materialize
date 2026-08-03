@@ -22,9 +22,17 @@ install:
 	mkdir -p ${PLUGIN_PATH}
 	go build -o ${PLUGIN_PATH}/${BINARY}
 
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: lint
+lint:
+	golangci-lint run
+
 .PHONY: test
 test:
-	go test ./... -v $(TESTARGS) -timeout 120m
+	go test -race ./... -v $(TESTARGS) -timeout 120m
 
 .PHONY: testacc
 testacc:
