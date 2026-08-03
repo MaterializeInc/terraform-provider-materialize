@@ -201,17 +201,19 @@ func cloneRequest(r *http.Request) *http.Request {
 
 func parseAppPassword(password string) (string, string, error) {
 	strippedPassword := strings.TrimPrefix(password, "mzp_")
-	var clientId, secretKey string
 
 	re := regexp.MustCompile("[^0-9a-fA-F]")
 	filteredChars := re.ReplaceAllString(strippedPassword, "")
 
-	if len(filteredChars) < 64 {
-		return "", "", fmt.Errorf("invalid app password length: %d", len(filteredChars))
+	// An app password is two dashless UUIDs, so exactly 64 hex characters.
+	// Anything longer used to be truncated into a malformed secret, which
+	// surfaced later as an opaque authentication failure.
+	if len(filteredChars) != 64 {
+		return "", "", fmt.Errorf("invalid app password: expected 64 hexadecimal characters, got %d", len(filteredChars))
 	}
 
-	clientId = formatDashlessUuid(filteredChars[0:32])
-	secretKey = formatDashlessUuid(filteredChars[32:])
+	clientId := formatDashlessUuid(filteredChars[0:32])
+	secretKey := formatDashlessUuid(filteredChars[32:64])
 
 	return clientId, secretKey, nil
 }
@@ -235,7 +237,8 @@ func (c *FronteggClient) NeedsTokenRefresh() error {
 }
 
 func (c *FronteggClient) RefreshToken() error {
-	log.Printf("[DEBUG] Refreshing Frontegg: %v\n", c)
+	// Never log the client itself: it carries the app password and the token.
+	log.Printf("[DEBUG] Refreshing Frontegg token for %s", c.Email)
 
 	token, email, tokenExpiry, err := getToken(context.Background(), c.Password, c.Endpoint)
 	if err != nil {
@@ -279,7 +282,11 @@ func FronteggRequest(ctx context.Context, client *FronteggClient, method, url st
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, HandleApiError(resp)
+		// The caller never sees this response, so read the error out of the body
+		// and close it here rather than leaking the connection.
+		apiErr := HandleApiError(resp)
+		_ = resp.Body.Close()
+		return nil, apiErr
 	}
 
 	return resp, nil
