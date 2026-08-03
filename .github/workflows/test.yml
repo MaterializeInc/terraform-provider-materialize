@@ -5,6 +5,10 @@ on:
       - pkg/**
       - main.go
       - go.mod
+      - .github/workflows/test.yml
+
+env:
+  COVERAGE_THRESHOLD: 50
 
 jobs:
   test:
@@ -17,21 +21,10 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
+      # No retries: these are deterministic unit tests, so a failure here is a
+      # real failure and retrying would only hide it.
       - name: Run Tests with Coverage
-        run: |
-          set -e
-          retries=3
-          count=0
-          until [ $count -ge $retries ]
-          do
-            go test -v -coverprofile=coverage.out -covermode=atomic ./... && break
-            count=$((count+1))
-            echo "Retrying tests... Attempt $count of $retries"
-          done
-          if [ $count -ge $retries ]; then
-            echo "Tests failed after $retries attempts."
-            exit 1
-          fi
+        run: go test -race -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Generate Coverage Report
         run: |
@@ -60,14 +53,23 @@ jobs:
 
             echo ""
 
-            # Check against 50% threshold
+            # Check against the 50% threshold, enforced by the step below
             COV_NUM=$(echo "$TOTAL_COV" | sed 's/%//')
-            if (( $(echo "$COV_NUM < 50" | bc -l) )); then
-              echo "⚠️ **Warning:** Coverage is below 50% threshold"
+            if (( $(echo "$COV_NUM < $COVERAGE_THRESHOLD" | bc -l) )); then
+              echo "❌ **Coverage is below the ${COVERAGE_THRESHOLD}% threshold**"
             else
-              echo "✅ Coverage meets minimum threshold (50%)"
+              echo "✅ Coverage meets minimum threshold (${COVERAGE_THRESHOLD}%)"
             fi
           } >> $GITHUB_STEP_SUMMARY
+
+      - name: Enforce Coverage Threshold
+        run: |
+          TOTAL_COV=$(tail -1 coverage.txt | awk '{gsub(/%/, "", $NF); print $NF}')
+          echo "Total coverage: ${TOTAL_COV}% (threshold ${COVERAGE_THRESHOLD}%)"
+          if (( $(echo "$TOTAL_COV < $COVERAGE_THRESHOLD" | bc -l) )); then
+            echo "Coverage ${TOTAL_COV}% is below the ${COVERAGE_THRESHOLD}% threshold."
+            exit 1
+          fi
 
       - name: Archive Coverage Report
         uses: actions/upload-artifact@v7
