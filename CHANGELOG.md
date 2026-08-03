@@ -5,6 +5,8 @@
 ### Bug Fixes
 
 * Fixed `snapshot = false` being ignored on `materialize_sink_kafka` [#898](https://github.com/MaterializeInc/terraform-provider-materialize/pull/898): the value is now passed through to `CREATE SINK` instead of falling back to the server default of `SNAPSHOT = true`.
+* Stopped the debug log from including the app password and access token when the Frontegg token is refreshed [#899](https://github.com/MaterializeInc/terraform-provider-materialize/pull/899).
+* Fixed a leaked HTTP connection on every failed Frontegg API call, and app passwords that are not exactly 64 hexadecimal characters are now rejected with a clear error instead of failing authentication later [#899](https://github.com/MaterializeInc/terraform-provider-materialize/pull/899).
 
 ### Misc
 

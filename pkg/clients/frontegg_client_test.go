@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -130,4 +131,42 @@ func TestParseAppPassword(t *testing.T) {
 	invalidPassword := "invalid_password"
 	_, _, err = parseAppPassword(invalidPassword)
 	require.Error(t, err, "Parsing invalid password should result in an error")
+
+	// Anything other than exactly 64 hex characters is rejected rather than
+	// truncated into a malformed secret.
+	_, _, err = parseAppPassword("mzp_" + strings.Repeat("a", 65))
+	require.Error(t, err, "Parsing an over-long password should result in an error")
+}
+
+// trackedBody records whether the response body was closed.
+type trackedBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *trackedBody) Close() error {
+	b.closed = true
+	return nil
+}
+
+type stubTransport struct {
+	body *trackedBody
+}
+
+func (t *stubTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: http.StatusInternalServerError,
+		Body:       t.body,
+		Header:     make(http.Header),
+	}, nil
+}
+
+func TestFronteggRequestClosesBodyOnError(t *testing.T) {
+	body := &trackedBody{Reader: strings.NewReader("boom")}
+	client := &FronteggClient{HTTPClient: &http.Client{Transport: &stubTransport{body: body}}}
+
+	resp, err := FronteggRequest(context.Background(), client, "GET", "https://example.invalid/x", nil)
+	require.Error(t, err, "A 500 response should surface as an error")
+	require.Nil(t, resp, "No response should be returned alongside the error")
+	require.True(t, body.closed, "The response body should be closed when the caller cannot")
 }
