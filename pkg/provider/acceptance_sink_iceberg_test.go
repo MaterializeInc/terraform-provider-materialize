@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -249,7 +250,7 @@ func testAccCheckSinkIcebergDestroyed(s *terraform.State) error {
 			return fmt.Errorf("sink Iceberg %s still exists", rs.Primary.ID)
 		}
 
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

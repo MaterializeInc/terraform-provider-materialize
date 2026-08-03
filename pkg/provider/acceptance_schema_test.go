@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -202,7 +203,7 @@ func testAccCheckAllSchemasDestroyed(s *terraform.State) error {
 		_, err = materialize.ScanSchema(db, utils.ExtractId(r.Primary.ID), false)
 		if err == nil {
 			return fmt.Errorf("Schema %v still exists", utils.ExtractId(r.Primary.ID))
-		} else if err != sql.ErrNoRows {
+		} else if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

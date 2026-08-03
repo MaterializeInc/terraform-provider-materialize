@@ -130,7 +130,10 @@ var DefaultRegion string
 // freshness is not checked here: authorized clients resolve a valid token per
 // request, so there is nothing to refresh up front.
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
-	providerMeta := meta.(*ProviderMeta)
+	providerMeta, ok := meta.(*ProviderMeta)
+	if !ok {
+		return nil, fmt.Errorf("unexpected provider meta type %T", meta)
+	}
 
 	return providerMeta, nil
 }

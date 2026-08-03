@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -90,7 +91,7 @@ func roleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	}
 
 	s, err := materialize.ScanRole(metaDb, utils.ExtractId(i))
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -153,7 +154,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	// present, reconcile it into state by applying the configured attributes.
 	if d.Get("create_if_not_exists").(bool) {
 		existingID, err := materialize.RoleId(metaDb, roleName)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return diag.FromErr(err)
 		}
 		if err == nil && existingID != "" {
@@ -194,9 +195,7 @@ func roleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		comment := materialize.NewCommentBuilder(metaDb, o)
 
 		if err := comment.Object(v.(string)); err != nil {
-			log.Printf("[DEBUG] resource failed comment, dropping object: %s", o.Name)
-			b.Drop()
-			return diag.FromErr(err)
+			return rollbackCreate(b, o, "comment", err)
 		}
 	}
 

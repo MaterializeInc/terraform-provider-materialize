@@ -11,6 +11,9 @@
 * Fixed identifiers and literals that were hand-quoted when generating SQL [#901](https://github.com/MaterializeInc/terraform-provider-materialize/pull/901), so ownership roles, system parameters, default privilege database and schema qualifiers, resize sizes, CSV delimiters and Protobuf message names now escape correctly instead of producing invalid statements.
 * Fixed a data race on the Frontegg access token that could corrupt the shared HTTP client when Terraform ran resource operations in parallel, and stopped concurrent operations from each firing their own token request when the token expired [#906](https://github.com/MaterializeInc/terraform-provider-materialize/pull/906).
 * Every Frontegg and Cloud API request now has a 30 second timeout. Previously an unresponsive endpoint could hang a plan or apply indefinitely [#906](https://github.com/MaterializeInc/terraform-provider-materialize/pull/906).
+* Reads now match "not found" with `errors.Is`, so a wrapped `sql.ErrNoRows` correctly removes the resource from state instead of failing the plan [#902](https://github.com/MaterializeInc/terraform-provider-materialize/pull/902).
+* When a resource is created but its ownership or comment cannot be applied, a failed cleanup drop is now reported as a warning instead of silently leaving an orphaned object behind [#902](https://github.com/MaterializeInc/terraform-provider-materialize/pull/902).
+* An unexpected provider meta type now returns an error instead of panicking [#902](https://github.com/MaterializeInc/terraform-provider-materialize/pull/902).
 
 ### Misc
 
