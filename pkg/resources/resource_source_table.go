@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -20,7 +21,7 @@ func sourceTableRead(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	t, err := materialize.ScanSourceTable(metaDb, utils.ExtractId(i))
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {

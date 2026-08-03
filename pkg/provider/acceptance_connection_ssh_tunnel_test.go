@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -173,7 +174,7 @@ func testAccCheckAllConnSshTunnelDestroyed(s *terraform.State) error {
 		_, err := materialize.ScanConnectionSshTunnel(db, utils.ExtractId(r.Primary.ID))
 		if err == nil {
 			return fmt.Errorf("connection %v still exists", utils.ExtractId(r.Primary.ID))
-		} else if err != sql.ErrNoRows {
+		} else if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

@@ -40,14 +40,19 @@ type Builder struct {
 }
 
 func (b *Builder) exec(statement string) error {
-	if statement[len(statement)-1:] != ";" {
+	if statement == "" {
+		return fmt.Errorf("cannot execute an empty statement")
+	}
+
+	if !strings.HasSuffix(statement, ";") {
 		statement += ";"
 	}
 
 	_, err := b.conn.Exec(statement)
 	if err != nil {
 		log.Printf("[DEBUG] error executing: %s", statement)
-		if pgErr, ok := err.(*pgconn.PgError); ok {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
 			msg := fmt.Sprintf("%s: %s", pgErr.Severity, pgErr.Message)
 			if pgErr.Detail != "" {
 				msg += fmt.Sprintf(" DETAIL: %s", pgErr.Detail)

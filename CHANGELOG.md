@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.7 - Unreleased
+
+### Bug Fixes
+
+* Reads now match "not found" with `errors.Is`, so a wrapped `sql.ErrNoRows` correctly removes the resource from state instead of failing the plan [#902](https://github.com/MaterializeInc/terraform-provider-materialize/pull/902).
+* When a resource is created but its ownership or comment cannot be applied, a failed cleanup drop is now reported as a warning instead of silently leaving an orphaned object behind [#902](https://github.com/MaterializeInc/terraform-provider-materialize/pull/902).
+* An unexpected provider meta type and an empty generated statement now return errors instead of panicking [#902](https://github.com/MaterializeInc/terraform-provider-materialize/pull/902).
+
 ## 0.11.6 - 2026-07-24
 
 ### Features

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -207,7 +208,7 @@ func testAccCheckConnectionIcebergCatalogDestroyed(s *terraform.State) error {
 			return fmt.Errorf("connection Iceberg Catalog %s still exists", rs.Primary.ID)
 		}
 
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 	}

@@ -347,3 +347,9 @@ func TestProviderMeta_GetFronteggRoles_RetryAfterError(t *testing.T) {
 	r.Equal("role-1", roles["Admin"])
 	r.Equal(2, callCount) // Still 2, fetcher not called again after success
 }
+
+func TestGetProviderMetaWrongType(t *testing.T) {
+	if _, err := GetProviderMeta("not a provider meta"); err == nil {
+		t.Fatal("Expected an error rather than a panic for an unexpected meta type")
+	}
+}

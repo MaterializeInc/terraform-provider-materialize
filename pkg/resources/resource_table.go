@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -92,7 +93,7 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.FromErr(err)
 	}
 	s, err := materialize.ScanTable(metaDb, utils.ExtractId(i))
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
@@ -190,9 +191,7 @@ func tableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		for _, c := range columns {
 			if c.Comment != "" {
 				if err := comment.Column(c.ColName, c.Comment); err != nil {
-					log.Printf("[DEBUG] resource failed column comment, dropping object: %s", o.Name)
-					b.Drop()
-					return diag.FromErr(err)
+					return rollbackCreate(b, o, "column comment", err)
 				}
 			}
 		}
