@@ -39,9 +39,10 @@ type CloudProviderResponse struct {
 	NextCursor string          `json:"nextCursor,omitempty"`
 }
 
-// CloudAPIClient is a client for interacting with the Materialize Cloud API
+// CloudAPIClient is a client for interacting with the Materialize Cloud API.
+// Requests go through the FronteggClient's HTTP client, which already carries
+// the Authorization token.
 type CloudAPIClient struct {
-	HTTPClient     *http.Client
 	FronteggClient *FronteggClient
 	Endpoint       string
 	BaseEndpoint   string
@@ -50,7 +51,6 @@ type CloudAPIClient struct {
 // NewCloudAPIClient creates a new Cloud API client
 func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint, baseEndpoint string) *CloudAPIClient {
 	return &CloudAPIClient{
-		HTTPClient:     &http.Client{},
 		FronteggClient: fronteggClient,
 		Endpoint:       cloudAPIEndpoint,
 		BaseEndpoint:   baseEndpoint,

@@ -12,7 +12,6 @@ import (
 )
 
 func TestResourceGrantTypeCreate(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{

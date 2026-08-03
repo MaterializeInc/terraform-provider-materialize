@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/jackc/pgconn"
@@ -85,8 +86,16 @@ func (b *Builder) resize(name, size string) error {
 }
 
 func (b *Builder) alter(name string, setOptions map[string]interface{}, resetOptions []string, isSecret, validate bool) error {
+	// Sort the options so the generated statement is stable across runs.
+	options := make([]string, 0, len(setOptions))
+	for option := range setOptions {
+		options = append(options, option)
+	}
+	sort.Strings(options)
+
 	var clauses []string
-	for option, val := range setOptions {
+	for _, option := range options {
+		val := setOptions[option]
 		var setValue string
 		switch v := val.(type) {
 		case ValueSecretStruct:

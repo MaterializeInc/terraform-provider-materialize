@@ -124,17 +124,13 @@ For more information on provider configuration, see: https://registry.terraform.
 	return nil
 }
 
-var DefaultRegion string
-
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
 	providerMeta := meta.(*ProviderMeta)
 
 	// Only refresh token for SaaS mode
-	if providerMeta.Mode == ModeSaaS && providerMeta.Frontegg != nil {
-		if err := providerMeta.Frontegg.NeedsTokenRefresh(); err != nil {
-			if err := providerMeta.Frontegg.RefreshToken(); err != nil {
-				return nil, fmt.Errorf("failed to refresh token: %v", err)
-			}
+	if providerMeta.Mode == ModeSaaS && providerMeta.Frontegg != nil && providerMeta.Frontegg.NeedsTokenRefresh() {
+		if err := providerMeta.Frontegg.RefreshToken(); err != nil {
+			return nil, fmt.Errorf("failed to refresh token: %v", err)
 		}
 	}
 
@@ -196,11 +192,6 @@ func GetDBClientFromMeta(meta interface{}, d *schema.ResourceData) (*sqlx.DB, cl
 	}
 
 	return dbClient.SQLX(), region, nil
-}
-
-func SetDefaultRegion(region string) error {
-	DefaultRegion = region
-	return nil
 }
 
 // Helper function to prepend region to the ID

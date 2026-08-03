@@ -14,7 +14,6 @@ import (
 // Confirm id is updated with region for 0.4.0
 // All resources share the same read function
 func TestResourceGrantPrivilegeReadIdMigration(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{

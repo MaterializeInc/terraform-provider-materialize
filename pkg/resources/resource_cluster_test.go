@@ -116,7 +116,6 @@ func TestResourceClusterAutoScalingCreate(t *testing.T) {
 
 // Confirm id is updated with region and type prefix
 func TestResourceClusterReadIdMigration(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	testCases := []struct {

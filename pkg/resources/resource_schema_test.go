@@ -71,7 +71,6 @@ func TestResourceSchemaCreateWithIdentifyByName(t *testing.T) {
 
 // Confirm id is updated with region and identify_by_name (by-id path keeps 2-part format)
 func TestResourceSchemaReadIdMigration(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	testCases := []struct {

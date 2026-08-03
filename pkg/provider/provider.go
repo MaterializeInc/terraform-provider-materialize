@@ -318,11 +318,6 @@ func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) 
 	options := optionsFromResourceData(d)
 	application_name := fmt.Sprintf("terraform-provider-materialize v%s", version)
 
-	err := utils.SetDefaultRegion(string(defaultRegion))
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
-
 	// Initialize the Frontegg client
 	fronteggClient, err := clients.NewFronteggClient(ctx, password, endpoint)
 	if err != nil {

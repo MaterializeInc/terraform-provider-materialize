@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.7 - Unreleased
+
+### Misc
+
+* Removed the unused `utils.DefaultRegion` global and `CloudAPIClient.HTTPClient` field, turned `NeedsTokenRefresh` into a boolean check, and simplified the token refresh deadline calculation [#903](https://github.com/MaterializeInc/terraform-provider-materialize/pull/903).
+* `ALTER` statements now emit their options in a stable order [#903](https://github.com/MaterializeInc/terraform-provider-materialize/pull/903).
+
 ## 0.11.6 - 2026-07-24
 
 ### Features

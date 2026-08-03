@@ -12,7 +12,6 @@ import (
 )
 
 func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -51,7 +50,6 @@ func TestResourceGrantRolePrivilegeCreate(t *testing.T) {
 
 // Confirm id is updated with region for 0.4.0
 func TestResourceGrantRolePrivilegeReadIdMigration(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{

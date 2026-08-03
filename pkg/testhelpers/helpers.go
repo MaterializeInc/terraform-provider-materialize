@@ -86,7 +86,6 @@ type SSOConfig struct {
 
 func WithMockDb(t *testing.T, f func(*sqlx.DB, sqlmock.Sqlmock)) {
 	// Set the region for testing
-	utils.DefaultRegion = "aws/us-east-1"
 
 	t.Helper()
 	r := require.New(t)

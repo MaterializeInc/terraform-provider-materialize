@@ -205,7 +205,6 @@ func TestNewCloudAPIClient(t *testing.T) {
 	// Assert that the returned CloudAPIClient has the expected properties
 	require.NotNil(t, cloudAPIClient)
 	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
-	require.NotNil(t, cloudAPIClient.HTTPClient)
 	require.Equal(t, customEndpoint, cloudAPIClient.Endpoint)
 
 	// Call the NewCloudAPIClient function with a different custom API endpoint
@@ -215,7 +214,6 @@ func TestNewCloudAPIClient(t *testing.T) {
 	// Assert that the returned CloudAPIClient has the updated custom endpoint
 	require.NotNil(t, cloudAPIClient)
 	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
-	require.NotNil(t, cloudAPIClient.HTTPClient)
 	require.Equal(t, anotherCustomEndpoint, cloudAPIClient.Endpoint)
 }
 

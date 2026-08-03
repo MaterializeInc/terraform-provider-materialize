@@ -46,7 +46,7 @@ func NewFronteggClient(ctx context.Context, password, endpoint string) (*Fronteg
 		Token:       token,
 		Email:       email,
 		Endpoint:    endpoint,
-		TokenExpiry: tokenExpiry.Add(-time.Duration(0.5*float64(time.Until(tokenExpiry).Nanoseconds())) * time.Nanosecond),
+		TokenExpiry: refreshDeadline(tokenExpiry),
 		Password:    password,
 	}, nil
 }
@@ -227,11 +227,15 @@ func formatDashlessUuid(dashlessUuid string) string {
 	return strings.Join(parts, "-")
 }
 
-func (c *FronteggClient) NeedsTokenRefresh() error {
-	if time.Now().After(c.TokenExpiry) {
-		return fmt.Errorf("token expired and needs refresh")
-	}
-	return nil
+// NeedsTokenRefresh reports whether the token has passed its refresh deadline.
+func (c *FronteggClient) NeedsTokenRefresh() bool {
+	return time.Now().After(c.TokenExpiry)
+}
+
+// refreshDeadline returns the point at which the token should be refreshed:
+// halfway between now and its actual expiry.
+func refreshDeadline(expiry time.Time) time.Time {
+	return time.Now().Add(time.Until(expiry) / 2)
 }
 
 func (c *FronteggClient) RefreshToken() error {
@@ -252,7 +256,7 @@ func (c *FronteggClient) RefreshToken() error {
 	c.HTTPClient = client
 	c.Token = token
 	c.Email = email
-	c.TokenExpiry = tokenExpiry.Add(-time.Duration(0.5*float64(time.Until(tokenExpiry).Nanoseconds())) * time.Nanosecond)
+	c.TokenExpiry = refreshDeadline(tokenExpiry)
 
 	return nil
 }

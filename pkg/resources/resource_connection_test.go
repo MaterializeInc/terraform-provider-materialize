@@ -45,7 +45,6 @@ func TestResourceConnectionUpdate(t *testing.T) {
 // All connections (other than AWS Privatelink and SSH Tunnel)
 // share the same read function
 func TestResourceConnectionReadIdMigration(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
 	r.NotNil(d)

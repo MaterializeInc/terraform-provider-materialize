@@ -62,7 +62,6 @@ func TestResourceNetworkPolicyCreate(t *testing.T) {
 }
 
 func TestResourceNetworkPolicyReadIdMigration(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy)
 	r.NotNil(d)

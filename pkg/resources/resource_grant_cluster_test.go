@@ -12,7 +12,6 @@ import (
 )
 
 func TestResourceGrantClusterCreate(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
@@ -52,7 +51,6 @@ func TestResourceGrantClusterCreate(t *testing.T) {
 }
 
 func TestResourceGrantClusterCreateP(t *testing.T) {
-	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
 
 	in := map[string]interface{}{
