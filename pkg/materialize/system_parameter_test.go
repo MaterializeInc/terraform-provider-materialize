@@ -74,3 +74,19 @@ func TestShowSystemParameter(t *testing.T) {
 		}
 	})
 }
+
+// A parameter value containing an apostrophe must be escaped rather than
+// terminating the string literal early.
+func TestSystemParameterSetQuotesValue(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SYSTEM SET "cluster" TO 'it''s';`).WillReturnResult(sqlmock.NewResult(0, 1))
+
+		if err := NewSystemParameterBuilder(db, "cluster", "it's").Set(); err != nil {
+			t.Fatalf("unexpected error during Set: %v", err)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+}

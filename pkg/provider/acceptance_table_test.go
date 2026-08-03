@@ -305,3 +305,47 @@ func testAccTableResourceWithUpdates(roleName, tableName, tableRoleName, tableOw
 	}
 	`, roleName, tableName, columnName1, commentColumn2, tableOwnership, tableRoleName, tableOwnership)
 }
+
+// A role whose name contains a double quote has to be escaped when the provider
+// builds ALTER ... OWNER TO. Without escaping Materialize rejects the statement
+// outright, so this covers the quoting of identifiers taken from config.
+func TestAccTable_ownershipRoleNeedingQuoting(t *testing.T) {
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	roleName := acctest.RandStringFromCharSet(5, acctest.CharSetAlpha) + `"quoted`
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTableQuotedOwnershipResource(roleName, tableName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTableExists("materialize_table.test_quoted_owner"),
+					resource.TestCheckResourceAttr("materialize_table.test_quoted_owner", "name", tableName),
+					resource.TestCheckResourceAttr("materialize_table.test_quoted_owner", "ownership_role", roleName),
+				),
+			},
+		},
+	})
+}
+
+func testAccTableQuotedOwnershipResource(roleName, tableName string) string {
+	return fmt.Sprintf(`
+	resource "materialize_role" "quoted" {
+		name = %[1]q
+	}
+
+	resource "materialize_table" "test_quoted_owner" {
+		name = "%[2]s"
+
+		column {
+			name = "column_1"
+			type = "text"
+		}
+
+		ownership_role = materialize_role.quoted.name
+
+		depends_on = [materialize_role.quoted]
+	}
+	`, roleName, tableName)
+}

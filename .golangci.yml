@@ -14,3 +14,10 @@ linters:
       - path: _test\.go
         linters:
           - errcheck
+
+      # QF1012 prefers fmt.Fprintf over WriteString(fmt.Sprintf(...)). The SQL
+      # builders use the latter in ~200 places, so this only ever fires on lines
+      # an unrelated change happens to touch.
+      - linters:
+          - staticcheck
+        text: QF1012
