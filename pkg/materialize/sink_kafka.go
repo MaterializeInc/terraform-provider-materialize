@@ -38,7 +38,7 @@ type SinkKafkaBuilder struct {
 	key                    []string
 	format                 SinkFormatSpecStruct
 	envelope               KafkaSinkEnvelopeStruct
-	snapshot               bool
+	snapshot               *bool
 	headers                string
 	keyNotEnforced         bool
 	partitionBy            string
@@ -111,8 +111,11 @@ func (b *SinkKafkaBuilder) Envelope(e KafkaSinkEnvelopeStruct) *SinkKafkaBuilder
 	return b
 }
 
+// Snapshot records the requested SNAPSHOT value. Both true and false are
+// meaningful, so it is optional: left nil the option is omitted entirely and
+// the server default applies.
 func (b *SinkKafkaBuilder) Snapshot(s bool) *SinkKafkaBuilder {
-	b.snapshot = s
+	b.snapshot = &s
 	return b
 }
 
@@ -122,7 +125,7 @@ func (b *SinkKafkaBuilder) Headers(h string) *SinkKafkaBuilder {
 }
 
 func (b *SinkKafkaBuilder) KeyNotEnforced(s bool) *SinkKafkaBuilder {
-	b.keyNotEnforced = true
+	b.keyNotEnforced = s
 	return b
 }
 
@@ -257,8 +260,8 @@ func (b *SinkKafkaBuilder) Create() error {
 
 	// With Options
 	withOptions := []string{}
-	if b.snapshot {
-		withOptions = append(withOptions, "SNAPSHOT = true")
+	if b.snapshot != nil {
+		withOptions = append(withOptions, fmt.Sprintf("SNAPSHOT = %t", *b.snapshot))
 	}
 
 	if len(withOptions) > 0 {

@@ -170,6 +170,31 @@ resource "materialize_sink_iceberg" "sink_iceberg" {
   commit_interval  = "10s"
 }
 
+resource "materialize_sink_kafka" "sink_kafka_no_snapshot" {
+  name          = "sink_kafka_no_snapshot"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  cluster_name  = materialize_cluster.cluster_sink.name
+  topic         = "topic_no_snapshot"
+  snapshot      = false
+  from {
+    name          = materialize_table.simple_table_sink.name
+    database_name = materialize_table.simple_table_sink.database_name
+    schema_name   = materialize_table.simple_table_sink.schema_name
+  }
+  kafka_connection {
+    name          = materialize_connection_kafka.kafka_connection.name
+    database_name = materialize_connection_kafka.kafka_connection.database_name
+    schema_name   = materialize_connection_kafka.kafka_connection.schema_name
+  }
+  format {
+    json = true
+  }
+  envelope {
+    debezium = true
+  }
+}
+
 output "qualified_sink_kafka" {
   value = materialize_sink_kafka.sink_kafka.qualified_sql_name
 }

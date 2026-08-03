@@ -49,6 +49,8 @@ func TestAccSinkKafka_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "headers", "column_1"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "envelope.0.upsert", "true"),
 					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_headers", "partition_by", "column_2"),
+					testAccCheckSinkKafkaExists("materialize_sink_kafka.sink_kafka_no_snapshot"),
+					resource.TestCheckResourceAttr("materialize_sink_kafka.sink_kafka_no_snapshot", "snapshot", "false"),
 				),
 			},
 			{
@@ -421,6 +423,31 @@ func testAccSinkKafkaResource(roleName, connName, tableName, sinkName, sink2Name
 		}
 
 		partition_by = "column_2"
+	}
+
+	# snapshot = false has to reach CREATE SINK as an explicit SNAPSHOT = false,
+	# so this asserts Materialize accepts the statement we generate for it.
+	resource "materialize_sink_kafka" "sink_kafka_no_snapshot" {
+		name         = "%[4]s_sink_no_snapshot"
+		cluster_name = materialize_cluster.test.name
+		topic        = "topic_no_snapshot"
+		snapshot     = false
+		from {
+			name          = materialize_table.simple_table.name
+			database_name = materialize_table.simple_table.database_name
+			schema_name   = materialize_table.simple_table.schema_name
+		}
+		kafka_connection {
+			name          = materialize_connection_kafka.test.name
+			database_name = materialize_connection_kafka.test.database_name
+			schema_name   = materialize_connection_kafka.test.schema_name
+		}
+		format {
+			json = true
+		}
+		envelope {
+			debezium = true
+		}
 	}
 	`, roleName, connName, tableName, sinkName, sink2Name, sinkOwner, comment)
 }

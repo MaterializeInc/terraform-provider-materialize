@@ -2,6 +2,10 @@
 
 ## 0.11.7 - Unreleased
 
+### Bug Fixes
+
+* Fixed `snapshot = false` being ignored on `materialize_sink_kafka` [#898](https://github.com/MaterializeInc/terraform-provider-materialize/pull/898): the value is now passed through to `CREATE SINK` instead of falling back to the server default of `SNAPSHOT = true`.
+
 ### Misc
 
 * CI now runs the unit tests under the race detector without retrying failures, enforces the coverage threshold, and runs `go vet` and `golangci-lint` on pull requests [#904](https://github.com/MaterializeInc/terraform-provider-materialize/pull/904).

@@ -204,9 +204,9 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		b.Key(keys)
 	}
 
-	if v, ok := d.GetOk("key_not_enforced"); ok {
-		b.KeyNotEnforced(v.(bool))
-	}
+	// Both booleans carry a schema default, so read them with Get: GetOk cannot
+	// tell a configured false from an unset value.
+	b.KeyNotEnforced(d.Get("key_not_enforced").(bool))
 
 	if v, ok := d.GetOk("format"); ok {
 		format := materialize.GetSinkFormatSpecStruc(v)
@@ -218,9 +218,7 @@ func sinkKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) diag
 		b.Envelope(envelope)
 	}
 
-	if v, ok := d.GetOk("snapshot"); ok {
-		b.Snapshot(v.(bool))
-	}
+	b.Snapshot(d.Get("snapshot").(bool))
 
 	if v, ok := d.GetOk("headers"); ok {
 		b.Headers(v.(string))
