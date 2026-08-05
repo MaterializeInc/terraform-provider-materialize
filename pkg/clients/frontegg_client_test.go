@@ -38,8 +38,10 @@ func TestNewFronteggClient(t *testing.T) {
 	require.NoError(t, err, "Error should be nil")
 	require.NotNil(t, fronteggClient, "Frontegg client should not be nil")
 
-	// The token should be set correctly in the Frontegg client
-	require.Equal(t, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im16X3N5c3RlbSIsImV4cCI6MTcwMDAwMDAwMH0.c2lnbmF0dXJl", fronteggClient.Token, "Token should be set correctly in the Frontegg client")
+	// The token fetched at construction should be the one handed to callers.
+	token, err := fronteggClient.Token(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im16X3N5c3RlbSIsImV4cCI6MTcwMDAwMDAwMH0.c2lnbmF0dXJl", token, "Token should be set correctly in the Frontegg client")
 }
 
 func TestFronteggClient_AuthenticationError(t *testing.T) {
@@ -86,11 +88,10 @@ func TestFronteggClient_TokenRefresh(t *testing.T) {
 	require.NoError(t, err, "Error should be nil")
 	require.NotNil(t, fronteggClient, "Frontegg client should not be nil")
 
-	// The token should be initially set correctly in the Frontegg client
-	require.NotEmpty(t, fronteggClient.Token, "Token should be set correctly in the Frontegg client")
-
-	// Verify that the client does not detect the need for token refresh immediately
-	require.NoError(t, fronteggClient.NeedsTokenRefresh(), "Token should not be considered expired")
+	// A freshly built client hands back its token without going back to the API.
+	token, err := fronteggClient.Token(context.Background())
+	require.NoError(t, err)
+	require.NotEmpty(t, token, "Token should be available from the Frontegg client")
 }
 
 func generateValidJWTToken() string {
@@ -107,18 +108,13 @@ func generateValidJWTToken() string {
 	return tokenString
 }
 
-func TestFronteggClient_NeedsTokenRefresh(t *testing.T) {
-	// Create a Frontegg client with an expired token
-	fronteggClient := &FronteggClient{
-		Token:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im16X3N5c3RlbSIsImV4cCI6MTYwMDAwMDAwMH0.c2lnbmF0dXJl",
-		Email:       "test@example.com",
-		Endpoint:    "http://mockedendpoint",
-		TokenExpiry: time.Now().Add(-time.Hour), // Expired token
-		Password:    "mzp_" + strings.Repeat("a", 64),
-	}
+func TestFronteggClientTokenWithoutCredentials(t *testing.T) {
+	// A client assembled without credentials cannot mint a token, and must say so
+	// rather than panicking.
+	fronteggClient := &FronteggClient{Endpoint: "http://mockedendpoint"}
 
-	// Verify that the client correctly detects the need for token refresh
-	require.Error(t, fronteggClient.NeedsTokenRefresh(), "Token should be considered expired and require refresh")
+	_, err := fronteggClient.Token(context.Background())
+	require.Error(t, err, "A client with no credentials should report an error")
 }
 
 func TestParseAppPassword(t *testing.T) {

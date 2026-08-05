@@ -41,28 +41,35 @@ type CloudProviderResponse struct {
 
 // CloudAPIClient is a client for interacting with the Materialize Cloud API
 type CloudAPIClient struct {
-	HTTPClient     *http.Client
-	FronteggClient *FronteggClient
-	Endpoint       string
-	BaseEndpoint   string
+	HTTPClient   *http.Client
+	Endpoint     string
+	BaseEndpoint string
 }
 
-// NewCloudAPIClient creates a new Cloud API client
-func NewCloudAPIClient(fronteggClient *FronteggClient, cloudAPIEndpoint, baseEndpoint string) *CloudAPIClient {
+// NewCloudAPIClient creates a new Cloud API client that authorizes its requests
+// from the given token source.
+func NewCloudAPIClient(tokens TokenSource, cloudAPIEndpoint, baseEndpoint string) *CloudAPIClient {
 	return &CloudAPIClient{
-		HTTPClient:     &http.Client{},
-		FronteggClient: fronteggClient,
-		Endpoint:       cloudAPIEndpoint,
-		BaseEndpoint:   baseEndpoint,
+		HTTPClient:   newAuthorizedClient(tokens),
+		Endpoint:     cloudAPIEndpoint,
+		BaseEndpoint: baseEndpoint,
 	}
+}
+
+// get issues an authorized GET that honours ctx.
+func (c *CloudAPIClient) get(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.HTTPClient.Do(req)
 }
 
 // ListCloudProviders fetches the list of cloud providers and their regions
 func (c *CloudAPIClient) ListCloudProviders(ctx context.Context) ([]CloudProvider, error) {
 	providersEndpoint := fmt.Sprintf("%s/api/cloud-regions", c.Endpoint)
 
-	// Reuse the FronteggClient's HTTPClient which already includes the Authorization token.
-	resp, err := c.FronteggClient.HTTPClient.Get(providersEndpoint)
+	resp, err := c.get(ctx, providersEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error listing cloud providers: %v", err)
 	}
@@ -90,7 +97,7 @@ func (c *CloudAPIClient) ListCloudProviders(ctx context.Context) ([]CloudProvide
 func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
 	regionEndpoint := fmt.Sprintf("%s/api/region", provider.Url)
 
-	resp, err := c.FronteggClient.HTTPClient.Get(regionEndpoint)
+	resp, err := c.get(ctx, regionEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving region details: %v", err)
 	}
@@ -127,7 +134,7 @@ func (c *CloudAPIClient) EnableRegion(ctx context.Context, provider CloudProvide
 
 	req.Header.Add("Content-Type", "application/json")
 
-	resp, err := c.FronteggClient.HTTPClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending request to enable region: %v", err)
 	}

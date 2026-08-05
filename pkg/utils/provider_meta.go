@@ -126,17 +126,11 @@ For more information on provider configuration, see: https://registry.terraform.
 
 var DefaultRegion string
 
+// GetProviderMeta returns the provider meta carried through the SDK. Token
+// freshness is not checked here: authorized clients resolve a valid token per
+// request, so there is nothing to refresh up front.
 func GetProviderMeta(meta interface{}) (*ProviderMeta, error) {
 	providerMeta := meta.(*ProviderMeta)
-
-	// Only refresh token for SaaS mode
-	if providerMeta.Mode == ModeSaaS && providerMeta.Frontegg != nil {
-		if err := providerMeta.Frontegg.NeedsTokenRefresh(); err != nil {
-			if err := providerMeta.Frontegg.RefreshToken(); err != nil {
-				return nil, fmt.Errorf("failed to refresh token: %v", err)
-			}
-		}
-	}
 
 	return providerMeta, nil
 }
