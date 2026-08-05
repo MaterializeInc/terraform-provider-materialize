@@ -18,9 +18,8 @@ func TestDataSourceSCIM2ConfigurationsRead_Success(t *testing.T) {
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
 		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
+			Endpoint:   serverURL,
+			HTTPClient: &http.Client{},
 		}
 
 		providerMeta := &utils.ProviderMeta{

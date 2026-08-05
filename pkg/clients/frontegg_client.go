@@ -7,61 +7,87 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// FronteggClient struct to encapsulate the http.Client with additional properties
+// FronteggClient talks to the Frontegg admin API and doubles as the TokenSource
+// for every other authorized client.
+//
+// HTTPClient, Endpoint and Email are fixed once the client is built. The token
+// state behind them is mutable and guarded by mu.
 type FronteggClient struct {
-	HTTPClient  *http.Client
-	Token       string
-	Email       string
-	Endpoint    string
-	TokenExpiry time.Time
-	Password    string
+	HTTPClient *http.Client
+	Endpoint   string
+	// Email identifies the authenticated principal and is also used as the
+	// database user. It is derived from the credentials, so it never changes for
+	// the lifetime of the client.
+	Email string
+
+	mu          sync.Mutex
+	token       string
+	tokenExpiry time.Time
+	password    string
 }
 
 // NewFronteggClient function for initializing a new Frontegg client with an auth token
 func NewFronteggClient(ctx context.Context, password, endpoint string) (*FronteggClient, error) {
+	// Fetch a token up front: it validates the credentials before Terraform gets
+	// going and yields the email used as the database user.
 	token, email, tokenExpiry, err := getToken(ctx, password, endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token: %v", err)
 	}
 
-	transport := &tokenTransport{
-		Token:     token,
-		Transport: http.DefaultTransport,
+	c := &FronteggClient{
+		Endpoint:    endpoint,
+		Email:       email,
+		token:       token,
+		tokenExpiry: refreshDeadline(tokenExpiry),
+		password:    password,
+	}
+	c.HTTPClient = newAuthorizedClient(c)
+
+	return c, nil
+}
+
+// Token implements TokenSource. It returns the cached token while it is still
+// good and otherwise fetches a new one. The lock is deliberately held across the
+// fetch so that concurrent callers arriving on an expired token produce a single
+// request instead of one each.
+func (c *FronteggClient) Token(ctx context.Context) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.token != "" && time.Now().Before(c.tokenExpiry) {
+		return c.token, nil
 	}
 
-	client := &http.Client{Transport: transport}
+	if c.password == "" {
+		return "", errors.New("no credentials available to obtain a Frontegg token")
+	}
 
-	return &FronteggClient{
-		HTTPClient:  client,
-		Token:       token,
-		Email:       email,
-		Endpoint:    endpoint,
-		TokenExpiry: tokenExpiry.Add(-time.Duration(0.5*float64(time.Until(tokenExpiry).Nanoseconds())) * time.Nanosecond),
-		Password:    password,
-	}, nil
+	token, _, tokenExpiry, err := getToken(ctx, c.password, c.Endpoint)
+	if err != nil {
+		return "", fmt.Errorf("failed to refresh token: %w", err)
+	}
+
+	c.token = token
+	c.tokenExpiry = refreshDeadline(tokenExpiry)
+
+	return c.token, nil
 }
 
-// tokenTransport struct to add the Authorization header to each request
-type tokenTransport struct {
-	Token     string
-	Transport http.RoundTripper
-}
-
-// RoundTrip method to execute the request with the token
-func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req2 := cloneRequest(req)
-	req2.Header.Set("Authorization", "Bearer "+t.Token)
-	return t.Transport.RoundTrip(req2)
+// refreshDeadline returns the point at which a token should be replaced: halfway
+// between now and its actual expiry, so a request is never sent with a token
+// about to lapse.
+func refreshDeadline(expiry time.Time) time.Time {
+	return time.Now().Add(time.Until(expiry) / 2)
 }
 
 // GetToken function to authenticate with the Frontegg API and retrieve a token
@@ -88,7 +114,8 @@ func getToken(ctx context.Context, password string, endpoint string) (string, st
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	// Not the authorized client: this call is what obtains the token.
+	resp, err := authClient.Do(req)
 	if err != nil {
 		return "", "", time.Time{}, err
 	}
@@ -154,51 +181,6 @@ func getToken(ctx context.Context, password string, endpoint string) (string, st
 	return tokenString, email, tokenExpiry, nil
 }
 
-// Get the token from the FronteggClient
-func (c *FronteggClient) GetToken() string {
-	return c.Token
-}
-
-// Get the email from the FronteggClient
-func (c *FronteggClient) GetEmail() string {
-	return c.Email
-}
-
-// Get the endpoint from the FronteggClient
-func (c *FronteggClient) GetEndpoint() string {
-	return c.Endpoint
-}
-
-// Get the token expiry from the FronteggClient
-func (c *FronteggClient) GetTokenExpiry() time.Time {
-	return c.TokenExpiry
-}
-
-// Get the password from the FronteggClient
-func (c *FronteggClient) GetPassword() string {
-	return c.Password
-}
-
-// cloneRequest creates a deep copy of an HTTP request to enable safe modifications
-// while preserving concurrency safety, immutability, and reusability.
-// https://stackoverflow.com/questions/62017146/http-request-clone-is-not-deep-clone
-func cloneRequest(r *http.Request) *http.Request {
-	// Deep copy the request
-	r2 := new(http.Request)
-	*r2 = *r
-
-	// Deep copy the URL
-	r2.URL = new(url.URL)
-	*r2.URL = *r.URL
-
-	// Deep copy the Header
-	r2.Header = make(http.Header, len(r.Header))
-	for k, s := range r.Header {
-		r2.Header[k] = append([]string(nil), s...)
-	}
-	return r2
-}
-
 func parseAppPassword(password string) (string, string, error) {
 	strippedPassword := strings.TrimPrefix(password, "mzp_")
 
@@ -227,37 +209,6 @@ func formatDashlessUuid(dashlessUuid string) string {
 		dashlessUuid[20:],
 	}
 	return strings.Join(parts, "-")
-}
-
-func (c *FronteggClient) NeedsTokenRefresh() error {
-	if time.Now().After(c.TokenExpiry) {
-		return fmt.Errorf("token expired and needs refresh")
-	}
-	return nil
-}
-
-func (c *FronteggClient) RefreshToken() error {
-	// Never log the client itself: it carries the app password and the token.
-	log.Printf("[DEBUG] Refreshing Frontegg token for %s", c.Email)
-
-	token, email, tokenExpiry, err := getToken(context.Background(), c.Password, c.Endpoint)
-	if err != nil {
-		return fmt.Errorf("failed to get token: %v", err)
-	}
-
-	transport := &tokenTransport{
-		Token:     token,
-		Transport: http.DefaultTransport,
-	}
-
-	client := &http.Client{Transport: transport}
-
-	c.HTTPClient = client
-	c.Token = token
-	c.Email = email
-	c.TokenExpiry = tokenExpiry.Add(-time.Duration(0.5*float64(time.Until(tokenExpiry).Nanoseconds())) * time.Nanosecond)
-
-	return nil
 }
 
 // Helper function to handle API errors

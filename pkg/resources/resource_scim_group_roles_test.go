@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -25,9 +24,8 @@ func TestScimGroupRoleResourceCreate(t *testing.T) {
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
 		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
+			Endpoint:   serverURL,
+			HTTPClient: &http.Client{},
 		}
 
 		providerMeta := &utils.ProviderMeta{
@@ -52,9 +50,8 @@ func TestScimGroupRoleResourceRead(t *testing.T) {
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
 		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
+			Endpoint:   serverURL,
+			HTTPClient: &http.Client{},
 		}
 
 		providerMeta := &utils.ProviderMeta{
@@ -77,9 +74,8 @@ func TestScimGroupRoleResourceDelete(t *testing.T) {
 
 	testhelpers.WithMockFronteggServer(t, func(serverURL string) {
 		client := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  &http.Client{},
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
+			Endpoint:   serverURL,
+			HTTPClient: &http.Client{},
 		}
 
 		providerMeta := &utils.ProviderMeta{

@@ -63,8 +63,8 @@ func TestCloudAPIClient_ListCloudProviders(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 
 	// Call the method to test
@@ -86,8 +86,8 @@ func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 
 	provider := CloudProvider{
@@ -115,8 +115,8 @@ func TestCloudAPIClient_GetHost(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 
 	regionID := "aws/us-east-1"
@@ -140,8 +140,8 @@ func TestCloudAPIClient_ListCloudProviders_ErrorResponse(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 
 	// Call the method to test
@@ -158,8 +158,8 @@ func TestCloudAPIClient_GetRegionDetails_ErrorResponse(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 	provider := CloudProvider{
 		ID:   "aws/us-east-1",
@@ -180,8 +180,8 @@ func TestCloudAPIClient_GetHost_RegionNotFound(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 	regionID := "non-existent-region"
 
@@ -194,7 +194,7 @@ func TestCloudAPIClient_GetHost_RegionNotFound(t *testing.T) {
 }
 
 func TestNewCloudAPIClient(t *testing.T) {
-	// Create a FronteggClient instance for testing
+	// Any TokenSource will do; the constructor only wires it into the transport.
 	fronteggClient := &FronteggClient{}
 
 	// Call the NewCloudAPIClient function with a custom API endpoint
@@ -204,7 +204,6 @@ func TestNewCloudAPIClient(t *testing.T) {
 
 	// Assert that the returned CloudAPIClient has the expected properties
 	require.NotNil(t, cloudAPIClient)
-	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
 	require.NotNil(t, cloudAPIClient.HTTPClient)
 	require.Equal(t, customEndpoint, cloudAPIClient.Endpoint)
 
@@ -214,7 +213,6 @@ func TestNewCloudAPIClient(t *testing.T) {
 
 	// Assert that the returned CloudAPIClient has the updated custom endpoint
 	require.NotNil(t, cloudAPIClient)
-	require.Equal(t, fronteggClient, cloudAPIClient.FronteggClient)
 	require.NotNil(t, cloudAPIClient.HTTPClient)
 	require.Equal(t, anotherCustomEndpoint, cloudAPIClient.Endpoint)
 }
@@ -225,8 +223,8 @@ func TestCloudAPIClient_EnableRegion_Success(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 
 	provider := CloudProvider{
@@ -250,8 +248,8 @@ func TestCloudAPIClient_EnableRegion_Error(t *testing.T) {
 	}
 	mockClient := &http.Client{Transport: mockService}
 	apiClient := &CloudAPIClient{
-		FronteggClient: &FronteggClient{HTTPClient: mockClient},
-		Endpoint:       "http://mockendpoint.com",
+		HTTPClient: mockClient,
+		Endpoint:   "http://mockendpoint.com",
 	}
 
 	provider := CloudProvider{

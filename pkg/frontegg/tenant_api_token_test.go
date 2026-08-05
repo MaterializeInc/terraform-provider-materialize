@@ -28,7 +28,6 @@ func TestListTenantApiTokens(t *testing.T) {
 	client := &clients.FronteggClient{
 		HTTPClient: &http.Client{},
 		Endpoint:   mockServer.URL,
-		Token:      "mock-token",
 	}
 
 	tokens, err := ListTenantApiTokens(context.Background(), client)

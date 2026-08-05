@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
@@ -24,14 +23,13 @@ func TestRegionRead(t *testing.T) {
 		}
 
 		fronteggClient := &clients.FronteggClient{
-			Endpoint:    serverURL,
-			HTTPClient:  mockClient,
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
+			Endpoint:   serverURL,
+			HTTPClient: mockClient,
 		}
 		// Create a mock cloud client
 		mockCloudClient := &clients.CloudAPIClient{
-			FronteggClient: fronteggClient,
-			Endpoint:       serverURL,
+			HTTPClient: fronteggClient.HTTPClient,
+			Endpoint:   serverURL,
 		}
 
 		// Create a provider meta with the mock cloud client

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -33,9 +32,7 @@ func TestGetDBClientFromMeta(t *testing.T) {
 			clients.AwsUsEast1: true,
 		},
 		DefaultRegion: clients.AwsUsEast1,
-		Frontegg: &clients.FronteggClient{
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		},
+		Frontegg:      &clients.FronteggClient{},
 	}
 
 	// Create a ResourceData schema with the "region" key

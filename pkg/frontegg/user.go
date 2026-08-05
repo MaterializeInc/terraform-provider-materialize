@@ -85,7 +85,7 @@ func CreateUser(ctx context.Context, client *clients.FronteggClient, userRequest
 func ReadUser(ctx context.Context, client *clients.FronteggClient, userID string) (UserResponse, error) {
 	var userResponse UserResponse
 
-	endpoint := fmt.Sprintf("%s%s/%s", client.GetEndpoint(), UsersApiPathV1, userID)
+	endpoint := fmt.Sprintf("%s%s/%s", client.Endpoint, UsersApiPathV1, userID)
 	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 	if err != nil {
 		return userResponse, err

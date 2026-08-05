@@ -117,10 +117,8 @@ func WithMockProviderMeta(t *testing.T, f func(*utils.ProviderMeta, sqlmock.Sqlm
 		DB:             dbClients,
 		RegionsEnabled: regionsEnabled,
 		DefaultRegion:  clients.AwsUsEast1,
-		Frontegg: &clients.FronteggClient{
-			TokenExpiry: time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC),
-		},
-		CloudAPI: nil,
+		Frontegg:       &clients.FronteggClient{},
+		CloudAPI:       nil,
 		FronteggRoles: map[string]string{
 			"Admin":  "1",
 			"Member": "2",

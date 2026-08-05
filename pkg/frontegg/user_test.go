@@ -142,7 +142,6 @@ func TestCreateUser(t *testing.T) {
 	client := &clients.FronteggClient{
 		HTTPClient: &http.Client{},
 		Endpoint:   mockServer.URL,
-		Token:      "mock-token",
 	}
 
 	userRequest := UserRequest{
@@ -166,7 +165,6 @@ func TestReadUser(t *testing.T) {
 	client := &clients.FronteggClient{
 		HTTPClient: &http.Client{},
 		Endpoint:   mockServer.URL,
-		Token:      "mock-token",
 	}
 
 	userID := "test-user-id"
@@ -187,7 +185,6 @@ func TestDeleteUser(t *testing.T) {
 	client := &clients.FronteggClient{
 		HTTPClient: &http.Client{},
 		Endpoint:   mockServer.URL,
-		Token:      "mock-token",
 	}
 
 	userID := "test-user-id"
@@ -204,7 +201,6 @@ func TestGetUsers(t *testing.T) {
 	client := &clients.FronteggClient{
 		HTTPClient: &http.Client{},
 		Endpoint:   mockServer.URL,
-		Token:      "mock-token",
 	}
 
 	// Test case 1: User found
@@ -241,7 +237,6 @@ func TestUpdateUserRoles(t *testing.T) {
 	client := &clients.FronteggClient{
 		HTTPClient: &http.Client{},
 		Endpoint:   mockServer.URL,
-		Token:      "mock-token",
 	}
 
 	userID := "test-user-id"
