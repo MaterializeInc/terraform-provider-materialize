@@ -9,13 +9,12 @@ import (
 )
 
 type RoleBuilder struct {
-	ddl          Builder
-	roleName     string
-	inherit      bool
-	password     string
-	superuser    bool
-	superuserSet bool
-	login        bool
+	ddl       Builder
+	roleName  string
+	inherit   bool
+	password  string
+	superuser *bool
+	login     bool
 }
 
 func NewRoleBuilder(conn *sqlx.DB, obj MaterializeObject) *RoleBuilder {
@@ -39,9 +38,11 @@ func (b *RoleBuilder) Password(password string) *RoleBuilder {
 	return b
 }
 
+// Superuser records the requested SUPERUSER value. Both true and false are
+// meaningful, so it is optional: left nil neither option is emitted and the
+// server default applies.
 func (b *RoleBuilder) Superuser(superuser bool) *RoleBuilder {
-	b.superuser = superuser
-	b.superuserSet = true
+	b.superuser = &superuser
 	return b
 }
 
@@ -70,8 +71,8 @@ func (b *RoleBuilder) Create() error {
 		options = append(options, fmt.Sprintf("PASSWORD %s", QuoteString(b.password)))
 	}
 
-	if b.superuserSet {
-		if b.superuser {
+	if b.superuser != nil {
+		if *b.superuser {
 			options = append(options, "SUPERUSER")
 		} else {
 			options = append(options, "NOSUPERUSER")
