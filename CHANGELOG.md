@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.11.7 - Unreleased
+## 0.11.7 - 2026-08-24
 
 ### Bug Fixes
 
@@ -18,6 +18,9 @@
 ### Misc
 
 * CI now runs the unit tests under the race detector without retrying failures, enforces the coverage threshold, and runs `go vet` and `golangci-lint` on pull requests [#904](https://github.com/MaterializeInc/terraform-provider-materialize/pull/904).
+* Bumped the Go toolchain to 1.27 [#909](https://github.com/MaterializeInc/terraform-provider-materialize/pull/909), [#910](https://github.com/MaterializeInc/terraform-provider-materialize/pull/910), which required updating the `golang.org/x` packages to a version that builds against it [#911](https://github.com/MaterializeInc/terraform-provider-materialize/pull/911).
+* The role builder now holds its optional `superuser` flag as a pointer rather than a second boolean [#905](https://github.com/MaterializeInc/terraform-provider-materialize/pull/905).
+* Routine dependency updates: [#896](https://github.com/MaterializeInc/terraform-provider-materialize/pull/896), [#907](https://github.com/MaterializeInc/terraform-provider-materialize/pull/907), [#908](https://github.com/MaterializeInc/terraform-provider-materialize/pull/908).
 
 ## 0.11.6 - 2026-07-24
 
