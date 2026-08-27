@@ -92,15 +92,17 @@ When configured with `host`, `username`, etc. (second example above), **some res
 
 These organization and identity management resources depend on Frontegg (Materialize Cloud's identity provider) and will produce clear error messages if used in self-hosted mode.
 
+**⚠️ Watch out for `MZ_HOST`:** `host` is what selects self-hosted mode, and it falls back to the `MZ_HOST` environment variable. If `MZ_HOST` is set in your shell, the provider uses self-hosted mode even when your configuration never mentions a host. Unset it before running against Materialize Cloud.
+
 **⚠️ Migration Warning:** Switching between SaaS and self-hosted modes requires careful state file management. We strongly recommend using consistent configuration mode from the beginning to avoid complex state migrations.
 
 ## Schema
 
 * `password` (String, Sensitive) Materialize App Password (SaaS) or database password (self-hosted). Can also come from the `MZ_PASSWORD` environment variable.
 * `default_region` (String, Optional) The Materialize AWS region (SaaS only). Can also come from the `MZ_DEFAULT_REGION` environment variable. Defaults to `aws/us-east-1`.
-* `host` (String, Optional) The Materialize host (self-hosted only). Can also come from the `MZ_HOST` environment variable.
+* `host` (String, Optional) The Materialize host (self-hosted only). Setting this, including through the `MZ_HOST` environment variable, switches the provider to self-hosted mode. Leave it unset to connect to Materialize Cloud.
 * `port` (Number, Optional) The Materialize port (self-hosted only). Can also come from the `MZ_PORT` environment variable. Defaults to `6875`.
-* `username` (String, Optional) The database username (self-hosted only). Can also come from the `MZ_USER` environment variable. Defaults to `materialize`.
+* `username` (String, Optional) The database username (self-hosted only). Can also come from the `MZ_USERNAME` environment variable. Defaults to `materialize`.
 * `database` (String, Optional) The Materialize database. Can also come from the `MZ_DATABASE` environment variable. Defaults to `materialize`.
 * `sslmode` (String, Optional) SSL mode (self-hosted only). Can also come from the `MZ_SSLMODE` environment variable. Defaults to `require`.
 * `options` (Map of String, Optional) Additional Postgres connection options forwarded in the `options` connection string parameter as `--key=value` flags. Useful for session-level settings such as `cluster`, `search_path`, or `oidc_auth_enabled` (required for OIDC/SSO authentication). The `transaction_isolation` and `application_name` keys are reserved and managed by the provider.

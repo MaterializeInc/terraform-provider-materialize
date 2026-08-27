@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -116,7 +117,7 @@ func Provider(version string) *schema.Provider {
 			"host": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The Materialize host. Can also come from the `MZ_HOST` environment variable.",
+				Description: "The Materialize host (self-hosted only). Setting this, including through the `MZ_HOST` environment variable, switches the provider to self-hosted mode. Leave it unset to connect to Materialize Cloud.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
 			"port": {
@@ -128,7 +129,7 @@ func Provider(version string) *schema.Provider {
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The Materialize username. Can also come from the `MZ_USERNAME` environment variable.",
+				Description: "The database username (self-hosted only). Ignored in Materialize Cloud, where the account that owns the app password is used. Can also come from the `MZ_USERNAME` environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_USERNAME", "materialize"),
 			},
 			"options": {
@@ -242,13 +243,62 @@ func Provider(version string) *schema.Provider {
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
-	// Check for self-hosted configuration
+	// Setting `host` is what selects self-hosted mode, and `host` falls back to
+	// MZ_HOST. That means a stray environment variable can switch modes even
+	// though the configuration never mentions a host, which changes how the
+	// connection authenticates and prefixes resource IDs with `self-hosted`.
 	if host := d.Get("host").(string); host != "" {
 		log.Printf("[DEBUG] Configuring self-hosted provider")
-		return configureSelfHosted(ctx, d, version)
+		meta, diags := configureSelfHosted(ctx, d, version)
+		if hostOnlyFromEnvironment(d) && usesCloudCredentials(d) {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Connecting to a self-hosted Materialize because MZ_HOST is set",
+				Detail: fmt.Sprintf(
+					"The provider is using self-hosted mode with host %q, which came from the MZ_HOST "+
+						"environment variable rather than this configuration.\n\n"+
+						"In this mode the provider authenticates with the `username` argument (currently %q) "+
+						"instead of the account that owns the app password, resource IDs are prefixed with "+
+						"`self-hosted` instead of the region, and Materialize Cloud resources such as "+
+						"materialize_app_password, materialize_user and the SSO/SCIM resources are unavailable.\n\n"+
+						"If you meant to connect to Materialize Cloud, unset MZ_HOST.",
+					host, d.Get("username").(string),
+				),
+			})
+		}
+		return meta, diags
 	}
 	log.Printf("[DEBUG] Configuring SaaS provider")
 	return configureSaaS(ctx, d, version)
+}
+
+// usesCloudCredentials reports whether the password is a Materialize Cloud app
+// password. That is the one signal that is unambiguous: self-managed instances
+// use ordinary database passwords. Cloud-only arguments such as default_region
+// are deliberately not used here, because a self-managed user migrating from
+// Cloud can easily leave one behind, and a warning that fires on every plan for
+// a correct setup is worse than missing a case.
+func usesCloudCredentials(d *schema.ResourceData) bool {
+	return strings.HasPrefix(d.Get("password").(string), "mzp_")
+}
+
+// hostOnlyFromEnvironment reports whether `host` was left out of the
+// configuration, meaning its value can only have come from MZ_HOST.
+func hostOnlyFromEnvironment(d *schema.ResourceData) bool {
+	envHost := os.Getenv("MZ_HOST")
+	if envHost == "" {
+		return false
+	}
+
+	// The raw configuration is the reliable answer: it holds what the user
+	// actually wrote, before any environment fallback is applied.
+	if raw := d.GetRawConfig(); !raw.IsNull() && raw.IsKnown() {
+		return raw.GetAttr("host").IsNull()
+	}
+
+	// No raw configuration available, so fall back to comparing the value the
+	// provider ended up with against the environment.
+	return d.Get("host").(string) == envHost
 }
 
 func configureSelfHosted(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {

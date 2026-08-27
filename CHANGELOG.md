@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.8 - Unreleased
+
+### Bug Fixes
+
+* The provider now warns when it selects self-hosted mode because `MZ_HOST` is set in the environment rather than `host` being set in the configuration. A leftover `MZ_HOST` silently switched the provider away from Materialize Cloud, which authenticated as the `username` default instead of the app password owner and produced a confusing `invalid password` error [#913](https://github.com/MaterializeInc/terraform-provider-materialize/pull/913).
+* Corrected the documented environment variable for `username`, which is `MZ_USERNAME` and not `MZ_USER`, and documented that `host` selects self-hosted mode [#913](https://github.com/MaterializeInc/terraform-provider-materialize/pull/913).
+
 ## 0.11.7 - 2026-08-24
 
 ### Bug Fixes

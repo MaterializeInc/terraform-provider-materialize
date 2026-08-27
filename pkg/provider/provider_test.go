@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,7 +10,9 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sdkterraform "github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"golang.org/x/exp/slices"
@@ -298,5 +301,63 @@ func testAccCheckGrantDefaultPrivilegeExists(objectType, grantName, granteeName,
 			return fmt.Errorf("object %s does not include privilege %s", p, privilege)
 		}
 		return nil
+	}
+}
+
+// Setting host is what selects self-hosted mode, and host falls back to MZ_HOST.
+// A stray environment variable therefore switches modes silently, so the
+// provider warns when the host it used never appeared in the configuration.
+func TestProviderWarnsWhenModeComesFromMZHost(t *testing.T) {
+	host := "some-host.aws.materialize.cloud"
+
+	tests := []struct {
+		name       string
+		envHost    string
+		configHost string
+		password   string
+		cloudArg   bool
+		wantWarn   bool
+	}{
+		{name: "cloud config with stray MZ_HOST", envHost: host, password: "mzp_secret", wantWarn: true},
+		{name: "host set in config", envHost: host, configHost: "configured-host.example.com", password: "mzp_secret", wantWarn: false},
+		{name: "no host anywhere", password: "mzp_secret", wantWarn: false},
+		// The documented self-managed setup supplies the host from the
+		// environment on purpose, so it must not be warned at every apply.
+		{name: "self-managed supplying host from env", envHost: host, password: "ordinary-password", wantWarn: false},
+		// A self-managed user migrating from Cloud may leave default_region
+		// behind; an ordinary password still means no warning.
+		{name: "self-managed with leftover cloud argument", envHost: host, password: "ordinary-password", cloudArg: true, wantWarn: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.envHost != "" {
+				t.Setenv("MZ_HOST", tt.envHost)
+			} else {
+				t.Setenv("MZ_HOST", "")
+			}
+
+			raw := map[string]interface{}{"password": tt.password, "sslmode": "disable"}
+			if tt.configHost != "" {
+				raw["host"] = tt.configHost
+			}
+			if tt.cloudArg {
+				raw["default_region"] = "aws/us-east-1"
+			}
+
+			p := Provider("test")
+			diags := p.Configure(context.Background(), sdkterraform.NewResourceConfigRaw(raw))
+
+			var warned bool
+			for _, d := range diags {
+				if d.Severity == diag.Warning && strings.Contains(d.Summary, "MZ_HOST") {
+					warned = true
+				}
+			}
+
+			if warned != tt.wantWarn {
+				t.Fatalf("warning about MZ_HOST = %v, want %v (diags: %+v)", warned, tt.wantWarn, diags)
+			}
+		})
 	}
 }
