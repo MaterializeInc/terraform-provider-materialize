@@ -60,3 +60,15 @@ func TestRegionRead(t *testing.T) {
 		r.Equal("sql.materialize.com", d.Get("regions.0.host"))
 	})
 }
+
+// The Cloud API client is only built in cloud mode. Without the guard the
+// client is nil here and the provider panics instead of reporting an error.
+func TestRegionDatasourceInDirectModeDoesNotPanic(t *testing.T) {
+	meta := &utils.ProviderMeta{Mode: utils.ModeSelfHosted}
+	d := schema.TestResourceDataRaw(t, Region().Schema, map[string]interface{}{})
+
+	diags := RegionRead(context.TODO(), d, meta)
+	if !diags.HasError() {
+		t.Fatal("expected an error when the Cloud API is not configured")
+	}
+}
