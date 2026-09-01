@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,7 +10,9 @@ import (
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sdkterraform "github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"golang.org/x/exp/slices"
@@ -298,5 +301,115 @@ func testAccCheckGrantDefaultPrivilegeExists(objectType, grantName, granteeName,
 			return fmt.Errorf("object %s does not include privilege %s", p, privilege)
 		}
 		return nil
+	}
+}
+
+// modeDiags configures the provider with the given raw config and environment,
+// returning the diagnostics so each mode rule can be asserted in isolation.
+func modeDiags(t *testing.T, envHost string, raw map[string]interface{}) diag.Diagnostics {
+	t.Helper()
+	t.Setenv("MZ_HOST", envHost)
+	if raw["password"] == nil {
+		// Any value works; cloud configuration fails later at the network call,
+		// which is past every rule under test here.
+		raw["password"] = "mzp_" + strings.Repeat("a", 64)
+	}
+	return Provider("test").Configure(context.Background(), sdkterraform.NewResourceConfigRaw(raw))
+}
+
+func hasDiag(diags diag.Diagnostics, sev diag.Severity, needle string) bool {
+	for _, d := range diags {
+		if d.Severity == sev && (strings.Contains(d.Summary, needle) || strings.Contains(d.Detail, needle)) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestProviderModeDirectRequiresHost(t *testing.T) {
+	// No host anywhere: this must be a clear error rather than a silent switch
+	// to cloud, which is what the old inference did.
+	diags := modeDiags(t, "", map[string]interface{}{"mode": "direct"})
+	if !hasDiag(diags, diag.Error, "`host` is required") {
+		t.Fatalf("expected a missing-host error, got %+v", diags)
+	}
+
+	// Host from the environment satisfies it, because the mode was still stated.
+	diags = modeDiags(t, "some-host.example.com", map[string]interface{}{
+		"mode": "direct", "sslmode": "disable",
+	})
+	if hasDiag(diags, diag.Error, "`host` is required") {
+		t.Fatalf("MZ_HOST should satisfy direct mode, got %+v", diags)
+	}
+}
+
+func TestProviderModeCloudIgnoresStrayMZHost(t *testing.T) {
+	// The reported incident: a cloud configuration with MZ_HOST left in the
+	// shell. Stating the mode must make the stray value irrelevant, so the
+	// provider must not report the direct-mode connection error.
+	diags := modeDiags(t, "leftover-host.example.com", map[string]interface{}{"mode": "cloud"})
+
+	if hasDiag(diags, diag.Error, "cannot be set when `mode`") {
+		t.Fatalf("a host from the environment should be ignored in cloud mode, got %+v", diags)
+	}
+	if hasDiag(diags, diag.Warning, "MZ_HOST is set") {
+		t.Fatalf("no inference warning should appear once mode is explicit, got %+v", diags)
+	}
+	for _, d := range diags {
+		if d.Severity == diag.Error && strings.Contains(d.Detail, "leftover-host.example.com") {
+			t.Fatalf("provider tried to use the stray host: %+v", d)
+		}
+	}
+}
+
+func TestProviderModeCloudRejectsConfiguredHost(t *testing.T) {
+	// Writing both into the configuration is a contradiction, unlike a stray
+	// environment variable.
+	diags := modeDiags(t, "", map[string]interface{}{
+		"mode": "cloud", "host": "written-in-config.example.com",
+	})
+	if !hasDiag(diags, diag.Error, "cannot be set when `mode`") {
+		t.Fatalf("expected a contradiction error, got %+v", diags)
+	}
+}
+
+func TestProviderModeRejectsUnknownValue(t *testing.T) {
+	// Terraform runs ValidateFunc during plan.
+	_, errs := Provider("test").Schema["mode"].ValidateFunc("self_hosted", "mode")
+	if len(errs) == 0 {
+		t.Fatal("expected schema validation to reject an unknown mode")
+	}
+
+	// And configuring with one must error rather than quietly inferring.
+	diags := modeDiags(t, "", map[string]interface{}{"mode": "self_hosted"})
+	if !hasDiag(diags, diag.Error, "unknown `mode`") {
+		t.Fatalf("expected an unknown-mode error, got %+v", diags)
+	}
+}
+
+func TestProviderInferredModeWarnsOnlyWhenHostCameFromEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		envHost  string
+		raw      map[string]interface{}
+		wantWarn bool
+	}{
+		// Nothing in the configuration reveals the backend: worth a warning.
+		{name: "host from env", envHost: "h.example.com",
+			raw: map[string]interface{}{"sslmode": "disable"}, wantWarn: true},
+		// The host is written down, so the inference is visible to the reader.
+		{name: "host in config", envHost: "",
+			raw: map[string]interface{}{"host": "h.example.com", "sslmode": "disable"}, wantWarn: false},
+		// Plain cloud usage.
+		{name: "no host at all", envHost: "", raw: map[string]interface{}{}, wantWarn: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diags := modeDiags(t, tt.envHost, tt.raw)
+			if got := hasDiag(diags, diag.Warning, "MZ_HOST is set"); got != tt.wantWarn {
+				t.Fatalf("warning = %v, want %v (diags: %+v)", got, tt.wantWarn, diags)
+			}
+		})
 	}
 }

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.8 - Unreleased
+
+### Features
+
+* Added a `mode` argument to the provider, either `cloud` or `direct`, that states how to connect instead of leaving it to be inferred. `cloud` authenticates with an app password and finds a connection for each region through the Materialize Cloud API, and ignores `MZ_HOST`. `direct` connects to the `host` you supply, which may be self-hosted or Materialize Cloud, and reports a clear error when no host is given. Leaving `mode` unset keeps the existing behaviour, where a host selects direct and its absence selects cloud [#914](https://github.com/MaterializeInc/terraform-provider-materialize/pull/914).
+
+### Bug Fixes
+
+* The provider now warns when it inferred a direct connection from `MZ_HOST` rather than from the configuration. A leftover `MZ_HOST` silently redirected Materialize Cloud projects, authenticated as the `username` default instead of the app password owner, and failed with a confusing `invalid password` error [#914](https://github.com/MaterializeInc/terraform-provider-materialize/pull/914).
+* Fixed a provider crash when `materialize_region` was used without Materialize Cloud credentials. The Cloud API client is only built in cloud mode, so reading it in a direct connection dereferenced a nil pointer; it now reports the same clear error as the other Cloud-only resources [#914](https://github.com/MaterializeInc/terraform-provider-materialize/pull/914).
+* Corrected the documented environment variable for `username`, which is `MZ_USERNAME` and not `MZ_USER` [#914](https://github.com/MaterializeInc/terraform-provider-materialize/pull/914).
+
 ## 0.11.7 - 2026-08-24
 
 ### Bug Fixes

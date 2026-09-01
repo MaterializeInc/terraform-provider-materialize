@@ -68,6 +68,12 @@ func resourceCloudRegionCreate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// The Cloud API is only configured in cloud mode; without this the
+	// client below is nil and the provider panics.
+	if diags := providerMeta.ValidateSaaSOnly("materialize_region"); diags.HasError() {
+		return diags
+	}
 	client := providerMeta.CloudAPI
 
 	regionID := d.Get("region_id").(string)
@@ -132,6 +138,12 @@ func resourceCloudRegionRead(ctx context.Context, d *schema.ResourceData, meta i
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// The Cloud API is only configured in cloud mode; without this the
+	// client below is nil and the provider panics.
+	if diags := providerMeta.ValidateSaaSOnly("materialize_region"); diags.HasError() {
+		return diags
 	}
 	client := providerMeta.CloudAPI
 

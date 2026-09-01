@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -16,7 +17,16 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	_ "github.com/jackc/pgx/v4/stdlib"
+)
+
+// The two ways the provider can reach Materialize. `cloud` discovers a SQL
+// connection per region through the Materialize Cloud API; `direct` connects to
+// a single host you supply, which may be a self-managed instance or a Cloud one.
+const (
+	modeCloud  = "cloud"
+	modeDirect = "direct"
 )
 
 // reservedOptionKeys are connection parameters the provider manages itself.
@@ -113,10 +123,22 @@ func Provider(version string) *schema.Provider {
 				Description: "The default region if not specified in the resource",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_DEFAULT_REGION", "aws/us-east-1"),
 			},
+			"mode": {
+				Type:     schema.TypeString,
+				Optional: true,
+				// Deliberately no environment fallback. The mode decides which
+				// backend the provider talks to, and that must be visible in the
+				// configuration rather than in someone's shell.
+				Description: "How the provider connects to Materialize. `cloud` authenticates with an app password and discovers a SQL connection for each region through the Materialize Cloud API. `direct` connects straight to the `host` you supply. When unset, the provider infers `direct` if a host is set and `cloud` otherwise; setting it explicitly is recommended.",
+				ValidateFunc: validation.StringInSlice([]string{
+					modeCloud,
+					modeDirect,
+				}, false),
+			},
 			"host": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The Materialize host. Can also come from the `MZ_HOST` environment variable.",
+				Description: "The Materialize host, used by `direct` mode. Can also come from the `MZ_HOST` environment variable. Note that when `mode` is unset, supplying a host is what selects `direct` mode.",
 				DefaultFunc: schema.EnvDefaultFunc("MZ_HOST", nil),
 			},
 			"port": {
@@ -242,13 +264,102 @@ func Provider(version string) *schema.Provider {
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
-	// Check for self-hosted configuration
-	if host := d.Get("host").(string); host != "" {
-		log.Printf("[DEBUG] Configuring self-hosted provider")
+	host := d.Get("host").(string)
+
+	switch d.Get("mode").(string) {
+	case modeDirect:
+		if host == "" {
+			return nil, diag.Diagnostics{{
+				Severity: diag.Error,
+				Summary:  "`host` is required when `mode` is \"direct\"",
+				Detail: "Set `host` in the provider configuration, or supply it through the MZ_HOST " +
+					"environment variable.",
+			}}
+		}
+		log.Printf("[DEBUG] Configuring provider in direct mode")
 		return configureSelfHosted(ctx, d, version)
+
+	case modeCloud:
+		// A host written into the configuration alongside `mode = "cloud"` is a
+		// contradiction. A host that merely arrived from MZ_HOST is ignored,
+		// which is the entire point of stating the mode explicitly.
+		if host != "" && !hostOnlyFromEnvironment(d) {
+			return nil, diag.Diagnostics{{
+				Severity: diag.Error,
+				Summary:  "`host` cannot be set when `mode` is \"cloud\"",
+				Detail: "In cloud mode the provider discovers a connection for each region through the " +
+					"Materialize Cloud API. Remove `host`, or set `mode` to \"direct\" to connect to it.",
+			}}
+		}
+		if host != "" {
+			log.Printf("[DEBUG] Ignoring MZ_HOST because mode is cloud")
+		}
+		return configureCloud(ctx, d, version)
+
+	case "":
+		// Fall through to the inference below.
+
+	default:
+		// ValidateFunc catches this during plan, but never silently fall back to
+		// inference for a mode we do not recognise.
+		return nil, diag.Diagnostics{{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("unknown `mode` %q", d.Get("mode").(string)),
+			Detail:   fmt.Sprintf("Valid values are %q and %q.", modeCloud, modeDirect),
+		}}
 	}
-	log.Printf("[DEBUG] Configuring SaaS provider")
-	return configureSaaS(ctx, d, version)
+
+	// No mode given, so fall back to the historical rule: a host means direct.
+	if host != "" {
+		log.Printf("[DEBUG] Configuring provider in direct mode (inferred from host)")
+		meta, diags := configureSelfHosted(ctx, d, version)
+		return meta, append(diags, inferredModeWarning(d, host)...)
+	}
+	log.Printf("[DEBUG] Configuring provider in cloud mode (inferred)")
+	return configureCloud(ctx, d, version)
+}
+
+// inferredModeWarning flags the case where nothing in the configuration says
+// which backend to use and the deciding value came from the environment. That
+// combination is invisible when reading the configuration, and it is how a
+// leftover MZ_HOST silently redirects a Materialize Cloud project.
+func inferredModeWarning(d *schema.ResourceData, host string) diag.Diagnostics {
+	if !hostOnlyFromEnvironment(d) {
+		return nil
+	}
+
+	return diag.Diagnostics{{
+		Severity: diag.Warning,
+		Summary:  "Connecting in direct mode because MZ_HOST is set",
+		Detail: fmt.Sprintf(
+			"The provider is connecting directly to %q. That host came from the MZ_HOST environment "+
+				"variable, not from this configuration, so nothing here shows which backend is in use.\n\n"+
+				"Direct mode authenticates with the `username` argument (currently %q), prefixes resource IDs "+
+				"with `self-hosted` rather than a region, and cannot manage Materialize Cloud resources such "+
+				"as materialize_app_password, materialize_user or the SSO and SCIM resources.\n\n"+
+				"Set `mode` in the provider configuration to say which you want. Use `mode = \"cloud\"` to "+
+				"reach Materialize Cloud and ignore MZ_HOST.",
+			host, d.Get("username").(string),
+		),
+	}}
+}
+
+// hostOnlyFromEnvironment reports whether `host` was left out of the
+// configuration, meaning its value can only have come from MZ_HOST.
+func hostOnlyFromEnvironment(d *schema.ResourceData) bool {
+	envHost := os.Getenv("MZ_HOST")
+	if envHost == "" {
+		return false
+	}
+
+	// The raw configuration is the reliable answer: it holds what the user
+	// actually wrote, before any environment fallback is applied.
+	if raw := d.GetRawConfig(); !raw.IsNull() && raw.IsKnown() {
+		return raw.GetAttr("host").IsNull()
+	}
+
+	// No raw configuration available, so compare the resolved value instead.
+	return d.Get("host").(string) == envHost
 }
 
 func configureSelfHosted(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
@@ -307,7 +418,7 @@ func optionsFromResourceData(d *schema.ResourceData) map[string]string {
 	return out
 }
 
-func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
+func configureCloud(ctx context.Context, d *schema.ResourceData, version string) (interface{}, diag.Diagnostics) {
 	password := d.Get("password").(string)
 	database := d.Get("database").(string)
 	sslmode := d.Get("sslmode").(string)

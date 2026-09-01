@@ -57,6 +57,12 @@ func RegionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// The Cloud API is only configured in cloud mode; without this the
+	// client below is nil and the provider panics.
+	if diags := providerMeta.ValidateSaaSOnly("materialize_region"); diags.HasError() {
+		return diags
+	}
 	client := providerMeta.CloudAPI
 
 	providers, err := client.ListCloudProviders(ctx)
