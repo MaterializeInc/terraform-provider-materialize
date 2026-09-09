@@ -185,7 +185,12 @@ services:
       interval: 10s
       timeout: 10s
       retries: 20
-      start_period: 120s
+      # The entrypoint can spend up to 240s waiting for SQL Server to accept
+      # connections before it even starts enabling CDC, so a 120s start period
+      # left almost no headroom on a busy runner. Failures during the start
+      # period do not count against retries and a success ends it immediately,
+      # so this costs nothing when the container comes up quickly.
+      start_period: 300s
 
   provider:
     build:

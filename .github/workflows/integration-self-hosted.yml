@@ -18,6 +18,10 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up --build -d materialized materialized_init redpanda postgres mysql provider sqlserver
 
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
       - name: Terraform Init
         run: |
           docker exec --workdir /usr/src/app/integration/self_hosted provider terraform init
