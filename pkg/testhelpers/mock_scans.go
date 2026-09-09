@@ -96,7 +96,7 @@ func MockClusterReplicaScan(mock sqlmock.Sqlmock, predicate string) {
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 
-func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
+func clusterScanQuery(predicate string) string {
 	b := `
 	SELECT
 		mz_clusters.id,
@@ -119,11 +119,20 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	\) comments
 		ON mz_clusters.id = comments.id`
 
-	q := mockQueryBuilder(b, predicate, "")
+	return mockQueryBuilder(b, predicate, "")
+}
+
+func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	az := StringArray{"use1-az1", "use1-az2", "use1-az3"}
 	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "availability_zones", "comment", "owner_name", "privileges"}).
 		AddRow("u1", "cluster", true, "small", 2, true, az, "comment", "joe", defaultPrivilege)
-	mock.ExpectQuery(q).WillReturnRows(ir)
+	mock.ExpectQuery(clusterScanQuery(predicate)).WillReturnRows(ir)
+}
+
+// MockClusterScanNoRows mocks a cluster scan that matches nothing, simulating a
+// cluster that no longer exists.
+func MockClusterScanNoRows(mock sqlmock.Sqlmock, predicate string) {
+	mock.ExpectQuery(clusterScanQuery(predicate)).WillReturnRows(mock.NewRows([]string{"id"}))
 }
 
 // MockClusterAutoScalingScan mocks the best-effort read of a cluster's
