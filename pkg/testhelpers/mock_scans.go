@@ -122,9 +122,11 @@ func clusterScanQuery(predicate string) string {
 	return mockQueryBuilder(b, predicate, "")
 }
 
+var clusterScanColumns = []string{"id", "name", "managed", "size", "replication_factor", "disk", "availability_zones", "comment", "owner_name", "privileges"}
+
 func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 	az := StringArray{"use1-az1", "use1-az2", "use1-az3"}
-	ir := mock.NewRows([]string{"id", "name", "managed", "size", "replication_factor", "disk", "availability_zones", "comment", "owner_name", "privileges"}).
+	ir := mock.NewRows(clusterScanColumns).
 		AddRow("u1", "cluster", true, "small", 2, true, az, "comment", "joe", defaultPrivilege)
 	mock.ExpectQuery(clusterScanQuery(predicate)).WillReturnRows(ir)
 }
@@ -132,7 +134,7 @@ func MockClusterScan(mock sqlmock.Sqlmock, predicate string) {
 // MockClusterScanNoRows mocks a cluster scan that matches nothing, simulating a
 // cluster that no longer exists.
 func MockClusterScanNoRows(mock sqlmock.Sqlmock, predicate string) {
-	mock.ExpectQuery(clusterScanQuery(predicate)).WillReturnRows(mock.NewRows([]string{"id"}))
+	mock.ExpectQuery(clusterScanQuery(predicate)).WillReturnRows(mock.NewRows(clusterScanColumns))
 }
 
 // MockClusterAutoScalingScan mocks the best-effort read of a cluster's
