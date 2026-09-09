@@ -230,3 +230,40 @@ func TestResourceClusterDelete(t *testing.T) {
 		}
 	})
 }
+
+// fakeChanges reports a fixed set of attributes as changed.
+type fakeChanges map[string]bool
+
+func (f fakeChanges) HasChange(key string) bool { return f[key] }
+
+// Materialize rejects WAIT unless the same statement also changes something
+// that builds new replicas, so we only send it for those attributes.
+func TestWaitUntilReadySupported(t *testing.T) {
+	tests := []struct {
+		changed string
+		want    bool
+	}{
+		{"size", true},
+		{"availability_zones", true},
+		{"introspection_interval", true},
+		{"introspection_debugging", true},
+		// The reported case: autoscaling resizes in place, nothing to wait on.
+		{"auto_scaling_strategy", false},
+		// Same restriction, and more likely to be hit in practice.
+		{"replication_factor", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.changed, func(t *testing.T) {
+			require.Equal(t, tt.want, waitUntilReadySupported(fakeChanges{tt.changed: true}))
+		})
+	}
+
+	t.Run("a supported change alongside an unsupported one still waits", func(t *testing.T) {
+		require.True(t, waitUntilReadySupported(fakeChanges{"size": true, "replication_factor": true}))
+	})
+
+	t.Run("no changes", func(t *testing.T) {
+		require.False(t, waitUntilReadySupported(fakeChanges{}))
+	})
+}
