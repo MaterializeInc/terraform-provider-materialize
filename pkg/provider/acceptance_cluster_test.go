@@ -417,9 +417,9 @@ func TestAccClusterAlterGraceful(t *testing.T) {
 	})
 }
 
-// Materialize rejects WAIT unless the ALTER also changes size, availability
-// zones or introspection, so a cluster that leaves wait_until_ready enabled
-// must still be able to change other attributes.
+// Materialize rejects WAIT unless the ALTER also carries a size, availability
+// zones or introspection option, so a cluster that leaves wait_until_ready
+// enabled must still be able to change its other attributes.
 func TestAccClusterAlterGracefulWithoutReplicaChange(t *testing.T) {
 	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
 	size := "25cc"
@@ -429,7 +429,7 @@ func TestAccClusterAlterGracefulWithoutReplicaChange(t *testing.T) {
 		CheckDestroy:      testAccCheckAllClusterDestroyed,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "1", ""),
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "1", "", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists("materialize_cluster.test_graceful"),
 					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "replication_factor", "1"),
@@ -437,23 +437,32 @@ func TestAccClusterAlterGracefulWithoutReplicaChange(t *testing.T) {
 			},
 			{
 				// Replication factor only
-				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "2", ""),
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "2", "", true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "replication_factor", "2"),
 				),
 			},
 			{
 				// Autoscaling only, the case the customer reported
-				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "2", "50cc"),
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "2", "50cc", true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "auto_scaling_strategy.0.on_hydration.0.hydration_size", "50cc"),
+				),
+			},
+			{
+				// Turning introspection debugging off drops the option from the
+				// statement, so it cannot carry WAIT either.
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "3", "50cc", false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "replication_factor", "3"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "introspection_debugging", "false"),
 				),
 			},
 		},
 	})
 }
 
-func testAccClusterGracefulWithoutReplicaChange(clusterName, clusterSize, replicationFactor, hydrationSize string) string {
+func testAccClusterGracefulWithoutReplicaChange(clusterName, clusterSize, replicationFactor, hydrationSize string, introspectionDebugging bool) string {
 	strategy := ""
 	if hydrationSize != "" {
 		strategy = fmt.Sprintf(`
@@ -465,16 +474,17 @@ func testAccClusterGracefulWithoutReplicaChange(clusterName, clusterSize, replic
 	}
 	return fmt.Sprintf(`
 	resource "materialize_cluster" "test_graceful" {
-		name               = "%[1]s"
-		size               = "%[2]s"
-		replication_factor = %[3]s
+		name                    = "%[1]s"
+		size                    = "%[2]s"
+		replication_factor      = %[3]s
+		introspection_debugging = %[5]t
 		wait_until_ready {
 			enabled    = true
 			timeout    = "10m"
 			on_timeout = "COMMIT"
 		}%[4]s
 	}
-	`, clusterName, clusterSize, replicationFactor, strategy)
+	`, clusterName, clusterSize, replicationFactor, strategy, introspectionDebugging)
 }
 
 func testAccClusterResource(

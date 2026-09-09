@@ -123,7 +123,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
 		MaxItems:    1,
-		Description: "Defines the parameters for the WAIT UNTIL READY options. Only applied when the change creates new replicas, meaning a change to `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. Other changes are applied without waiting.",
+		Description: "Defines the parameters for the WAIT UNTIL READY options. Only applied when the change creates new replicas, meaning a change that sets `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. Other changes are applied without waiting.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"enabled": {
@@ -397,27 +397,39 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return clusterRead(ctx, d, meta)
 }
 
-// waitUntilReadyFields are the attributes Materialize allows WAIT UNTIL READY
-// to be combined with. Any other change alters the cluster in place, so there
-// are no new replicas to wait on and the server rejects the statement.
-var waitUntilReadyFields = []string{
-	"size",
-	"availability_zones",
-	"introspection_interval",
-	"introspection_debugging",
-}
-
-// changeChecker is the part of schema.ResourceData that waitUntilReadySupported needs.
-type changeChecker interface {
+// clusterChanges is the part of schema.ResourceData that waitUntilReadySupported needs.
+type clusterChanges interface {
 	HasChange(key string) bool
+	Get(key string) interface{}
 }
 
-func waitUntilReadySupported(d changeChecker) bool {
-	for _, f := range waitUntilReadyFields {
-		if d.HasChange(f) {
+// waitUntilReadySupported reports whether the pending change will put an option
+// in the statement that Materialize allows WAIT UNTIL READY alongside: size,
+// availability zones or introspection. Anything else alters the cluster in
+// place, so there are no new replicas to wait on and the server rejects the
+// whole statement.
+//
+// A field being unset does not count. GenerateClusterOptions omits an option
+// without a value, so the server never sees it, and these conditions mirror it.
+func waitUntilReadySupported(d clusterChanges) bool {
+	if d.HasChange("size") && d.Get("size").(string) != "" {
+		return true
+	}
+
+	if d.HasChange("availability_zones") {
+		if azs, ok := d.Get("availability_zones").([]interface{}); ok && len(azs) > 0 {
 			return true
 		}
 	}
+
+	if d.HasChange("introspection_interval") && d.Get("introspection_interval").(string) != "" {
+		return true
+	}
+
+	if d.HasChange("introspection_debugging") && d.Get("introspection_debugging").(bool) {
+		return true
+	}
+
 	return false
 }
 

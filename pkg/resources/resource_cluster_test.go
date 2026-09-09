@@ -231,39 +231,68 @@ func TestResourceClusterDelete(t *testing.T) {
 	})
 }
 
-// fakeChanges reports a fixed set of attributes as changed.
-type fakeChanges map[string]bool
+// fakeChanges reports a fixed set of attributes as changed, with the values
+// they are changing to.
+type fakeChanges map[string]interface{}
 
-func (f fakeChanges) HasChange(key string) bool { return f[key] }
+func (f fakeChanges) HasChange(key string) bool {
+	_, ok := f[key]
+	return ok
+}
 
-// Materialize rejects WAIT unless the same statement also changes something
-// that builds new replicas, so we only send it for those attributes.
+func (f fakeChanges) Get(key string) interface{} {
+	if v, ok := f[key]; ok {
+		return v
+	}
+	// Match ResourceData, which returns the zero value for an unset attribute.
+	switch key {
+	case "availability_zones":
+		return []interface{}{}
+	case "introspection_debugging":
+		return false
+	default:
+		return ""
+	}
+}
+
+// Materialize rejects WAIT unless the same statement also carries a size,
+// availability zones or introspection option, so we only send it for those.
 func TestWaitUntilReadySupported(t *testing.T) {
 	tests := []struct {
-		changed string
+		name    string
+		changed fakeChanges
 		want    bool
 	}{
-		{"size", true},
-		{"availability_zones", true},
-		{"introspection_interval", true},
-		{"introspection_debugging", true},
+		{"size", fakeChanges{"size": "small"}, true},
+		{"availability_zones", fakeChanges{"availability_zones": []interface{}{"use1-az1"}}, true},
+		{"introspection_interval", fakeChanges{"introspection_interval": "10s"}, true},
+		{"introspection_debugging", fakeChanges{"introspection_debugging": true}, true},
+
 		// The reported case: autoscaling resizes in place, nothing to wait on.
-		{"auto_scaling_strategy", false},
+		{"auto_scaling_strategy", fakeChanges{"auto_scaling_strategy": []interface{}{}}, false},
 		// Same restriction, and more likely to be hit in practice.
-		{"replication_factor", false},
+		{"replication_factor", fakeChanges{"replication_factor": 3}, false},
+
+		// Unsetting one of the supported attributes leaves the option out of
+		// the statement, so there is still nothing for WAIT to attach to.
+		{"introspection_debugging turned off", fakeChanges{"introspection_debugging": false}, false},
+		{"availability_zones emptied", fakeChanges{"availability_zones": []interface{}{}}, false},
+		{"introspection_interval cleared", fakeChanges{"introspection_interval": ""}, false},
+
+		{"no changes", fakeChanges{}, false},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.changed, func(t *testing.T) {
-			require.Equal(t, tt.want, waitUntilReadySupported(fakeChanges{tt.changed: true}))
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, waitUntilReadySupported(tt.changed))
 		})
 	}
 
 	t.Run("a supported change alongside an unsupported one still waits", func(t *testing.T) {
-		require.True(t, waitUntilReadySupported(fakeChanges{"size": true, "replication_factor": true}))
+		require.True(t, waitUntilReadySupported(fakeChanges{"size": "small", "replication_factor": 3}))
 	})
 
-	t.Run("no changes", func(t *testing.T) {
-		require.False(t, waitUntilReadySupported(fakeChanges{}))
+	t.Run("an unset supported attribute does not rescue an unsupported change", func(t *testing.T) {
+		require.False(t, waitUntilReadySupported(fakeChanges{"introspection_debugging": false, "replication_factor": 3}))
 	})
 }
