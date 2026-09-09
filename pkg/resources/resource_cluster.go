@@ -123,7 +123,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
 		MaxItems:    1,
-		Description: "Defines the parameters for the WAIT UNTIL READY options. Only applied when the change creates new replicas, meaning a change that sets `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. Other changes are applied without waiting.",
+		Description: "Defines the parameters for the WAIT UNTIL READY options. Materialize only allows waiting when the same change also sets `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. For any other change, such as `replication_factor`, the wait is skipped.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"enabled": {
@@ -405,9 +405,8 @@ type clusterChanges interface {
 
 // waitUntilReadySupported reports whether the pending change will put an option
 // in the statement that Materialize allows WAIT UNTIL READY alongside: size,
-// availability zones or introspection. Anything else alters the cluster in
-// place, so there are no new replicas to wait on and the server rejects the
-// whole statement.
+// availability zones or introspection. Sending WAIT with anything else makes
+// the server reject the whole statement.
 //
 // A field being unset does not count. GenerateClusterOptions omits an option
 // without a value, so the server never sees it, and these conditions mirror it.
@@ -431,6 +430,22 @@ func waitUntilReadySupported(d clusterChanges) bool {
 	}
 
 	return false
+}
+
+// waitUntilReadyEnabled reports whether the config asks to wait at all.
+func waitUntilReadyEnabled(d clusterChanges) bool {
+	v, ok := d.Get("wait_until_ready").([]interface{})
+	if !ok || len(v) == 0 {
+		return false
+	}
+
+	opts, ok := v[0].(map[string]interface{})
+	if !ok {
+		return false
+	}
+
+	enabled, _ := opts["enabled"].(bool)
+	return enabled
 }
 
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -552,14 +567,25 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		}
 	}
 
+	var diags diag.Diagnostics
+
 	if changed {
 		_, reconfigOptsRaw := d.GetChange("wait_until_ready")
 		reconfigOpts := b.GetReconfigOpts(reconfigOptsRaw)
 		if !waitUntilReadySupported(d) {
-			// Nothing here builds new replicas to wait on, and sending WAIT
-			// anyway makes Materialize reject the whole statement.
-			log.Printf("[DEBUG] dropping WAIT UNTIL READY: this change does not create replicas")
+			// Materialize would reject the statement, so apply the change
+			// without waiting rather than failing the whole update.
+			log.Printf("[DEBUG] dropping WAIT UNTIL READY: no size, availability zones or introspection change to wait on")
 			reconfigOpts = materialize.ReconfigurationOptions{}
+
+			if waitUntilReadyEnabled(d) {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Warning,
+					Summary:  "wait_until_ready was skipped for this change",
+					Detail: fmt.Sprintf("Materialize only supports WAIT UNTIL READY when the same change sets size, availability zones or introspection. "+
+						"Cluster %q was updated without waiting for it to be ready.", clusterName),
+				})
+			}
 		}
 		if err := b.AlterCluster(reconfigOpts); err != nil {
 			return diag.FromErr(err)
@@ -575,7 +601,7 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		}
 	}
 
-	return clusterRead(ctx, d, meta)
+	return append(diags, clusterRead(ctx, d, meta)...)
 }
 
 func clusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

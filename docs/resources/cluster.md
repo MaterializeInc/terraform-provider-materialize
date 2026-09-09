@@ -39,7 +39,7 @@ resource "materialize_cluster" "example_cluster" {
 - `replication_factor` (Number) The number of replicas of each dataflow-powered object to maintain.
 - `scheduling` (Block List, Max: 1) Defines the scheduling parameters for the cluster. (see [below for nested schema](#nestedblock--scheduling))
 - `size` (String) The size of the managed cluster.
-- `wait_until_ready` (Block List, Max: 1) Defines the parameters for the WAIT UNTIL READY options. Only applied when the change creates new replicas, meaning a change that sets `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. Other changes are applied without waiting. (see [below for nested schema](#nestedblock--wait_until_ready))
+- `wait_until_ready` (Block List, Max: 1) Defines the parameters for the WAIT UNTIL READY options. Materialize only allows waiting when the same change also sets `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. For any other change, such as `replication_factor`, the wait is skipped. (see [below for nested schema](#nestedblock--wait_until_ready))
 
 ### Read-Only
 

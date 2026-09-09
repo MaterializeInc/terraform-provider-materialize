@@ -246,7 +246,7 @@ func (f fakeChanges) Get(key string) interface{} {
 	}
 	// Match ResourceData, which returns the zero value for an unset attribute.
 	switch key {
-	case "availability_zones":
+	case "availability_zones", "wait_until_ready":
 		return []interface{}{}
 	case "introspection_debugging":
 		return false
@@ -295,4 +295,17 @@ func TestWaitUntilReadySupported(t *testing.T) {
 	t.Run("an unset supported attribute does not rescue an unsupported change", func(t *testing.T) {
 		require.False(t, waitUntilReadySupported(fakeChanges{"introspection_debugging": false, "replication_factor": 3}))
 	})
+}
+
+func TestWaitUntilReadyEnabled(t *testing.T) {
+	block := func(enabled bool) fakeChanges {
+		return fakeChanges{"wait_until_ready": []interface{}{
+			map[string]interface{}{"enabled": enabled},
+		}}
+	}
+
+	require.True(t, waitUntilReadyEnabled(block(true)))
+	require.False(t, waitUntilReadyEnabled(block(false)))
+	require.False(t, waitUntilReadyEnabled(fakeChanges{"wait_until_ready": []interface{}{}}))
+	require.False(t, waitUntilReadyEnabled(fakeChanges{}))
 }
