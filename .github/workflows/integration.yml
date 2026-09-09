@@ -4,6 +4,8 @@ on:
     paths:
       - pkg/**
       - integration/**
+      - compose.yaml
+      - .github/workflows/integration.yml
       - main.go
       - go.mod
   schedule:
