@@ -42,3 +42,74 @@ func TestResourceGrantPrivilegeReadIdMigration(t *testing.T) {
 		}
 	})
 }
+
+// A cluster swap or rename drops the cluster the id in state refers to
+func TestResourceGrantPrivilegeReadClusterSwapped(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":    "joe",
+		"privilege":    "USAGE",
+		"cluster_name": "materialize",
+	}
+	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
+	r.NotNil(d)
+
+	d.SetId("aws/us-east-1:GRANT|CLUSTER|u99|u1|USAGE")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_clusters.id = 'u99'`
+		testhelpers.MockClusterScanNoRows(mock, pp)
+
+		// Query Cluster Id
+		cp := `WHERE mz_clusters.name = 'materialize'`
+		testhelpers.MockClusterScan(mock, cp)
+
+		// Query Params
+		np := `WHERE mz_clusters.id = 'u1'`
+		testhelpers.MockClusterScan(mock, np)
+
+		if err := grantRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "aws/us-east-1:GRANT|CLUSTER|u1|u1|USAGE" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
+
+func TestResourceGrantPrivilegeReadClusterDropped(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":    "joe",
+		"privilege":    "USAGE",
+		"cluster_name": "materialize",
+	}
+	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
+	r.NotNil(d)
+
+	d.SetId("aws/us-east-1:GRANT|CLUSTER|u99|u1|USAGE")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Query Params
+		pp := `WHERE mz_clusters.id = 'u99'`
+		testhelpers.MockClusterScanNoRows(mock, pp)
+
+		// Query Cluster Id
+		cp := `WHERE mz_clusters.name = 'materialize'`
+		testhelpers.MockClusterScanNoRows(mock, cp)
+
+		if err := grantRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		if d.Id() != "" {
+			t.Fatalf("unexpected id of %s", d.Id())
+		}
+	})
+}
