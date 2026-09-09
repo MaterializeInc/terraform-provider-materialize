@@ -120,7 +120,13 @@ func MapGrantPrivileges(privileges []string) (map[string][]string, error) {
 	mapping := make(map[string][]string)
 	for _, p := range privileges {
 		f := ParseMzAclString(p)
-		mapping[f.Grantee] = f.Privileges
+		grantee := f.Grantee
+		if grantee == "" {
+			// PUBLIC has no row in mz_roles and renders with an empty grantee,
+			// so key it under the same pseudo-role id that RoleId hands out
+			grantee = publicRoleId
+		}
+		mapping[grantee] = f.Privileges
 	}
 	return mapping, nil
 }

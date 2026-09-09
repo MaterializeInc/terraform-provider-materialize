@@ -132,9 +132,25 @@ func TestScanPrivileges(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		e := []string{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1", "p=UC/u18"}
+		e := []string{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1", "=UC/s1"}
 		if !reflect.DeepEqual(o, e) {
 			t.Fatalf("unexpected privileges %s", o)
 		}
 	})
+}
+
+// PUBLIC has no row in mz_roles and renders with an empty grantee, so it has to
+// be keyed under the same id RoleId returns or its grants never match
+func TestMapGrantPrivilegesPublic(t *testing.T) {
+	m, err := MapGrantPrivileges([]string{"s1=UC/s1", "=U/s1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(m["p"], []string{"USAGE"}) {
+		t.Fatalf("PUBLIC privileges not mapped to %q: %v", "p", m)
+	}
+	if _, ok := m[""]; ok {
+		t.Fatalf("empty grantee should not remain in the map: %v", m)
+	}
 }
