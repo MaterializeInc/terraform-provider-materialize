@@ -42,6 +42,26 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Enabling CDC creates a capture job, which needs SQL Server Agent. The Agent
+# only finishes starting after SQL Server begins accepting connections, and
+# sp_cdc_enable_table fails with 14258 while it is still coming up. The
+# bootstrap runs without -b so that failure is not fatal, which left CDC
+# silently disabled and the healthcheck waiting forever.
+echo "Waiting for SQL Server Agent..."
+for i in {1..60}
+do
+    $SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -C -b -Q \
+        "SET NOCOUNT ON; IF NOT EXISTS (SELECT 1 FROM sys.dm_server_services WHERE servicename LIKE 'SQL Server Agent%' AND status_desc = 'Running') RAISERROR('agent not ready', 16, 1);" > /dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+        echo "SQL Server Agent is running after $i attempts"
+        break
+    else
+        echo "Attempt $i: SQL Server Agent not ready yet..."
+        sleep 2
+    fi
+done
+
 # Run the bootstrap script. We intentionally do NOT pass -b here: the bootstrap
 # is not idempotent (re-running sp_cdc_enable_table on an already-CDC-enabled
 # table raises Msg 22926), so -b combined with `restart: always` would crash-loop
