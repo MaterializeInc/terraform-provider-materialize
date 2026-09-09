@@ -51,7 +51,7 @@ func (a StringArray) Value() (driver.Value, error) {
 	return textArray.Value()
 }
 
-var defaultPrivilege = StringArray{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1", "p=UC/u18"}
+var defaultPrivilege = StringArray{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1", "=UC/s1"}
 
 func mockQueryBuilder(query, predicate, order string) string {
 	q := strings.Builder{}

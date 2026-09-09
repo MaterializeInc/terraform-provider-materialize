@@ -146,9 +146,12 @@ var roleQuery = NewBaseQuery(`
 	) comments
 		ON mz_roles.id = comments.id`)
 
+// publicRoleId is the id used for the PUBLIC pseudo-role, which has no row in mz_roles.
+const publicRoleId = "p"
+
 func RoleId(conn *sqlx.DB, roleName string) (string, error) {
 	if roleName == "PUBLIC" {
-		return "p", nil
+		return publicRoleId, nil
 	} else {
 		p := map[string]string{"mz_roles.name": roleName}
 		q := roleQuery.QueryPredicate(p)
