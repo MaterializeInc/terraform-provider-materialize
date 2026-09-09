@@ -132,7 +132,7 @@ func TestScanPrivileges(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		e := []string{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1"}
+		e := []string{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1", "p=UC/u18"}
 		if !reflect.DeepEqual(o, e) {
 			t.Fatalf("unexpected privileges %s", o)
 		}

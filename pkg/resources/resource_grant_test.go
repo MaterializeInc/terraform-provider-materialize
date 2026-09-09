@@ -136,3 +136,63 @@ func TestResourceGrantPrivilegeReadClusterIdOnOtherResource(t *testing.T) {
 		r.Empty(d.Id(), "an unresolvable grant should be removed from state")
 	})
 }
+
+// A grant that is no longer present on the object should leave state, otherwise
+// the next plan sees no drift and the grant is never recreated
+func TestResourceGrantPrivilegeReadRevoked(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":    "joe",
+		"privilege":    "USAGE",
+		"cluster_name": "materialize",
+	}
+	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
+	r.NotNil(d)
+
+	// u99 holds no privileges on the cluster
+	d.SetId("aws/us-east-1:GRANT|CLUSTER|u1|u99|USAGE")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		testhelpers.MockClusterScan(mock, `WHERE mz_clusters.id = 'u1'`)
+
+		if err := grantRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Empty(d.Id(), "a revoked grant should be removed from state")
+	})
+}
+
+// The swapped-in cluster does not always carry the grant. Re-resolving must not
+// hide that, or the grant is silently missing and no plan ever restores it
+func TestResourceGrantPrivilegeReadClusterSwappedWithoutGrant(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":    "joe",
+		"privilege":    "USAGE",
+		"cluster_name": "materialize",
+	}
+	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
+	r.NotNil(d)
+
+	d.SetId("aws/us-east-1:GRANT|CLUSTER|u99|u77|USAGE")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// The id in state was dropped by the swap
+		testhelpers.MockClusterScanNoRows(mock, `WHERE mz_clusters.id = 'u99'`)
+
+		// The name resolves to the new cluster, which holds no grant for u77
+		testhelpers.MockClusterScan(mock, `WHERE mz_clusters.name = 'materialize'`)
+		testhelpers.MockClusterScan(mock, `WHERE mz_clusters.id = 'u1'`)
+
+		if err := grantRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Empty(d.Id(), "a grant absent from the swapped-in cluster should be removed from state")
+	})
+}

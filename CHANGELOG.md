@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+* Fixed `materialize_cluster_grant` wanting to recreate a grant after a cluster swap. The grant addresses its cluster by name but stored the catalog id, so a blue/green deploy left the id pointing at a dropped cluster. The read now re-resolves the id from `cluster_name`.
+* Fixed a revoked grant staying in state. `grantRead` cleared the id when the privilege was no longer present on the object, but set it again before returning, so the next plan saw no drift and the grant was never recreated.
+
 ## 0.11.7 - 2026-08-24
 
 ### Bug Fixes
