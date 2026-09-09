@@ -42,3 +42,31 @@ func TestResourceGrantPrivilegeReadIdMigration(t *testing.T) {
 		}
 	})
 }
+
+// A grant that is no longer present on the object should leave state, otherwise
+// the next plan sees no drift and the grant is never recreated.
+func TestResourceGrantPrivilegeReadRevoked(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name":    "joe",
+		"privilege":    "USAGE",
+		"cluster_name": "materialize",
+	}
+	d := schema.TestResourceDataRaw(t, GrantCluster().Schema, in)
+	r.NotNil(d)
+
+	// u99 holds no privileges on the cluster
+	d.SetId("aws/us-east-1:GRANT|CLUSTER|u1|u99|USAGE")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		testhelpers.MockClusterScan(mock, `WHERE mz_clusters.id = 'u1'`)
+
+		if err := grantRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Empty(d.Id(), "a revoked grant should be removed from state")
+	})
+}

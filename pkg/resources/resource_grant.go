@@ -68,6 +68,7 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		log.Printf("[DEBUG] %s object does not contain privilege %s", i, privilege)
 		// Remove id from state
 		d.SetId("")
+		return nil
 	}
 
 	d.SetId(utils.TransformIdWithRegion(string(region), i))

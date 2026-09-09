@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+* Fixed a revoked grant staying in state. `grantRead` cleared the id when the privilege was no longer present on the object, but then set it again before returning, so the next plan saw no drift and the grant was never recreated.
+
 ## 0.11.7 - 2026-08-24
 
 ### Bug Fixes
