@@ -92,3 +92,29 @@ func TestResourceGrantSystemPrivilegeDelete(t *testing.T) {
 		}
 	})
 }
+
+// A revoked system privilege has to leave state, or the next plan sees no drift
+func TestResourceGrantSystemPrivilegeReadRevoked(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	in := map[string]interface{}{
+		"role_name": "joe",
+		"privilege": "CREATEDB",
+	}
+	d := schema.TestResourceDataRaw(t, GrantSystemPrivilege().Schema, in)
+	r.NotNil(d)
+
+	// u99 holds no system privileges
+	d.SetId("aws/us-east-1:GRANT SYSTEM|u99|CREATEDB")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		testhelpers.MockSystemPrivilege(mock)
+
+		if err := grantSystemPrivilegeRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Empty(d.Id(), "a revoked system privilege should be removed from state")
+	})
+}

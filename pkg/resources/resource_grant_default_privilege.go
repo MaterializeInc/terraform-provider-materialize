@@ -73,6 +73,7 @@ func grantDefaultPrivilegeRead(ctx context.Context, d *schema.ResourceData, meta
 		log.Printf("[DEBUG] %s object does not contain privilege %s", i, key.privilege)
 		// Remove id from state
 		d.SetId("")
+		return nil
 	}
 
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
