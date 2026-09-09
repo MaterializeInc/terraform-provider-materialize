@@ -417,6 +417,66 @@ func TestAccClusterAlterGraceful(t *testing.T) {
 	})
 }
 
+// Materialize rejects WAIT unless the ALTER also changes size, availability
+// zones or introspection, so a cluster that leaves wait_until_ready enabled
+// must still be able to change other attributes.
+func TestAccClusterAlterGracefulWithoutReplicaChange(t *testing.T) {
+	clusterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	size := "25cc"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckAllClusterDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "1", ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists("materialize_cluster.test_graceful"),
+					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "replication_factor", "1"),
+				),
+			},
+			{
+				// Replication factor only
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "2", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "replication_factor", "2"),
+				),
+			},
+			{
+				// Autoscaling only, the case the customer reported
+				Config: testAccClusterGracefulWithoutReplicaChange(clusterName, size, "2", "50cc"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("materialize_cluster.test_graceful", "auto_scaling_strategy.0.on_hydration.0.hydration_size", "50cc"),
+				),
+			},
+		},
+	})
+}
+
+func testAccClusterGracefulWithoutReplicaChange(clusterName, clusterSize, replicationFactor, hydrationSize string) string {
+	strategy := ""
+	if hydrationSize != "" {
+		strategy = fmt.Sprintf(`
+		auto_scaling_strategy {
+			on_hydration {
+				hydration_size = "%s"
+			}
+		}`, hydrationSize)
+	}
+	return fmt.Sprintf(`
+	resource "materialize_cluster" "test_graceful" {
+		name               = "%[1]s"
+		size               = "%[2]s"
+		replication_factor = %[3]s
+		wait_until_ready {
+			enabled    = true
+			timeout    = "10m"
+			on_timeout = "COMMIT"
+		}%[4]s
+	}
+	`, clusterName, clusterSize, replicationFactor, strategy)
+}
+
 func testAccClusterResource(
 	roleName,
 	cluster1Name,

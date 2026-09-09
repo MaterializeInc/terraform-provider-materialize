@@ -123,7 +123,7 @@ var clusterSchema = map[string]*schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
 		MaxItems:    1,
-		Description: "Defines the parameters for the WAIT UNTIL READY options",
+		Description: "Defines the parameters for the WAIT UNTIL READY options. Only applied when the change creates new replicas, meaning a change to `size`, `availability_zones`, `introspection_interval` or `introspection_debugging`. Other changes are applied without waiting.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"enabled": {
@@ -397,6 +397,30 @@ func clusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return clusterRead(ctx, d, meta)
 }
 
+// waitUntilReadyFields are the attributes Materialize allows WAIT UNTIL READY
+// to be combined with. Any other change alters the cluster in place, so there
+// are no new replicas to wait on and the server rejects the statement.
+var waitUntilReadyFields = []string{
+	"size",
+	"availability_zones",
+	"introspection_interval",
+	"introspection_debugging",
+}
+
+// changeChecker is the part of schema.ResourceData that waitUntilReadySupported needs.
+type changeChecker interface {
+	HasChange(key string) bool
+}
+
+func waitUntilReadySupported(d changeChecker) bool {
+	for _, f := range waitUntilReadyFields {
+		if d.HasChange(f) {
+			return true
+		}
+	}
+	return false
+}
+
 func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterName := d.Get("name").(string)
 
@@ -519,6 +543,12 @@ func clusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if changed {
 		_, reconfigOptsRaw := d.GetChange("wait_until_ready")
 		reconfigOpts := b.GetReconfigOpts(reconfigOptsRaw)
+		if !waitUntilReadySupported(d) {
+			// Nothing here builds new replicas to wait on, and sending WAIT
+			// anyway makes Materialize reject the whole statement.
+			log.Printf("[DEBUG] dropping WAIT UNTIL READY: this change does not create replicas")
+			reconfigOpts = materialize.ReconfigurationOptions{}
+		}
 		if err := b.AlterCluster(reconfigOpts); err != nil {
 			return diag.FromErr(err)
 		}
