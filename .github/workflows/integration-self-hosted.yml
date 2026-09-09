@@ -4,6 +4,9 @@ on:
     paths:
       - pkg/**
       - integration/self_hosted/**
+      - integration/sqlserver/**
+      - compose.yaml
+      - .github/workflows/integration-self-hosted.yml
       - main.go
       - go.mod
   schedule:
