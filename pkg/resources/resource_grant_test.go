@@ -113,3 +113,26 @@ func TestResourceGrantPrivilegeReadClusterDropped(t *testing.T) {
 		}
 	})
 }
+
+// A cluster id imported into another grant resource has no cluster_name to
+// re-resolve from, which must not take the provider down
+func TestResourceGrantPrivilegeReadClusterIdOnOtherResource(t *testing.T) {
+	utils.SetDefaultRegion("aws/us-east-1")
+	r := require.New(t)
+
+	d := schema.TestResourceDataRaw(t, GrantDatabase().Schema, map[string]interface{}{})
+	r.NotNil(d)
+
+	d.SetId("aws/us-east-1:GRANT|CLUSTER|u99|u1|USAGE")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		pp := `WHERE mz_clusters.id = 'u99'`
+		testhelpers.MockClusterScanNoRows(mock, pp)
+
+		if err := grantRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Empty(d.Id(), "an unresolvable grant should be removed from state")
+	})
+}

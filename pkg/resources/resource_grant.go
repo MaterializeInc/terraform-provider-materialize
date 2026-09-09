@@ -52,17 +52,22 @@ func grantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	p, err := materialize.ScanPrivileges(metaDb, materialize.EntityType(key.objectType), key.objectId)
 	if errors.Is(err, sql.ErrNoRows) && materialize.EntityType(key.objectType) == materialize.Cluster {
-		// A swapped or renamed cluster leaves a dropped id in state, re-resolve it from the configured name
-		c, clusterErr := materialize.ScanCluster(metaDb, d.Get("cluster_name").(string), true)
-		if clusterErr != nil && !errors.Is(clusterErr, sql.ErrNoRows) {
-			return diag.FromErr(clusterErr)
-		}
-		if clusterErr == nil {
-			key.objectId = c.ClusterId.String
-			ie := strings.Split(i, "|")
-			ie[2] = key.objectId
-			i = strings.Join(ie, "|")
-			p, err = materialize.ScanPrivileges(metaDb, materialize.Cluster, key.objectId)
+		// A swapped cluster leaves a dropped id in state, re-resolve it from the configured
+		// name. cluster_name is absent when a cluster id was imported into another grant
+		// resource, and then there is nothing to re-resolve from.
+		clusterName, _ := d.Get("cluster_name").(string)
+		if clusterName != "" {
+			c, clusterErr := materialize.ScanCluster(metaDb, clusterName, true)
+			if clusterErr != nil && !errors.Is(clusterErr, sql.ErrNoRows) {
+				return diag.FromErr(clusterErr)
+			}
+			if clusterErr == nil {
+				key.objectId = c.ClusterId.String
+				ie := strings.Split(i, "|")
+				ie[2] = key.objectId
+				i = strings.Join(ie, "|")
+				p, err = materialize.ScanPrivileges(metaDb, materialize.Cluster, key.objectId)
+			}
 		}
 	}
 	if errors.Is(err, sql.ErrNoRows) {
