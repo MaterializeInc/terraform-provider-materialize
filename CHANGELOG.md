@@ -1,13 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.11.8 - 2026-09-11
 
 ### Bug Fixes
 
-* Fixed `materialize_cluster_grant` wanting to recreate a grant after a cluster swap. The grant addresses its cluster by name but stored the catalog id, so a blue/green deploy left the id pointing at a dropped cluster. The read now re-resolves the id from `cluster_name`.
-* Fixed a revoked grant staying in state. The grant, system privilege and default privilege reads each cleared the id when the privilege was no longer present, but set it again before returning, so the next plan saw no drift and the grant was never recreated.
-* Fixed grants to `PUBLIC` never matching on read. `PUBLIC` has no row in `mz_roles` and its privileges come back with an empty grantee, so they were never keyed under the id the grant resources use.
-* Fixed `ALTER CLUSTER` failing when `wait_until_ready` is enabled and the change was one Materialize does not allow waiting on, such as `replication_factor` or `auto_scaling_strategy`. `WAIT UNTIL READY` is now only sent alongside a `size`, `availability_zones` or introspection change. Other changes are applied without waiting, and a warning is emitted so the skipped wait is visible.
+* Fixed `materialize_cluster_grant` wanting to recreate a grant after a cluster swap [#917](https://github.com/MaterializeInc/terraform-provider-materialize/pull/917). The grant addresses its cluster by name but stored the catalog id, so a blue/green deploy left the id pointing at a dropped cluster. The read now re-resolves the id from `cluster_name`.
+* Fixed a revoked grant staying in state [#917](https://github.com/MaterializeInc/terraform-provider-materialize/pull/917). The grant, system privilege and default privilege reads each cleared the id when the privilege was no longer present, but set it again before returning, so the next plan saw no drift and the grant was never recreated.
+* Fixed grants to `PUBLIC` never matching on read [#917](https://github.com/MaterializeInc/terraform-provider-materialize/pull/917). `PUBLIC` has no row in `mz_roles` and its privileges come back with an empty grantee, so they were never keyed under the id the grant resources use.
+* Fixed `ALTER CLUSTER` failing when `wait_until_ready` is enabled and the change was one Materialize does not allow waiting on, such as `replication_factor` or `auto_scaling_strategy` [#915](https://github.com/MaterializeInc/terraform-provider-materialize/pull/915). `WAIT UNTIL READY` is now only sent alongside a `size`, `availability_zones` or introspection change. Other changes are applied without waiting, and a warning is emitted so the skipped wait is visible.
+
+### Misc
+
+* Fixed the sqlserver test fixture racing SQL Server Agent, which intermittently failed the integration jobs with an unhealthy container [#916](https://github.com/MaterializeInc/terraform-provider-materialize/pull/916). The integration workflows now also run when `compose.yaml` or their own definition changes, and dump container logs on failure.
 
 ## 0.11.7 - 2026-08-24
 
