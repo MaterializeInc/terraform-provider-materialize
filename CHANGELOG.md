@@ -20,6 +20,10 @@
 
 * Fixed the sqlserver test fixture racing SQL Server Agent, which intermittently failed the integration jobs with an unhealthy container [#916](https://github.com/MaterializeInc/terraform-provider-materialize/pull/916). The integration workflows now also run when `compose.yaml` or their own definition changes, and dump container logs on failure.
 
+### Misc
+
+* Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
+
 ## 0.11.7 - 2026-08-24
 
 ### Bug Fixes
