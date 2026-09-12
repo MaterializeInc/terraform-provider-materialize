@@ -6,6 +6,8 @@
 
 * Removed the MinIO fixture from the compose stack. MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.
 * Bumped `google.golang.org/grpc` to 1.83.2, which clears three advisories reachable from the provider: an xDS denial of service, an HTTP/2 heap exhaustion, and a server panic on missing authority headers.
+* Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
+* The connection string now percent-encodes spaces instead of writing them as `+`. The `options` parameter carries the transaction isolation setting, and a `+` there was read back literally, so the setting was dropped and reads could miss writes the provider had just made.
 
 ## 0.11.8 - 2026-09-11
 
@@ -19,10 +21,6 @@
 ### Misc
 
 * Fixed the sqlserver test fixture racing SQL Server Agent, which intermittently failed the integration jobs with an unhealthy container [#916](https://github.com/MaterializeInc/terraform-provider-materialize/pull/916). The integration workflows now also run when `compose.yaml` or their own definition changes, and dump container logs on failure.
-
-### Misc
-
-* Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
 
 ## 0.11.7 - 2026-08-24
 
