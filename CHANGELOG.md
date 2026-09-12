@@ -9,6 +9,10 @@
 * Fixed grants to `PUBLIC` never matching on read. `PUBLIC` has no row in `mz_roles` and its privileges come back with an empty grantee, so they were never keyed under the id the grant resources use.
 * Fixed `ALTER CLUSTER` failing when `wait_until_ready` is enabled and the change was one Materialize does not allow waiting on, such as `replication_factor` or `auto_scaling_strategy`. `WAIT UNTIL READY` is now only sent alongside a `size`, `availability_zones` or introspection change. Other changes are applied without waiting, and a warning is emitted so the skipped wait is visible.
 
+### Misc
+
+* Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
+
 ## 0.11.7 - 2026-08-24
 
 ### Bug Fixes
