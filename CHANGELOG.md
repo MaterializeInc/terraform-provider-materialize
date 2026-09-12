@@ -12,6 +12,7 @@
 ### Misc
 
 * Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
+* The connection string now percent-encodes spaces instead of writing them as `+`. The `options` parameter carries the transaction isolation setting, and a `+` there was read back literally, so the setting was dropped and reads could miss writes the provider had just made.
 
 ## 0.11.7 - 2026-08-24
 
