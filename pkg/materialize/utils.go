@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // isUndefinedObject reports whether err is Postgres undefined_table or
@@ -74,22 +74,25 @@ type StringArray []string
 // Scan implements the sql.Scanner interface for StringArray.
 // It allows scanning PostgreSQL text[] arrays into a []string slice.
 func (a *StringArray) Scan(src interface{}) error {
-	var textArray pgtype.TextArray
-	if err := textArray.Scan(src); err != nil {
-		return err
-	}
-
-	if textArray.Status != pgtype.Present {
+	if src == nil {
 		*a = nil
 		return nil
 	}
 
-	// Convert pgtype.TextArray elements to []string
-	elements := make([]string, len(textArray.Elements))
-	for i, elem := range textArray.Elements {
-		if elem.Status == pgtype.Present {
-			elements[i] = elem.String
-		}
+	var buf []byte
+	switch s := src.(type) {
+	case []byte:
+		buf = s
+	case string:
+		buf = []byte(s)
+	default:
+		return fmt.Errorf("cannot scan %T into StringArray", src)
+	}
+
+	var elements []string
+	m := pgtype.NewMap()
+	if err := m.Scan(pgtype.TextArrayOID, pgtype.TextFormatCode, buf, &elements); err != nil {
+		return err
 	}
 
 	*a = elements
@@ -103,10 +106,11 @@ func (a StringArray) Value() (driver.Value, error) {
 		return nil, nil
 	}
 
-	var textArray pgtype.TextArray
-	if err := textArray.Set([]string(a)); err != nil {
+	m := pgtype.NewMap()
+	buf, err := m.Encode(pgtype.TextArrayOID, pgtype.TextFormatCode, []string(a), nil)
+	if err != nil {
 		return nil, err
 	}
 
-	return textArray.Value()
+	return string(buf), nil
 }
