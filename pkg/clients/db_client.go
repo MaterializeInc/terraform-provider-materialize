@@ -46,19 +46,28 @@ func buildConnectionString(host, user, password string, port int, database, sslm
 		parts = append(parts, fmt.Sprintf("--%s=%s", escapeOptionToken(k), escapeOptionToken(options[k])))
 	}
 
-	url := &url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(user, password),
-		Host:   fmt.Sprintf("%s:%d", host, port),
-		Path:   database,
-		RawQuery: url.Values{
-			"application_name": {application_name},
-			"sslmode":          {sslmode},
-			"options":          {strings.Join(parts, " ")},
-		}.Encode(),
+	query := url.Values{
+		"application_name": {application_name},
+		"sslmode":          {sslmode},
+		"options":          {strings.Join(parts, " ")},
+	}.Encode()
+
+	// Encode writes spaces as "+", which is an HTML form convention rather than
+	// RFC 3986. pgx v5 does not read it back as a space, so the escaped spaces in
+	// the options string would reach the server as literal "+" and the whole
+	// option would be ignored. Every "+" left by Encode is a space, since a
+	// literal one comes back as %2B.
+	query = strings.ReplaceAll(query, "+", "%20")
+
+	u := &url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(user, password),
+		Host:     fmt.Sprintf("%s:%d", host, port),
+		Path:     database,
+		RawQuery: query,
 	}
 
-	return url.String()
+	return u.String()
 }
 
 func escapeOptionToken(s string) string {
