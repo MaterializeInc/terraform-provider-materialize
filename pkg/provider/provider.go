@@ -173,6 +173,7 @@ func Provider(version string) *schema.Provider {
 			"materialize_scim_config":                          resources.SCIM2Configuration(),
 			"materialize_scim_group":                           resources.SCIM2Group(),
 			"materialize_scim_group_users":                     resources.SCIM2GroupUsers(),
+			"materialize_organization_role":                    resources.OrganizationRole(),
 			"materialize_scim_group_roles":                     resources.SCIM2GroupRoles(),
 			"materialize_sso_config":                           resources.SSOConfiguration(),
 			"materialize_sso_domain":                           resources.SSODomain(),

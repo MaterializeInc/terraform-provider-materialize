@@ -2,7 +2,11 @@
 # to push the group before applying this mapping.
 data "materialize_scim_groups" "all" {}
 
-# Create the custom organization role analytics_reader before this mapping.
+resource "materialize_organization_role" "reader" {
+  name           = "analytics_reader"
+  base_role_name = "Member"
+}
+
 locals {
   analytics_groups = [
     for group in data.materialize_scim_groups.all.groups : group
@@ -13,7 +17,7 @@ locals {
 resource "materialize_scim_group_roles" "reader" {
   group_id = try(one(local.analytics_groups).id, "")
   # Member assigns the reserved Organization Member [MaterializePlatform] role.
-  roles = ["Member", "analytics_reader"]
+  roles = ["Member", materialize_organization_role.reader.name]
 
   lifecycle {
     precondition {
