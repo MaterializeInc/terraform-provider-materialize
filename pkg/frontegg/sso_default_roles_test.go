@@ -107,3 +107,24 @@ func TestClearSSODefaultRolesSuccess(t *testing.T) {
 	err := ClearSSODefaultRoles(context.Background(), client, "config-id")
 	assert.NoError(err)
 }
+
+func TestListFronteggRolesIncludesCustomRolesAcrossPages(t *testing.T) {
+	pages := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := FronteggRolesResponse{}
+		response.Metadata.TotalPages = 2
+		if r.URL.Query().Get("_offset") == "0" {
+			response.Items = []FronteggRole{{ID: "member", Name: "Organization Member"}}
+		} else {
+			assert.Equal(t, "1", r.URL.Query().Get("_offset"))
+			response.Items = []FronteggRole{{ID: "custom", Name: "Organization Analytics"}}
+		}
+		pages++
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+	roles, err := ListFronteggRoles(context.Background(), &clients.FronteggClient{Endpoint: server.URL, HTTPClient: server.Client()})
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"Member": "member", "Organization Analytics": "custom"}, roles)
+	assert.Equal(t, 2, pages)
+}

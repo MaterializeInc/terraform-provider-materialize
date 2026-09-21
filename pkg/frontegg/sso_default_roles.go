@@ -28,33 +28,61 @@ type FronteggRolesResponse struct {
 }
 
 type FronteggRole struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Key         string   `json:"key"`
+	Description string   `json:"description"`
+	TenantID    string   `json:"tenantId"`
+	Permissions []string `json:"permissions"`
 }
 
-// ListRoles fetches roles from the Frontegg API and returns a map of role names to their IDs.
+// RoleName preserves custom names and the provider's built-in role aliases.
+func RoleName(name string) string {
+	switch name {
+	case "Organization Admin":
+		return "Admin"
+	case "Organization Member":
+		return "Member"
+	default:
+		return name
+	}
+}
+
+func FetchFronteggRoles(ctx context.Context, client *clients.FronteggClient) ([]FronteggRole, error) {
+	var roles []FronteggRole
+	for page := 0; ; page++ {
+		endpoint := fmt.Sprintf("%s%s?_sortBy=key&_order=ASC&_limit=2000&_offset=%d", client.Endpoint, SSORolesApiPathV2, page)
+		resp, err := doRequest(ctx, client, "GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		var result FronteggRolesResponse
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		resp.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("error decoding roles: %w", err)
+		}
+		roles = append(roles, result.Items...)
+		if page+1 >= result.Metadata.TotalPages {
+			return roles, nil
+		}
+	}
+}
+
+// ListFronteggRoles includes tenant roles as well as built-in organization roles.
 func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map[string]string, error) {
-	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSORolesApiPathV2)
-	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
+	roles, err := FetchFronteggRoles(ctx, client)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	var rolesResponse FronteggRolesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&rolesResponse); err != nil {
-		return nil, fmt.Errorf("error decoding response: %v", err)
-	}
-
 	roleMap := make(map[string]string)
-	for _, role := range rolesResponse.Items {
-		if role.Name == "Organization Admin" {
-			roleMap["Admin"] = role.ID
-		} else if role.Name == "Organization Member" {
-			roleMap["Member"] = role.ID
+	for _, role := range roles {
+		name := RoleName(role.Name)
+		if id, ok := roleMap[name]; ok && id != role.ID {
+			return nil, fmt.Errorf("ambiguous organization role name: %s", name)
 		}
+		roleMap[name] = role.ID
 	}
-
 	return roleMap, nil
 }
 
