@@ -5,6 +5,7 @@
 ### Misc
 
 * Removed the MinIO fixture from the compose stack. MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.
+* Bumped `google.golang.org/grpc` to 1.83.2, which clears three advisories reachable from the provider: an xDS denial of service, an HTTP/2 heap exhaustion, and a server panic on missing authority headers.
 
 ## 0.11.8 - 2026-09-11
 
