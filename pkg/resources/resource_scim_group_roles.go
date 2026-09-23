@@ -39,7 +39,7 @@ func SCIM2GroupRoles() *schema.Resource {
 
 		Schema: ScimGroupRoleSchema,
 
-		Description: "Manages the complete set of organization roles assigned to a SCIM group. Use Admin and Member for the built-in roles, and exact names for custom roles. Keep Member in the set when group members need its organization permissions.",
+		Description: "Manages the complete set of organization roles assigned to a SCIM group. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin, specified here as Admin) and Organization Member (key MaterializePlatform, specified here as Member). You can assign these roles to groups, but cannot edit or delete the roles themselves. Use exact names for custom roles. Keep Member in the set when group members need its organization permissions.",
 	}
 }
 
