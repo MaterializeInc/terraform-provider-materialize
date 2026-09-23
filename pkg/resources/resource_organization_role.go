@@ -21,7 +21,7 @@ func OrganizationRole() *schema.Resource {
 		UpdateContext: organizationRoleUpdate,
 		DeleteContext: organizationRoleDelete,
 		Importer:      &schema.ResourceImporter{StateContext: schema.ImportStatePassthroughContext},
-		Description:   "Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. This does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.",
+		Description:   "Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. This resource does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.",
 		Schema: map[string]*schema.Schema{
 			"name":           {Type: schema.TypeString, Required: true, ForceNew: true, ValidateFunc: validateOrganizationRoleName, Description: "Name of the custom role. Also used as its JWT key on creation. For database role mapping, create a database role with the same name."},
 			"key":            {Type: schema.TypeString, Computed: true, Description: "Role key included in the JWT roles claim. Match this key to the database role name."},

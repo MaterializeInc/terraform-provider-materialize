@@ -3,12 +3,12 @@
 page_title: "materialize_organization_role Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. This does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.
+  Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. This resource does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.
 ---
 
 # materialize_organization_role (Resource)
 
-Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. This does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.
+Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. This resource does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.
 
 ## Example Usage
 
