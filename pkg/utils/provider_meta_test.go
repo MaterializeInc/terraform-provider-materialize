@@ -245,16 +245,16 @@ func TestProviderMeta_GetFronteggRoles_AlreadyLoaded(t *testing.T) {
 
 	// When FronteggRoles is already set, it should return without calling fetcher
 	providerMeta := &ProviderMeta{
-		FronteggRoles: map[string]string{
-			"Admin":  "role-1",
-			"Member": "role-2",
+		FronteggRoles: map[string][]string{
+			"Admin":  {"role-1"},
+			"Member": {"role-2"},
 		},
 	}
 
 	roles, err := providerMeta.GetFronteggRoles(context.Background())
 	r.NoError(err)
-	r.Equal("role-1", roles["Admin"])
-	r.Equal("role-2", roles["Member"])
+	r.Equal([]string{"role-1"}, roles["Admin"])
+	r.Equal([]string{"role-2"}, roles["Member"])
 }
 
 func TestProviderMeta_GetFronteggRoles_NoFetcher(t *testing.T) {
@@ -273,11 +273,11 @@ func TestProviderMeta_GetFronteggRoles_LazyLoad(t *testing.T) {
 
 	fetchCount := 0
 	providerMeta := &ProviderMeta{
-		FronteggRolesFetcher: func(ctx context.Context) (map[string]string, error) {
+		FronteggRolesFetcher: func(ctx context.Context) (map[string][]string, error) {
 			fetchCount++
-			return map[string]string{
-				"Admin":  "fetched-role-1",
-				"Member": "fetched-role-2",
+			return map[string][]string{
+				"Admin":  {"fetched-role-1"},
+				"Member": {"fetched-role-2"},
 			}, nil
 		},
 	}
@@ -285,13 +285,13 @@ func TestProviderMeta_GetFronteggRoles_LazyLoad(t *testing.T) {
 	// First call should fetch roles
 	roles, err := providerMeta.GetFronteggRoles(context.Background())
 	r.NoError(err)
-	r.Equal("fetched-role-1", roles["Admin"])
+	r.Equal([]string{"fetched-role-1"}, roles["Admin"])
 	r.Equal(1, fetchCount)
 
 	// Second call should return cached roles without fetching again
 	roles, err = providerMeta.GetFronteggRoles(context.Background())
 	r.NoError(err)
-	r.Equal("fetched-role-1", roles["Admin"])
+	r.Equal([]string{"fetched-role-1"}, roles["Admin"])
 	r.Equal(1, fetchCount) // Still 1, fetcher not called again
 }
 
@@ -299,7 +299,7 @@ func TestProviderMeta_GetFronteggRoles_FetcherError(t *testing.T) {
 	r := require.New(t)
 
 	providerMeta := &ProviderMeta{
-		FronteggRolesFetcher: func(ctx context.Context) (map[string]string, error) {
+		FronteggRolesFetcher: func(ctx context.Context) (map[string][]string, error) {
 			return nil, errors.New("network error")
 		},
 	}
@@ -315,14 +315,14 @@ func TestProviderMeta_GetFronteggRoles_RetryAfterError(t *testing.T) {
 
 	callCount := 0
 	providerMeta := &ProviderMeta{
-		FronteggRolesFetcher: func(ctx context.Context) (map[string]string, error) {
+		FronteggRolesFetcher: func(ctx context.Context) (map[string][]string, error) {
 			callCount++
 			if callCount == 1 {
 				return nil, errors.New("transient error")
 			}
-			return map[string]string{
-				"Admin":  "role-1",
-				"Member": "role-2",
+			return map[string][]string{
+				"Admin":  {"role-1"},
+				"Member": {"role-2"},
 			}, nil
 		},
 	}
@@ -335,13 +335,13 @@ func TestProviderMeta_GetFronteggRoles_RetryAfterError(t *testing.T) {
 	// Second call should retry and succeed (not cached on error)
 	roles, err := providerMeta.GetFronteggRoles(context.Background())
 	r.NoError(err)
-	r.Equal("role-1", roles["Admin"])
+	r.Equal([]string{"role-1"}, roles["Admin"])
 	r.Equal(2, callCount)
 
 	// Third call should use cached value
 	roles, err = providerMeta.GetFronteggRoles(context.Background())
 	r.NoError(err)
-	r.Equal("role-1", roles["Admin"])
+	r.Equal([]string{"role-1"}, roles["Admin"])
 	r.Equal(2, callCount) // Still 2, fetcher not called again after success
 }
 

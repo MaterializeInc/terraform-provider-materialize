@@ -36,8 +36,8 @@ func TestListFronteggRolesSuccess(t *testing.T) {
 	roles, err := ListFronteggRoles(context.Background(), client)
 	assert.NoError(err)
 	assert.Equal(2, len(roles))
-	assert.Equal("role-id-1", roles["Admin"])
-	assert.Equal("role-id-2", roles["Member"])
+	assert.Equal([]string{"role-id-1"}, roles["Admin"])
+	assert.Equal([]string{"role-id-2"}, roles["Member"])
 }
 
 func TestSetSSODefaultRolesSuccess(t *testing.T) {
@@ -125,6 +125,30 @@ func TestListFronteggRolesIncludesCustomRolesAcrossPages(t *testing.T) {
 	defer server.Close()
 	roles, err := ListFronteggRoles(context.Background(), &clients.FronteggClient{Endpoint: server.URL, HTTPClient: server.Client()})
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{"Member": "member", "Organization Analytics": "custom"}, roles)
+	assert.Equal(t, map[string][]string{"Member": {"member"}, "Organization Analytics": {"custom"}}, roles)
 	assert.Equal(t, 2, pages)
+}
+
+func TestListFronteggRolesOnlyRejectsAmbiguousLookup(t *testing.T) {
+	response := FronteggRolesResponse{Items: []FronteggRole{
+		{ID: "built-in-admin", Name: "Organization Admin"},
+		{ID: "custom-admin", Name: "Admin"},
+		{ID: "member", Name: "Organization Member"},
+	}}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NoError(t, json.NewEncoder(w).Encode(response))
+	}))
+	defer server.Close()
+
+	roles, err := ListFronteggRoles(context.Background(), &clients.FronteggClient{Endpoint: server.URL, HTTPClient: server.Client()})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"built-in-admin", "custom-admin"}, roles["Admin"])
+	memberID, err := RoleIDByName(roles, "Member")
+	assert.NoError(t, err)
+	assert.Equal(t, "member", memberID)
+	_, err = RoleIDByName(roles, "Admin")
+	assert.ErrorContains(t, err, "ambiguous organization role name: Admin")
+	name, found := RoleNameByID(roles, "custom-admin")
+	assert.True(t, found)
+	assert.Equal(t, "Admin", name)
 }

@@ -33,9 +33,9 @@ func TestScimGroupRoleResourceCreate(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 
@@ -83,9 +83,9 @@ func TestScimGroupRoleResourceDelete(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 
@@ -128,7 +128,7 @@ func TestScimGroupRolesCustomNamesAndUpdate(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	meta := &utils.ProviderMeta{Frontegg: &clients.FronteggClient{Endpoint: server.URL, HTTPClient: server.Client()}, FronteggRoles: map[string]string{"Member": "member", "Organization Analytics": "new"}}
+	meta := &utils.ProviderMeta{Frontegg: &clients.FronteggClient{Endpoint: server.URL, HTTPClient: server.Client()}, FronteggRoles: map[string][]string{"Member": {"member"}, "Organization Analytics": {"new"}}}
 	d := schema.TestResourceDataRaw(t, ScimGroupRoleSchema, map[string]interface{}{"group_id": "group", "roles": []interface{}{"Member", "Organization Analytics"}})
 	d.SetId("group")
 	require.Empty(t, scimGroupRoleUpdate(context.Background(), d, meta))

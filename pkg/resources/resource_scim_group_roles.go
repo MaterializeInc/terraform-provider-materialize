@@ -189,11 +189,11 @@ func getRoleIDsByName(ctx context.Context, providerMeta *utils.ProviderMeta, rol
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
-		if roleID, ok := roleMap[roleName]; ok {
-			roleIDs = append(roleIDs, roleID)
-		} else {
-			return nil, fmt.Errorf("role not found: %s", roleName)
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return nil, err
 		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
 	return roleIDs, nil
