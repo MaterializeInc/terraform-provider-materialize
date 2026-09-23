@@ -87,7 +87,7 @@ func TestOrganizationRoleLifecycle(t *testing.T) {
 			}
 			roles, err := meta.GetFronteggRoles(ctx)
 			require.NoError(t, err)
-			require.Equal(t, "custom", roles["analytics_reader"])
+			require.Equal(t, []string{"custom"}, roles["analytics_reader"])
 			d = schema.TestResourceDataRaw(t, OrganizationRole().Schema, map[string]interface{}{
 				"name": "analytics_reader", "description": "Updated description", "permission_ids": []interface{}{"read-profile"},
 			})
