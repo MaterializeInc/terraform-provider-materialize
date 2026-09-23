@@ -3,12 +3,12 @@
 page_title: "materialize_scim_group_roles Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  Manages the complete set of organization roles assigned to a SCIM group. Use Admin and Member for the built-in roles, and exact names for custom roles. Keep Member in the set when group members need its organization permissions.
+  Manages the complete set of organization roles assigned to a SCIM group. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin, specified here as Admin) and Organization Member (key MaterializePlatform, specified here as Member). You can assign these roles to groups, but cannot edit or delete the roles themselves. Use exact names for custom roles. Keep Member in the set when group members need its organization permissions.
 ---
 
 # materialize_scim_group_roles (Resource)
 
-Manages the complete set of organization roles assigned to a SCIM group. Use Admin and Member for the built-in roles, and exact names for custom roles. Keep Member in the set when group members need its organization permissions.
+Manages the complete set of organization roles assigned to a SCIM group. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin, specified here as Admin) and Organization Member (key MaterializePlatform, specified here as Member). You can assign these roles to groups, but cannot edit or delete the roles themselves. Use exact names for custom roles. Keep Member in the set when group members need its organization permissions.
 
 ## Example Usage
 
@@ -27,6 +27,7 @@ locals {
 
 resource "materialize_scim_group_roles" "reader" {
   group_id = try(one(local.analytics_groups).id, "")
+  # Member assigns the reserved Organization Member [MaterializePlatform] role.
   roles    = ["Member", "analytics_reader"]
 
   lifecycle {
