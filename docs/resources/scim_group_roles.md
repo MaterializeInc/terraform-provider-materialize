@@ -28,7 +28,7 @@ locals {
 resource "materialize_scim_group_roles" "reader" {
   group_id = try(one(local.analytics_groups).id, "")
   # Member assigns the reserved Organization Member [MaterializePlatform] role.
-  roles    = ["Member", "analytics_reader"]
+  roles = ["Member", "analytics_reader"]
 
   lifecycle {
     precondition {

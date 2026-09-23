@@ -67,11 +67,11 @@ func ssoDefaultRolesCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
-		if roleID, ok := roleMap[roleName]; ok {
-			roleIDs = append(roleIDs, roleID)
-		} else {
-			return diag.Errorf("role not found: %s", roleName)
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
 	err = frontegg.SetSSODefaultRoles(ctx, client, ssoConfigID, roleIDs)
@@ -114,11 +114,8 @@ func ssoDefaultRolesRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	var roleNames []string
 	for _, roleID := range roleIDs {
-		for name, id := range roleMap {
-			if id == roleID {
-				roleNames = append(roleNames, name)
-				break
-			}
+		if name, ok := frontegg.RoleNameByID(roleMap, roleID); ok {
+			roleNames = append(roleNames, name)
 		}
 	}
 

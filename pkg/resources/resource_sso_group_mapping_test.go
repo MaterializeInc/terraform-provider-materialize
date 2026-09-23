@@ -23,9 +23,9 @@ func TestSSORoleGroupMappingCreate(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 
@@ -63,9 +63,9 @@ func TestSSORoleGroupMappingRead(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 
@@ -100,9 +100,9 @@ func TestSSORoleGroupMappingUpdate(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 

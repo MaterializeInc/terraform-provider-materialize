@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 )
@@ -51,16 +52,20 @@ func RoleName(name string) string {
 func FetchFronteggRoles(ctx context.Context, client *clients.FronteggClient) ([]FronteggRole, error) {
 	var roles []FronteggRole
 	for page := 0; ; page++ {
+		// Frontegg defines _offset as a page number, not a record offset.
 		endpoint := fmt.Sprintf("%s%s?_sortBy=key&_order=ASC&_limit=2000&_offset=%d", client.Endpoint, SSORolesApiPathV2, page)
 		resp, err := doRequest(ctx, client, "GET", endpoint, nil)
 		if err != nil {
 			return nil, err
 		}
 		var result FronteggRolesResponse
-		err = json.NewDecoder(resp.Body).Decode(&result)
-		resp.Body.Close()
-		if err != nil {
-			return nil, fmt.Errorf("error decoding roles: %w", err)
+		decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+		closeErr := resp.Body.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("error decoding roles: %w", decodeErr)
+		}
+		if closeErr != nil {
+			return nil, fmt.Errorf("error closing roles response: %w", closeErr)
 		}
 		roles = append(roles, result.Items...)
 		if page+1 >= result.Metadata.TotalPages {
@@ -70,20 +75,43 @@ func FetchFronteggRoles(ctx context.Context, client *clients.FronteggClient) ([]
 }
 
 // ListFronteggRoles includes tenant roles as well as built-in organization roles.
-func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map[string]string, error) {
+// Multiple IDs for one name are kept so only lookups of that name fail.
+func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map[string][]string, error) {
 	roles, err := FetchFronteggRoles(ctx, client)
 	if err != nil {
 		return nil, err
 	}
-	roleMap := make(map[string]string)
+	roleMap := make(map[string][]string)
 	for _, role := range roles {
 		name := RoleName(role.Name)
-		if id, ok := roleMap[name]; ok && id != role.ID {
-			return nil, fmt.Errorf("ambiguous organization role name: %s", name)
+		if !slices.Contains(roleMap[name], role.ID) {
+			roleMap[name] = append(roleMap[name], role.ID)
 		}
-		roleMap[name] = role.ID
 	}
 	return roleMap, nil
+}
+
+func RoleIDByName(roles map[string][]string, name string) (string, error) {
+	ids := roles[name]
+	switch len(ids) {
+	case 0:
+		return "", fmt.Errorf("role not found: %s", name)
+	case 1:
+		return ids[0], nil
+	default:
+		return "", fmt.Errorf("ambiguous organization role name: %s", name)
+	}
+}
+
+func RoleNameByID(roles map[string][]string, id string) (string, bool) {
+	for name, ids := range roles {
+		for _, roleID := range ids {
+			if roleID == id {
+				return name, true
+			}
+		}
+	}
+	return "", false
 }
 
 // SetSSODefaultRoles sets the default roles for an SSO configuration.

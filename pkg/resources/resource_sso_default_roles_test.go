@@ -24,9 +24,9 @@ func TestSSODefaultRolesCreateOrUpdate(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 
@@ -71,9 +71,9 @@ func TestSSODefaultRolesRead(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 
@@ -114,9 +114,9 @@ func TestSSODefaultRolesDelete(t *testing.T) {
 
 		providerMeta := &utils.ProviderMeta{
 			Frontegg: client,
-			FronteggRoles: map[string]string{
-				"Admin":  "1",
-				"Member": "2",
+			FronteggRoles: map[string][]string{
+				"Admin":  {"1"},
+				"Member": {"2"},
 			},
 		}
 

@@ -395,7 +395,7 @@ func configureSaaS(ctx context.Context, d *schema.ResourceData, version string) 
 		CloudAPI:       cloudAPIClient,
 		DefaultRegion:  clients.Region(defaultRegion),
 		RegionsEnabled: regionsEnabled,
-		FronteggRolesFetcher: func(ctx context.Context) (map[string]string, error) {
+		FronteggRolesFetcher: func(ctx context.Context) (map[string][]string, error) {
 			return frontegg.ListFronteggRoles(ctx, fronteggClient)
 		},
 	}

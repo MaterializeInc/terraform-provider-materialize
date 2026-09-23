@@ -76,11 +76,11 @@ func ssoGroupMappingCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
-		if roleID, ok := roleMap[roleName]; ok {
-			roleIDs = append(roleIDs, roleID)
-		} else {
-			return diag.Errorf("role not found: %s", roleName)
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
 	groupMapping, err := frontegg.CreateSSOGroupMapping(ctx, client, ssoConfigID, group, roleIDs)
@@ -125,11 +125,8 @@ func ssoGroupMappingRead(ctx context.Context, d *schema.ResourceData, meta inter
 			// Convert role IDs to role names
 			var roleNames []string
 			for _, roleID := range group.RoleIds {
-				for name, id := range roleMap {
-					if id == roleID {
-						roleNames = append(roleNames, name)
-						break
-					}
+				if name, ok := frontegg.RoleNameByID(roleMap, roleID); ok {
+					roleNames = append(roleNames, name)
 				}
 			}
 
@@ -164,11 +161,11 @@ func ssoGroupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
-		if roleID, ok := roleMap[roleName]; ok {
-			roleIDs = append(roleIDs, roleID)
-		} else {
-			return diag.Errorf("role not found: %s", roleName)
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
 	_, err = frontegg.UpdateSSOGroupMapping(ctx, client, ssoConfigID, groupID, group, roleIDs)
