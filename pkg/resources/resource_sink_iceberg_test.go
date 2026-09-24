@@ -237,3 +237,45 @@ func TestResourceSinkIcebergKeyModePlanCheck(t *testing.T) {
 	r.ErrorContains(plan(map[string]interface{}{"mode": "append", "key": []interface{}{"id"}}), "key is not allowed")
 	r.ErrorContains(plan(map[string]interface{}{"mode": "append", "key_not_enforced": true}), "key_not_enforced has no effect")
 }
+
+func TestResourceSinkIcebergRemovingAwsConnectionDoesNotReplace(t *testing.T) {
+	r := require.New(t)
+	res := SinkIceberg()
+	cfg := map[string]interface{}{
+		"name":                       "iceberg_sink",
+		"from":                       []interface{}{map[string]interface{}{"name": "my_view"}},
+		"iceberg_catalog_connection": []interface{}{map[string]interface{}{"name": "iceberg_catalog"}},
+		"namespace":                  "ns",
+		"table":                      "tbl",
+		"key":                        []interface{}{"id"},
+		"commit_interval":            "10s",
+	}
+	withAws := map[string]interface{}{}
+	for k, v := range cfg {
+		withAws[k] = v
+	}
+	withAws["aws_connection"] = []interface{}{map[string]interface{}{"name": "aws_conn"}}
+
+	// state as written by an older provider: the block is set
+	state := &terraform.InstanceState{ID: "u1", Attributes: map[string]string{
+		"name": "iceberg_sink", "schema_name": "public", "database_name": "materialize",
+		"from.#": "1", "from.0.name": "my_view", "from.0.schema_name": "public", "from.0.database_name": "materialize",
+		"iceberg_catalog_connection.#": "1", "iceberg_catalog_connection.0.name": "iceberg_catalog", "iceberg_catalog_connection.0.schema_name": "public", "iceberg_catalog_connection.0.database_name": "materialize",
+		"aws_connection.#": "1", "aws_connection.0.name": "aws_conn", "aws_connection.0.schema_name": "public", "aws_connection.0.database_name": "materialize",
+		"namespace": "ns", "table": "tbl", "key.#": "1", "key.0": "id", "key_not_enforced": "false", "mode": "upsert", "commit_interval": "10s",
+	}}
+
+	// dropping the block from the configuration is a no-op
+	diff, err := res.Diff(context.TODO(), state, terraform.NewResourceConfigRaw(cfg), nil)
+	r.NoError(err)
+	r.True(diff == nil || diff.Empty(), "removing aws_connection must not produce a diff, got %v", diff)
+
+	// adding the block where there was none is still a real change
+	delete(state.Attributes, "aws_connection.#")
+	delete(state.Attributes, "aws_connection.0.name")
+	delete(state.Attributes, "aws_connection.0.schema_name")
+	delete(state.Attributes, "aws_connection.0.database_name")
+	diff, err = res.Diff(context.TODO(), state, terraform.NewResourceConfigRaw(withAws), nil)
+	r.NoError(err)
+	r.False(diff == nil || diff.Empty(), "adding aws_connection should still show up in the plan")
+}
