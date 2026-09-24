@@ -272,6 +272,57 @@ func TestScanClusterAutoScalingStrategyQueryError(t *testing.T) {
 	})
 }
 
+func TestScanClusterPendingReconfigurationById(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`WHERE cluster_id = \$1 AND status = 'in-progress'`).
+			WithArgs("u1").
+			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}).AddRow("small", 2))
+
+		p, inFlight, err := ScanClusterPendingReconfiguration(db, "u1", false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !inFlight || p.Size.String != "small" || p.ReplicationFactor.Int64 != 2 {
+			t.Fatalf("unexpected result: inFlight=%v size=%q rf=%d", inFlight, p.Size.String, p.ReplicationFactor.Int64)
+		}
+	})
+}
+
+// Name-based cluster ids resolve the cluster inside the same query, so the
+// lookup and the reconfiguration row come from one snapshot.
+func TestScanClusterPendingReconfigurationByName(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`WHERE cluster_id = \(SELECT id FROM mz_clusters WHERE name = \$1\) AND status = 'in-progress'`).
+			WithArgs("cluster").
+			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}).AddRow("small", 2))
+
+		_, inFlight, err := ScanClusterPendingReconfiguration(db, "cluster", true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !inFlight {
+			t.Fatal("expected the in-flight reconfiguration to be reported")
+		}
+	})
+}
+
+// A finalized or otherwise settled row is not a pending reconfiguration.
+func TestScanClusterPendingReconfigurationNoneInFlight(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`AND status = 'in-progress'`).
+			WithArgs("u1").
+			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}))
+
+		_, inFlight, err := ScanClusterPendingReconfiguration(db, "u1", false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if inFlight {
+			t.Fatal("expected no in-flight reconfiguration")
+		}
+	})
+}
+
 func TestScanClusterPendingReconfigurationMissingView(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
