@@ -10,7 +10,7 @@ resource "materialize_organization_role" "reader" {
 locals {
   analytics_groups = [
     for group in data.materialize_scim_groups.all.groups : group
-    if group.name == "analytics-team" && group.managed_by == "scim"
+    if group.name == "analytics-team" && startswith(group.managed_by, "scim")
   ]
 }
 
