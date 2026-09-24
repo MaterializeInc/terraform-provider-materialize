@@ -47,3 +47,45 @@ func TestConnectionIcebergCatalogCreateWithValidation(t *testing.T) {
 		}
 	})
 }
+
+func TestConnectionIcebergCatalogCreateRest(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 'rest', URL = 'https://dbc.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest', WAREHOUSE = 'main', CREDENTIAL = SECRET "database"."schema"."databricks_oauth", OAUTH2 SERVER URL = 'https://dbc.cloud.databricks.com/oidc/v1/token', SCOPE = 'all-apis', ACCESS DELEGATION = 'vended-credentials'\) WITH \(VALIDATE = false\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "iceberg_conn", SchemaName: "schema", DatabaseName: "database"}
+		b := NewConnectionIcebergCatalogBuilder(db, o)
+		b.CatalogType("rest")
+		b.Url("https://dbc.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest")
+		b.Warehouse("main")
+		b.Credential(ValueSecretStruct{Secret: IdentifierSchemaStruct{Name: "databricks_oauth", SchemaName: "schema", DatabaseName: "database"}})
+		b.Oauth2ServerUrl("https://dbc.cloud.databricks.com/oidc/v1/token")
+		b.Scope("all-apis")
+		b.AccessDelegation("vended-credentials")
+		b.Validate(false)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestConnectionIcebergCatalogCreateRestTextCredential(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 'rest', URL = 'https://catalog.example.com/iceberg', CREDENTIAL = 'client:secret'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "iceberg_conn", SchemaName: "schema", DatabaseName: "database"}
+		b := NewConnectionIcebergCatalogBuilder(db, o)
+		b.CatalogType("rest")
+		b.Url("https://catalog.example.com/iceberg")
+		b.Credential(ValueSecretStruct{Text: "client:secret"})
+		b.Validate(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

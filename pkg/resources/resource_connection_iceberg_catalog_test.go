@@ -48,6 +48,46 @@ func TestResourceConnectionIcebergCatalogCreate(t *testing.T) {
 	})
 }
 
+func TestResourceConnectionIcebergCatalogCreateRest(t *testing.T) {
+	r := require.New(t)
+	in := map[string]interface{}{
+		"name":          "iceberg_conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"catalog_type":  "rest",
+		"url":           "https://dbc.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest",
+		"warehouse":     "main",
+		"credential": []interface{}{map[string]interface{}{
+			"secret": []interface{}{map[string]interface{}{"name": "databricks_oauth", "schema_name": "public", "database_name": "materialize"}},
+		}},
+		"oauth2_server_url": "https://dbc.cloud.databricks.com/oidc/v1/token",
+		"scope":             "all-apis",
+		"access_delegation": "vended-credentials",
+		"validate":          false,
+	}
+	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(
+			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 'rest', URL = 'https://dbc.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest', WAREHOUSE = 'main', CREDENTIAL = SECRET "materialize"."public"."databricks_oauth", OAUTH2 SERVER URL = 'https://dbc.cloud.databricks.com/oidc/v1/token', SCOPE = 'all-apis', ACCESS DELEGATION = 'vended-credentials'\) WITH \(VALIDATE = false\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_connections.name = 'iceberg_conn' AND mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
+		testhelpers.MockConnectionScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_connections.id = 'u1'`
+		testhelpers.MockConnectionScan(mock, pp)
+
+		if err := connectionIcebergCatalogCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestResourceConnectionIcebergCatalogRead(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog)

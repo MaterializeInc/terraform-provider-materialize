@@ -99,3 +99,25 @@ func TestSinkIcebergCreateMinimal(t *testing.T) {
 		}
 	})
 }
+
+func TestSinkIcebergCreateAppend(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."iceberg_sink" IN CLUSTER "my_cluster" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'my_namespace', TABLE = 'my_table'\) MODE APPEND WITH \(COMMIT INTERVAL = '10s'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "iceberg_sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkIcebergBuilder(db, o)
+		b.ClusterName("my_cluster")
+		b.From(IdentifierSchemaStruct{Name: "my_view", SchemaName: "schema", DatabaseName: "database"})
+		b.IcebergCatalogConnection(IdentifierSchemaStruct{Name: "iceberg_catalog", SchemaName: "schema", DatabaseName: "database"})
+		b.Namespace("my_namespace")
+		b.Table("my_table")
+		b.Mode("append")
+		b.CommitInterval("10s")
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

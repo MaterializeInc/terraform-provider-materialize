@@ -33,15 +33,33 @@ resource "materialize_sink_iceberg" "example" {
   namespace = "my_namespace"
   table     = "my_table"
 
-  aws_connection {
-    name          = "aws_connection"
+  key              = ["id"]
+  key_not_enforced = true
+  commit_interval  = "10s"
+}
+
+# Append every change as a row instead of keeping rows current by key. Takes no
+# key. Databricks Unity Catalog tables only accept this mode.
+resource "materialize_sink_iceberg" "append" {
+  name         = "iceberg_sink_append"
+  cluster_name = "quickstart"
+
+  from {
+    name          = "my_materialized_view"
     database_name = "materialize"
     schema_name   = "public"
   }
 
-  key              = ["id"]
-  key_not_enforced = true
-  commit_interval  = "10s"
+  iceberg_catalog_connection {
+    name          = "databricks_catalog_connection"
+    database_name = "materialize"
+    schema_name   = "public"
+  }
+
+  namespace       = "my_schema"
+  table           = "my_table"
+  mode            = "append"
+  commit_interval = "1m"
 }
 ```
 
@@ -50,21 +68,22 @@ resource "materialize_sink_iceberg" "example" {
 
 ### Required
 
-- `aws_connection` (Block List, Min: 1, Max: 1) The AWS connection for object storage access. (see [below for nested schema](#nestedblock--aws_connection))
 - `commit_interval` (String) How frequently to commit snapshots to Iceberg (e.g., '10s', '1m'). Required for Iceberg sinks.
 - `from` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--from))
 - `iceberg_catalog_connection` (Block List, Min: 1, Max: 1) The name of the Iceberg catalog connection to use. (see [below for nested schema](#nestedblock--iceberg_catalog_connection))
-- `key` (List of String) The columns that uniquely identify rows. Required for Iceberg sinks.
 - `name` (String) The identifier for the sink.
 - `namespace` (String) The Iceberg namespace (database) containing the table.
 - `table` (String) The name of the Iceberg table to write to. If the table doesn't exist, Materialize creates it with a schema matching the source.
 
 ### Optional
 
+- `aws_connection` (Block List, Max: 1) The AWS connection for object storage access. No longer needed: the sink inherits storage credentials from the Iceberg catalog connection. Kept for sinks created before that change. (see [below for nested schema](#nestedblock--aws_connection))
 - `cluster_name` (String) The cluster to maintain this sink.
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the sink database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `key` (List of String) The columns that uniquely identify rows. Required when `mode` is `upsert` and not allowed when `mode` is `append`.
 - `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique.
+- `mode` (String) How changes are written to the Iceberg table. `upsert` keeps one row per `key` and writes delete files for updates and deletes. `append` writes every change as a new row with `_mz_diff` and `_mz_timestamp` columns and takes no `key`; Databricks Unity Catalog tables only accept `append`.
 - `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the sink schema in Materialize. Defaults to `public`.
@@ -74,19 +93,6 @@ resource "materialize_sink_iceberg" "example" {
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the sink.
 - `size` (String) The size of the cluster maintaining this sink.
-
-<a id="nestedblock--aws_connection"></a>
-### Nested Schema for `aws_connection`
-
-Required:
-
-- `name` (String) The aws_connection name.
-
-Optional:
-
-- `database_name` (String) The aws_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
-- `schema_name` (String) The aws_connection schema name. Defaults to `public`.
-
 
 <a id="nestedblock--from"></a>
 ### Nested Schema for `from`
@@ -112,3 +118,16 @@ Optional:
 
 - `database_name` (String) The iceberg_catalog_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `schema_name` (String) The iceberg_catalog_connection schema name. Defaults to `public`.
+
+
+<a id="nestedblock--aws_connection"></a>
+### Nested Schema for `aws_connection`
+
+Required:
+
+- `name` (String) The aws_connection name.
+
+Optional:
+
+- `database_name` (String) The aws_connection database name. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `schema_name` (String) The aws_connection schema name. Defaults to `public`.

@@ -103,6 +103,33 @@ func TestAccConnectionIcebergCatalog_disappears(t *testing.T) {
 	})
 }
 
+func TestAccConnectionIcebergCatalog_rest(t *testing.T) {
+	resourceName := "materialize_connection_iceberg_catalog.rest"
+	connectionName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckConnectionIcebergCatalogDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConnectionIcebergCatalogRestResource(connectionName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionIcebergCatalogExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", connectionName),
+					resource.TestCheckResourceAttr(resourceName, "catalog_type", "rest"),
+					resource.TestCheckResourceAttr(resourceName, "warehouse", "main"),
+					resource.TestCheckResourceAttr(resourceName, "oauth2_server_url", "https://example.invalid/oidc/v1/token"),
+					resource.TestCheckResourceAttr(resourceName, "scope", "all-apis"),
+					resource.TestCheckResourceAttr(resourceName, "access_delegation", "vended-credentials"),
+					resource.TestCheckResourceAttr(resourceName, "credential.0.secret.0.name", connectionName+"_oauth"),
+					resource.TestCheckNoResourceAttr(resourceName, "aws_connection.0.name"),
+				),
+			},
+		},
+	})
+}
+
 func testAccConnectionIcebergCatalogResource(name, catalogType, url, warehouse string) string {
 	return fmt.Sprintf(`
 resource "materialize_secret" "aws_secret_access_key" {
@@ -214,4 +241,33 @@ func testAccCheckConnectionIcebergCatalogDestroyed(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+// A REST catalog needs no AWS connection. validate = false keeps Materialize
+// from contacting the catalog or the token endpoint, neither of which exists.
+func testAccConnectionIcebergCatalogRestResource(name string) string {
+	return fmt.Sprintf(`
+resource "materialize_secret" "oauth" {
+  name  = "%[1]s_oauth"
+  value = "client_id:client_secret"
+}
+
+resource "materialize_connection_iceberg_catalog" "rest" {
+  name              = "%[1]s"
+  catalog_type      = "rest"
+  url               = "https://example.invalid/api/2.1/unity-catalog/iceberg-rest"
+  warehouse         = "main"
+  oauth2_server_url = "https://example.invalid/oidc/v1/token"
+  scope             = "all-apis"
+  access_delegation = "vended-credentials"
+  credential {
+    secret {
+      name          = materialize_secret.oauth.name
+      database_name = materialize_secret.oauth.database_name
+      schema_name   = materialize_secret.oauth.schema_name
+    }
+  }
+  validate = false
+}
+`, name)
 }
