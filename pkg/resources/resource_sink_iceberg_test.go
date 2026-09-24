@@ -127,6 +127,66 @@ func TestResourceSinkIcebergCreateWithKeyNotEnforced(t *testing.T) {
 	})
 }
 
+func TestResourceSinkIcebergCreateAppend(t *testing.T) {
+	r := require.New(t)
+	in := map[string]interface{}{
+		"name":          "iceberg_sink",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "my_cluster",
+		"from": []interface{}{
+			map[string]interface{}{"name": "my_view", "schema_name": "public", "database_name": "database"},
+		},
+		"iceberg_catalog_connection": []interface{}{
+			map[string]interface{}{"name": "iceberg_catalog", "schema_name": "public", "database_name": "materialize"},
+		},
+		"namespace":       "my_namespace",
+		"table":           "my_table",
+		"mode":            "append",
+		"commit_interval": "1m",
+	}
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create: no KEY and no USING AWS CONNECTION
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."iceberg_sink" IN CLUSTER "my_cluster" FROM "database"."public"."my_view" INTO ICEBERG CATALOG CONNECTION "materialize"."public"."iceberg_catalog" \(NAMESPACE = 'my_namespace', TABLE = 'my_table'\) MODE APPEND WITH \(COMMIT INTERVAL = '1m'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_sinks.name = 'iceberg_sink'`
+		testhelpers.MockSinkIcebergScan(mock, ip, "append")
+
+		// Query Params
+		pp := `WHERE mz_sinks.id = 'u1'`
+		testhelpers.MockSinkIcebergScan(mock, pp, "append")
+
+		if err := sinkIcebergCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+		r.Equal("append", d.Get("mode"))
+	})
+}
+
+func TestResourceSinkIcebergReadSetsModeFromEnvelope(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
+	r.NotNil(d)
+	d.SetId("u1")
+	r.Equal("upsert", d.Get("mode"), "schema default")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		pp := `WHERE mz_sinks.id = 'u1'`
+		testhelpers.MockSinkIcebergScan(mock, pp, "append")
+
+		if err := sinkIcebergRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+		r.Equal("append", d.Get("mode"))
+	})
+}
+
 func TestResourceSinkIcebergRead(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
