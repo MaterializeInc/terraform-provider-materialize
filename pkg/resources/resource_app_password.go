@@ -136,11 +136,11 @@ func appPasswordCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 		var roleIDs []string
 		for _, role := range roles {
-			if roleID, ok := roleMap[role]; ok {
-				roleIDs = append(roleIDs, roleID)
-			} else {
-				return diag.Errorf("role not found: %s", role)
+			roleID, err := frontegg.RoleIDByName(roleMap, role)
+			if err != nil {
+				return diag.FromErr(err)
 			}
+			roleIDs = append(roleIDs, roleID)
 		}
 
 		request := frontegg.TenantApiTokenRequest{
@@ -215,11 +215,6 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 			return diag.FromErr(err)
 		}
 
-		roleReverseMap := make(map[string]string)
-		for roleName, roleId := range roleMap {
-			roleReverseMap[roleId] = roleName
-		}
-
 		tokens, err := frontegg.ListTenantApiTokens(ctx, client)
 		if err != nil {
 			return diag.FromErr(err)
@@ -233,7 +228,7 @@ func appPasswordRead(ctx context.Context, d *schema.ResourceData, meta interface
 
 		var roles []string
 		for _, roleID := range token.RoleIDs {
-			role, ok := roleReverseMap[roleID]
+			role, ok := frontegg.RoleNameByID(roleMap, roleID)
 			if !ok {
 				return diag.Errorf("unknown role ID: %s", roleID)
 			}

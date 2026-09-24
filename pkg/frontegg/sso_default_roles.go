@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 )
@@ -28,34 +29,89 @@ type FronteggRolesResponse struct {
 }
 
 type FronteggRole struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Key         string   `json:"key"`
+	Description string   `json:"description"`
+	TenantID    string   `json:"tenantId"`
+	Permissions []string `json:"permissions"`
 }
 
-// ListRoles fetches roles from the Frontegg API and returns a map of role names to their IDs.
-func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map[string]string, error) {
-	endpoint := fmt.Sprintf("%s%s", client.Endpoint, SSORolesApiPathV2)
-	resp, err := doRequest(ctx, client, "GET", endpoint, nil)
+// RoleName preserves custom names and the provider's built-in role aliases.
+func RoleName(name string) string {
+	switch name {
+	case "Organization Admin":
+		return "Admin"
+	case "Organization Member":
+		return "Member"
+	default:
+		return name
+	}
+}
+
+func FetchFronteggRoles(ctx context.Context, client *clients.FronteggClient) ([]FronteggRole, error) {
+	var roles []FronteggRole
+	for page := 0; ; page++ {
+		// Frontegg defines _offset as a page number, not a record offset.
+		endpoint := fmt.Sprintf("%s%s?_sortBy=key&_order=ASC&_limit=2000&_offset=%d", client.Endpoint, SSORolesApiPathV2, page)
+		resp, err := doRequest(ctx, client, "GET", endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		var result FronteggRolesResponse
+		decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+		closeErr := resp.Body.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("error decoding roles: %w", decodeErr)
+		}
+		if closeErr != nil {
+			return nil, fmt.Errorf("error closing roles response: %w", closeErr)
+		}
+		roles = append(roles, result.Items...)
+		if page+1 >= result.Metadata.TotalPages {
+			return roles, nil
+		}
+	}
+}
+
+// ListFronteggRoles includes tenant roles as well as built-in organization roles.
+// Multiple IDs for one name are kept so only lookups of that name fail.
+func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map[string][]string, error) {
+	roles, err := FetchFronteggRoles(ctx, client)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	var rolesResponse FronteggRolesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&rolesResponse); err != nil {
-		return nil, fmt.Errorf("error decoding response: %v", err)
-	}
-
-	roleMap := make(map[string]string)
-	for _, role := range rolesResponse.Items {
-		if role.Name == "Organization Admin" {
-			roleMap["Admin"] = role.ID
-		} else if role.Name == "Organization Member" {
-			roleMap["Member"] = role.ID
+	roleMap := make(map[string][]string)
+	for _, role := range roles {
+		name := RoleName(role.Name)
+		if !slices.Contains(roleMap[name], role.ID) {
+			roleMap[name] = append(roleMap[name], role.ID)
 		}
 	}
-
 	return roleMap, nil
+}
+
+func RoleIDByName(roles map[string][]string, name string) (string, error) {
+	ids := roles[name]
+	switch len(ids) {
+	case 0:
+		return "", fmt.Errorf("role not found: %s", name)
+	case 1:
+		return ids[0], nil
+	default:
+		return "", fmt.Errorf("ambiguous organization role name: %s", name)
+	}
+}
+
+func RoleNameByID(roles map[string][]string, id string) (string, bool) {
+	for name, ids := range roles {
+		for _, roleID := range ids {
+			if roleID == id {
+				return name, true
+			}
+		}
+	}
+	return "", false
 }
 
 // SetSSODefaultRoles sets the default roles for an SSO configuration.

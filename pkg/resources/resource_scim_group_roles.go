@@ -3,9 +3,8 @@ package resources
 import (
 	"context"
 	"fmt"
-	"log"
-	"strings"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -16,7 +15,8 @@ var ScimGroupRoleSchema = map[string]*schema.Schema{
 	"group_id": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: "The ID of the SCIM group.",
+		ForceNew:    true,
+		Description: "The ID of an existing SCIM group. Wait for your identity provider to provision the group before applying this resource.",
 	},
 	"roles": {
 		Type:        schema.TypeSet,
@@ -39,14 +39,12 @@ func SCIM2GroupRoles() *schema.Resource {
 
 		Schema: ScimGroupRoleSchema,
 
-		Description: "The materialize_scim_group_role resource allows managing roles within a SCIM group in Frontegg.",
+		Description: "Manages the complete set of organization roles assigned to a SCIM group. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin, specified here as Admin) and Organization Member (key MaterializePlatform, specified here as Member). You can assign these roles to groups, but cannot edit or delete the roles themselves. Use exact names for custom roles. Keep Member in the set when group members need its organization permissions.",
 	}
 }
 
 func scimGroupRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	groupID := d.Get("group_id").(string)
-	roleNames := expandStringSet(d.Get("roles").(*schema.Set))
-
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -57,20 +55,8 @@ func scimGroupRoleCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diags
 	}
 
-	client := providerMeta.Frontegg
-
-	roleIDs, err := getRoleIDsByName(ctx, providerMeta, roleNames)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
-	}
-
-	err = frontegg.AddRolesToGroup(ctx, client, groupID, roleIDs)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error adding roles to SCIM group: %s", err))
-	}
-
 	d.SetId(groupID)
-	return scimGroupRoleRead(ctx, d, meta)
+	return scimGroupRoleUpdate(ctx, d, meta)
 }
 
 func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -87,13 +73,16 @@ func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
+		if clients.IsNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %w", err))
 	}
 
 	var roleNames []interface{}
 	for _, role := range group.Roles {
-		roleName := strings.TrimPrefix(role.Name, "Organization ")
+		roleName := frontegg.RoleName(role.Name)
 		roleNames = append(roleNames, roleName)
 	}
 
@@ -105,7 +94,7 @@ func scimGroupRoleRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 func scimGroupRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	groupID := d.Get("group_id").(string)
-	oldRoleNames := expandStringSet(d.Get("roles").(*schema.Set))
+	desiredRoleNames := expandStringSet(d.Get("roles").(*schema.Set))
 
 	providerMeta, err := utils.GetProviderMeta(meta)
 	if err != nil {
@@ -113,19 +102,27 @@ func scimGroupRoleUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
+	newRoleIDs, err := getRoleIDsByName(ctx, providerMeta, desiredRoleNames)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting role IDs: %w", err))
+	}
+
 	// Get the current roles assigned to the group
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
+		if clients.IsNotFoundError(err) {
+			d.SetId("")
+			return diag.Errorf("SCIM group %q does not exist; wait for the identity provider to provision it before applying the mapping", groupID)
+		}
+		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %w", err))
 	}
 
 	// Determine the role IDs that need to be removed
 	var removedRoleIDs []string
 	for _, role := range group.Roles {
 		roleRemoved := true
-		for _, roleName := range oldRoleNames {
-			if role.Name == roleName {
+		for _, roleName := range desiredRoleNames {
+			if frontegg.RoleName(role.Name) == roleName {
 				roleRemoved = false
 				break
 			}
@@ -145,13 +142,6 @@ func scimGroupRoleUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	// Add the new roles to the group
-	newRoleNames := expandStringSet(d.Get("roles").(*schema.Set))
-	newRoleIDs, err := getRoleIDsByName(ctx, providerMeta, newRoleNames)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
-	}
-
-	log.Printf("[DEBUG] Adding roles to SCIM group: %v", newRoleIDs)
 	// Check if newRoleIDs is empty
 	if len(newRoleIDs) > 0 {
 		// Add the new roles to the group only if newRoleIDs is not empty
@@ -174,14 +164,28 @@ func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
-	roleIDs, err := getRoleIDsByName(ctx, providerMeta, roleNames)
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
 	}
+	var roleIDs []string
+	for _, roleName := range roleNames {
+		// A role deleted before this mapping is already detached from the group.
+		if len(roleMap[roleName]) == 0 {
+			continue
+		}
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error getting role ID: %w", err))
+		}
+		roleIDs = append(roleIDs, roleID)
+	}
 
-	err = frontegg.RemoveRolesFromGroup(ctx, client, groupID, roleIDs)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error removing roles from SCIM group: %s", err))
+	if len(roleIDs) > 0 {
+		err = frontegg.RemoveRolesFromGroup(ctx, client, groupID, roleIDs)
+		if err != nil && !clients.IsNotFoundError(err) {
+			return diag.FromErr(fmt.Errorf("error removing roles from SCIM group: %s", err))
+		}
 	}
 
 	// Forcing deletion by setting an empty ID
@@ -199,11 +203,11 @@ func getRoleIDsByName(ctx context.Context, providerMeta *utils.ProviderMeta, rol
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
-		if roleID, ok := roleMap[roleName]; ok {
-			roleIDs = append(roleIDs, roleID)
-		} else {
-			return nil, fmt.Errorf("role not found: %s", roleName)
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return nil, err
 		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
 	return roleIDs, nil

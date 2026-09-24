@@ -119,9 +119,9 @@ func WithMockProviderMeta(t *testing.T, f func(*utils.ProviderMeta, sqlmock.Sqlm
 		DefaultRegion:  clients.AwsUsEast1,
 		Frontegg:       &clients.FronteggClient{},
 		CloudAPI:       nil,
-		FronteggRoles: map[string]string{
-			"Admin":  "1",
-			"Member": "2",
+		FronteggRoles: map[string][]string{
+			"Admin":  {"1"},
+			"Member": {"2"},
 		},
 	}
 

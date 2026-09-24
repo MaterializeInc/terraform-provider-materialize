@@ -47,14 +47,14 @@ type ProviderMeta struct {
 	// for use. This can be used to quickly check the availability in different regions.
 	RegionsEnabled map[clients.Region]bool
 
-	// FronteggRoles is a map that associates each Frontegg role with its corresponding ID.
-	// This is used to map role names to role IDs when creating/updating users.
+	// FronteggRoles maps each role name to its IDs. A name with multiple IDs is
+	// ambiguous and fails only when a resource selects that name.
 	// This field is lazily loaded - use GetFronteggRoles() to access it.
-	FronteggRoles map[string]string
+	FronteggRoles map[string][]string
 
 	// FronteggRolesFetcher is a function to fetch Frontegg roles on demand.
 	// This allows lazy loading of roles only when SSO resources need them.
-	FronteggRolesFetcher func(ctx context.Context) (map[string]string, error)
+	FronteggRolesFetcher func(ctx context.Context) (map[string][]string, error)
 
 	// fronteggRolesMu protects lazy loading of FronteggRoles
 	fronteggRolesMu sync.Mutex
@@ -72,8 +72,11 @@ func (p *ProviderMeta) IsSaaS() bool {
 // GetFronteggRoles lazily fetches and returns the Frontegg roles map.
 // This allows non-admin users to use the provider for resources that don't
 // require SSO/role management capabilities.
-func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string]string, error) {
-	// Fast path: if roles are already loaded, return them without locking
+func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string][]string, error) {
+	p.fronteggRolesMu.Lock()
+	defer p.fronteggRolesMu.Unlock()
+
+	// Cached maps are immutable once published.
 	if p.FronteggRoles != nil {
 		return p.FronteggRoles, nil
 	}
@@ -81,15 +84,6 @@ func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string]string,
 	// If no fetcher is configured, return an error
 	if p.FronteggRolesFetcher == nil {
 		return nil, fmt.Errorf("frontegg roles fetcher not configured")
-	}
-
-	// Slow path: acquire lock and double-check
-	p.fronteggRolesMu.Lock()
-	defer p.fronteggRolesMu.Unlock()
-
-	// Double-check after acquiring lock
-	if p.FronteggRoles != nil {
-		return p.FronteggRoles, nil
 	}
 
 	// Fetch roles - only cache on success to allow retries on transient failures

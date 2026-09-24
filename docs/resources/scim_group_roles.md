@@ -3,25 +3,39 @@
 page_title: "materialize_scim_group_roles Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The materialize_scim_group_role resource allows managing roles within a SCIM group in Frontegg.
+  Manages the complete set of organization roles assigned to a SCIM group. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin, specified here as Admin) and Organization Member (key MaterializePlatform, specified here as Member). You can assign these roles to groups, but cannot edit or delete the roles themselves. Use exact names for custom roles. Keep Member in the set when group members need its organization permissions.
 ---
 
 # materialize_scim_group_roles (Resource)
 
-The materialize_scim_group_role resource allows managing roles within a SCIM group in Frontegg.
+Manages the complete set of organization roles assigned to a SCIM group. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin, specified here as Admin) and Organization Member (key MaterializePlatform, specified here as Member). You can assign these roles to groups, but cannot edit or delete the roles themselves. Use exact names for custom roles. Keep Member in the set when group members need its organization permissions.
 
 ## Example Usage
 
 ```terraform
-# Create a SCIM group role
-resource "materialize_scim_group" "scim_group_example" {
-  name        = "scim_group_example"
-  description = "scim_group_example"
+# Configure SCIM provisioning first, then wait for the identity provider
+# to push the group before applying this mapping.
+data "materialize_scim_groups" "all" {}
+
+# Create the custom organization role analytics_reader before this mapping.
+locals {
+  analytics_groups = [
+    for group in data.materialize_scim_groups.all.groups : group
+    if group.name == "analytics-team" && group.managed_by == "scim"
+  ]
 }
 
-resource "materialize_scim_group_roles" "scim_group_roles_example" {
-  group_id = materialize_scim_group.scim_group_example.id
-  roles    = ["Admin", "Member"]
+resource "materialize_scim_group_roles" "reader" {
+  group_id = try(one(local.analytics_groups).id, "")
+  # Member assigns the reserved Organization Member [MaterializePlatform] role.
+  roles = ["Member", "analytics_reader"]
+
+  lifecycle {
+    precondition {
+      condition     = length(local.analytics_groups) == 1
+      error_message = "Wait for exactly one SCIM group named analytics-team to be provisioned, then rerun Terraform."
+    }
+  }
 }
 ```
 
@@ -30,7 +44,7 @@ resource "materialize_scim_group_roles" "scim_group_roles_example" {
 
 ### Required
 
-- `group_id` (String) The ID of the SCIM group.
+- `group_id` (String) The ID of an existing SCIM group. Wait for your identity provider to provision the group before applying this resource.
 
 ### Optional
 

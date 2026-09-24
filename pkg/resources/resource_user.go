@@ -93,12 +93,11 @@ func userCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	var roleIDs []string
 	for _, roleName := range roleNames {
-		if roleID, ok := roleMap[roleName]; ok {
-			roleIDs = append(roleIDs, roleID)
-		} else {
-			// Consider failing the process if the role is not found
-			return diag.Errorf("role not found: %s", roleName)
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if err != nil {
+			return diag.FromErr(err)
 		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
 	userRequest := frontegg.UserRequest{
@@ -187,11 +186,11 @@ func userUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 		var roleIDs []string
 		for _, roleName := range roleNames {
-			if roleID, ok := roleMap[roleName]; ok {
-				roleIDs = append(roleIDs, roleID)
-			} else {
-				return diag.Errorf("role not found: %s", roleName)
+			roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+			if err != nil {
+				return diag.FromErr(err)
 			}
+			roleIDs = append(roleIDs, roleID)
 		}
 
 		err = frontegg.UpdateUserRoles(ctx, client, userID, email, roleIDs)
