@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
