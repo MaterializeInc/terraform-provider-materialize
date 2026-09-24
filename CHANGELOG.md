@@ -5,14 +5,6 @@
 ### Bug Fixes
 
 * Fixed `materialize_cluster` occasionally reporting the old `size` and `replication_factor` right after an `ALTER CLUSTER`, which showed up as a non-empty plan straight after an apply. The read fetched `mz_clusters` before checking for an in-flight reconfiguration, so a reconfiguration that finalized between the two reads was missed. The in-flight check now comes first.
-* Fixed `materialize_scim_group` and `materialize_scim_group_users` failing to refresh or destroy once the group had been removed in Frontegg. A 404 on read now removes the resource from state instead of failing the plan, other errors no longer clear the id, and delete treats an already missing group as done.
-
-### Misc
-
-* Removed the MinIO fixture from the compose stack. MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.
-* Bumped `google.golang.org/grpc` to 1.83.2, which clears three advisories reachable from the provider: an xDS denial of service, an HTTP/2 heap exhaustion, and a server panic on missing authority headers.
-* Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
-* The connection string now percent-encodes spaces instead of writing them as `+`. The `options` parameter carries the transaction isolation setting, and a `+` there was read back literally, so the setting was dropped and reads could miss writes the provider had just made.
 
 ## 0.11.9 - 2026-09-24
 
