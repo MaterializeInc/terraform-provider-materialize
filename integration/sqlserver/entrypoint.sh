@@ -91,9 +91,11 @@ do
     fi
 done
 
-# The bootstrap creates the database and tables, enables CDC and seeds data. It
-# runs once and without -b: the seed INSERTs are not idempotent, and a single
-# failed statement must not abort the rest.
+# The bootstrap creates the database and tables, enables CDC and seeds data.
+# It runs without -b: restart: always re-runs this whole entrypoint, and on a
+# second pass sp_cdc_enable_table fails on already tracked tables (Msg 22926),
+# so -b would crash-loop the container. Readiness is gated by the healthcheck
+# and the CDC check below instead.
 echo "Running bootstrap script..."
 $SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -i /docker-entrypoint-initdb.d/sqlserver_bootstrap.sql -C -t 30
 
@@ -109,7 +111,9 @@ fi
 echo "Verifying CDC on the fixture tables..."
 for i in {1..30}
 do
-    tracked=$($SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM testdb.sys.tables WHERE is_tracked_by_cdc = 1;" 2>/dev/null | tr -dc '0-9')
+    # -r 1 sends server errors to stderr; sqlcmd prints them on stdout by
+    # default, and their digits would otherwise be read as the count.
+    tracked=$($SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -C -r 1 -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM testdb.sys.tables WHERE is_tracked_by_cdc = 1;" 2>/dev/null | grep -E '^[[:space:]]*[0-9]+[[:space:]]*$' | head -1 | tr -dc '0-9')
     if [ "${tracked:-0}" -ge 10 ]
     then
         echo "CDC is enabled on $tracked fixture tables"
