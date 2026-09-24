@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -343,6 +344,38 @@ func TestProviderMeta_GetFronteggRoles_RetryAfterError(t *testing.T) {
 	r.NoError(err)
 	r.Equal([]string{"role-1"}, roles["Admin"])
 	r.Equal(2, callCount) // Still 2, fetcher not called again after success
+}
+
+func TestProviderMeta_GetFronteggRoles_Concurrent(t *testing.T) {
+	const callers = 32
+	start := make(chan struct{})
+	results := make(chan map[string][]string, callers)
+	errs := make(chan error, callers)
+	var wg sync.WaitGroup
+	fetchCount := 0
+	providerMeta := &ProviderMeta{
+		FronteggRolesFetcher: func(context.Context) (map[string][]string, error) {
+			fetchCount++
+			return map[string][]string{"Member": {"member-id"}}, nil
+		},
+	}
+	for range callers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			roles, err := providerMeta.GetFronteggRoles(context.Background())
+			results <- roles
+			errs <- err
+		}()
+	}
+	close(start)
+	wg.Wait()
+	for range callers {
+		require.NoError(t, <-errs)
+		require.Equal(t, []string{"member-id"}, (<-results)["Member"])
+	}
+	require.Equal(t, 1, fetchCount)
 }
 
 func TestGetProviderMetaWrongType(t *testing.T) {

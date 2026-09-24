@@ -102,6 +102,47 @@ func TestScimGroupRoleResourceDelete(t *testing.T) {
 	})
 }
 
+func TestScimGroupRoleDeleteAfterRoleRemoved(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, ScimGroupRoleSchema, map[string]interface{}{
+		"group_id": "group", "roles": []interface{}{"deleted-role"},
+	})
+	d.SetId("group")
+	meta := &utils.ProviderMeta{
+		Frontegg:      &clients.FronteggClient{},
+		FronteggRoles: map[string][]string{},
+	}
+	require.Empty(t, scimGroupRoleDelete(context.Background(), d, meta))
+	require.Empty(t, d.Id())
+}
+
+func TestScimGroupRoleDeleteHandlesRemovalResponse(t *testing.T) {
+	for _, status := range []int{http.StatusOK, http.StatusNotFound, http.StatusInternalServerError} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				require.Equal(t, http.MethodDelete, r.Method)
+				w.WriteHeader(status)
+			}))
+			defer server.Close()
+			d := schema.TestResourceDataRaw(t, ScimGroupRoleSchema, map[string]interface{}{
+				"group_id": "group", "roles": []interface{}{"custom-role"},
+			})
+			d.SetId("group")
+			meta := &utils.ProviderMeta{
+				Frontegg:      &clients.FronteggClient{Endpoint: server.URL, HTTPClient: server.Client()},
+				FronteggRoles: map[string][]string{"custom-role": {"role-id"}},
+			}
+			diags := scimGroupRoleDelete(context.Background(), d, meta)
+			if status == http.StatusOK || status == http.StatusNotFound {
+				require.Empty(t, diags)
+				require.Empty(t, d.Id())
+			} else {
+				require.True(t, diags.HasError())
+				require.Equal(t, "group", d.Id())
+			}
+		})
+	}
+}
+
 func TestScimGroupRolesCustomNamesAndUpdate(t *testing.T) {
 	group := frontegg.ScimGroup{ID: "group", Roles: []frontegg.ScimRole{{ID: "member", Name: "Organization Member"}, {ID: "old", Name: "Organization Old"}}}
 	var removed, added []string

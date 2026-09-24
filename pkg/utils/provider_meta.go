@@ -73,7 +73,10 @@ func (p *ProviderMeta) IsSaaS() bool {
 // This allows non-admin users to use the provider for resources that don't
 // require SSO/role management capabilities.
 func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string][]string, error) {
-	// Fast path: if roles are already loaded, return them without locking
+	p.fronteggRolesMu.Lock()
+	defer p.fronteggRolesMu.Unlock()
+
+	// Cached maps are immutable once published.
 	if p.FronteggRoles != nil {
 		return p.FronteggRoles, nil
 	}
@@ -81,15 +84,6 @@ func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string][]strin
 	// If no fetcher is configured, return an error
 	if p.FronteggRolesFetcher == nil {
 		return nil, fmt.Errorf("frontegg roles fetcher not configured")
-	}
-
-	// Slow path: acquire lock and double-check
-	p.fronteggRolesMu.Lock()
-	defer p.fronteggRolesMu.Unlock()
-
-	// Double-check after acquiring lock
-	if p.FronteggRoles != nil {
-		return p.FronteggRoles, nil
 	}
 
 	// Fetch roles - only cache on success to allow retries on transient failures
