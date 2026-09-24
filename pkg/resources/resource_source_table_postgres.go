@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -50,19 +51,17 @@ var sourceTablePostgresSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"exclude_constraints": {
-		Description:   "Names of upstream `PRIMARY KEY`, `UNIQUE` or `NOT NULL` constraints to leave out of the table, so they can later be dropped in PostgreSQL without stalling the source. Names are case sensitive. Requires Materialize v26.42 or later.",
-		Type:          schema.TypeList,
-		Elem:          &schema.Schema{Type: schema.TypeString},
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"exclude_all_constraints"},
+		Description: "Names of upstream `PRIMARY KEY`, `UNIQUE` or `NOT NULL` constraints to leave out of the table, so they can later be dropped in PostgreSQL without stalling the source. Names are case sensitive. Requires Materialize v26.42 or later.",
+		Type:        schema.TypeList,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"exclude_all_constraints": {
-		Description:   "Leave every upstream constraint out of the table. Requires Materialize v26.42 or later.",
-		Type:          schema.TypeBool,
-		Optional:      true,
-		ForceNew:      true,
-		ConflictsWith: []string{"exclude_constraints"},
+		Description: "Leave every upstream constraint out of the table. Cannot be combined with `exclude_constraints`. Requires Materialize v26.42 or later.",
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
 	},
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
@@ -80,8 +79,23 @@ func SourceTablePostgres() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
+		CustomizeDiff: sourceTablePostgresValidateExcludeConstraints,
+
 		Schema: sourceTablePostgresSchema,
 	}
+}
+
+// Materialize rejects the combination as well, but only at apply time. A
+// ConflictsWith would also reject an explicit `exclude_all_constraints = false`
+// next to a list, which a module driving the flag from a variable would hit.
+func sourceTablePostgresValidateExcludeConstraints(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	if !d.NewValueKnown("exclude_all_constraints") || !d.NewValueKnown("exclude_constraints") {
+		return nil
+	}
+	if d.Get("exclude_all_constraints").(bool) && len(d.Get("exclude_constraints").([]interface{})) > 0 {
+		return fmt.Errorf("exclude_all_constraints cannot be combined with exclude_constraints")
+	}
+	return nil
 }
 
 func sourceTablePostgresCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
