@@ -372,30 +372,31 @@ type ClusterReconfigParams struct {
 	ReplicationFactor sql.NullInt64  `db:"replication_factor"`
 }
 
-// ScanClusterPendingReconfiguration returns the target of an in-flight graceful
-// resize, if one is in progress. As of Materialize v26.34, a bare
-// `ALTER CLUSTER ... SET (SIZE = ...)` resizes gracefully in the background and
-// returns immediately; until it commits, mz_clusters keeps reporting the old
-// configuration. Callers use the returned target so the read reflects the
-// intended end-state instead of perpetually diffing against the pre-resize
-// values. Version-safe: on older Materialize versions without the
-// reconfigurations view (where resizing was synchronous), it reports no
-// in-flight reconfiguration. Any other failure is returned to the caller.
-func ScanClusterPendingReconfiguration(conn *sqlx.DB, clusterId string) (ClusterReconfigParams, bool, error) {
+// ScanClusterPendingReconfiguration returns the target of a graceful
+// reconfiguration that is still in progress for the cluster identified by id
+// or, with byName, by name. Callers that also read mz_clusters must run this
+// first: the two reads are separate snapshots, and a reconfiguration that
+// finalizes between them would otherwise be missed by both, leaving the old
+// shape from mz_clusters as the result.
+func ScanClusterPendingReconfiguration(conn *sqlx.DB, identifier string, byName bool) (ClusterReconfigParams, bool, error) {
 	var p ClusterReconfigParams
+	predicate := `cluster_id = $1`
+	if byName {
+		predicate = `cluster_id = (SELECT id FROM mz_clusters WHERE name = $1)`
+	}
 	q := `
 		SELECT
 			target->>'size' AS size,
 			(target->>'replication_factor')::bigint AS replication_factor
 		FROM mz_internal.mz_cluster_reconfigurations
-		WHERE cluster_id = $1 AND status = 'in-progress'`
+		WHERE ` + predicate + ` AND status = 'in-progress'`
 
-	if err := conn.Get(&p, q, clusterId); err != nil {
+	if err := conn.Get(&p, q, identifier); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return p, false, nil
 		}
 		if isUndefinedObject(err) {
-			log.Printf("[DEBUG] reconfigurations view unavailable for cluster %s: %s", clusterId, err)
+			log.Printf("[DEBUG] reconfigurations view unavailable for cluster %s: %s", identifier, err)
 			return p, false, nil
 		}
 		return p, false, err
