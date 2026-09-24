@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -38,11 +39,11 @@ var connectionIcebergCatalogSchema = map[string]*schema.Schema{
 	},
 	"aws_connection": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "aws_connection",
-		Description: "The name of an AWS connection to use for authentication. Required for `s3tablesrest` catalogs.",
+		Description: "The name of an AWS connection to use for authentication. Required for `s3tablesrest` catalogs and not allowed for `rest` catalogs.",
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"credential": ValueSecretSchema("credential", "OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone", false, true),
+	"credential": ValueSecretSchema("credential", "OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Required for `rest` catalogs", false, true),
 	"oauth2_server_url": {
 		Description: "The token endpoint the `credential` is exchanged at. Defaults to the catalog's own `/v1/oauth/tokens` endpoint.",
 		Type:        schema.TypeString,
@@ -80,8 +81,40 @@ func ConnectionIcebergCatalog() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
+		CustomizeDiff: connectionIcebergCatalogValidateOptions,
+
 		Schema: connectionIcebergCatalogSchema,
 	}
+}
+
+// Materialize rejects these combinations as well, but only at apply time.
+// Values still unknown at plan time are left for Materialize to check.
+func connectionIcebergCatalogValidateOptions(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	for _, k := range []string{"catalog_type", "aws_connection", "credential", "access_delegation"} {
+		if !d.NewValueKnown(k) {
+			return nil
+		}
+	}
+	catalogType := d.Get("catalog_type").(string)
+	hasAws := len(d.Get("aws_connection").([]interface{})) > 0
+	hasCredential := len(d.Get("credential").([]interface{})) > 0
+	switch catalogType {
+	case "s3tablesrest":
+		if !hasAws {
+			return fmt.Errorf("aws_connection is required when catalog_type is %q", catalogType)
+		}
+		if d.Get("access_delegation").(string) != "" {
+			return fmt.Errorf("access_delegation is not supported when catalog_type is %q", catalogType)
+		}
+	case "rest":
+		if hasAws {
+			return fmt.Errorf("aws_connection is not supported when catalog_type is %q, use credential", catalogType)
+		}
+		if !hasCredential {
+			return fmt.Errorf("credential is required when catalog_type is %q", catalogType)
+		}
+	}
+	return nil
 }
 
 func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

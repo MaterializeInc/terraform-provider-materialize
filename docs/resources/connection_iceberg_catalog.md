@@ -99,9 +99,9 @@ resource "materialize_connection_iceberg_catalog" "databricks" {
 ### Optional
 
 - `access_delegation` (String) Ask the catalog to vend temporary, table-scoped storage credentials. The only accepted value is `vended-credentials`. Only valid with `rest` catalogs, and required by Databricks Unity Catalog.
-- `aws_connection` (Block List, Max: 1) The name of an AWS connection to use for authentication. Required for `s3tablesrest` catalogs. (see [below for nested schema](#nestedblock--aws_connection))
+- `aws_connection` (Block List, Max: 1) The name of an AWS connection to use for authentication. Required for `s3tablesrest` catalogs and not allowed for `rest` catalogs. (see [below for nested schema](#nestedblock--aws_connection))
 - `comment` (String) Comment on an object in the database.
-- `credential` (Block List, Max: 1) OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--credential))
+- `credential` (Block List, Max: 1) OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Required for `rest` catalogs. Can be supplied as either free text using `text` or reference to a secret object using `secret`. (see [below for nested schema](#nestedblock--credential))
 - `database_name` (String) The identifier for the connection database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `oauth2_server_url` (String) The token endpoint the `credential` is exchanged at. Defaults to the catalog's own `/v1/oauth/tokens` endpoint.
 - `ownership_role` (String) The ownership role of the object.
