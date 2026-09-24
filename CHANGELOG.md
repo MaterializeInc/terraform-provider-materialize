@@ -1,17 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.11.9 - 2026-09-24
+
+### Features
+
+* Added `materialize_organization_role` for managing custom, tenant-scoped organization roles in Materialize Cloud [#925](https://github.com/MaterializeInc/terraform-provider-materialize/pull/925). A role copies the permissions of a base role (`Member` by default) or takes an explicit `permission_ids` set, and supports update, import and deletion. The two built-in roles cannot be managed with it.
+* `materialize_scim_group_roles` now supports custom organization roles alongside `Admin` and `Member` [#924](https://github.com/MaterializeInc/terraform-provider-materialize/pull/924). The role lookup reads every page and keeps custom role names intact, the full role set is reconciled on create and update, changing `group_id` replaces the mapping, and a group that SCIM has not provisioned yet reports a clear error.
 
 ### Bug Fixes
 
-* Fixed `materialize_scim_group` and `materialize_scim_group_users` failing to refresh or destroy once the group had been removed in Frontegg. A 404 on read now removes the resource from state instead of failing the plan, other errors no longer clear the id, and delete treats an already missing group as done.
+* Fixed `materialize_scim_group`, `materialize_scim_group_users` and `materialize_scim_config` failing to refresh or destroy once the object had been removed in Frontegg [#929](https://github.com/MaterializeInc/terraform-provider-materialize/pull/929). A 404 on read now removes the resource from state instead of failing the plan, other errors no longer clear the id, and delete treats an already missing object as done.
 
 ### Misc
 
-* Removed the MinIO fixture from the compose stack. MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.
-* Bumped `google.golang.org/grpc` to 1.83.2, which clears three advisories reachable from the provider: an xDS denial of service, an HTTP/2 heap exhaustion, and a server panic on missing authority headers.
-* Moved the database driver from `pgx/v4` to `pgx/v5`. This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
-* The connection string now percent-encodes spaces instead of writing them as `+`. The `options` parameter carries the transaction isolation setting, and a `+` there was read back literally, so the setting was dropped and reads could miss writes the provider had just made.
+* Removed the MinIO fixture from the compose stack [#927](https://github.com/MaterializeInc/terraform-provider-materialize/pull/927). MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.
+* Bumped `google.golang.org/grpc` to 1.83.2 [#926](https://github.com/MaterializeInc/terraform-provider-materialize/pull/926), which clears three advisories reachable from the provider: an xDS denial of service, an HTTP/2 heap exhaustion, and a server panic on missing authority headers.
+* Moved the database driver from `pgx/v4` to `pgx/v5` [#923](https://github.com/MaterializeInc/terraform-provider-materialize/pull/923). This drops `pgproto3/v2`, which carries an unfixed denial of service advisory (CVE-2026-32286), and clears the `pgx/v4` SQL injection advisory (CVE-2026-41889). Neither has a fix on the v4 line.
+* The connection string now percent-encodes spaces instead of writing them as `+` [#923](https://github.com/MaterializeInc/terraform-provider-materialize/pull/923). The `options` parameter carries the transaction isolation setting, and a `+` there was read back literally, so the setting was dropped and reads could miss writes the provider had just made.
 
 ## 0.11.8 - 2026-09-11
 
@@ -620,7 +625,6 @@
 
 * Unify the cluster alter commands [#628](https://github.com/MaterializeInc/terraform-provider-materialize/pull/628)
 * Switched tests to use the Rust Frontegg mock service [#634](https://github.com/MaterializeInc/terraform-provider-materialize/pull/634)
-
 
 ## 0.8.7 - 2024-08-15
 
