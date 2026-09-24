@@ -92,6 +92,9 @@ func TestAccSinkIceberg_disappears(t *testing.T) {
 	})
 }
 
+// The minio endpoint below is a placeholder. Nothing listens there: the
+// connections use validate = false and the sink DDL does not contact an
+// s3tablesrest catalog, so the tests need no S3 service in the stack.
 func testAccSinkIcebergResource(nameSpace string) string {
 	return testAccSinkIcebergResourceWithName(nameSpace, nameSpace+"_sink")
 }

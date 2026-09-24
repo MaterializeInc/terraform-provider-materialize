@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Misc
+
+* Removed the MinIO fixture from the compose stack. MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.
+
 ## 0.11.8 - 2026-09-11
 
 ### Bug Fixes
