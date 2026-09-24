@@ -68,7 +68,7 @@ func GetSliceValueInt(v []interface{}) []int {
 
 // StringArray is a custom type that wraps []string and provides
 // compatibility with PostgreSQL text[] arrays using pgx.
-// It replaces pq.StringArray for pgx v4 compatibility.
+// It replaces pq.StringArray, which the pgx driver cannot scan into or encode from.
 type StringArray []string
 
 // Scan implements the sql.Scanner interface for StringArray.
