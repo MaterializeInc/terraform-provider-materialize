@@ -8,6 +8,7 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -278,4 +279,28 @@ func TestResourceSourceTablePostgresDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestResourceSourceTablePostgresExcludeConstraintsPlanCheck(t *testing.T) {
+	r := require.New(t)
+	res := SourceTablePostgres()
+	plan := func(extra map[string]interface{}) error {
+		cfg := map[string]interface{}{
+			"name":          "table",
+			"upstream_name": "upstream_table",
+			"source":        []interface{}{map[string]interface{}{"name": "source"}},
+		}
+		for k, v := range extra {
+			cfg[k] = v
+		}
+		_, err := res.Diff(context.TODO(), nil, terraform.NewResourceConfigRaw(cfg), nil)
+		return err
+	}
+
+	r.NoError(plan(map[string]interface{}{"exclude_constraints": []interface{}{"orders_pkey"}}))
+	r.NoError(plan(map[string]interface{}{"exclude_all_constraints": true}))
+	// an explicit false next to a list is fine, which ConflictsWith would have rejected
+	r.NoError(plan(map[string]interface{}{"exclude_constraints": []interface{}{"orders_pkey"}, "exclude_all_constraints": false}))
+	r.NoError(plan(map[string]interface{}{"exclude_constraints": []interface{}{}, "exclude_all_constraints": true}))
+	r.ErrorContains(plan(map[string]interface{}{"exclude_constraints": []interface{}{"orders_pkey"}, "exclude_all_constraints": true}), "cannot be combined")
 }
