@@ -26,10 +26,14 @@ func CreateOrganizationRole(ctx context.Context, client *clients.FronteggClient,
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 	var role FronteggRole
-	if err := json.NewDecoder(resp.Body).Decode(&role); err != nil {
-		return nil, err
+	decodeErr := json.NewDecoder(resp.Body).Decode(&role)
+	closeErr := resp.Body.Close()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("error decoding created role: %w", decodeErr)
+	}
+	if closeErr != nil {
+		return nil, fmt.Errorf("error closing created role response: %w", closeErr)
 	}
 	if role.ID == "" {
 		return nil, fmt.Errorf("role creation returned no ID")

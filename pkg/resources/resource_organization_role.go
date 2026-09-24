@@ -20,16 +20,25 @@ func OrganizationRole() *schema.Resource {
 		ReadContext:   organizationRoleRead,
 		UpdateContext: organizationRoleUpdate,
 		DeleteContext: organizationRoleDelete,
-		Importer:      &schema.ResourceImporter{StateContext: schema.ImportStatePassthroughContext},
+		Importer:      &schema.ResourceImporter{StateContext: organizationRoleImport},
 		Description:   "Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. This resource does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.",
 		Schema: map[string]*schema.Schema{
 			"name":           {Type: schema.TypeString, Required: true, ForceNew: true, ValidateFunc: validateOrganizationRoleName, Description: "Name of the custom role. Also used as its JWT key on creation. For database role mapping, create a database role with the same name."},
 			"key":            {Type: schema.TypeString, Computed: true, Description: "Role key included in the JWT roles claim. Match this key to the database role name."},
 			"description":    {Type: schema.TypeString, Optional: true, Description: "Description of the organization role."},
-			"base_role_name": {Type: schema.TypeString, Optional: true, Default: "Member", ForceNew: true, ValidateFunc: validation.StringIsNotEmpty, Description: "Existing organization role used to determine the new role's level. Defaults to Member. When permission_ids is omitted, copies this role's permissions at creation. Later changes to the base role are not propagated."},
+			"base_role_name": {Type: schema.TypeString, Optional: true, Default: "Member", ForceNew: true, ValidateFunc: validation.StringIsNotEmpty, Description: "Existing organization role used to determine the new role's level. Defaults to Member. When permission_ids is omitted, copies this role's permissions at creation. Later changes to the base role are not propagated. Imports assume Member because Frontegg does not return the role used at creation; configuring another base role after import replaces the role."},
 			"permission_ids": {Type: schema.TypeSet, Optional: true, Computed: true, Elem: &schema.Schema{Type: schema.TypeString}, Description: "Organization permission IDs assigned to the role. If omitted on creation, copies the base role's permissions. These permissions do not grant privileges on database objects. Use an explicit empty set for no organization permissions."},
 		},
 	}
+}
+
+func organizationRoleImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	// Frontegg does not return the base role used at creation. Seed the
+	// default so an imported role does not immediately plan a replacement.
+	if err := d.Set("base_role_name", "Member"); err != nil {
+		return nil, err
+	}
+	return []*schema.ResourceData{d}, nil
 }
 
 func validateOrganizationRoleName(value interface{}, key string) ([]string, []error) {

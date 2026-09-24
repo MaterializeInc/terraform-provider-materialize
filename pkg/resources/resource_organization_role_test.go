@@ -190,7 +190,8 @@ func TestOrganizationRoleTerraformLifecycle(t *testing.T) {
 				resource.TestCheckResourceAttr("materialize_organization_role.test", "key", "analytics_reader"),
 				resource.TestCheckResourceAttr("materialize_organization_role.test", "permission_ids.#", "1"),
 			)},
-			{ResourceName: "materialize_organization_role.test", ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"base_role_name"}},
+			{ResourceName: "materialize_organization_role.test", ImportState: true, ImportStateVerify: true},
+			{Config: `resource "materialize_organization_role" "test" { name = "analytics_reader" }`, PlanOnly: true},
 			{Config: `resource "materialize_organization_role" "test" {
     name = "analytics_reader"
     description = "Updated"

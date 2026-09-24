@@ -34,7 +34,7 @@ resource "materialize_role" "reader" {
 
 ### Optional
 
-- `base_role_name` (String) Existing organization role used to determine the new role's level. Defaults to Member. When permission_ids is omitted, copies this role's permissions at creation. Later changes to the base role are not propagated.
+- `base_role_name` (String) Existing organization role used to determine the new role's level. Defaults to Member. When permission_ids is omitted, copies this role's permissions at creation. Later changes to the base role are not propagated. Imports assume Member because Frontegg does not return the role used at creation; configuring another base role after import replaces the role.
 - `description` (String) Description of the organization role.
 - `permission_ids` (Set of String) Organization permission IDs assigned to the role. If omitted on creation, copies the base role's permissions. These permissions do not grant privileges on database objects. Use an explicit empty set for no organization permissions.
 
