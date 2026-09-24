@@ -8,7 +8,7 @@
 
 ### Misc
 
-* Fixed the sqlserver test fixture staying unhealthy for the whole healthcheck budget, which intermittently failed the acceptance and integration jobs with `container sqlserver is unhealthy`. Two causes: `sqlservr` sometimes crashed a moment after starting and the backgrounded process was never noticed, and `sys.dm_server_services` reported SQL Server Agent as running before it could accept jobs, so enabling CDC failed with error 14258. The entrypoint now restarts a crashed server, probes the Agent by adding a throwaway job, and enables CDC on any fixture table still untracked after the bootstrap.
+* Fixed the sqlserver test fixture staying unhealthy for the whole healthcheck budget, which intermittently failed the acceptance and integration jobs with `container sqlserver is unhealthy` [#933](https://github.com/MaterializeInc/terraform-provider-materialize/pull/933). Two causes: `sqlservr` sometimes crashed a moment after starting and the backgrounded process was never noticed, and `sys.dm_server_services` reported SQL Server Agent as running before it could accept jobs, so enabling CDC failed with error 14258. The entrypoint now restarts a crashed server, probes the Agent by adding a throwaway job, and enables CDC on any fixture table still untracked after the bootstrap.
 
 ## 0.11.9 - 2026-09-24
 
