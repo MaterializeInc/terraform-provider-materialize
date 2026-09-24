@@ -1,5 +1,6 @@
-# Copies Organization Member permissions when created. Database privileges
-# are granted separately to the database role below.
+# Copies Organization Member permissions when created. When assigned to a user,
+# this role maps to the database role below through a JWT claim. Grant database
+# privileges separately.
 resource "materialize_organization_role" "reader" {
   name           = "analytics_reader"
   base_role_name = "Member"

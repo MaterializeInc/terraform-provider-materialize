@@ -3,18 +3,19 @@
 page_title: "materialize_organization_role Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. This resource does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.
+  Manages a custom organization role in Materialize Cloud. Organization roles define a user's account-level permissions and belong to the account associated with the provider credentials. When assigned to a user, the role's name is included in the user's JWT roles claim and automatically mapped to an existing database role with the same name. Create the database role separately. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. Requires organization role management to be enabled and an Organization Admin app password.
 ---
 
 # materialize_organization_role (Resource)
 
-Manages a custom organization role in Materialize Cloud. The role is scoped to the authenticated organization. Its JWT key is set to its name on creation. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. This resource does not create a database role. Requires organization role management to be enabled and an Organization Admin app password.
+Manages a custom organization role in Materialize Cloud. Organization roles define a user's account-level permissions and belong to the account associated with the provider credentials. When assigned to a user, the role's name is included in the user's JWT roles claim and automatically mapped to an existing database role with the same name. Create the database role separately. Materialize creates two reserved, built-in roles: Organization Admin (key MaterializePlatformAdmin) and Organization Member (key MaterializePlatform). You cannot edit or delete them with this resource, but you can assign them to SCIM groups with materialize_scim_group_roles using Admin or Member. Requires organization role management to be enabled and an Organization Admin app password.
 
 ## Example Usage
 
 ```terraform
-# Copies Organization Member permissions when created. Database privileges
-# are granted separately to the database role below.
+# Copies Organization Member permissions when created. When assigned to a user,
+# this role maps to the database role below through a JWT claim. Grant database
+# privileges separately.
 resource "materialize_organization_role" "reader" {
   name           = "analytics_reader"
   base_role_name = "Member"
@@ -30,7 +31,7 @@ resource "materialize_role" "reader" {
 
 ### Required
 
-- `name` (String) Name of the custom role. Also used as its JWT key on creation. For database role mapping, create a database role with the same name.
+- `name` (String) Name of the custom role. When assigned to a user, this name maps to an existing database role with the same name.
 
 ### Optional
 
@@ -41,7 +42,7 @@ resource "materialize_role" "reader" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `key` (String) Role key included in the JWT roles claim. Match this key to the database role name.
+- `key` (String) Identifier included in the JWT roles claim. For roles created by this resource, it matches the role name.
 
 ## Import
 
