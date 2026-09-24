@@ -31,6 +31,11 @@ func TestAccSourceTablePostgres_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "text_columns.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "text_columns.0", "updated_at"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "upstream_name", "table2"),
+					testAccCheckSourceTablePostgresExists("materialize_source_table_postgres.test_exclude_constraints"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_exclude_constraints", "exclude_constraints.#", "1"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_exclude_constraints", "exclude_constraints.0", "table4_pkey"),
+					testAccCheckSourceTablePostgresExists("materialize_source_table_postgres.test_exclude_all_constraints"),
+					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_exclude_all_constraints", "exclude_all_constraints", "true"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "upstream_schema_name", "public"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.#", "1"),
 					resource.TestCheckResourceAttr("materialize_source_table_postgres.test_postgres", "source.0.name", nameSpace+"_source_postgres"),
@@ -169,6 +174,40 @@ func testAccSourceTablePostgresBasicResource(nameSpace string) string {
 		text_columns = [
 			"updated_at"
 		]
+	}
+
+	resource "materialize_source_table_postgres" "test_exclude_constraints" {
+		name           = "%[1]s_table_exclude_constraints"
+		schema_name    = materialize_schema.test_schema.name
+		database_name  = "materialize"
+
+		source {
+			name          = materialize_source_postgres.test_source_postgres.name
+			schema_name   = materialize_schema.test_schema.name
+			database_name = "materialize"
+		}
+
+		upstream_name         = "table4"
+		upstream_schema_name  = "public"
+
+		exclude_constraints = ["table4_pkey"]
+	}
+
+	resource "materialize_source_table_postgres" "test_exclude_all_constraints" {
+		name           = "%[1]s_table_exclude_all_constraints"
+		schema_name    = materialize_schema.test_schema.name
+		database_name  = "materialize"
+
+		source {
+			name          = materialize_source_postgres.test_source_postgres.name
+			schema_name   = materialize_schema.test_schema.name
+			database_name = "materialize"
+		}
+
+		upstream_name         = "table7"
+		upstream_schema_name  = "public"
+
+		exclude_all_constraints = true
 	}
 	`, nameSpace)
 }

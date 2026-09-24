@@ -138,6 +138,90 @@ func TestResourceSourceTablePostgresCreateWithExcludeColumns(t *testing.T) {
 	})
 }
 
+func TestResourceSourceTablePostgresCreateWithExcludeConstraints(t *testing.T) {
+	r := require.New(t)
+	in := map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
+		},
+		"upstream_name":        "upstream_table",
+		"upstream_schema_name": "upstream_schema",
+		"exclude_constraints":  []interface{}{"upstream_table_pkey", "Upstream_Email_Key"},
+	}
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
+            FROM SOURCE "materialize"."public"."source"
+            \(REFERENCE "upstream_schema"."upstream_table"\)
+            WITH \(EXCLUDE CONSTRAINTS \('upstream_table_pkey', 'Upstream_Email_Key'\)\);`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		testhelpers.MockSourceTablePostgresScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
+
+		if err := sourceTablePostgresCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestResourceSourceTablePostgresCreateWithExcludeAllConstraints(t *testing.T) {
+	r := require.New(t)
+	in := map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
+		},
+		"upstream_name":           "upstream_table",
+		"upstream_schema_name":    "upstream_schema",
+		"exclude_all_constraints": true,
+	}
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, in)
+	r.NotNil(d)
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// Create
+		mock.ExpectExec(`CREATE TABLE "database"."schema"."table"
+            FROM SOURCE "materialize"."public"."source"
+            \(REFERENCE "upstream_schema"."upstream_table"\)
+            WITH \(EXCLUDE ALL CONSTRAINTS\);`).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Query Id
+		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
+		testhelpers.MockSourceTablePostgresScan(mock, ip)
+
+		// Query Params
+		pp := `WHERE mz_tables.id = 'u1'`
+		testhelpers.MockSourceTablePostgresScan(mock, pp)
+
+		if err := sourceTablePostgresCreate(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestResourceSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
 	r := require.New(t)
 	in := map[string]interface{}{

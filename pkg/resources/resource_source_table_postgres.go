@@ -49,6 +49,21 @@ var sourceTablePostgresSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
+	"exclude_constraints": {
+		Description:   "Names of upstream `PRIMARY KEY`, `UNIQUE` or `NOT NULL` constraints to leave out of the table, so they can later be dropped in PostgreSQL without stalling the source. Names are case sensitive. Requires Materialize v26.42 or later.",
+		Type:          schema.TypeList,
+		Elem:          &schema.Schema{Type: schema.TypeString},
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"exclude_all_constraints"},
+	},
+	"exclude_all_constraints": {
+		Description:   "Leave every upstream constraint out of the table. Requires Materialize v26.42 or later.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"exclude_constraints"},
+	},
 	"comment":        CommentSchema(false),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -105,6 +120,18 @@ func sourceTablePostgresCreate(ctx context.Context, d *schema.ResourceData, meta
 			return diag.FromErr(err)
 		}
 		b.ExcludeColumns(columns)
+	}
+
+	if v, ok := d.GetOk("exclude_constraints"); ok && len(v.([]interface{})) > 0 {
+		constraints, err := materialize.GetSliceValueString("exclude_constraints", v.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		b.ExcludeConstraints(constraints)
+	}
+
+	if v, ok := d.GetOk("exclude_all_constraints"); ok {
+		b.ExcludeAllConstraints(v.(bool))
 	}
 
 	if err := b.Create(); err != nil {

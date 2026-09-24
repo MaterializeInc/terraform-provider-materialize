@@ -81,8 +81,10 @@ func ScanSourceTablePostgres(conn *sqlx.DB, id string) (SourceTablePostgresParam
 // SourceTablePostgresBuilder for Postgres sources
 type SourceTablePostgresBuilder struct {
 	*SourceTableBuilder
-	textColumns    []string
-	excludeColumns []string
+	textColumns           []string
+	excludeColumns        []string
+	excludeConstraints    []string
+	excludeAllConstraints bool
 }
 
 func NewSourceTablePostgresBuilder(conn *sqlx.DB, obj MaterializeObject) *SourceTablePostgresBuilder {
@@ -98,6 +100,16 @@ func (b *SourceTablePostgresBuilder) TextColumns(c []string) *SourceTablePostgre
 
 func (b *SourceTablePostgresBuilder) ExcludeColumns(c []string) *SourceTablePostgresBuilder {
 	b.excludeColumns = c
+	return b
+}
+
+func (b *SourceTablePostgresBuilder) ExcludeConstraints(c []string) *SourceTablePostgresBuilder {
+	b.excludeConstraints = c
+	return b
+}
+
+func (b *SourceTablePostgresBuilder) ExcludeAllConstraints(e bool) *SourceTablePostgresBuilder {
+	b.excludeAllConstraints = e
 	return b
 }
 
@@ -121,6 +133,20 @@ func (b *SourceTablePostgresBuilder) Create() error {
 			}
 			s := strings.Join(quotedCols, ", ")
 			options = append(options, fmt.Sprintf(`EXCLUDE COLUMNS (%s)`, s))
+		}
+
+		// Constraint names are upstream identifiers whose case Materialize
+		// preserves exactly, so they are passed as string literals.
+		if len(b.excludeConstraints) > 0 {
+			var quoted []string
+			for _, c := range b.excludeConstraints {
+				quoted = append(quoted, QuoteString(c))
+			}
+			options = append(options, fmt.Sprintf(`EXCLUDE CONSTRAINTS (%s)`, strings.Join(quoted, ", ")))
+		}
+
+		if b.excludeAllConstraints {
+			options = append(options, `EXCLUDE ALL CONSTRAINTS`)
 		}
 
 		if len(options) > 0 {
