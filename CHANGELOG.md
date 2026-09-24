@@ -6,6 +6,10 @@
 
 * Fixed `materialize_cluster` occasionally reporting the old `size` and `replication_factor` right after an `ALTER CLUSTER`, which showed up as a non-empty plan straight after an apply. The read fetched `mz_clusters` before checking for an in-flight reconfiguration, so a reconfiguration that finalized between the two reads was missed. The in-flight check now comes first.
 
+### Misc
+
+* Fixed the sqlserver test fixture staying unhealthy for the whole healthcheck budget when `sqlservr` crashed a moment after starting, which intermittently failed the acceptance and integration jobs with `container sqlserver is unhealthy`. The entrypoint now notices the exit, prints the errorlog tail and starts the server again.
+
 ## 0.11.9 - 2026-09-24
 
 ### Features
