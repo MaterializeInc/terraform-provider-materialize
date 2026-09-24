@@ -115,7 +115,7 @@ func scimGroupUsersUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		if clients.IsNotFoundError(err) {
 			d.SetId("")
-			return diag.Errorf("SCIM group %q does not exist; wait for the identity provider to provision it before applying the membership", groupID)
+			return diag.Errorf("SCIM group %q does not exist; it may not be provisioned yet or it was removed in Frontegg", groupID)
 		}
 		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %w", err))
 	}
