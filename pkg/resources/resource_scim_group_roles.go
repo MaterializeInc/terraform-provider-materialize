@@ -2,7 +2,9 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
@@ -164,17 +166,32 @@ func scimGroupRoleDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	client := providerMeta.Frontegg
 
-	roleIDs, err := getRoleIDsByName(ctx, providerMeta, roleNames)
+	roleMap, err := providerMeta.GetFronteggRoles(ctx)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting role IDs: %s", err))
+		return diag.FromErr(fmt.Errorf("error getting role IDs: %w", err))
 	}
 
-	err = frontegg.RemoveRolesFromGroup(ctx, client, groupID, roleIDs)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error removing roles from SCIM group: %s", err))
+	var roleIDs []string
+	for _, roleName := range roleNames {
+		roleID, err := frontegg.RoleIDByName(roleMap, roleName)
+		if errors.Is(err, frontegg.ErrRoleNotFound) {
+			// The role is gone, and its assignment to the group went with it.
+			log.Printf("[DEBUG] role %q no longer exists, nothing to remove from SCIM group %s", roleName, groupID)
+			continue
+		}
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error getting role IDs: %w", err))
+		}
+		roleIDs = append(roleIDs, roleID)
 	}
 
-	// Forcing deletion by setting an empty ID
+	if len(roleIDs) > 0 {
+		err = frontegg.RemoveRolesFromGroup(ctx, client, groupID, roleIDs)
+		if err != nil && !clients.IsNotFoundError(err) {
+			return diag.FromErr(fmt.Errorf("error removing roles from SCIM group: %w", err))
+		}
+	}
+
 	d.SetId("")
 
 	return nil

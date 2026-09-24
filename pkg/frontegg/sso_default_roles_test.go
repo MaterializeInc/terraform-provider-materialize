@@ -3,6 +3,7 @@ package frontegg
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -151,4 +152,15 @@ func TestListFronteggRolesOnlyRejectsAmbiguousLookup(t *testing.T) {
 	name, found := RoleNameByID(roles, "custom-admin")
 	assert.True(t, found)
 	assert.Equal(t, "Admin", name)
+}
+
+func TestRoleIDByNameNotFoundIsSentinel(t *testing.T) {
+	roles := map[string][]string{"Admin": {"a"}, "Dup": {"x", "y"}}
+
+	_, err := RoleIDByName(roles, "Missing")
+	assert.True(t, errors.Is(err, ErrRoleNotFound))
+	assert.ErrorContains(t, err, "role not found: Missing")
+
+	_, err = RoleIDByName(roles, "Dup")
+	assert.False(t, errors.Is(err, ErrRoleNotFound), "ambiguous must not read as not found")
 }

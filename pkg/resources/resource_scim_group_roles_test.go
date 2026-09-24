@@ -6,6 +6,8 @@ import (
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -135,4 +137,109 @@ func TestScimGroupRolesCustomNamesAndUpdate(t *testing.T) {
 	require.Equal(t, []string{"old"}, removed)
 	require.ElementsMatch(t, []string{"member", "new"}, added)
 	require.ElementsMatch(t, []interface{}{"Member", "Organization Analytics"}, d.Get("roles").(*schema.Set).List())
+}
+
+// scimRoleRemovalServer answers the group role removal with status and records
+// which role IDs it was asked to remove.
+func scimRoleRemovalServer(t *testing.T, status int) (*httptest.Server, func() ([]string, int)) {
+	var mu sync.Mutex
+	var removed []string
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		if r.Method != http.MethodDelete || !strings.HasSuffix(r.URL.Path, "/roles") {
+			t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		calls++
+		var body struct {
+			RoleIds []string `json:"roleIds"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		removed = append(removed, body.RoleIds...)
+		w.WriteHeader(status)
+	}))
+	return srv, func() ([]string, int) { mu.Lock(); defer mu.Unlock(); return removed, calls }
+}
+
+func scimGroupRoleDeleteData(t *testing.T, roles ...interface{}) *schema.ResourceData {
+	d := schema.TestResourceDataRaw(t, ScimGroupRoleSchema, map[string]interface{}{
+		"group_id": "test-group-id",
+		"roles":    roles,
+	})
+	d.SetId("test-group-id")
+	return d
+}
+
+// A role deleted in Frontegg takes its group assignment with it, so the destroy
+// should remove what is left and succeed rather than get stuck on the lookup.
+func TestScimGroupRoleResourceDeleteSkipsMissingRole(t *testing.T) {
+	r := require.New(t)
+	srv, recorded := scimRoleRemovalServer(t, http.StatusOK)
+	defer srv.Close()
+
+	providerMeta := &utils.ProviderMeta{
+		Frontegg:      &clients.FronteggClient{Endpoint: srv.URL, HTTPClient: srv.Client()},
+		FronteggRoles: map[string][]string{"Admin": {"1"}}, // Member is gone
+	}
+	d := scimGroupRoleDeleteData(t, "Admin", "Member")
+
+	r.False(scimGroupRoleDelete(context.TODO(), d, providerMeta).HasError())
+	r.Empty(d.Id())
+	removed, calls := recorded()
+	r.Equal(1, calls)
+	r.Equal([]string{"1"}, removed)
+}
+
+func TestScimGroupRoleResourceDeleteAllRolesMissing(t *testing.T) {
+	r := require.New(t)
+	srv, recorded := scimRoleRemovalServer(t, http.StatusOK)
+	defer srv.Close()
+
+	providerMeta := &utils.ProviderMeta{
+		Frontegg:      &clients.FronteggClient{Endpoint: srv.URL, HTTPClient: srv.Client()},
+		FronteggRoles: map[string][]string{},
+	}
+	d := scimGroupRoleDeleteData(t, "Admin", "Member")
+
+	r.False(scimGroupRoleDelete(context.TODO(), d, providerMeta).HasError())
+	r.Empty(d.Id())
+	_, calls := recorded()
+	r.Equal(0, calls, "nothing left to remove, so no request should be made")
+}
+
+func TestScimGroupRoleResourceDeleteGroupGone(t *testing.T) {
+	r := require.New(t)
+	srv, _ := scimRoleRemovalServer(t, http.StatusNotFound)
+	defer srv.Close()
+
+	providerMeta := &utils.ProviderMeta{
+		Frontegg:      &clients.FronteggClient{Endpoint: srv.URL, HTTPClient: srv.Client()},
+		FronteggRoles: map[string][]string{"Admin": {"1"}},
+	}
+	d := scimGroupRoleDeleteData(t, "Admin")
+
+	r.False(scimGroupRoleDelete(context.TODO(), d, providerMeta).HasError())
+	r.Empty(d.Id())
+}
+
+// An ambiguous name could remove the wrong role, so that still has to fail.
+func TestScimGroupRoleResourceDeleteAmbiguousRoleFails(t *testing.T) {
+	r := require.New(t)
+	srv, recorded := scimRoleRemovalServer(t, http.StatusOK)
+	defer srv.Close()
+
+	providerMeta := &utils.ProviderMeta{
+		Frontegg:      &clients.FronteggClient{Endpoint: srv.URL, HTTPClient: srv.Client()},
+		FronteggRoles: map[string][]string{"Admin": {"1", "2"}},
+	}
+	d := scimGroupRoleDeleteData(t, "Admin")
+
+	diags := scimGroupRoleDelete(context.TODO(), d, providerMeta)
+	r.True(diags.HasError())
+	r.Contains(diags[0].Summary, "ambiguous")
+	_, calls := recorded()
+	r.Equal(0, calls)
 }

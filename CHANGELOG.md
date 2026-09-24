@@ -4,6 +4,7 @@
 
 ### Bug Fixes
 
+* Fixed `materialize_scim_group_roles` failing to destroy when one of its roles, or the group itself, had already been removed in Frontegg. The delete now skips roles that no longer exist and treats a missing group as already cleaned up, instead of leaving the mapping stuck in state.
 * Fixed `materialize_cluster_grant` wanting to recreate a grant after a cluster swap. The grant addresses its cluster by name but stored the catalog id, so a blue/green deploy left the id pointing at a dropped cluster. The read now re-resolves the id from `cluster_name`.
 * Fixed a revoked grant staying in state. The grant, system privilege and default privilege reads each cleared the id when the privilege was no longer present, but set it again before returning, so the next plan saw no drift and the grant was never recreated.
 * Fixed grants to `PUBLIC` never matching on read. `PUBLIC` has no row in `mz_roles` and its privileges come back with an empty grantee, so they were never keyed under the id the grant resources use.

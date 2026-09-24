@@ -3,6 +3,7 @@ package frontegg
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -91,11 +92,14 @@ func ListFronteggRoles(ctx context.Context, client *clients.FronteggClient) (map
 	return roleMap, nil
 }
 
+// ErrRoleNotFound is returned by RoleIDByName when no role carries the name.
+var ErrRoleNotFound = errors.New("role not found")
+
 func RoleIDByName(roles map[string][]string, name string) (string, error) {
 	ids := roles[name]
 	switch len(ids) {
 	case 0:
-		return "", fmt.Errorf("role not found: %s", name)
+		return "", fmt.Errorf("%w: %s", ErrRoleNotFound, name)
 	case 1:
 		return ids[0], nil
 	default:
