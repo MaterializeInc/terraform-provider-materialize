@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -123,7 +124,7 @@ func resourceSCIM2ConfigurationsDelete(ctx context.Context, d *schema.ResourceDa
 	client := providerMeta.Frontegg
 
 	err = frontegg.DeleteSCIM2Configuration(ctx, client, d.Id())
-	if err != nil {
+	if err != nil && !clients.IsNotFoundError(err) {
 		return diag.FromErr(err)
 	}
 
