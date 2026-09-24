@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+* Fixed `materialize_scim_group` and `materialize_scim_group_users` failing to refresh or destroy once the group had been removed in Frontegg. A 404 on read now removes the resource from state instead of failing the plan, other errors no longer clear the id, and delete treats an already missing group as done.
+
 ### Misc
 
 * Removed the MinIO fixture from the compose stack. MinIO deleted its images from Docker Hub and quay.io, which failed every job that starts the full stack, and nothing in the tests ever connected to it: the Iceberg connections are created with `validate = false` and the sink DDL does not contact an `s3tablesrest` catalog.

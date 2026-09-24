@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -76,8 +77,11 @@ func scim2GroupRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, d.Id())
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
+		if clients.IsNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %w", err))
 	}
 
 	d.Set("name", group.Name)
@@ -119,8 +123,8 @@ func scim2GroupDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	client := providerMeta.Frontegg
 
 	err = frontegg.DeleteSCIMGroup(ctx, client, d.Id())
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error deleting SCIM group: %s", err))
+	if err != nil && !clients.IsNotFoundError(err) {
+		return diag.FromErr(fmt.Errorf("error deleting SCIM group: %w", err))
 	}
 
 	d.SetId("")
