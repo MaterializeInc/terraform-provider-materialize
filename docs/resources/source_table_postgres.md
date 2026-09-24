@@ -31,6 +31,11 @@ resource "materialize_source_table_postgres" "postgres_table_from_source" {
     "updated_at"
   ]
 
+  # Leave out upstream constraints you plan to drop in PostgreSQL. Names are
+  # case sensitive. Use exclude_all_constraints = true to leave out every one.
+  exclude_constraints = [
+    "postgres_table_name_pkey"
+  ]
 }
 ```
 
@@ -47,7 +52,9 @@ resource "materialize_source_table_postgres" "postgres_table_from_source" {
 
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
+- `exclude_all_constraints` (Boolean) Leave every upstream constraint out of the table. Requires Materialize v26.42 or later.
 - `exclude_columns` (List of String) Exclude specific columns when reading data from PostgreSQL.
+- `exclude_constraints` (List of String) Names of upstream `PRIMARY KEY`, `UNIQUE` or `NOT NULL` constraints to leave out of the table, so they can later be dropped in PostgreSQL without stalling the source. Names are case sensitive. Requires Materialize v26.42 or later.
 - `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the table schema in Materialize. Defaults to `public`.

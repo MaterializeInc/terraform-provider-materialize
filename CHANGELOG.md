@@ -13,6 +13,10 @@
 * Added `materialize_organization_role` for managing custom, tenant-scoped organization roles in Materialize Cloud [#925](https://github.com/MaterializeInc/terraform-provider-materialize/pull/925). A role copies the permissions of a base role (`Member` by default) or takes an explicit `permission_ids` set, and supports update, import and deletion. The two built-in roles cannot be managed with it.
 * `materialize_scim_group_roles` now supports custom organization roles alongside `Admin` and `Member` [#924](https://github.com/MaterializeInc/terraform-provider-materialize/pull/924). The role lookup reads every page and keeps custom role names intact, the full role set is reconciled on create and update, changing `group_id` replaces the mapping, and a group that SCIM has not provisioned yet reports a clear error.
 
+### Features
+
+* Added `exclude_constraints` and `exclude_all_constraints` to `materialize_source_table_postgres`, mapping to `EXCLUDE CONSTRAINTS` and `EXCLUDE ALL CONSTRAINTS` on `CREATE TABLE ... FROM SOURCE`. Leaving a constraint out of the table lets it be dropped upstream without stalling the source. Requires Materialize v26.42 or later.
+
 ### Bug Fixes
 
 * Fixed `materialize_scim_group`, `materialize_scim_group_users` and `materialize_scim_config` failing to refresh or destroy once the object had been removed in Frontegg [#929](https://github.com/MaterializeInc/terraform-provider-materialize/pull/929). A 404 on read now removes the resource from state instead of failing the plan, other errors no longer clear the id, and delete treats an already missing object as done.

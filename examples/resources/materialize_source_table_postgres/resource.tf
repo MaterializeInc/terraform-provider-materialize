@@ -16,4 +16,9 @@ resource "materialize_source_table_postgres" "postgres_table_from_source" {
     "updated_at"
   ]
 
+  # Leave out upstream constraints you plan to drop in PostgreSQL. Names are
+  # case sensitive. Use exclude_all_constraints = true to leave out every one.
+  exclude_constraints = [
+    "postgres_table_name_pkey"
+  ]
 }

@@ -87,6 +87,49 @@ func TestSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
 	})
 }
 
+func TestSourceTablePostgresCreateWithExcludeConstraints(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE TABLE "database"."schema"."table"
+			FROM SOURCE "materialize"."public"."source"
+			\(REFERENCE "upstream_schema"."upstream_table"\)
+			WITH \(EXCLUDE COLUMNS \("exclude1"\), EXCLUDE CONSTRAINTS \('orders_pkey', 'Orders_Email_Key'\)\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceTablePostgresBuilder(db, sourceTablePostgres)
+		b.Source(IdentifierSchemaStruct{Name: "source", SchemaName: "public", DatabaseName: "materialize"})
+		b.UpstreamName("upstream_table")
+		b.UpstreamSchemaName("upstream_schema")
+		b.ExcludeColumns([]string{"exclude1"})
+		b.ExcludeConstraints([]string{"orders_pkey", "Orders_Email_Key"})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
+func TestSourceTablePostgresCreateWithExcludeAllConstraints(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE TABLE "database"."schema"."table"
+			FROM SOURCE "materialize"."public"."source"
+			\(REFERENCE "upstream_schema"."upstream_table"\)
+			WITH \(EXCLUDE ALL CONSTRAINTS\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		b := NewSourceTablePostgresBuilder(db, sourceTablePostgres)
+		b.Source(IdentifierSchemaStruct{Name: "source", SchemaName: "public", DatabaseName: "materialize"})
+		b.UpstreamName("upstream_table")
+		b.UpstreamSchemaName("upstream_schema")
+		b.ExcludeAllConstraints(true)
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}
+
 func TestSourceTablePostgresDrop(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
