@@ -1,7 +1,30 @@
 #!/bin/bash
 
-# Start SQL Server in the background
-/opt/mssql/bin/sqlservr &
+# sqlservr occasionally core dumps a couple of seconds into startup on the CI
+# runners. Backgrounding it meant nothing noticed: the loop below kept polling a
+# dead process until the healthcheck budget ran out and the job failed with
+# "container sqlserver is unhealthy". Keep the pid so the loop can tell a slow
+# start from a dead server, and start it again if it died.
+start_sqlservr() {
+    /opt/mssql/bin/sqlservr &
+    SQLSERVR_PID=$!
+}
+
+sqlservr_alive() {
+    kill -0 "$SQLSERVR_PID" 2>/dev/null
+}
+
+restart_sqlservr_if_dead() {
+    if sqlservr_alive; then
+        return 0
+    fi
+    echo "sqlservr (pid $SQLSERVR_PID) exited before accepting connections; last errorlog lines:"
+    tail -n 20 /var/opt/mssql/log/errorlog 2>/dev/null || echo "(no errorlog yet)"
+    echo "Starting sqlservr again..."
+    start_sqlservr
+}
+
+start_sqlservr
 
 # Wait for SQL Server to start up
 echo "Waiting for SQL Server to start..."
@@ -20,10 +43,12 @@ fi
 
 echo "Using sqlcmd at: $SQLCMD"
 
-# Wait longer for SQL Server to initialize properly
+# Wait longer for SQL Server to initialize properly. A short login timeout keeps
+# each attempt from eating most of the budget while the server is still coming up.
 for i in {1..120}
 do
-    $SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -Q "SELECT 1" -C > /dev/null 2>&1
+    restart_sqlservr_if_dead
+    $SQLCMD -S localhost -U sa -P "${SA_PASSWORD}" -Q "SELECT 1" -C -l 3 > /dev/null 2>&1
     if [ $? -eq 0 ]
     then
         echo "SQL Server started successfully after $i attempts"
@@ -77,5 +102,6 @@ else
     echo "Warning: bootstrap script reported a non-zero exit; the healthcheck will gate readiness on CDC state"
 fi
 
-# Keep the container running
-wait
+# Keep the container running for as long as sqlservr does. If it dies later the
+# container exits non-zero and restart: always brings it back.
+wait "$SQLSERVR_PID"
