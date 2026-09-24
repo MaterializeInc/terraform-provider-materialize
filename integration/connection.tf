@@ -574,6 +574,8 @@ resource "materialize_connection_aws" "aws_conn" {
   validate = false
 }
 
+# Nothing listens at this endpoint. The connections below are created with
+# validate = false and the sink DDL does not contact an s3tablesrest catalog.
 resource "materialize_connection_aws" "minio_conn" {
   name       = "minio_conn"
   endpoint   = "http://minio:9000"
