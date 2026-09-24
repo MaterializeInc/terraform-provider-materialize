@@ -96,51 +96,51 @@ func TestScimGroupResourceDelete(t *testing.T) {
 	})
 }
 
-// groupStatusServer answers every SCIM group call with status.
-func groupStatusServer(status int) *httptest.Server {
+// fronteggStatusServer answers every SCIM group call with status.
+func fronteggStatusServer(status int) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
 	}))
 }
 
-func scimGroupMeta(srv *httptest.Server) *utils.ProviderMeta {
+func fronteggMeta(srv *httptest.Server) *utils.ProviderMeta {
 	return &utils.ProviderMeta{Frontegg: &clients.FronteggClient{Endpoint: srv.URL, HTTPClient: srv.Client()}}
 }
 
 // A group removed in Frontegg should leave state on refresh, not fail the plan.
 func TestScimGroupResourceReadGoneRemovesFromState(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusNotFound)
+	srv := fronteggStatusServer(http.StatusNotFound)
 	defer srv.Close()
 
 	d := schema.TestResourceDataRaw(t, Scim2GroupSchema, nil)
 	d.SetId("gone-group")
 
-	r.False(scim2GroupRead(context.TODO(), d, scimGroupMeta(srv)).HasError())
+	r.False(scim2GroupRead(context.TODO(), d, fronteggMeta(srv)).HasError())
 	r.Empty(d.Id())
 }
 
 // Anything other than a 404 is a real failure and must not clear state.
 func TestScimGroupResourceReadErrorKeepsState(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusInternalServerError)
+	srv := fronteggStatusServer(http.StatusInternalServerError)
 	defer srv.Close()
 
 	d := schema.TestResourceDataRaw(t, Scim2GroupSchema, nil)
 	d.SetId("some-group")
 
-	r.True(scim2GroupRead(context.TODO(), d, scimGroupMeta(srv)).HasError())
+	r.True(scim2GroupRead(context.TODO(), d, fronteggMeta(srv)).HasError())
 	r.Equal("some-group", d.Id())
 }
 
 func TestScimGroupResourceDeleteGoneSucceeds(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusNotFound)
+	srv := fronteggStatusServer(http.StatusNotFound)
 	defer srv.Close()
 
 	d := schema.TestResourceDataRaw(t, Scim2GroupSchema, nil)
 	d.SetId("gone-group")
 
-	r.False(scim2GroupDelete(context.TODO(), d, scimGroupMeta(srv)).HasError())
+	r.False(scim2GroupDelete(context.TODO(), d, fronteggMeta(srv)).HasError())
 	r.Empty(d.Id())
 }

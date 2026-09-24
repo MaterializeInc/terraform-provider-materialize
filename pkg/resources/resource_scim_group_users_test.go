@@ -126,31 +126,31 @@ func scimGroupUsersData(t *testing.T) *schema.ResourceData {
 
 func TestScimGroupUsersReadGoneRemovesFromState(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusNotFound)
+	srv := fronteggStatusServer(http.StatusNotFound)
 	defer srv.Close()
 
 	d := scimGroupUsersData(t)
-	r.False(scimGroupUsersRead(context.TODO(), d, scimGroupMeta(srv)).HasError())
+	r.False(scimGroupUsersRead(context.TODO(), d, fronteggMeta(srv)).HasError())
 	r.Empty(d.Id())
 }
 
 func TestScimGroupUsersReadErrorKeepsState(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusInternalServerError)
+	srv := fronteggStatusServer(http.StatusInternalServerError)
 	defer srv.Close()
 
 	d := scimGroupUsersData(t)
-	r.True(scimGroupUsersRead(context.TODO(), d, scimGroupMeta(srv)).HasError())
+	r.True(scimGroupUsersRead(context.TODO(), d, fronteggMeta(srv)).HasError())
 	r.Equal("gone-group", d.Id())
 }
 
 func TestScimGroupUsersUpdateGoneReportsMissingGroup(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusNotFound)
+	srv := fronteggStatusServer(http.StatusNotFound)
 	defer srv.Close()
 
 	d := scimGroupUsersData(t)
-	diags := scimGroupUsersUpdate(context.TODO(), d, scimGroupMeta(srv))
+	diags := scimGroupUsersUpdate(context.TODO(), d, fronteggMeta(srv))
 	r.True(diags.HasError())
 	r.Contains(diags[0].Summary, "does not exist")
 	r.Empty(d.Id())
@@ -158,10 +158,10 @@ func TestScimGroupUsersUpdateGoneReportsMissingGroup(t *testing.T) {
 
 func TestScimGroupUsersDeleteGoneSucceeds(t *testing.T) {
 	r := require.New(t)
-	srv := groupStatusServer(http.StatusNotFound)
+	srv := fronteggStatusServer(http.StatusNotFound)
 	defer srv.Close()
 
 	d := scimGroupUsersData(t)
-	r.False(scimGroupUsersDelete(context.TODO(), d, scimGroupMeta(srv)).HasError())
+	r.False(scimGroupUsersDelete(context.TODO(), d, fronteggMeta(srv)).HasError())
 	r.Empty(d.Id())
 }

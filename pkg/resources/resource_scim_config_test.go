@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -97,4 +98,16 @@ func TestSCIM2ConfigurationResourceDelete(t *testing.T) {
 		// Assertions to check the state after delete
 		r.Equal("", d.Id())
 	})
+}
+
+func TestSCIM2ConfigurationResourceDeleteGoneSucceeds(t *testing.T) {
+	r := require.New(t)
+	srv := fronteggStatusServer(http.StatusNotFound)
+	defer srv.Close()
+
+	d := schema.TestResourceDataRaw(t, resourceSCIM2ConfigurationsSchema, nil)
+	d.SetId("gone-config")
+
+	r.False(resourceSCIM2ConfigurationsDelete(context.TODO(), d, fronteggMeta(srv)).HasError())
+	r.Empty(d.Id())
 }
