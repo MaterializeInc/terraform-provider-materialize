@@ -77,7 +77,7 @@ resource "materialize_sink_iceberg" "append" {
 
 ### Optional
 
-- `aws_connection` (Block List, Max: 1) The AWS connection for object storage access. No longer needed: the sink inherits storage credentials from the Iceberg catalog connection. Kept for sinks created before that change. (see [below for nested schema](#nestedblock--aws_connection))
+- `aws_connection` (Block List, Max: 1, Deprecated) (Deprecated) The AWS connection for object storage access. Materialize now takes storage credentials from the Iceberg catalog connection, so this is no longer needed. Removing it does not recreate the sink. (see [below for nested schema](#nestedblock--aws_connection))
 - `cluster_name` (String) The cluster to maintain this sink.
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the sink database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.

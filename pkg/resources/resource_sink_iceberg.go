@@ -44,12 +44,7 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
-	"aws_connection": IdentifierSchema(IdentifierSchemaParams{
-		Elem:        "aws_connection",
-		Description: "The AWS connection for object storage access. No longer needed: the sink inherits storage credentials from the Iceberg catalog connection. Kept for sinks created before that change.",
-		Required:    false,
-		ForceNew:    true,
-	}),
+	"aws_connection": sinkIcebergAwsConnectionSchema(),
 	"key": {
 		Description: "The columns that uniquely identify rows. Required when `mode` is `upsert` and not allowed when `mode` is `append`.",
 		Type:        schema.TypeList,
@@ -80,6 +75,24 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 	},
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
+}
+
+// The sink inherits storage credentials from the Iceberg catalog connection,
+// so Materialize no longer needs USING AWS CONNECTION. The block stays for
+// sinks created with it. Removing it from a configuration is suppressed so the
+// deprecation warning does not push users into recreating their sinks.
+func sinkIcebergAwsConnectionSchema() *schema.Schema {
+	s := IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "aws_connection",
+		Description: "(Deprecated) The AWS connection for object storage access. Materialize now takes storage credentials from the Iceberg catalog connection, so this is no longer needed. Removing it does not recreate the sink.",
+		Required:    false,
+		ForceNew:    true,
+	})
+	s.Deprecated = "The `aws_connection` block is no longer needed: the sink inherits storage credentials from the Iceberg catalog connection. Remove it from the configuration."
+	s.DiffSuppressFunc = func(k, old, new string, d *schema.ResourceData) bool {
+		return old != "" && (new == "" || new == "0")
+	}
+	return s
 }
 
 func SinkIceberg() *schema.Resource {
