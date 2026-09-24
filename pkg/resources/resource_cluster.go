@@ -179,6 +179,17 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	value := utils.ExtractId(fullId)
 	useNameAsId := d.Get("identify_by_name").(bool)
 
+	// Read the in-flight reconfiguration before mz_clusters. The two reads are
+	// separate snapshots, and a reconfiguration that finalized between them
+	// would otherwise leave mz_clusters read as the old shape with no
+	// in-progress row to correct it, so the old size would be reported until
+	// the next refresh. In this order a finalize between the reads only makes
+	// mz_clusters agree with the target already in hand.
+	pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, value, idType == "name")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	s, err := materialize.ScanCluster(metaDb, value, idType == "name")
 	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
@@ -201,17 +212,13 @@ func clusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.FromErr(err)
 	}
 
-	// If a graceful resize is in flight, mz_clusters still reports the old
-	// size/replication factor until it commits. Reflect the target so Terraform
-	// sees the intended end-state rather than perpetually diffing against the
-	// pre-resize values. The resize proceeds in the background; users who want
-	// apply to block on it use the `wait_until_ready` option instead.
+	// While a graceful reconfiguration is in flight, mz_clusters still reports
+	// the old size/replication factor until it commits. Reflect the target so
+	// Terraform sees the intended end-state rather than perpetually diffing
+	// against the pre-resize values. The resize proceeds in the background;
+	// users who want apply to block on it use the `wait_until_ready` option.
 	size := s.Size.String
 	replicationFactor := s.ReplicationFactor.Int64
-	pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, s.ClusterId.String)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	if inFlight {
 		if pending.Size.Valid {
 			size = pending.Size.String

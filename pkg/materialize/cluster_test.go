@@ -277,7 +277,7 @@ func TestScanClusterPendingReconfigurationMissingView(t *testing.T) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
 			WillReturnError(&pgconn.PgError{Code: "42P01", Message: "unknown catalog item"})
 
-		_, inFlight, err := ScanClusterPendingReconfiguration(db, "u1")
+		_, inFlight, err := ScanClusterPendingReconfiguration(db, "u1", false)
 		if err != nil {
 			t.Fatalf("Expected a missing view to degrade gracefully, got %v", err)
 		}
@@ -292,7 +292,7 @@ func TestScanClusterPendingReconfigurationQueryError(t *testing.T) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
 			WillReturnError(errors.New("connection reset by peer"))
 
-		if _, _, err := ScanClusterPendingReconfiguration(db, "u1"); err == nil {
+		if _, _, err := ScanClusterPendingReconfiguration(db, "u1", false); err == nil {
 			t.Fatal("Expected a transient failure to be returned, not swallowed")
 		}
 	})

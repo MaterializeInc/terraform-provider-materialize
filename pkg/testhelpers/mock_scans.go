@@ -168,7 +168,7 @@ func MockClusterReconfigurationScan(mock sqlmock.Sqlmock, size string, replicati
 			target->>'size' AS size,
 			\(target->>'replication_factor'\)::bigint AS replication_factor
 		FROM mz_internal.mz_cluster_reconfigurations
-		WHERE cluster_id = \$1 AND status = 'in-progress'`
+		WHERE cluster_id = .+ AND status = 'in-progress'`
 
 	rows := mock.NewRows([]string{"size", "replication_factor"})
 	if size != "" {

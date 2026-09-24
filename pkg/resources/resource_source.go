@@ -48,7 +48,7 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	// perpetually diffing against the pre-resize value.
 	size := s.Size.String
 	if s.ClusterId.Valid {
-		pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, s.ClusterId.String)
+		pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, s.ClusterId.String, false)
 		if err != nil {
 			return diag.FromErr(err)
 		}

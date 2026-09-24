@@ -58,8 +58,8 @@ func TestResourceClusterCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
-		testhelpers.MockClusterScan(mock, pp)
 		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockClusterScan(mock, pp)
 		testhelpers.MockClusterAutoScalingScan(mock, "", 0)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
@@ -101,8 +101,8 @@ func TestResourceClusterAutoScalingCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
-		testhelpers.MockClusterScan(mock, pp)
 		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockClusterScan(mock, pp)
 		testhelpers.MockClusterAutoScalingScan(mock, "800cc", 15)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
@@ -160,8 +160,8 @@ func TestResourceClusterReadIdMigration(t *testing.T) {
 			testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 				// Query Params
 				pp := `WHERE mz_clusters.id = '` + tc.mockId + `'`
-				testhelpers.MockClusterScan(mock, pp)
 				testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+				testhelpers.MockClusterScan(mock, pp)
 				testhelpers.MockClusterAutoScalingScan(mock, "", 0)
 
 				if err := clusterRead(context.TODO(), d, db); err != nil {
@@ -206,8 +206,8 @@ func TestResourceClusterZeroReplicationCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_clusters.id = 'u1'`
-		testhelpers.MockClusterScan(mock, pp)
 		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockClusterScan(mock, pp)
 		testhelpers.MockClusterAutoScalingScan(mock, "", 0)
 
 		if err := clusterCreate(context.TODO(), d, db); err != nil {
@@ -308,4 +308,27 @@ func TestWaitUntilReadyEnabled(t *testing.T) {
 	require.False(t, waitUntilReadyEnabled(block(false)))
 	require.False(t, waitUntilReadyEnabled(fakeChanges{"wait_until_ready": []interface{}{}}))
 	require.False(t, waitUntilReadyEnabled(fakeChanges{}))
+}
+
+// While a reconfiguration is in flight, mz_clusters still shows the old shape
+// and the read has to report the target instead. The mock enforces query
+// order: the reconfiguration is read before mz_clusters, so a finalize landing
+// between the two reads cannot leave the old shape as the answer.
+func TestResourceClusterReadReportsReconfigurationTarget(t *testing.T) {
+	r := require.New(t)
+
+	d := schema.TestResourceDataRaw(t, Cluster().Schema, map[string]interface{}{"name": "cluster"})
+	d.SetId("aws/us-east-1:id:u1")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		// the reconfiguration is heading to 3xsmall / 1 ...
+		testhelpers.MockClusterReconfigurationScan(mock, "3xsmall", 1)
+		// ... while mz_clusters still says small / 2
+		testhelpers.MockClusterScan(mock, `WHERE mz_clusters.id = 'u1'`)
+		testhelpers.MockClusterAutoScalingScan(mock, "", 0)
+
+		r.False(clusterRead(context.TODO(), d, db).HasError())
+		r.Equal("3xsmall", d.Get("size"))
+		r.Equal(1, d.Get("replication_factor"))
+	})
 }
