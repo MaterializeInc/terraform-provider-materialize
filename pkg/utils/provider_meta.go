@@ -96,6 +96,14 @@ func (p *ProviderMeta) GetFronteggRoles(ctx context.Context) (map[string][]strin
 	return p.FronteggRoles, nil
 }
 
+// InvalidateFronteggRoles makes roles created or renamed in this apply visible
+// to dependent resources. Previously returned maps remain immutable.
+func (p *ProviderMeta) InvalidateFronteggRoles() {
+	p.fronteggRolesMu.Lock()
+	defer p.fronteggRolesMu.Unlock()
+	p.FronteggRoles = nil
+}
+
 // ValidateSaaSOnly validates that a resource is only used in SaaS mode and returns
 // a clear error message if used in self-hosted mode.
 func (p *ProviderMeta) ValidateSaaSOnly(resourceType string) diag.Diagnostics {
