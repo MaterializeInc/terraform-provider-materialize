@@ -82,7 +82,7 @@ resource "materialize_sink_iceberg" "append" {
 - `comment` (String) Comment on an object in the database.
 - `database_name` (String) The identifier for the sink database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `key` (List of String) The columns that uniquely identify rows. Required when `mode` is `upsert` and not allowed when `mode` is `append`.
-- `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique.
+- `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique. Only valid with `mode = "upsert"`.
 - `mode` (String) How changes are written to the Iceberg table. `upsert` keeps one row per `key` and writes delete files for updates and deletes. `append` writes every change as a new row with `_mz_diff` and `_mz_timestamp` columns and takes no `key`; Databricks Unity Catalog tables only accept `append`.
 - `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.

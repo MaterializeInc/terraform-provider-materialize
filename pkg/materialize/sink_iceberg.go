@@ -113,8 +113,8 @@ func (b *SinkIcebergBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` KEY (%s)`, strings.Join(b.key, ", ")))
 	}
 
-	// NOT ENFORCED
-	if b.keyNotEnforced {
+	// NOT ENFORCED qualifies the KEY; without one it is a parse error
+	if len(b.key) > 0 && b.keyNotEnforced {
 		q.WriteString(` NOT ENFORCED`)
 	}
 

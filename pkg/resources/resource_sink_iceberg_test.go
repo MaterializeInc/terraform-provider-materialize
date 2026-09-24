@@ -9,6 +9,7 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -208,4 +209,31 @@ func TestResourceSinkIcebergRead(t *testing.T) {
 			t.Fatalf("unexpected id of %s", d.Id())
 		}
 	})
+}
+
+func TestResourceSinkIcebergKeyModePlanCheck(t *testing.T) {
+	r := require.New(t)
+	res := SinkIceberg()
+	plan := func(extra map[string]interface{}) error {
+		cfg := map[string]interface{}{
+			"name":                       "iceberg_sink",
+			"from":                       []interface{}{map[string]interface{}{"name": "my_view"}},
+			"iceberg_catalog_connection": []interface{}{map[string]interface{}{"name": "iceberg_catalog"}},
+			"namespace":                  "ns",
+			"table":                      "tbl",
+			"commit_interval":            "10s",
+		}
+		for k, v := range extra {
+			cfg[k] = v
+		}
+		_, err := res.Diff(context.TODO(), nil, terraform.NewResourceConfigRaw(cfg), nil)
+		return err
+	}
+
+	r.NoError(plan(map[string]interface{}{"key": []interface{}{"id"}}))
+	r.NoError(plan(map[string]interface{}{"key": []interface{}{"id"}, "key_not_enforced": true}))
+	r.NoError(plan(map[string]interface{}{"mode": "append"}))
+	r.ErrorContains(plan(map[string]interface{}{}), "key is required")
+	r.ErrorContains(plan(map[string]interface{}{"mode": "append", "key": []interface{}{"id"}}), "key is not allowed")
+	r.ErrorContains(plan(map[string]interface{}{"mode": "append", "key_not_enforced": true}), "key_not_enforced has no effect")
 }

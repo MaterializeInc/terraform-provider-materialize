@@ -58,7 +58,7 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"key_not_enforced": {
-		Description: "Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique.",
+		Description: "Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique. Only valid with `mode = \"upsert\"`.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
@@ -101,9 +101,14 @@ func SinkIceberg() *schema.Resource {
 	}
 }
 
-// Materialize rejects both combinations, but at apply time. Catching them in
-// the plan saves a failed apply.
+// Materialize rejects these combinations as well, but only at apply time.
+// Values still unknown at plan time are left for Materialize to check.
 func sinkIcebergValidateKeyForMode(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	for _, k := range []string{"mode", "key", "key_not_enforced"} {
+		if !d.NewValueKnown(k) {
+			return nil
+		}
+	}
 	mode := d.Get("mode").(string)
 	keys := d.Get("key").([]interface{})
 	switch {
@@ -111,6 +116,8 @@ func sinkIcebergValidateKeyForMode(ctx context.Context, d *schema.ResourceDiff, 
 		return fmt.Errorf("key is required when mode is %q", mode)
 	case mode == "append" && len(keys) > 0:
 		return fmt.Errorf("key is not allowed when mode is %q", mode)
+	case mode == "append" && d.Get("key_not_enforced").(bool):
+		return fmt.Errorf("key_not_enforced has no effect when mode is %q", mode)
 	}
 	return nil
 }

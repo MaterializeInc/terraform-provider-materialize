@@ -79,12 +79,14 @@ func TestAccSinkIceberg_keyMustMatchMode(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSinkIcebergAppendResource(nameSpace, "mode = \"append\"\n  key = [\"id\"]"),
-				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`key is not allowed when mode is "append"`),
 			},
 			{
+				Config:      testAccSinkIcebergAppendResource(nameSpace, "mode = \"append\"\n  key_not_enforced = true"),
+				ExpectError: regexp.MustCompile(`key_not_enforced has no effect when mode is "append"`),
+			},
+			{
 				Config:      testAccSinkIcebergAppendResource(nameSpace, ""),
-				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`key is required when mode is "upsert"`),
 			},
 		},

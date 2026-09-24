@@ -9,6 +9,7 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -142,4 +143,26 @@ func TestResourceConnectionIcebergCatalogUpdate(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestResourceConnectionIcebergCatalogOptionsPlanCheck(t *testing.T) {
+	r := require.New(t)
+	res := ConnectionIcebergCatalog()
+	aws := []interface{}{map[string]interface{}{"name": "aws_conn"}}
+	cred := []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "oauth"}}}}
+	plan := func(extra map[string]interface{}) error {
+		cfg := map[string]interface{}{"name": "iceberg_conn", "url": "https://catalog.example.com/iceberg"}
+		for k, v := range extra {
+			cfg[k] = v
+		}
+		_, err := res.Diff(context.TODO(), nil, terraform.NewResourceConfigRaw(cfg), nil)
+		return err
+	}
+
+	r.NoError(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "aws_connection": aws}))
+	r.NoError(plan(map[string]interface{}{"catalog_type": "rest", "credential": cred, "access_delegation": "vended-credentials"}))
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest"}), "aws_connection is required")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "aws_connection": aws, "access_delegation": "vended-credentials"}), "access_delegation is not supported")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "rest", "credential": cred, "aws_connection": aws}), "aws_connection is not supported")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "rest"}), "credential is required")
 }
