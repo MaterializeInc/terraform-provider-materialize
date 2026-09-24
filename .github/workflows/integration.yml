@@ -20,6 +20,11 @@ jobs:
       - name: Docker Compose Up
         run: docker compose up --build -d
 
+      - name: sqlserver fixture summary
+        if: always()
+        run: |
+          docker logs sqlserver 2>&1 | grep -E 'started successfully|accepted a job|CDC is enabled|CDC enable failed|exited before accepting|Attempt [0-9]+: (SQL Server Agent|CDC)' || true
+
       - name: Container logs on failure
         if: failure()
         run: |
