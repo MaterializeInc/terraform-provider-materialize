@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/frontegg"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -81,8 +82,11 @@ func scimGroupUsersRead(ctx context.Context, d *schema.ResourceData, meta interf
 
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
+		if clients.IsNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %w", err))
 	}
 
 	var userIDs []interface{}
@@ -109,8 +113,11 @@ func scimGroupUsersUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Get the current users assigned to the group
 	group, err := frontegg.GetSCIMGroupByID(ctx, client, groupID)
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %s", err))
+		if clients.IsNotFoundError(err) {
+			d.SetId("")
+			return diag.Errorf("SCIM group %q does not exist; wait for the identity provider to provision it before applying the membership", groupID)
+		}
+		return diag.FromErr(fmt.Errorf("error fetching SCIM group: %w", err))
 	}
 
 	// Extract user IDs from group.Users
@@ -168,8 +175,8 @@ func scimGroupUsersDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	client := providerMeta.Frontegg
 
 	err = frontegg.RemoveUsersFromGroup(ctx, client, groupID, userIDs)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error removing users from SCIM group: %s", err))
+	if err != nil && !clients.IsNotFoundError(err) {
+		return diag.FromErr(fmt.Errorf("error removing users from SCIM group: %w", err))
 	}
 
 	// Forcing deletion by setting an empty ID

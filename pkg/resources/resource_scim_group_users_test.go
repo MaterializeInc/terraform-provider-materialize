@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/clients"
@@ -113,4 +114,65 @@ func TestScimGroupUsersDelete(t *testing.T) {
 		// Assertions to check the state after delete
 		r.Empty(d.Id())
 	})
+}
+
+func groupUsersStatusServer(status int) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(status)
+	}))
+}
+
+func scimGroupUsersMeta(srv *httptest.Server) *utils.ProviderMeta {
+	return &utils.ProviderMeta{Frontegg: &clients.FronteggClient{Endpoint: srv.URL, HTTPClient: srv.Client()}}
+}
+
+func scimGroupUsersData(t *testing.T) *schema.ResourceData {
+	d := schema.TestResourceDataRaw(t, ScimGroupUsersSchema, map[string]interface{}{
+		"group_id": "gone-group",
+		"users":    []interface{}{"u1"},
+	})
+	d.SetId("gone-group")
+	return d
+}
+
+func TestScimGroupUsersReadGoneRemovesFromState(t *testing.T) {
+	r := require.New(t)
+	srv := groupUsersStatusServer(http.StatusNotFound)
+	defer srv.Close()
+
+	d := scimGroupUsersData(t)
+	r.False(scimGroupUsersRead(context.TODO(), d, scimGroupUsersMeta(srv)).HasError())
+	r.Empty(d.Id())
+}
+
+func TestScimGroupUsersReadErrorKeepsState(t *testing.T) {
+	r := require.New(t)
+	srv := groupUsersStatusServer(http.StatusInternalServerError)
+	defer srv.Close()
+
+	d := scimGroupUsersData(t)
+	r.True(scimGroupUsersRead(context.TODO(), d, scimGroupUsersMeta(srv)).HasError())
+	r.Equal("gone-group", d.Id())
+}
+
+func TestScimGroupUsersUpdateGoneReportsMissingGroup(t *testing.T) {
+	r := require.New(t)
+	srv := groupUsersStatusServer(http.StatusNotFound)
+	defer srv.Close()
+
+	d := scimGroupUsersData(t)
+	diags := scimGroupUsersUpdate(context.TODO(), d, scimGroupUsersMeta(srv))
+	r.True(diags.HasError())
+	r.Contains(diags[0].Summary, "does not exist")
+	r.Empty(d.Id())
+}
+
+func TestScimGroupUsersDeleteGoneSucceeds(t *testing.T) {
+	r := require.New(t)
+	srv := groupUsersStatusServer(http.StatusNotFound)
+	defer srv.Close()
+
+	d := scimGroupUsersData(t)
+	r.False(scimGroupUsersDelete(context.TODO(), d, scimGroupUsersMeta(srv)).HasError())
+	r.Empty(d.Id())
 }
