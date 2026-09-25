@@ -159,15 +159,33 @@ resource "materialize_sink_iceberg" "sink_iceberg" {
   namespace = "my_namespace"
   table     = "my_table"
 
-  aws_connection {
-    name          = materialize_connection_aws.minio_conn.name
-    database_name = materialize_connection_aws.minio_conn.database_name
-    schema_name   = materialize_connection_aws.minio_conn.schema_name
-  }
-
   key              = ["id"]
   key_not_enforced = true
   commit_interval  = "10s"
+}
+
+resource "materialize_sink_iceberg" "sink_iceberg_append" {
+  name          = "sink_iceberg_append"
+  schema_name   = materialize_schema.schema.name
+  database_name = materialize_database.database.name
+  cluster_name  = materialize_cluster.cluster_sink.name
+
+  from {
+    name          = materialize_table.iceberg_sink_table.name
+    database_name = materialize_table.iceberg_sink_table.database_name
+    schema_name   = materialize_table.iceberg_sink_table.schema_name
+  }
+
+  iceberg_catalog_connection {
+    name          = materialize_connection_iceberg_catalog.iceberg_conn.name
+    database_name = materialize_connection_iceberg_catalog.iceberg_conn.database_name
+    schema_name   = materialize_connection_iceberg_catalog.iceberg_conn.schema_name
+  }
+
+  namespace       = "my_namespace"
+  table           = "my_table_append"
+  mode            = "append"
+  commit_interval = "10s"
 }
 
 resource "materialize_sink_kafka" "sink_kafka_no_snapshot" {

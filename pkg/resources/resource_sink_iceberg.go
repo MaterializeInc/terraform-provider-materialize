@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -66,6 +67,13 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 		ForceNew:     true,
 		Default:      "upsert",
 		ValidateFunc: validation.StringInSlice([]string{"upsert", "append"}, false),
+		// Sinks created before this attribute existed have no mode in state
+		// until the next refresh fills it in. Every one of them is an upsert
+		// sink, so do not plan a replacement for them in the meantime, for
+		// example under -refresh=false.
+		DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+			return d.Id() != "" && old == "" && new == "upsert"
+		},
 	},
 	"commit_interval": {
 		Description: "How frequently to commit snapshots to Iceberg (e.g., '10s', '1m'). Required for Iceberg sinks.",
@@ -88,9 +96,12 @@ func sinkIcebergAwsConnectionSchema() *schema.Schema {
 		Required:    false,
 		ForceNew:    true,
 	})
-	s.Deprecated = "The `aws_connection` block is no longer needed: the sink inherits storage credentials from the Iceberg catalog connection. Remove it from the configuration."
+	s.Deprecated = "The `aws_connection` attribute is deprecated and will be removed in a future release. The sink inherits storage credentials from the Iceberg catalog connection, so remove it from the configuration."
 	s.DiffSuppressFunc = func(k, old, new string, d *schema.ResourceData) bool {
-		return old != "" && (new == "" || new == "0")
+		if strings.HasSuffix(k, ".#") {
+			return old != "" && old != "0" && new == "0"
+		}
+		return old != "" && new == ""
 	}
 	return s
 }

@@ -43,7 +43,7 @@ var connectionIcebergCatalogSchema = map[string]*schema.Schema{
 		Required:    false,
 		ForceNew:    true,
 	}),
-	"credential": ValueSecretSchema("credential", "OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Required for `rest` catalogs", false, true),
+	"credential": icebergCatalogCredentialSchema(),
 	"oauth2_server_url": {
 		Description: "The token endpoint the `credential` is exchanged at. Defaults to the catalog's own `/v1/oauth/tokens` endpoint.",
 		Type:        schema.TypeString,
@@ -90,21 +90,34 @@ func ConnectionIcebergCatalog() *schema.Resource {
 // Materialize rejects these combinations as well, but only at apply time.
 // Values still unknown at plan time are left for Materialize to check.
 func connectionIcebergCatalogValidateOptions(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-	for _, k := range []string{"catalog_type", "aws_connection", "credential", "access_delegation"} {
+	for _, k := range []string{"catalog_type", "warehouse", "aws_connection", "credential", "oauth2_server_url", "scope", "access_delegation"} {
 		if !d.NewValueKnown(k) {
 			return nil
 		}
 	}
 	catalogType := d.Get("catalog_type").(string)
 	hasAws := len(d.Get("aws_connection").([]interface{})) > 0
-	hasCredential := len(d.Get("credential").([]interface{})) > 0
+	hasCredential, err := icebergCatalogCredentialSet(d)
+	if err != nil {
+		return err
+	}
 	switch catalogType {
 	case "s3tablesrest":
 		if !hasAws {
 			return fmt.Errorf("aws_connection is required when catalog_type is %q", catalogType)
 		}
-		if d.Get("access_delegation").(string) != "" {
-			return fmt.Errorf("access_delegation is not supported when catalog_type is %q", catalogType)
+		if d.Get("warehouse").(string) == "" {
+			return fmt.Errorf("warehouse is required when catalog_type is %q", catalogType)
+		}
+		// Materialize rejects oauth2_server_url and access_delegation here, and
+		// accepts credential and scope but ignores them, so reject all four.
+		for _, k := range []string{"access_delegation", "oauth2_server_url", "scope"} {
+			if d.Get(k).(string) != "" {
+				return fmt.Errorf("%s is not supported when catalog_type is %q", k, catalogType)
+			}
+		}
+		if len(d.Get("credential").([]interface{})) > 0 {
+			return fmt.Errorf("credential is not supported when catalog_type is %q, use aws_connection", catalogType)
 		}
 	case "rest":
 		if hasAws {
@@ -115,6 +128,42 @@ func connectionIcebergCatalogValidateOptions(ctx context.Context, d *schema.Reso
 		}
 	}
 	return nil
+}
+
+// ValueSecretSchema puts ForceNew on the block, which the SDK only applies when
+// the block is added or removed. Changing the text or the secret it points at
+// would otherwise plan as an in-place update that nothing applies, since
+// Materialize cannot alter the option.
+func icebergCatalogCredentialSchema() *schema.Schema {
+	s := ValueSecretSchema("credential", "OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Required for `rest` catalogs", false, true)
+	r := s.Elem.(*schema.Resource)
+	r.Schema["text"].ForceNew = true
+	secret := r.Schema["secret"]
+	secret.ForceNew = true
+	for _, f := range secret.Elem.(*schema.Resource).Schema {
+		f.ForceNew = true
+	}
+	return s
+}
+
+// icebergCatalogCredentialSet reports whether the credential block holds a
+// value. An empty `credential {}` block is rejected here rather than reaching
+// the builder with nothing to send.
+func icebergCatalogCredentialSet(d *schema.ResourceDiff) (bool, error) {
+	blocks := d.Get("credential").([]interface{})
+	if len(blocks) == 0 {
+		return false, nil
+	}
+	if !d.NewValueKnown("credential.0.text") {
+		return true, nil
+	}
+	block, _ := blocks[0].(map[string]interface{})
+	text, _ := block["text"].(string)
+	secret, _ := block["secret"].([]interface{})
+	if text == "" && len(secret) == 0 {
+		return false, fmt.Errorf("credential must set text or secret")
+	}
+	return true, nil
 }
 
 func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

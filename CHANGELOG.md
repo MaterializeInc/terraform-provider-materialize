@@ -4,6 +4,10 @@
 
 ### Features
 
+* Added `exclude_constraints` and `exclude_all_constraints` to `materialize_source_table_postgres`, mapping to `EXCLUDE CONSTRAINTS` and `EXCLUDE ALL CONSTRAINTS` on `CREATE TABLE ... FROM SOURCE`. Leaving a constraint out of the table lets it be dropped upstream without stalling the source. Requires Materialize v26.42 or later.
+* `materialize_connection_iceberg_catalog` now supports `catalog_type = "rest"` for any Iceberg REST catalog, including Databricks Unity Catalog [#934](https://github.com/MaterializeInc/terraform-provider-materialize/pull/934), with `credential` (a secret or text holding `<client_id>:<client_secret>`), `oauth2_server_url`, `scope` and `access_delegation`. `warehouse` and `aws_connection` are now optional since a REST catalog does not need them.
+* `materialize_sink_iceberg` gained `mode`, which defaults to `upsert` and accepts `append` for tables that only take appends, such as Databricks Unity Catalog [#934](https://github.com/MaterializeInc/terraform-provider-materialize/pull/934). `key` is now optional: the plan requires it for `upsert` and rejects it for `append`. `aws_connection` is deprecated and optional, as the sink inherits storage credentials from the catalog connection; removing it from a configuration does not recreate the sink. The mode is read back from the catalog so imports pick it up.
+
 ### Bug Fixes
 
 * Fixed `materialize_cluster` occasionally reporting the old `size` and `replication_factor` right after an `ALTER CLUSTER`, which showed up as a non-empty plan straight after an apply. The read fetched `mz_clusters` before checking for an in-flight reconfiguration, so a reconfiguration that finalized between the two reads was missed. The in-flight check now comes first.

@@ -159,10 +159,57 @@ func TestResourceConnectionIcebergCatalogOptionsPlanCheck(t *testing.T) {
 		return err
 	}
 
-	r.NoError(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "aws_connection": aws}))
+	wh := "arn:aws:s3tables:us-east-1:123456789012:bucket/b"
+	r.NoError(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "warehouse": wh, "aws_connection": aws}))
 	r.NoError(plan(map[string]interface{}{"catalog_type": "rest", "credential": cred, "access_delegation": "vended-credentials"}))
 	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest"}), "aws_connection is required")
-	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "aws_connection": aws, "access_delegation": "vended-credentials"}), "access_delegation is not supported")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "aws_connection": aws}), "warehouse is required")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "warehouse": wh, "aws_connection": aws, "access_delegation": "vended-credentials"}), "access_delegation is not supported")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "warehouse": wh, "aws_connection": aws, "oauth2_server_url": "https://x/token"}), "oauth2_server_url is not supported")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "warehouse": wh, "aws_connection": aws, "scope": "all"}), "scope is not supported")
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "s3tablesrest", "warehouse": wh, "aws_connection": aws, "credential": cred}), "credential is not supported")
+	// an empty block used to pass the plan and panic on apply
+	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "rest", "credential": []interface{}{map[string]interface{}{}}}), "credential must set text or secret")
 	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "rest", "credential": cred, "aws_connection": aws}), "aws_connection is not supported")
 	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "rest"}), "credential is required")
+}
+
+// Materialize cannot alter the credential, so any change inside the block,
+// not only adding or removing it, has to replace the connection.
+func TestResourceConnectionIcebergCatalogCredentialChangeReplaces(t *testing.T) {
+	r := require.New(t)
+	res := ConnectionIcebergCatalog()
+	base := map[string]string{
+		"name": "iceberg_conn", "schema_name": "public", "database_name": "materialize",
+		"catalog_type": "rest", "url": "https://catalog.example.com/iceberg", "validate": "true",
+	}
+	withState := func(extra map[string]string) *terraform.InstanceState {
+		a := map[string]string{}
+		for k, v := range base {
+			a[k] = v
+		}
+		for k, v := range extra {
+			a[k] = v
+		}
+		return &terraform.InstanceState{ID: "u1", Attributes: a}
+	}
+	cfg := func(cred map[string]interface{}) *terraform.ResourceConfig {
+		return terraform.NewResourceConfigRaw(map[string]interface{}{
+			"name": "iceberg_conn", "catalog_type": "rest", "url": "https://catalog.example.com/iceberg",
+			"credential": []interface{}{cred},
+		})
+	}
+
+	text := withState(map[string]string{"credential.#": "1", "credential.0.text": "id:old", "credential.0.secret.#": "0"})
+	diff, err := res.Diff(context.TODO(), text, cfg(map[string]interface{}{"text": "id:new"}), nil)
+	r.NoError(err)
+	r.True(diff != nil && diff.RequiresNew(), "rotating the text credential must replace")
+
+	secret := withState(map[string]string{
+		"credential.#": "1", "credential.0.text": "", "credential.0.secret.#": "1",
+		"credential.0.secret.0.name": "old_secret", "credential.0.secret.0.schema_name": "public", "credential.0.secret.0.database_name": "materialize",
+	})
+	diff, err = res.Diff(context.TODO(), secret, cfg(map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "new_secret"}}}), nil)
+	r.NoError(err)
+	r.True(diff != nil && diff.RequiresNew(), "pointing at another secret must replace")
 }
