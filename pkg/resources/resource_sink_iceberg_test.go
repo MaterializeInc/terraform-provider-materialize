@@ -166,7 +166,6 @@ func TestResourceSinkIcebergCreateAppend(t *testing.T) {
 		if err := sinkIcebergCreate(context.TODO(), d, db); err != nil {
 			t.Fatal(err)
 		}
-		r.Equal("append", d.Get("mode"))
 	})
 }
 
@@ -278,4 +277,84 @@ func TestResourceSinkIcebergRemovingAwsConnectionDoesNotReplace(t *testing.T) {
 	diff, err = res.Diff(context.TODO(), state, terraform.NewResourceConfigRaw(withAws), nil)
 	r.NoError(err)
 	r.False(diff == nil || diff.Empty(), "adding aws_connection should still show up in the plan")
+}
+
+// Older Materialize versions may not report an Iceberg envelope; the read must
+// leave mode as it is rather than blank it.
+func TestResourceSinkIcebergReadKeepsModeOnUnknownEnvelope(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
+	d.SetId("u1")
+	r.NoError(d.Set("mode", "append"))
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		testhelpers.MockSinkIcebergScan(mock, `WHERE mz_sinks.id = 'u1'`, "")
+		if err := sinkIcebergRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+		r.Equal("append", d.Get("mode"))
+	})
+}
+
+func icebergSinkState(extra map[string]string) *terraform.InstanceState {
+	a := map[string]string{
+		"name": "iceberg_sink", "schema_name": "public", "database_name": "materialize",
+		"from.#": "1", "from.0.name": "my_view", "from.0.schema_name": "public", "from.0.database_name": "materialize",
+		"iceberg_catalog_connection.#": "1", "iceberg_catalog_connection.0.name": "iceberg_catalog", "iceberg_catalog_connection.0.schema_name": "public", "iceberg_catalog_connection.0.database_name": "materialize",
+		"namespace": "ns", "table": "tbl", "key.#": "1", "key.0": "id", "key_not_enforced": "false", "commit_interval": "10s",
+	}
+	for k, v := range extra {
+		a[k] = v
+	}
+	return &terraform.InstanceState{ID: "u1", Attributes: a}
+}
+
+var icebergSinkUpsertConfig = map[string]interface{}{
+	"name":                       "iceberg_sink",
+	"from":                       []interface{}{map[string]interface{}{"name": "my_view"}},
+	"iceberg_catalog_connection": []interface{}{map[string]interface{}{"name": "iceberg_catalog"}},
+	"namespace":                  "ns",
+	"table":                      "tbl",
+	"key":                        []interface{}{"id"},
+	"commit_interval":            "10s",
+}
+
+// State written before mode existed has no mode. Planning it without a refresh
+// must not replace the sink, while a real change to append still does.
+func TestResourceSinkIcebergUpgradeWithoutModeDoesNotReplace(t *testing.T) {
+	r := require.New(t)
+	res := SinkIceberg()
+
+	diff, err := res.Diff(context.TODO(), icebergSinkState(nil), terraform.NewResourceConfigRaw(icebergSinkUpsertConfig), nil)
+	r.NoError(err)
+	r.False(diff != nil && diff.RequiresNew(), "an upsert sink from an older provider must not be replaced, got %v", diff)
+
+	appendCfg := map[string]interface{}{}
+	for k, v := range icebergSinkUpsertConfig {
+		if k != "key" {
+			appendCfg[k] = v
+		}
+	}
+	appendCfg["mode"] = "append"
+	diff, err = res.Diff(context.TODO(), icebergSinkState(map[string]string{"mode": "upsert"}), terraform.NewResourceConfigRaw(appendCfg), nil)
+	r.NoError(err)
+	r.True(diff != nil && diff.RequiresNew(), "switching an existing sink to append must replace")
+}
+
+// Only removing the deprecated block is suppressed; pointing it at a
+// connection named "0" is a real change.
+func TestResourceSinkIcebergAwsConnectionNamedZeroIsNotSuppressed(t *testing.T) {
+	r := require.New(t)
+	state := icebergSinkState(map[string]string{
+		"mode": "upsert", "aws_connection.#": "1", "aws_connection.0.name": "aws_conn",
+		"aws_connection.0.schema_name": "public", "aws_connection.0.database_name": "materialize",
+	})
+	cfg := map[string]interface{}{}
+	for k, v := range icebergSinkUpsertConfig {
+		cfg[k] = v
+	}
+	cfg["aws_connection"] = []interface{}{map[string]interface{}{"name": "0"}}
+	diff, err := SinkIceberg().Diff(context.TODO(), state, terraform.NewResourceConfigRaw(cfg), nil)
+	r.NoError(err)
+	r.False(diff == nil || diff.Empty(), "renaming aws_connection to 0 must show up in the plan")
 }

@@ -13,7 +13,11 @@ type ValueSecretStruct struct {
 
 func GetValueSecretStruct(v interface{}) ValueSecretStruct {
 	var value ValueSecretStruct
-	u := v.([]interface{})[0].(map[string]interface{})
+	l, _ := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return value
+	}
+	u := l[0].(map[string]interface{})
 	if v, ok := u["text"]; ok {
 		value.Text = v.(string)
 	}
