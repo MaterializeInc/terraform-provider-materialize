@@ -261,7 +261,7 @@ func TestResourceSinkIcebergRemovingAwsConnectionDoesNotReplace(t *testing.T) {
 		"from.#": "1", "from.0.name": "my_view", "from.0.schema_name": "public", "from.0.database_name": "materialize",
 		"iceberg_catalog_connection.#": "1", "iceberg_catalog_connection.0.name": "iceberg_catalog", "iceberg_catalog_connection.0.schema_name": "public", "iceberg_catalog_connection.0.database_name": "materialize",
 		"aws_connection.#": "1", "aws_connection.0.name": "aws_conn", "aws_connection.0.schema_name": "public", "aws_connection.0.database_name": "materialize",
-		"namespace": "ns", "table": "tbl", "key.#": "1", "key.0": "id", "key_not_enforced": "false", "mode": "upsert", "commit_interval": "10s",
+		"namespace": "ns", "table": "tbl", "key.#": "1", "key.0": "id", "key_not_enforced": "false", "commit_interval": "10s",
 	}}
 
 	// dropping the block from the configuration is a no-op
