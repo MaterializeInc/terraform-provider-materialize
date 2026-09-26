@@ -620,6 +620,16 @@ func MockSecretScan(mock sqlmock.Sqlmock, predicate string) {
 }
 
 func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
+	mockSinkScanWithEnvelope(mock, predicate, "kafka", "JSON")
+}
+
+// MockSinkIcebergScan returns an Iceberg sink whose envelope_type carries the
+// sink MODE, as mz_sinks reports it.
+func MockSinkIcebergScan(mock sqlmock.Sqlmock, predicate, mode string) {
+	mockSinkScanWithEnvelope(mock, predicate, "iceberg", mode)
+}
+
+func mockSinkScanWithEnvelope(mock sqlmock.Sqlmock, predicate, sinkType, envelope string) {
 	b := `
 	SELECT
 		mz_sinks.id,
@@ -653,7 +663,7 @@ func MockSinkScan(mock sqlmock.Sqlmock, predicate string) {
 
 	q := mockQueryBuilder(b, predicate, "")
 	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "sink_type", "size", "envelope_type", "connection_name", "cluster_name", "owner_name"}).
-		AddRow("u1", "sink", "schema", "database", "kafka", "small", "JSON", "conn", "cluster", "joe")
+		AddRow("u1", "sink", "schema", "database", sinkType, "small", envelope, "conn", "cluster", "joe")
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

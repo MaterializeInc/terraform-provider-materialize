@@ -13,56 +13,64 @@ import (
 )
 
 func sinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	_, diags := sinkReadParams(ctx, d, meta)
+	return diags
+}
+
+// sinkReadParams populates the fields every sink shares and hands back the
+// scanned row so a sink type can set its own fields without a second query.
+// A nil result with nil diagnostics means the sink no longer exists.
+func sinkReadParams(ctx context.Context, d *schema.ResourceData, meta interface{}) (*materialize.SinkParams, diag.Diagnostics) {
 	i := d.Id()
 
 	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 	s, err := materialize.ScanSink(metaDb, utils.ExtractId(i))
 	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
-		return nil
+		return nil, nil
 	} else if err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
 	if err := d.Set("name", s.SinkName.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	if err := d.Set("size", s.Size.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	b := materialize.Sink{SinkName: s.SinkName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
 	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
 	if err := d.Set("comment", s.Comment.String); err != nil {
-		return diag.FromErr(err)
+		return nil, diag.FromErr(err)
 	}
 
-	return nil
+	return &s, nil
 }
 
 func sinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

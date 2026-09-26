@@ -17,6 +17,7 @@ type SinkIcebergBuilder struct {
 	awsConnection            IdentifierSchemaStruct
 	key                      []string
 	keyNotEnforced           bool
+	mode                     string
 	commitInterval           string
 }
 
@@ -67,6 +68,11 @@ func (b *SinkIcebergBuilder) KeyNotEnforced(k bool) *SinkIcebergBuilder {
 	return b
 }
 
+func (b *SinkIcebergBuilder) Mode(m string) *SinkIcebergBuilder {
+	b.mode = m
+	return b
+}
+
 func (b *SinkIcebergBuilder) CommitInterval(c string) *SinkIcebergBuilder {
 	b.commitInterval = c
 	return b
@@ -107,13 +113,18 @@ func (b *SinkIcebergBuilder) Create() error {
 		q.WriteString(fmt.Sprintf(` KEY (%s)`, strings.Join(b.key, ", ")))
 	}
 
-	// NOT ENFORCED
-	if b.keyNotEnforced {
+	// NOT ENFORCED qualifies the KEY; without one it is a parse error
+	if len(b.key) > 0 && b.keyNotEnforced {
 		q.WriteString(` NOT ENFORCED`)
 	}
 
-	// MODE UPSERT is required for Iceberg sinks
-	q.WriteString(` MODE UPSERT`)
+	// MODE is required for Iceberg sinks. UPSERT keeps rows current by KEY,
+	// APPEND writes every change as a row and takes no KEY.
+	mode := b.mode
+	if mode == "" {
+		mode = "upsert"
+	}
+	q.WriteString(fmt.Sprintf(` MODE %s`, strings.ToUpper(mode)))
 
 	// WITH options
 	withOptions := []string{}

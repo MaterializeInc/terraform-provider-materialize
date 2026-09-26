@@ -2,12 +2,14 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var connectionIcebergCatalogSchema = map[string]*schema.Schema{
@@ -17,29 +19,50 @@ var connectionIcebergCatalogSchema = map[string]*schema.Schema{
 	"qualified_sql_name": QualifiedNameSchema("connection"),
 	"comment":            CommentSchema(false),
 	"catalog_type": {
-		Description: "The type of Iceberg catalog. Currently only `s3tablesrest` (AWS S3 Tables) is supported.",
-		Type:        schema.TypeString,
-		Required:    true,
-		ForceNew:    true,
+		Description:  "The type of Iceberg catalog: `s3tablesrest` for AWS S3 Tables, or `rest` for any Iceberg REST catalog such as Databricks Unity Catalog.",
+		Type:         schema.TypeString,
+		Required:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice([]string{"s3tablesrest", "rest"}, false),
 	},
 	"url": {
-		Description: "The URL of the Iceberg catalog endpoint. For AWS S3 Tables, use `https://s3tables.<region>.amazonaws.com/iceberg`.",
+		Description: "The URL of the Iceberg catalog endpoint. For AWS S3 Tables, use `https://s3tables.<region>.amazonaws.com/iceberg`. For a REST catalog, the path the catalog serves `/v1/` under.",
 		Type:        schema.TypeString,
 		Required:    true,
 		ForceNew:    true,
 	},
 	"warehouse": {
-		Description: "The ARN of the S3 Tables bucket: `arn:aws:s3tables:<region>:<account-id>:bucket/<bucket-name>`.",
+		Description: "The warehouse to operate in. For AWS S3 Tables, the ARN of the S3 Tables bucket: `arn:aws:s3tables:<region>:<account-id>:bucket/<bucket-name>`. For a REST catalog this is catalog specific, for example the Unity Catalog name on Databricks.",
 		Type:        schema.TypeString,
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 	},
 	"aws_connection": IdentifierSchema(IdentifierSchemaParams{
 		Elem:        "aws_connection",
-		Description: "The name of an AWS connection to use for authentication.",
-		Required:    true,
+		Description: "The name of an AWS connection to use for authentication. Required for `s3tablesrest` catalogs and not allowed for `rest` catalogs.",
+		Required:    false,
 		ForceNew:    true,
 	}),
+	"credential": icebergCatalogCredentialSchema(),
+	"oauth2_server_url": {
+		Description: "The token endpoint the `credential` is exchanged at. Defaults to the catalog's own `/v1/oauth/tokens` endpoint.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"scope": {
+		Description: "The OAuth2 scope to request, for example `all-apis` on Databricks.",
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+	},
+	"access_delegation": {
+		Description:  "Ask the catalog to vend temporary, table-scoped storage credentials. The only accepted value is `vended-credentials`. Only valid with `rest` catalogs, and required by Databricks Unity Catalog.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		ValidateFunc: validation.StringInSlice([]string{"vended-credentials"}, false),
+	},
 	"validate":       ValidateConnectionSchema(),
 	"ownership_role": OwnershipRoleSchema(),
 	"region":         RegionSchema(),
@@ -58,8 +81,85 @@ func ConnectionIcebergCatalog() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
+		CustomizeDiff: connectionIcebergCatalogValidateOptions,
+
 		Schema: connectionIcebergCatalogSchema,
 	}
+}
+
+// Materialize rejects these combinations as well, but only at apply time.
+// Values still unknown at plan time are left for Materialize to check.
+func connectionIcebergCatalogValidateOptions(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	for _, k := range []string{"catalog_type", "warehouse", "aws_connection", "credential", "oauth2_server_url", "scope", "access_delegation"} {
+		if !d.NewValueKnown(k) {
+			return nil
+		}
+	}
+	catalogType := d.Get("catalog_type").(string)
+	hasAws := len(d.Get("aws_connection").([]interface{})) > 0
+	hasCredential, err := icebergCatalogCredentialSet(d)
+	if err != nil {
+		return err
+	}
+	switch catalogType {
+	case "s3tablesrest":
+		if !hasAws {
+			return fmt.Errorf("aws_connection is required when catalog_type is %q", catalogType)
+		}
+		if d.Get("warehouse").(string) == "" {
+			return fmt.Errorf("warehouse is required when catalog_type is %q", catalogType)
+		}
+		// Materialize rejects oauth2_server_url and access_delegation here, and
+		// accepts credential and scope but ignores them, so reject all four.
+		for _, k := range []string{"access_delegation", "oauth2_server_url", "scope"} {
+			if d.Get(k).(string) != "" {
+				return fmt.Errorf("%s is not supported when catalog_type is %q", k, catalogType)
+			}
+		}
+		if len(d.Get("credential").([]interface{})) > 0 {
+			return fmt.Errorf("credential is not supported when catalog_type is %q, use aws_connection", catalogType)
+		}
+	case "rest":
+		if hasAws {
+			return fmt.Errorf("aws_connection is not supported when catalog_type is %q, use credential", catalogType)
+		}
+		if !hasCredential {
+			return fmt.Errorf("credential is required when catalog_type is %q", catalogType)
+		}
+	}
+	return nil
+}
+
+// ValueSecretSchema puts ForceNew on the block, which the SDK only applies when
+// the block is added or removed. Changing the text would otherwise plan as an
+// in-place update that nothing applies, since Materialize cannot alter the
+// option, so the text forces a new connection. The secret reference does not:
+// Materialize holds the secret by id, so renaming it needs no change here,
+// and replacing the connection would fail while a sink depends on it.
+func icebergCatalogCredentialSchema() *schema.Schema {
+	s := ValueSecretSchema("credential", "OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Required for `rest` catalogs", false, true)
+	s.Elem.(*schema.Resource).Schema["text"].ForceNew = true
+	return s
+}
+
+// icebergCatalogCredentialSet reports whether the credential block holds a
+// value. An empty `credential {}` block is rejected here rather than reaching
+// the builder with nothing to send.
+func icebergCatalogCredentialSet(d *schema.ResourceDiff) (bool, error) {
+	blocks := d.Get("credential").([]interface{})
+	if len(blocks) == 0 {
+		return false, nil
+	}
+	if !d.NewValueKnown("credential.0.text") {
+		return true, nil
+	}
+	block, _ := blocks[0].(map[string]interface{})
+	text, _ := block["text"].(string)
+	secret, _ := block["secret"].([]interface{})
+	if text == "" && len(secret) == 0 {
+		return false, fmt.Errorf("credential must set text or secret")
+	}
+	return true, nil
 }
 
 func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -89,6 +189,22 @@ func connectionIcebergCatalogCreate(ctx context.Context, d *schema.ResourceData,
 	if v, ok := d.GetOk("aws_connection"); ok {
 		conn := materialize.GetIdentifierSchemaStruct(v)
 		b.AwsConnection(conn)
+	}
+
+	if v, ok := d.GetOk("credential"); ok {
+		b.Credential(materialize.GetValueSecretStruct(v))
+	}
+
+	if v, ok := d.GetOk("oauth2_server_url"); ok {
+		b.Oauth2ServerUrl(v.(string))
+	}
+
+	if v, ok := d.GetOk("scope"); ok {
+		b.Scope(v.(string))
+	}
+
+	if v, ok := d.GetOk("access_delegation"); ok {
+		b.AccessDelegation(v.(string))
 	}
 
 	if v, ok := d.GetOk("validate"); ok {
@@ -140,8 +256,9 @@ func connectionIcebergCatalogUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	// TODO: catalog_type, url, warehouse, and aws_connection cannot be altered and are marked
-	// with ForceNew: true, so changes to them will recreate the resource.
+	// TODO: catalog_type, url, warehouse, aws_connection, credential, oauth2_server_url, scope
+	// and access_delegation cannot be altered and are marked with ForceNew: true, so changes to
+	// them will recreate the resource.
 	// Error: "storage error: cannot be altered in the requested way (SQLSTATE XX000)"
 	// Once Materialize supports ALTER for these properties, remove ForceNew and add ALTER logic here.
 

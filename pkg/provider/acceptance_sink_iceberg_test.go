@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
@@ -38,6 +39,55 @@ func TestAccSinkIceberg_basic(t *testing.T) {
 				ResourceName:      "materialize_sink_iceberg.test",
 				ImportState:       true,
 				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func TestAccSinkIceberg_append(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckSinkIcebergDestroyed,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSinkIcebergAppendResource(nameSpace, `mode = "append"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSinkIcebergExists("materialize_sink_iceberg.append"),
+					resource.TestCheckResourceAttr("materialize_sink_iceberg.append", "mode", "append"),
+					resource.TestCheckResourceAttr("materialize_sink_iceberg.append", "key.#", "0"),
+					resource.TestCheckNoResourceAttr("materialize_sink_iceberg.append", "aws_connection.0.name"),
+				),
+			},
+			{
+				// mode is read back from mz_sinks, so an import sees it too
+				ResourceName:            "materialize_sink_iceberg.append",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"from", "iceberg_catalog_connection", "namespace", "table", "key_not_enforced", "commit_interval"},
+			},
+		},
+	})
+}
+
+func TestAccSinkIceberg_keyMustMatchMode(t *testing.T) {
+	nameSpace := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSinkIcebergAppendResource(nameSpace, "mode = \"append\"\n  key = [\"id\"]"),
+				ExpectError: regexp.MustCompile(`key is not allowed when mode is "append"`),
+			},
+			{
+				Config:      testAccSinkIcebergAppendResource(nameSpace, "mode = \"append\"\n  key_not_enforced = true"),
+				ExpectError: regexp.MustCompile(`key_not_enforced has no effect when mode is "append"`),
+			},
+			{
+				Config:      testAccSinkIcebergAppendResource(nameSpace, ""),
+				ExpectError: regexp.MustCompile(`key is required when mode is "upsert"`),
 			},
 		},
 	})
@@ -183,6 +233,81 @@ resource "materialize_sink_iceberg" "test" {
   commit_interval = "10s"
 }
 `, nameSpace, sinkName)
+}
+
+// Same fixtures as testAccSinkIcebergResource, but the sink carries no key and
+// no aws_connection; modeAndKey is spliced into the sink block.
+func testAccSinkIcebergAppendResource(nameSpace, modeAndKey string) string {
+	return fmt.Sprintf(`
+resource "materialize_secret" "aws_secret" {
+  name  = "%[1]s_aws_secret"
+  value = "minio123"
+}
+
+resource "materialize_connection_aws" "test_aws" {
+  name       = "%[1]s_aws_conn"
+  endpoint   = "http://minio:9000"
+  aws_region = "us-east-1"
+  access_key_id {
+    text = "minio"
+  }
+  secret_access_key {
+    name          = materialize_secret.aws_secret.name
+    database_name = materialize_secret.aws_secret.database_name
+    schema_name   = materialize_secret.aws_secret.schema_name
+  }
+  validate = false
+}
+
+resource "materialize_connection_iceberg_catalog" "test_catalog" {
+  name         = "%[1]s_iceberg_catalog"
+  catalog_type = "s3tablesrest"
+  url          = "http://minio:9000/iceberg-test"
+  warehouse    = "arn:aws:s3tables:us-east-1:123456789012:bucket/iceberg-test"
+  aws_connection {
+    name          = materialize_connection_aws.test_aws.name
+    database_name = materialize_connection_aws.test_aws.database_name
+    schema_name   = materialize_connection_aws.test_aws.schema_name
+  }
+  validate = false
+}
+
+resource "materialize_table" "test_table" {
+  name          = "%[1]s_table"
+  database_name = "materialize"
+  schema_name   = "public"
+  column {
+    name = "id"
+    type = "int4"
+  }
+  column {
+    name = "value"
+    type = "text"
+  }
+}
+
+resource "materialize_sink_iceberg" "append" {
+  name         = "%[1]s_append"
+  cluster_name = "quickstart"
+
+  from {
+    name          = materialize_table.test_table.name
+    database_name = materialize_table.test_table.database_name
+    schema_name   = materialize_table.test_table.schema_name
+  }
+
+  iceberg_catalog_connection {
+    name          = materialize_connection_iceberg_catalog.test_catalog.name
+    database_name = materialize_connection_iceberg_catalog.test_catalog.database_name
+    schema_name   = materialize_connection_iceberg_catalog.test_catalog.schema_name
+  }
+
+  namespace       = "my_namespace"
+  table           = "%[1]s_append"
+  commit_interval = "10s"
+  %[2]s
+}
+`, nameSpace, modeAndKey)
 }
 
 func testAccCheckSinkIcebergExists(resourceName string) resource.TestCheckFunc {

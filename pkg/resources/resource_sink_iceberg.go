@@ -2,12 +2,15 @@ package resources
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var sinkIcebergSchema = map[string]*schema.Schema{
@@ -42,25 +45,35 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 		Required:    true,
 		ForceNew:    true,
 	},
-	"aws_connection": IdentifierSchema(IdentifierSchemaParams{
-		Elem:        "aws_connection",
-		Description: "The AWS connection for object storage access.",
-		Required:    true,
-		ForceNew:    true,
-	}),
+	"aws_connection": sinkIcebergAwsConnectionSchema(),
 	"key": {
-		Description: "The columns that uniquely identify rows. Required for Iceberg sinks.",
+		Description: "The columns that uniquely identify rows. Required when `mode` is `upsert` and not allowed when `mode` is `append`.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
-		Required:    true,
+		Optional:    true,
 		ForceNew:    true,
 	},
 	"key_not_enforced": {
-		Description: "Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique.",
+		Description: "Disable Materialize's validation of the key's uniqueness. Use only when you have outside knowledge that the key is unique. Only valid with `mode = \"upsert\"`.",
 		Type:        schema.TypeBool,
 		Optional:    true,
 		ForceNew:    true,
 		Default:     false,
+	},
+	"mode": {
+		Description:  "How changes are written to the Iceberg table. `upsert` keeps one row per `key` and writes delete files for updates and deletes. `append` writes every change as a new row with `_mz_diff` and `_mz_timestamp` columns and takes no `key`; Databricks Unity Catalog tables only accept `append`.",
+		Type:         schema.TypeString,
+		Optional:     true,
+		ForceNew:     true,
+		Default:      "upsert",
+		ValidateFunc: validation.StringInSlice([]string{"upsert", "append"}, false),
+		// Sinks created before this attribute existed have no mode in state
+		// until the next refresh fills it in. Every one of them is an upsert
+		// sink, so do not plan a replacement for them in the meantime, for
+		// example under -refresh=false.
+		DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+			return d.Id() != "" && old == "" && new == "upsert"
+		},
 	},
 	"commit_interval": {
 		Description: "How frequently to commit snapshots to Iceberg (e.g., '10s', '1m'). Required for Iceberg sinks.",
@@ -72,14 +85,37 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 	"region":         RegionSchema(),
 }
 
+// The sink inherits storage credentials from the Iceberg catalog connection,
+// so Materialize no longer needs USING AWS CONNECTION. The block stays for
+// sinks created with it. Removing it from a configuration is suppressed so the
+// deprecation warning does not push users into recreating their sinks.
+func sinkIcebergAwsConnectionSchema() *schema.Schema {
+	s := IdentifierSchema(IdentifierSchemaParams{
+		Elem:        "aws_connection",
+		Description: "(Deprecated) The AWS connection for object storage access. Materialize now takes storage credentials from the Iceberg catalog connection, so this is no longer needed. Removing it does not recreate the sink.",
+		Required:    false,
+		ForceNew:    true,
+	})
+	s.Deprecated = "The `aws_connection` attribute is deprecated and will be removed in a future release. The sink inherits storage credentials from the Iceberg catalog connection, so remove it from the configuration."
+	s.DiffSuppressFunc = func(k, old, new string, d *schema.ResourceData) bool {
+		if strings.HasSuffix(k, ".#") {
+			return old != "" && old != "0" && new == "0"
+		}
+		return old != "" && new == ""
+	}
+	return s
+}
+
 func SinkIceberg() *schema.Resource {
 	return &schema.Resource{
 		Description: "An Iceberg sink writes data from Materialize to an Apache Iceberg table stored in object storage.",
 
 		CreateContext: sinkIcebergCreate,
-		ReadContext:   sinkRead,
+		ReadContext:   sinkIcebergRead,
 		UpdateContext: sinkUpdate,
 		DeleteContext: sinkDelete,
+
+		CustomizeDiff: sinkIcebergValidateKeyForMode,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -87,6 +123,44 @@ func SinkIceberg() *schema.Resource {
 
 		Schema: sinkIcebergSchema,
 	}
+}
+
+// Materialize rejects these combinations as well, but only at apply time.
+// Values still unknown at plan time are left for Materialize to check.
+func sinkIcebergValidateKeyForMode(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	for _, k := range []string{"mode", "key", "key_not_enforced"} {
+		if !d.NewValueKnown(k) {
+			return nil
+		}
+	}
+	mode := d.Get("mode").(string)
+	keys := d.Get("key").([]interface{})
+	switch {
+	case mode == "upsert" && len(keys) == 0:
+		return fmt.Errorf("key is required when mode is %q", mode)
+	case mode == "append" && len(keys) > 0:
+		return fmt.Errorf("key is not allowed when mode is %q", mode)
+	case mode == "append" && d.Get("key_not_enforced").(bool):
+		return fmt.Errorf("key_not_enforced has no effect when mode is %q", mode)
+	}
+	return nil
+}
+
+func sinkIcebergRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	s, diags := sinkReadParams(ctx, d, meta)
+	if diags != nil || s == nil {
+		return diags
+	}
+
+	// mz_sinks reports the MODE as the envelope type for Iceberg sinks.
+	switch s.EnvelopeType.String {
+	case "upsert", "append":
+		if err := d.Set("mode", s.EnvelopeType.String); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return nil
 }
 
 func sinkIcebergCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -140,6 +214,10 @@ func sinkIcebergCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 		b.KeyNotEnforced(v.(bool))
 	}
 
+	if v, ok := d.GetOk("mode"); ok {
+		b.Mode(v.(string))
+	}
+
 	if v, ok := d.GetOk("commit_interval"); ok {
 		b.CommitInterval(v.(string))
 	}
@@ -166,5 +244,5 @@ func sinkIcebergCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sinkRead(ctx, d, meta)
+	return sinkIcebergRead(ctx, d, meta)
 }
