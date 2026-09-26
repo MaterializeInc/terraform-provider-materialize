@@ -174,8 +174,10 @@ func TestResourceConnectionIcebergCatalogOptionsPlanCheck(t *testing.T) {
 	r.ErrorContains(plan(map[string]interface{}{"catalog_type": "rest"}), "credential is required")
 }
 
-// Materialize cannot alter the credential, so any change inside the block,
-// not only adding or removing it, has to replace the connection.
+// Materialize cannot alter the credential, so a new text value has to replace
+// the connection. Renaming the secret it references must not: Materialize
+// keeps the secret by id, and a replacement would fail while sinks depend on
+// the connection.
 func TestResourceConnectionIcebergCatalogCredentialChangeReplaces(t *testing.T) {
 	r := require.New(t)
 	res := ConnectionIcebergCatalog()
@@ -209,7 +211,7 @@ func TestResourceConnectionIcebergCatalogCredentialChangeReplaces(t *testing.T) 
 		"credential.#": "1", "credential.0.text": "", "credential.0.secret.#": "1",
 		"credential.0.secret.0.name": "old_secret", "credential.0.secret.0.schema_name": "public", "credential.0.secret.0.database_name": "materialize",
 	})
-	diff, err = res.Diff(context.TODO(), secret, cfg(map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "new_secret"}}}), nil)
+	diff, err = res.Diff(context.TODO(), secret, cfg(map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "renamed_secret"}}}), nil)
 	r.NoError(err)
-	r.True(diff != nil && diff.RequiresNew(), "pointing at another secret must replace")
+	r.False(diff != nil && diff.RequiresNew(), "renaming the referenced secret must not replace the connection")
 }
