@@ -67,7 +67,7 @@ func (b *TableBuilder) Create() error {
 	for _, c := range b.column {
 		s := strings.Builder{}
 
-		s.WriteString(fmt.Sprintf(`%s %s`, c.ColName, c.ColType))
+		s.WriteString(fmt.Sprintf(`%s %s`, QuoteColumnName(c.ColName), c.ColType))
 		if c.NotNull {
 			s.WriteString(" NOT NULL")
 		}

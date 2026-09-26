@@ -168,6 +168,48 @@ func TestAccTable_disappears(t *testing.T) {
 	})
 }
 
+// Column names used to be sent unquoted: a mixed-case name folded to lower
+// case and planned a replacement on every run, a comment on it failed, and a
+// name with a space was a syntax error. The framework checks that the plan is
+// empty after apply.
+func TestAccTable_caseSensitiveColumnNames(t *testing.T) {
+	tableName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				resource "materialize_table" "test" {
+					name = "%s"
+					column {
+						name    = "TenantId"
+						type    = "int"
+						comment = "tenant"
+					}
+					column {
+						name = "first name"
+						type = "text"
+					}
+					column {
+						name = "order"
+						type = "text"
+					}
+				}
+				`, tableName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTableExists("materialize_table.test"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.name", "TenantId"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.0.comment", "tenant"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.1.name", "first name"),
+					resource.TestCheckResourceAttr("materialize_table.test", "column.2.name", "order"),
+				),
+			},
+		},
+	})
+}
+
 func testAccTableResource(roleName, tableName, tableRoleName, tableOwnership, comment string) string {
 	return fmt.Sprintf(`
 	resource "materialize_role" "test" {

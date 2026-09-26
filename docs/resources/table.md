@@ -61,7 +61,7 @@ resource "materialize_table" "simple_table" {
 
 Required:
 
-- `name` (String) The name of the column to be created in the table.
+- `name` (String) The name of the column to be created in the table. Used exactly as written, including case, spaces and reserved words.
 - `type` (String) The data type of the column indicated by name.
 
 Optional:
