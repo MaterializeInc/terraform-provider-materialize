@@ -99,3 +99,26 @@ func TestSinkIcebergCreateMinimal(t *testing.T) {
 		}
 	})
 }
+
+// See TestSinkKafkaKeyCaseHandling: unquoted keys fold, quoted ones pass through.
+func TestSinkIcebergKeyCaseHandling(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."iceberg_sink" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'ns', TABLE = 'tbl'\) USING AWS CONNECTION "database"."schema"."aws_conn" KEY \(TenantId, "CaseSensitive"\) MODE UPSERT WITH \(COMMIT INTERVAL = '10s'\);`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "iceberg_sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkIcebergBuilder(db, o)
+		b.From(IdentifierSchemaStruct{Name: "my_view", SchemaName: "schema", DatabaseName: "database"})
+		b.IcebergCatalogConnection(IdentifierSchemaStruct{Name: "iceberg_catalog", SchemaName: "schema", DatabaseName: "database"})
+		b.Namespace("ns")
+		b.Table("tbl")
+		b.AwsConnection(IdentifierSchemaStruct{Name: "aws_conn", SchemaName: "schema", DatabaseName: "database"})
+		b.Key([]string{"TenantId", `"CaseSensitive"`})
+		b.CommitInterval("10s")
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

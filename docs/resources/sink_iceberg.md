@@ -54,7 +54,7 @@ resource "materialize_sink_iceberg" "example" {
 - `commit_interval` (String) How frequently to commit snapshots to Iceberg (e.g., '10s', '1m'). Required for Iceberg sinks.
 - `from` (Block List, Min: 1, Max: 1) The name of the source, table or materialized view you want to send to the sink. (see [below for nested schema](#nestedblock--from))
 - `iceberg_catalog_connection` (Block List, Min: 1, Max: 1) The name of the Iceberg catalog connection to use. (see [below for nested schema](#nestedblock--iceberg_catalog_connection))
-- `key` (List of String) The columns that uniquely identify rows. Required for Iceberg sinks.
+- `key` (List of String) The columns that uniquely identify rows. Required for Iceberg sinks. Column names are sent unquoted, so Materialize folds them to lower case like any unquoted SQL identifier. To use a case-sensitive column, include the double quotes in the value, for example `key = ["\"TenantId\""]`.
 - `name` (String) The identifier for the sink.
 - `namespace` (String) The Iceberg namespace (database) containing the table.
 - `table` (String) The name of the Iceberg table to write to. If the table doesn't exist, Materialize creates it with a schema matching the source.

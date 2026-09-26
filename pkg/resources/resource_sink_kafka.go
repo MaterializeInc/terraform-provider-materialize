@@ -67,7 +67,7 @@ var sinkKafkaSchema = map[string]*schema.Schema{
 		ValidateFunc: validation.StringInSlice(compressionTypes, true),
 	},
 	"key": {
-		Description: "An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.",
+		Description: "An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset. Column names are sent unquoted, so Materialize folds them to lower case like any unquoted SQL identifier. To use a case-sensitive column, include the double quotes in the value, for example `key = [\"\\\"TenantId\\\"\"]`.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
