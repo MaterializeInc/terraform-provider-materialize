@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Misc
+
+* Clarified the `nullable` column option on `materialize_table` (`true` adds `NOT NULL`) and the difference between `materialize_user` (Materialize Cloud) and `materialize_role` (the login itself in self-managed Materialize, via password or SSO) [#938](https://github.com/MaterializeInc/terraform-provider-materialize/pull/938).
+
 ## 0.11.10 - 2026-09-29
 
 ### Features
