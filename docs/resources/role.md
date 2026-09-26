@@ -3,12 +3,12 @@
 page_title: "materialize_role Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  A role is a collection of privileges you can apply to users.
+  A role is a collection of privileges you can apply to users. In Materialize Cloud, people sign in as users managed with materialize_user, and roles group their privileges. In self-managed Materialize, a role with a password is also the login, so there is no separate user resource.
 ---
 
 # materialize_role (Resource)
 
-A role is a collection of privileges you can apply to users.
+A role is a collection of privileges you can apply to users. In Materialize Cloud, people sign in as users managed with materialize_user, and roles group their privileges. In self-managed Materialize, a role with a password is also the login, so there is no separate user resource.
 
 ## Example Usage
 
