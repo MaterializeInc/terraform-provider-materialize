@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+* Fixed `materialize_table` column names that are not plain lower case [#937](https://github.com/MaterializeInc/terraform-provider-materialize/pull/937). Names were sent unquoted, so a mixed-case name folded to lower case and planned a replacement on every run, a comment on it failed during create, and a name with a space or other special character was a syntax error. Names are now quoted and kept as written; a name already wrapped in quotes in the configuration is still passed through unchanged.
+
 ### Misc
 
 * Clarified the `nullable` column option on `materialize_table` (`true` adds `NOT NULL`) and the difference between `materialize_user` (Materialize Cloud) and `materialize_role` (the login itself in self-managed Materialize, via password or SSO) [#938](https://github.com/MaterializeInc/terraform-provider-materialize/pull/938).

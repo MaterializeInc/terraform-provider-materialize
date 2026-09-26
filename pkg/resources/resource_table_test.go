@@ -35,7 +35,7 @@ func TestResourceTableCreate(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Create
 		mock.ExpectExec(`
-			CREATE TABLE "database"."schema"."table" \(column text NOT NULL DEFAULT NULL\);
+			CREATE TABLE "database"."schema"."table" \("column" text NOT NULL DEFAULT NULL\);
 		`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Ownership
