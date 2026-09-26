@@ -71,7 +71,7 @@ resource "materialize_sink_kafka" "example_sink_kafka" {
 - `envelope` (Block List, Max: 1) How to interpret records (e.g. Debezium, Upsert). (see [below for nested schema](#nestedblock--envelope))
 - `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures it can understand at runtime. (see [below for nested schema](#nestedblock--format))
 - `headers` (String) The name of a column containing additional headers to add to each message emitted by the sink. The column must be of type map[text => text] or map[text => bytea].
-- `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset.
+- `key` (List of String) An optional list of columns to use for the Kafka key. If unspecified, the Kafka key is left unset. Column names are sent unquoted, so Materialize folds them to lower case like any unquoted SQL identifier. To use a case-sensitive column, include the double quotes in the value, for example `key = ["\"TenantId\""]`.
 - `key_not_enforced` (Boolean) Disable Materialize's validation of the key's uniqueness.
 - `ownership_role` (String) The ownership role of the object.
 - `partition_by` (String) A SQL expression used to partition the data in the Kafka sink. Can only be used with `ENVELOPE UPSERT`.

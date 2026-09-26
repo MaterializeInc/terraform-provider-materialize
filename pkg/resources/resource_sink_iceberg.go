@@ -49,7 +49,7 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	}),
 	"key": {
-		Description: "The columns that uniquely identify rows. Required for Iceberg sinks.",
+		Description: "The columns that uniquely identify rows. Required for Iceberg sinks. Column names are sent unquoted, so Materialize folds them to lower case like any unquoted SQL identifier. To use a case-sensitive column, include the double quotes in the value, for example `key = [\"\\\"TenantId\\\"\"]`.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Required:    true,
