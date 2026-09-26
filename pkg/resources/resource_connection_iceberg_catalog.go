@@ -131,18 +131,14 @@ func connectionIcebergCatalogValidateOptions(ctx context.Context, d *schema.Reso
 }
 
 // ValueSecretSchema puts ForceNew on the block, which the SDK only applies when
-// the block is added or removed. Changing the text or the secret it points at
-// would otherwise plan as an in-place update that nothing applies, since
-// Materialize cannot alter the option.
+// the block is added or removed. Changing the text would otherwise plan as an
+// in-place update that nothing applies, since Materialize cannot alter the
+// option, so the text forces a new connection. The secret reference does not:
+// Materialize holds the secret by id, so renaming it needs no change here,
+// and replacing the connection would fail while a sink depends on it.
 func icebergCatalogCredentialSchema() *schema.Schema {
 	s := ValueSecretSchema("credential", "OAuth2 client credentials for a `rest` catalog, as `<client_id>:<client_secret>`. A value without a colon is sent as the client secret alone. Required for `rest` catalogs", false, true)
-	r := s.Elem.(*schema.Resource)
-	r.Schema["text"].ForceNew = true
-	secret := r.Schema["secret"]
-	secret.ForceNew = true
-	for _, f := range secret.Elem.(*schema.Resource).Schema {
-		f.ForceNew = true
-	}
+	s.Elem.(*schema.Resource).Schema["text"].ForceNew = true
 	return s
 }
 
