@@ -67,7 +67,7 @@ var roleSchema = map[string]*schema.Schema{
 
 func Role() *schema.Resource {
 	return &schema.Resource{
-		Description: "A role is a collection of privileges you can apply to users.",
+		Description: "A role is a collection of privileges you can apply to users. In Materialize Cloud, people sign in as users managed with materialize_user, and roles group their privileges. In self-managed Materialize, a role with a password is also the login, so there is no separate user resource.",
 
 		CreateContext: roleCreate,
 		ReadContext:   roleRead,
