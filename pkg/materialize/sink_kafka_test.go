@@ -599,3 +599,32 @@ func TestSinkKafkaPartitionByCreate(t *testing.T) {
 		}
 	})
 }
+
+// Key columns are sent unquoted so they fold like any SQL identifier, and a
+// value that already carries quotes passes through, which is how a
+// case-sensitive column is referenced.
+func TestSinkKafkaKeyCaseHandling(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(
+			`CREATE SINK "database"."schema"."sink"
+			FROM "database"."schema"."src"
+			INTO KAFKA CONNECTION "database"."schema"."kafka_conn" \(TOPIC 'topic'\)
+			KEY \(TenantId, "CaseSensitive"\)
+			FORMAT JSON
+			ENVELOPE DEBEZIUM;`,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		o := MaterializeObject{Name: "sink", SchemaName: "schema", DatabaseName: "database"}
+		b := NewSinkKafkaBuilder(db, o)
+		b.From(IdentifierSchemaStruct{Name: "src", SchemaName: "schema", DatabaseName: "database"})
+		b.KafkaConnection(IdentifierSchemaStruct{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"})
+		b.Topic("topic")
+		b.Format(SinkFormatSpecStruct{Json: true})
+		b.Key([]string{"TenantId", `"CaseSensitive"`})
+		b.Envelope(KafkaSinkEnvelopeStruct{Debezium: true})
+
+		if err := b.Create(); err != nil {
+			t.Fatal(err)
+		}
+	})
+}

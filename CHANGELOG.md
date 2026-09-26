@@ -4,6 +4,7 @@
 
 ### Misc
 
+* Documented how `key` on `materialize_sink_kafka` and `materialize_sink_iceberg` treats case: column names are sent unquoted and fold to lower case, and a case-sensitive column is referenced by including the quotes in the value, for example `key = ["\"TenantId\""]` [#936](https://github.com/MaterializeInc/terraform-provider-materialize/pull/936).
 * Clarified the `nullable` column option on `materialize_table` (`true` adds `NOT NULL`) and the difference between `materialize_user` (Materialize Cloud) and `materialize_role` (the login itself in self-managed Materialize, via password or SSO) [#938](https://github.com/MaterializeInc/terraform-provider-materialize/pull/938).
 
 ## 0.11.10 - 2026-09-29

@@ -47,7 +47,7 @@ var sinkIcebergSchema = map[string]*schema.Schema{
 	},
 	"aws_connection": sinkIcebergAwsConnectionSchema(),
 	"key": {
-		Description: "The columns that uniquely identify rows. Required when `mode` is `upsert` and not allowed when `mode` is `append`.",
+		Description: "The columns that uniquely identify rows. Required when `mode` is `upsert` and not allowed when `mode` is `append`. Column names are sent unquoted, so Materialize folds them to lower case like any unquoted SQL identifier. To use a case-sensitive column, include the double quotes in the value, for example `key = [\"\\\"TenantId\\\"\"]`.",
 		Type:        schema.TypeList,
 		Elem:        &schema.Schema{Type: schema.TypeString},
 		Optional:    true,
