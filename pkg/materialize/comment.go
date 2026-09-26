@@ -26,7 +26,7 @@ func (b *CommentBuilder) Object(comment string) error {
 
 func (b *CommentBuilder) Column(column, comment string) error {
 	c := QuoteString(comment)
-	col := QuoteIdentifier(column)
+	col := QuoteColumnName(column)
 	q := fmt.Sprintf(`COMMENT ON COLUMN %s.%s IS %s;`, b.object.QualifiedName(), col, c)
 	return b.ddl.exec(q)
 }

@@ -69,3 +69,19 @@ func TestStringArrayRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestQuoteColumnName(t *testing.T) {
+	cases := map[string]string{
+		"id":         `"id"`,
+		"TenantId":   `"TenantId"`,
+		"first name": `"first name"`,
+		`we"ird`:     `"we""ird"`,
+		`"Quoted"`:   `"Quoted"`,
+		`"`:          `""""`,
+	}
+	for in, want := range cases {
+		if got := QuoteColumnName(in); got != want {
+			t.Errorf("QuoteColumnName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
