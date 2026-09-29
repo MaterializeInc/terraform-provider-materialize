@@ -25,7 +25,7 @@ var tableSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {
-					Description: "The name of the column to be created in the table.",
+					Description: "The name of the column to be created in the table. Used exactly as written, including case, spaces and reserved words.",
 					Type:        schema.TypeString,
 					Required:    true,
 					ForceNew:    true,

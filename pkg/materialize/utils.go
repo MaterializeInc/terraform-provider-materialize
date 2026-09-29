@@ -35,6 +35,17 @@ func QuoteIdentifier(input string) string {
 	return `"` + strings.Replace(input, `"`, `""`, -1) + `"`
 }
 
+// QuoteColumnName quotes a column name so Materialize keeps it as written. A
+// name already wrapped in double quotes is passed through unchanged, since
+// quoting inside the value was the only way to keep case before names were
+// quoted here.
+func QuoteColumnName(name string) string {
+	if len(name) >= 2 && strings.HasPrefix(name, `"`) && strings.HasSuffix(name, `"`) {
+		return name
+	}
+	return QuoteIdentifier(name)
+}
+
 func QualifiedName(fields ...string) string {
 	var o []string
 	for _, f := range fields {
