@@ -44,7 +44,7 @@ var tableSchema = map[string]*schema.Schema{
 					},
 				},
 				"nullable": {
-					Description: "Do not allow the column to contain `NULL` values. Columns without this constraint can contain `NULL` values.",
+					Description: "Set to `true` to add a `NOT NULL` constraint, so the column cannot contain `NULL` values. Despite the name, the default `false` is what allows `NULL` values.",
 					Type:        schema.TypeBool,
 					ForceNew:    true,
 					Optional:    true,

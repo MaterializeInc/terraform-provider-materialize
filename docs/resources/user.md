@@ -3,12 +3,12 @@
 page_title: "materialize_user Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  The user resource allows you to invite and delete users in your Materialize organization.
+  The user resource allows you to invite and delete users in your Materialize organization. Materialize Cloud only: users sign in through the Cloud identity provider. For self-managed Materialize, create login roles with materialize_role instead, which supports password authentication.
 ---
 
 # materialize_user (Resource)
 
-The user resource allows you to invite and delete users in your Materialize organization.
+The user resource allows you to invite and delete users in your Materialize organization. Materialize Cloud only: users sign in through the Cloud identity provider. For self-managed Materialize, create login roles with materialize_role instead, which supports password authentication.
 
 ## Example Usage
 
