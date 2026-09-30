@@ -48,6 +48,7 @@ var SSOConfigSchema = map[string]*schema.Schema{
 	"oidc_secret": {
 		Type:        schema.TypeString,
 		Optional:    true,
+		Sensitive:   true,
 		Description: "The client secret of the OIDC application. This is used to authenticate the application to the OIDC service. This is required if the type is OIDC.",
 	},
 }

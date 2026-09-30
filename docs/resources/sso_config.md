@@ -38,7 +38,7 @@ resource "materialize_sso_config" "example_sso_config" {
 ### Optional
 
 - `oidc_client_id` (String) The client ID of the OIDC application. This is used to identify the application to the OIDC service. This is required if the type is OIDC.
-- `oidc_secret` (String) The client secret of the OIDC application. This is used to authenticate the application to the OIDC service. This is required if the type is OIDC.
+- `oidc_secret` (String, Sensitive) The client secret of the OIDC application. This is used to authenticate the application to the OIDC service. This is required if the type is OIDC.
 
 ### Read-Only
 
