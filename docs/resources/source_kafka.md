@@ -58,27 +58,25 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `database_name` (String) The identifier for the source database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1, Deprecated) (Deprecated) How Materialize should interpret records (e.g. append-only, upsert). Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--envelope))
 - `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>_progress`. (see [below for nested schema](#nestedblock--expose_progress))
-- `format` (Block List, Max: 1, Deprecated) (Deprecated) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--format))
+- `format` (Block List, Max: 1, Deprecated) (Deprecated) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Cannot be used together with `key_format` or `value_format`. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean, Deprecated) (Deprecated) Include message headers. Use `materialize_source_table_kafka` resources instead.
 - `include_headers_alias` (String, Deprecated) (Deprecated) Provide an alias for the headers column. Use `materialize_source_table_kafka` resources instead.
-- `include_key` (Boolean, Deprecated) (Deprecated) Include a column containing the Kafka message key. Use `materialize_source_table_kafka` resources instead.
-- `include_key_alias` (String, Deprecated) (Deprecated) Provide an alias for the key column. Use `materialize_source_table_kafka` resources instead.
+- `include_key` (Boolean, Deprecated) (Deprecated) Include a column containing the Kafka message key. Use `materialize_source_table_kafka` resources instead.- `include_key_alias` (String, Deprecated) (Deprecated) Provide an alias for the key column. Use `materialize_source_table_kafka` resources instead.
 - `include_offset` (Boolean, Deprecated) (Deprecated) Include an offset column containing the Kafka message offset. Use `materialize_source_table_kafka` resources instead.
 - `include_offset_alias` (String, Deprecated) (Deprecated) Provide an alias for the offset column. Use `materialize_source_table_kafka` resources instead.
 - `include_partition` (Boolean, Deprecated) (Deprecated) Include a partition column containing the Kafka message partition. Use `materialize_source_table_kafka` resources instead.
 - `include_partition_alias` (String, Deprecated) (Deprecated) Provide an alias for the partition column. Use `materialize_source_table_kafka` resources instead.
 - `include_timestamp` (Boolean, Deprecated) (Deprecated) Include a timestamp column containing the Kafka message timestamp. Use `materialize_source_table_kafka` resources instead.
 - `include_timestamp_alias` (String, Deprecated) (Deprecated) Provide an alias for the timestamp column. Use `materialize_source_table_kafka` resources instead.
-- `key_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the key format explicitly. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--key_format))
+- `key_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the key format explicitly. Must be used together with `value_format` and cannot be used together with `format`. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source schema in Materialize. Defaults to `public`.
 - `start_offset` (List of Number) Read partitions from the specified offset.
 - `start_timestamp` (Number) Use the specified value to set `START OFFSET` based on the Kafka timestamp.
-- `value_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the value format explicitly. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--value_format))
+- `value_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the value format explicitly. Must be used together with `key_format` and cannot be used together with `format`. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only
-
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
