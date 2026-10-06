@@ -416,3 +416,17 @@ func TestResourceSourceKafkaCreateCSVFormat(t *testing.T) {
 		}
 	})
 }
+
+func TestResourceSourceKafkaFormatConstraints(t *testing.T) {
+	r := require.New(t)
+	s := SourceKafka().Schema
+
+	r.ElementsMatch([]string{"key_format", "value_format"}, s["format"].ConflictsWith)
+	r.Empty(s["format"].RequiredWith)
+
+	r.ElementsMatch([]string{"format"}, s["key_format"].ConflictsWith)
+	r.ElementsMatch([]string{"value_format"}, s["key_format"].RequiredWith)
+
+	r.ElementsMatch([]string{"format"}, s["value_format"].ConflictsWith)
+	r.ElementsMatch([]string{"key_format"}, s["value_format"].RequiredWith)
+}

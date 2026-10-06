@@ -104,18 +104,23 @@ var sourceKafkaSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 	},
 	"format": func() *schema.Schema {
-		s := FormatSpecSchema("format", "(Deprecated) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Use `materialize_source_table_kafka` resources instead.", false)
+		s := FormatSpecSchema("format", "(Deprecated) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Cannot be used together with `key_format` or `value_format`. Use `materialize_source_table_kafka` resources instead.", false)
 		s.Deprecated = "The `format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead."
+		s.ConflictsWith = []string{"key_format", "value_format"}
 		return s
 	}(),
 	"key_format": func() *schema.Schema {
-		s := FormatSpecSchema("key_format", "(Deprecated) Set the key format explicitly. Use `materialize_source_table_kafka` resources instead.", false)
+		s := FormatSpecSchema("key_format", "(Deprecated) Set the key format explicitly. Must be used together with `value_format` and cannot be used together with `format`. Use `materialize_source_table_kafka` resources instead.", false)
 		s.Deprecated = "The `key_format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead."
+		s.ConflictsWith = []string{"format"}
+		s.RequiredWith = []string{"value_format"}
 		return s
 	}(),
 	"value_format": func() *schema.Schema {
-		s := FormatSpecSchema("value_format", "(Deprecated) Set the value format explicitly. Use `materialize_source_table_kafka` resources instead.", false)
+		s := FormatSpecSchema("value_format", "(Deprecated) Set the value format explicitly. Must be used together with `key_format` and cannot be used together with `format`. Use `materialize_source_table_kafka` resources instead.", false)
 		s.Deprecated = "The `value_format` attribute is deprecated and will be removed in a future release. Use `materialize_source_table_kafka` resources instead."
+		s.ConflictsWith = []string{"format"}
+		s.RequiredWith = []string{"key_format"}
 		return s
 	}(),
 	"envelope": {
