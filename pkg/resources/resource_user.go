@@ -18,7 +18,7 @@ func User() *schema.Resource {
 		UpdateContext: userUpdate,
 		DeleteContext: userDelete,
 
-		Description: `The user resource allows you to invite and delete users in your Materialize organization. Materialize Cloud only: users sign in through the Cloud identity provider. For self-managed Materialize, create login roles with materialize_role instead, which supports password authentication.`,
+		Description: `The user resource allows you to invite and delete users in your Materialize organization. Materialize Cloud only: users sign in through the Cloud identity provider. For self-managed Materialize, the role is the login (via password or SSO), so use materialize_role instead.`,
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
