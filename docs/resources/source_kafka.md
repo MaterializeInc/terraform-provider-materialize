@@ -61,7 +61,8 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `format` (Block List, Max: 1, Deprecated) (Deprecated) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Cannot be used together with `key_format` or `value_format`. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean, Deprecated) (Deprecated) Include message headers. Use `materialize_source_table_kafka` resources instead.
 - `include_headers_alias` (String, Deprecated) (Deprecated) Provide an alias for the headers column. Use `materialize_source_table_kafka` resources instead.
-- `include_key` (Boolean, Deprecated) (Deprecated) Include a column containing the Kafka message key. Use `materialize_source_table_kafka` resources instead.- `include_key_alias` (String, Deprecated) (Deprecated) Provide an alias for the key column. Use `materialize_source_table_kafka` resources instead.
+- `include_key` (Boolean, Deprecated) (Deprecated) Include a column containing the Kafka message key. Use `materialize_source_table_kafka` resources instead.
+- `include_key_alias` (String, Deprecated) (Deprecated) Provide an alias for the key column. Use `materialize_source_table_kafka` resources instead.
 - `include_offset` (Boolean, Deprecated) (Deprecated) Include an offset column containing the Kafka message offset. Use `materialize_source_table_kafka` resources instead.
 - `include_offset_alias` (String, Deprecated) (Deprecated) Provide an alias for the offset column. Use `materialize_source_table_kafka` resources instead.
 - `include_partition` (Boolean, Deprecated) (Deprecated) Include a partition column containing the Kafka message partition. Use `materialize_source_table_kafka` resources instead.
@@ -77,6 +78,7 @@ resource "materialize_source_kafka" "example_source_kafka" {
 - `value_format` (Block List, Max: 1, Deprecated) (Deprecated) Set the value format explicitly. Must be used together with `key_format` and cannot be used together with `format`. Use `materialize_source_table_kafka` resources instead. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only
+
 - `id` (String) The ID of this resource.
 - `qualified_sql_name` (String) The fully qualified name of the source.
 - `size` (String) The size of the cluster maintaining this source.
