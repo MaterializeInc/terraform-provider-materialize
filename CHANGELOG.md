@@ -4,6 +4,7 @@
 
 ### Bug Fixes
 
+* Fixed `materialize_source_kafka` accepting `format` together with `key_format` or `value_format`, and `key_format` or `value_format` on its own [#947](https://github.com/MaterializeInc/terraform-provider-materialize/pull/947). Materialize takes either `FORMAT` or `KEY FORMAT ... VALUE FORMAT`, so these failed at apply with a syntax error; they are now rejected at plan time.
 * Fixed `materialize_table` column names that are not plain lower case [#937](https://github.com/MaterializeInc/terraform-provider-materialize/pull/937). Names were sent unquoted, so a mixed-case name folded to lower case and planned a replacement on every run, a comment on it failed during create, and a name with a space or other special character was a syntax error. Names are now quoted and kept as written; a name already wrapped in quotes in the configuration is still passed through unchanged.
 
 ### Misc
