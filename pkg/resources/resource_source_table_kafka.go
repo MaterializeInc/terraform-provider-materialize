@@ -17,6 +17,11 @@ func withRequiredWith(s *schema.Schema, requiredWith []string) *schema.Schema {
 	return s
 }
 
+func withConflictsWith(s *schema.Schema, conflictsWith []string) *schema.Schema {
+	s.ConflictsWith = conflictsWith
+	return s
+}
+
 var sourceTableKafkaSchema = map[string]*schema.Schema{
 	"name":               ObjectNameSchema("source table", true, false),
 	"schema_name":        SchemaNameSchema("source table", false),
@@ -97,9 +102,9 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		Optional:    true,
 		ForceNew:    true,
 	},
-	"format":       FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime.", false),
-	"key_format":   withRequiredWith(FormatSpecSchema("key_format", "Set the key format explicitly.", false), []string{"value_format"}),
-	"value_format": withRequiredWith(FormatSpecSchema("value_format", "Set the value format explicitly.", false), []string{"key_format"}),
+	"format":       withConflictsWith(FormatSpecSchema("format", "How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Cannot be used together with `key_format` or `value_format`.", false), []string{"key_format", "value_format"}),
+	"key_format":   withConflictsWith(withRequiredWith(FormatSpecSchema("key_format", "Set the key format explicitly. Must be used together with `value_format` and cannot be used together with `format`.", false), []string{"value_format"}), []string{"format"}),
+	"value_format": withConflictsWith(withRequiredWith(FormatSpecSchema("value_format", "Set the value format explicitly. Must be used together with `key_format` and cannot be used together with `format`.", false), []string{"key_format"}), []string{"format"}),
 	"envelope": {
 		Description: "How Materialize should interpret records (e.g. append-only, upsert)..",
 		Type:        schema.TypeList,

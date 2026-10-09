@@ -75,7 +75,7 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 - `database_name` (String) The identifier for the source table database in Materialize. Defaults to `MZ_DATABASE` environment variable if set or `materialize` if environment variable is not set.
 - `envelope` (Block List, Max: 1) How Materialize should interpret records (e.g. append-only, upsert).. (see [below for nested schema](#nestedblock--envelope))
 - `expose_progress` (Block List, Max: 1) The name of the progress collection for the source. If this is not specified, the collection will be named `<src_name>`. (see [below for nested schema](#nestedblock--expose_progress))
-- `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. (see [below for nested schema](#nestedblock--format))
+- `format` (Block List, Max: 1) How to decode raw bytes from different formats into data structures Materialize can understand at runtime. Cannot be used together with `key_format` or `value_format`. (see [below for nested schema](#nestedblock--format))
 - `include_headers` (Boolean) Include message headers.
 - `include_headers_alias` (String) Provide an alias for the headers column.
 - `include_key` (Boolean) Include a column containing the Kafka message key.
@@ -86,12 +86,12 @@ resource "materialize_source_table_kafka" "kafka_source_table" {
 - `include_partition_alias` (String) Provide an alias for the partition column.
 - `include_timestamp` (Boolean) Include a timestamp column containing the Kafka message timestamp.
 - `include_timestamp_alias` (String) Provide an alias for the timestamp column.
-- `key_format` (Block List, Max: 1) Set the key format explicitly. (see [below for nested schema](#nestedblock--key_format))
+- `key_format` (Block List, Max: 1) Set the key format explicitly. Must be used together with `value_format` and cannot be used together with `format`. (see [below for nested schema](#nestedblock--key_format))
 - `ownership_role` (String) The ownership role of the object.
 - `region` (String) The region to use for the resource connection. If not set, the default region is used.
 - `schema_name` (String) The identifier for the source table schema in Materialize. Defaults to `public`.
 - `topic` (String) The name of the Kafka topic in the Kafka cluster.
-- `value_format` (Block List, Max: 1) Set the value format explicitly. (see [below for nested schema](#nestedblock--value_format))
+- `value_format` (Block List, Max: 1) Set the value format explicitly. Must be used together with `key_format` and cannot be used together with `format`. (see [below for nested schema](#nestedblock--value_format))
 
 ### Read-Only
 
