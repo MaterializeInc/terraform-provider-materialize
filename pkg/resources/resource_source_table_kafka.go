@@ -107,7 +107,7 @@ var sourceTableKafkaSchema = map[string]*schema.Schema{
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"upsert": {
-					Description:   "Use the upsert envelope, which uses message keys to handle CRUD operations.",
+					Description:   "Use the upsert envelope, which uses message keys to handle CRUD operations. Requires `key_format` and `value_format`, unless `format` uses `avro` or `protobuf`.",
 					Type:          schema.TypeBool,
 					Optional:      true,
 					ForceNew:      true,
@@ -197,6 +197,8 @@ func SourceTableKafka() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
+
+		CustomizeDiff: validateKafkaEnvelopeKeyFormat,
 
 		Schema: sourceTableKafkaSchema,
 	}
