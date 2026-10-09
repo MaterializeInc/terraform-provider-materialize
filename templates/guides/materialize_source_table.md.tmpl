@@ -143,7 +143,7 @@ resource "materialize_source_table_kafka" "kafka_table_from_source" {
   schema_name    = "public"
   database_name  = "materialize"
 
-  source_name {
+  source {
     name = materialize_source_kafka.kafka_source.name
   }
 
@@ -280,7 +280,17 @@ resource "materialize_source_table_kafka" "kafka_table_from_source" {
   schema_name    = "public"
   database_name  = "materialize"
 
-  source_name = materialize_source_kafka.kafka_source.name
+  source {
+    name = materialize_source_kafka.kafka_source.name
+  }
+
+  key_format {
+    text = true
+  }
+
+  value_format {
+    json = true
+  }
 
   include_key     = true
   include_headers = true
