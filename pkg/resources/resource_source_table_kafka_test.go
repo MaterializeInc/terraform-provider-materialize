@@ -2,12 +2,16 @@ package resources
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -505,4 +509,56 @@ func TestResourceSourceTableKafkaCreateWithNoTopic(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+// Materialize takes either FORMAT or KEY FORMAT ... VALUE FORMAT on CREATE
+// TABLE ... FROM SOURCE, and the key and value formats only together. The plan
+// rejects the other combinations instead of failing at apply.
+func TestResourceSourceTableKafkaFormatCombinations(t *testing.T) {
+	text := []interface{}{map[string]interface{}{"text": true}}
+	validate := func(formats map[string]interface{}) error {
+		cfg := map[string]interface{}{
+			"name":   "table",
+			"source": []interface{}{map[string]interface{}{"name": "kafka_source"}},
+		}
+		for k, v := range formats {
+			cfg[k] = v
+		}
+		var errs []string
+		for _, d := range SourceTableKafka().Validate(terraform.NewResourceConfigRaw(cfg)) {
+			if d.Severity == diag.Error {
+				errs = append(errs, d.Summary+": "+d.Detail)
+			}
+		}
+		if len(errs) == 0 {
+			return nil
+		}
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
+
+	cases := []struct {
+		name    string
+		formats map[string]interface{}
+		wantErr string
+	}{
+		{"no format", nil, ""},
+		{"format only", map[string]interface{}{"format": text}, ""},
+		{"key and value format", map[string]interface{}{"key_format": text, "value_format": text}, ""},
+		{"format with key_format", map[string]interface{}{"format": text, "key_format": text}, "conflicts with"},
+		{"format with value_format", map[string]interface{}{"format": text, "value_format": text}, "conflicts with"},
+		{"format with both", map[string]interface{}{"format": text, "key_format": text, "value_format": text}, "conflicts with"},
+		{"key_format only", map[string]interface{}{"key_format": text}, "all of `key_format,value_format` must be specified"},
+		{"value_format only", map[string]interface{}{"value_format": text}, "all of `key_format,value_format` must be specified"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := validate(c.formats)
+			if c.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), c.wantErr)
+		})
+	}
 }
