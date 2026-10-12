@@ -43,5 +43,11 @@ func validateKafkaEnvelopeKeyFormat(ctx context.Context, d *schema.ResourceDiff,
 		}
 	}
 
-	return fmt.Errorf("envelope %s requires key_format and value_format, unless format uses avro or protobuf, which take the key schema from the schema registry", name)
+	if name == "debezium" {
+		// A Debezium value has to decode to before/after records, which only
+		// Avro or Protobuf do, so pointing at key_format with JSON or text would
+		// still fail at apply.
+		return fmt.Errorf("envelope debezium requires format to use avro or protobuf, or key_format with an avro or protobuf value_format")
+	}
+	return fmt.Errorf("envelope upsert requires key_format and value_format, unless format uses avro or protobuf, which take the key schema from the schema registry")
 }
