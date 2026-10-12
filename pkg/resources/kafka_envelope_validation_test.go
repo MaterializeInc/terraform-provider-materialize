@@ -34,7 +34,7 @@ func TestKafkaEnvelopeRequiresKeyFormat(t *testing.T) {
 		{"upsert with json", map[string]interface{}{"format": json, "envelope": envelope("upsert")}, "envelope upsert requires key_format"},
 		{"upsert with text", map[string]interface{}{"format": text, "envelope": envelope("upsert")}, "envelope upsert requires key_format"},
 		{"upsert without any format", map[string]interface{}{"envelope": envelope("upsert")}, "envelope upsert requires key_format"},
-		{"debezium with json", map[string]interface{}{"format": json, "envelope": envelope("debezium")}, "envelope debezium requires key_format"},
+		{"debezium with json", map[string]interface{}{"format": json, "envelope": envelope("debezium")}, "envelope debezium requires format to use avro or protobuf"},
 	}
 
 	resources := map[string]struct {
