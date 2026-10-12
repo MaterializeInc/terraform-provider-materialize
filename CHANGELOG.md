@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.11.11 - 2026-10-13
 
 ### Bug Fixes
 
+* Marked `oidc_secret` on `materialize_sso_config` as sensitive, so the OIDC client secret no longer appears in plan and apply output, including CI logs [#946](https://github.com/MaterializeInc/terraform-provider-materialize/pull/946).
 * Fixed `materialize_source_kafka` and `materialize_source_table_kafka` accepting an upsert or Debezium envelope without `key_format` [#949](https://github.com/MaterializeInc/terraform-provider-materialize/pull/949). Materialize rejects that unless the value format is Avro or Protobuf, which take the key schema from the schema registry, so it failed at apply; it is now rejected at plan time. Also fixed the source table guide, whose Kafka examples used a `source_name` attribute that does not exist and an upsert envelope without a key format.
 * Fixed `materialize_source_table_kafka` accepting `format` together with `key_format` or `value_format` [#948](https://github.com/MaterializeInc/terraform-provider-materialize/pull/948). Materialize takes either `FORMAT` or `KEY FORMAT ... VALUE FORMAT`, so this failed at apply with a syntax error; it is now rejected at plan time, matching `materialize_source_kafka`.
 * Fixed `materialize_source_kafka` accepting `format` together with `key_format` or `value_format`, and `key_format` or `value_format` on its own [#947](https://github.com/MaterializeInc/terraform-provider-materialize/pull/947). Materialize takes either `FORMAT` or `KEY FORMAT ... VALUE FORMAT`, so these failed at apply with a syntax error; they are now rejected at plan time.
