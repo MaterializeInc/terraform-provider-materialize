@@ -1,4 +1,6 @@
-FROM mcr.microsoft.com/mssql/server:2025-latest
+# 2025 crashes on every start on some CI runners. Use the same 2022 image as
+# Materialize's own SQL Server tests.
+FROM mcr.microsoft.com/mssql/server:2022-CU21-ubuntu-22.04
 
 # Switch to root to install packages and copy files
 USER root

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Misc
+
+* Fixed the sqlserver test fixture filling the CI runner's disk when SQL Server 2025 crashed on every start, which failed the integration jobs with `container sqlserver is unhealthy`. The fixture now uses `mssql/server:2022-CU21-ubuntu-22.04`, the image Materialize's own SQL Server tests run, and the entrypoint deletes crash dumps and stops restarting after a few crashes [#954](https://github.com/MaterializeInc/terraform-provider-materialize/pull/954).
+
 ## 0.11.11 - 2026-10-13
 
 ### Bug Fixes

@@ -5,6 +5,13 @@
 # dead process until the healthcheck budget ran out and the job failed with
 # "container sqlserver is unhealthy". Keep the pid so the loop can tell a slow
 # start from a dead server, and start it again if it died.
+#
+# On a host where it crashes every time, restarting forever left a dump per
+# crash and filled the runner's disk. Remove the dumps, and after a few tries
+# exit so Docker's restart backoff takes over.
+MAX_RESTARTS=3
+RESTARTS=0
+
 start_sqlservr() {
     /opt/mssql/bin/sqlservr &
     SQLSERVR_PID=$!
@@ -20,6 +27,12 @@ restart_sqlservr_if_dead() {
     fi
     echo "sqlservr (pid $SQLSERVR_PID) exited before accepting connections; last errorlog lines:"
     tail -n 20 /var/opt/mssql/log/errorlog 2>/dev/null || echo "(no errorlog yet)"
+    rm -rf /var/opt/mssql/log/core.* /var/opt/mssql/log/SQLDump*
+    if [ "$RESTARTS" -ge "$MAX_RESTARTS" ]; then
+        echo "sqlservr crashed $((RESTARTS + 1)) times, giving up"
+        exit 1
+    fi
+    RESTARTS=$((RESTARTS + 1))
     echo "Starting sqlservr again..."
     start_sqlservr
 }
