@@ -27,6 +27,13 @@ func isUndefinedObject(err error) bool {
 	}
 }
 
+// IsDependentObjectsStillExist reports whether err is SQLSTATE 2BP01, returned
+// when an object cannot be dropped because other objects still depend on it.
+func IsDependentObjectsStillExist(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.SQLState() == "2BP01"
+}
+
 func QuoteString(input string) string {
 	return "'" + strings.Replace(input, "'", "''", -1) + "'"
 }

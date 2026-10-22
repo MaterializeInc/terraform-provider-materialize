@@ -39,6 +39,17 @@ type Builder struct {
 	entity EntityType
 }
 
+// execError carries the flattened message callers have always seen, and keeps
+// the driver error underneath so its SQLSTATE can still be checked.
+type execError struct {
+	msg   string
+	pgErr *pgconn.PgError
+}
+
+func (e *execError) Error() string { return e.msg }
+
+func (e *execError) Unwrap() error { return e.pgErr }
+
 func (b *Builder) exec(statement string) error {
 	if !strings.HasSuffix(statement, ";") {
 		statement += ";"
@@ -57,7 +68,7 @@ func (b *Builder) exec(statement string) error {
 				msg += fmt.Sprintf(" HINT: %s", pgErr.Hint)
 			}
 			msg += fmt.Sprintf(" (SQLSTATE %s)", pgErr.SQLState())
-			return errors.New(msg)
+			return &execError{msg: msg, pgErr: pgErr}
 		}
 		return err
 	}
