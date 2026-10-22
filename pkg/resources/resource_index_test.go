@@ -181,6 +181,26 @@ func TestResourceIndexDeleteGivesUpOnPersistentReaders(t *testing.T) {
 	r.GreaterOrEqual(attempts, 2)
 }
 
+// When the readers stay, the error explains how to replace the index together
+// with them.
+func TestResourceIndexDeleteHintsAtReplaceTriggeredBy(t *testing.T) {
+	r := require.New(t)
+	orig := indexDropRetryTimeout
+	indexDropRetryTimeout = time.Second
+	t.Cleanup(func() { indexDropRetryTimeout = orig })
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		for i := 0; i < 20; i++ {
+			mock.ExpectExec(`DROP INDEX "database"."schema"."index" RESTRICT;`).WillReturnError(dependentsError)
+		}
+
+		diags := indexDelete(context.TODO(), indexDeleteData(t), db)
+		r.True(diags.HasError())
+		r.Contains(diags[0].Summary, "(SQLSTATE 2BP01)")
+		r.Contains(diags[0].Detail, "replace_triggered_by = [materialize_index.<name>.id]")
+	})
+}
+
 // Any other failure is returned straight away rather than retried.
 func TestResourceIndexDeleteDoesNotRetryOtherErrors(t *testing.T) {
 	r := require.New(t)
@@ -191,6 +211,7 @@ func TestResourceIndexDeleteDoesNotRetryOtherErrors(t *testing.T) {
 		diags := indexDelete(context.TODO(), indexDeleteData(t), db)
 		r.True(diags.HasError())
 		r.Contains(diags[0].Summary, "(SQLSTATE XX000)")
+		r.Empty(diags[0].Detail, "the hint is only for the dependency error")
 		r.Error(mock.ExpectationsWereMet(), "the second DROP must not have run")
 	})
 }
