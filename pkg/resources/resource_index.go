@@ -4,11 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
+	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -285,8 +288,28 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		},
 	)
 
-	if err := b.Drop(); err != nil {
+	if err := dropIndex(ctx, b.Drop); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
+}
+
+// Materialize refuses to drop an index while a materialized view or another
+// index reads from it. terraform destroy drops those readers in parallel with
+// the index, because the configuration does not link them, so the index drop
+// gets a moment for them to go before it fails.
+var indexDropRetryTimeout = time.Minute
+
+func dropIndex(ctx context.Context, drop func() error) error {
+	return retry.RetryContext(ctx, indexDropRetryTimeout, func() *retry.RetryError {
+		err := drop()
+		if err == nil {
+			return nil
+		}
+		if materialize.IsDependentObjectsStillExist(err) {
+			log.Printf("[INFO] index is still read by other objects, retrying drop: %s", err)
+			return retry.RetryableError(err)
+		}
+		return retry.NonRetryableError(err)
+	})
 }
