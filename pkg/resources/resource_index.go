@@ -87,7 +87,7 @@ var indexSchema = map[string]*schema.Schema{
 
 func Index() *schema.Resource {
 	return &schema.Resource{
-		Description: "Indexes represent query results stored in memory. Recent Materialize versions do not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link, so replacing such an index fails. Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to the resources that read from it so Terraform replaces them together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.",
+		Description: "Indexes represent query results stored in memory. Materialize does not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link. Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each resource that reads from the index, so Terraform drops it before the index on destroy and replaces it together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.",
 
 		CreateContext: indexCreate,
 		ReadContext:   indexRead,
@@ -301,8 +301,8 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 // the index is replaced it drops the index without touching the view. The view
 // has to be told to follow the index.
 const indexReadersHint = "The objects named in the error still read from this index, so Materialize cannot drop it. " +
-	"If the index is being replaced, add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` " +
-	"to each of those resources so Terraform recreates them together with the index."
+	"Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each of those resources, " +
+	"so Terraform drops them before the index and recreates them when the index is replaced."
 
 // Materialize refuses to drop an index while a materialized view or another
 // index reads from it. terraform destroy drops those readers in parallel with

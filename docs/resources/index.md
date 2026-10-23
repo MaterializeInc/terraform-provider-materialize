@@ -3,12 +3,12 @@
 page_title: "materialize_index Resource - terraform-provider-materialize"
 subcategory: ""
 description: |-
-  Indexes represent query results stored in memory. Recent Materialize versions do not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link, so replacing such an index fails. Add lifecycle { replace_triggered_by = [materialize_index.<name>.id] } to the resources that read from it so Terraform replaces them together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.
+  Indexes represent query results stored in memory. Materialize does not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link. Add lifecycle { replace_triggered_by = [materialize_index.<name>.id] } to each resource that reads from the index, so Terraform drops it before the index on destroy and replaces it together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.
 ---
 
 # materialize_index (Resource)
 
-Indexes represent query results stored in memory. Recent Materialize versions do not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link, so replacing such an index fails. Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to the resources that read from it so Terraform replaces them together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.
+Indexes represent query results stored in memory. Materialize does not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link. Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each resource that reads from the index, so Terraform drops it before the index on destroy and replaces it together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.
 
 ## Example Usage
 
@@ -31,8 +31,8 @@ resource "materialize_index" "loadgen_index" {
 #     USING ARRANGEMENT
 
 # A materialized view that reads from the index above. Materialize does not
-# drop an index that is still read from, so when the index is replaced the view
-# has to be replaced with it. Referencing the id, rather than the whole
+# drop an index that is still read from, so the view has to be dropped first on
+# destroy and replaced with the index. Referencing the id, rather than the whole
 # resource, avoids replacing the view on in-place changes such as a comment.
 resource "materialize_materialized_view" "reads_index" {
   name         = "reads_index"
