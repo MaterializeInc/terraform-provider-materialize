@@ -6,6 +6,10 @@
 
 * Fixed `terraform destroy` failing to drop a `materialize_index` with SQLSTATE `2BP01` when a materialized view or index that reads from it is dropped in the same run. Materialize versions that refuse to drop an index other objects still read from return that error, and Terraform drops those objects in parallel because the configuration does not link them. The provider now retries the drop for up to a minute while they go. [#952](https://github.com/MaterializeInc/terraform-provider-materialize/pull/952)
 
+### Misc
+
+* Documented how to replace a `materialize_index` that a materialized view or another index reads from: Materialize does not drop such an index and Terraform cannot see that link, so the readers need `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }`, which also makes `terraform destroy` drop them before the index. The error for that case now includes this hint. [#953](https://github.com/MaterializeInc/terraform-provider-materialize/pull/953)
+
 ## 0.11.11 - 2026-10-13
 
 ### Bug Fixes
