@@ -423,7 +423,7 @@ func MockIndexColumnScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_index_columns.index_id = mz_indexes.id
 		AND mz_index_columns.on_position = mz_columns.position`
 
-	q := mockQueryBuilder(b, predicate, "ORDER BY mz_columns.position")
+	q := mockQueryBuilder(b, predicate, "ORDER BY mz_index_columns.index_position")
 	ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default", "indexed_column", "index_name", "index_id"}).
 		AddRow("u1", "column", "1", "true", "integer", "", "true", "index", "u1")
 	mock.ExpectQuery(q).WillReturnRows(ir)
