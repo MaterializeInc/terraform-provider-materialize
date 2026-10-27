@@ -72,7 +72,8 @@ docker compose up -d --build
 ## API Endpoints
 
 - `/api/cloud-regions`: Get information about all cloud regions
-- `/{region-name}/api/region`: Get, update, or delete information about a specific region (e.g., `/us-east-1/api/region`).
+- `/api/region/{cloud-provider}/{region-name}`: Get, update, or delete information about a specific region on the global API (e.g., `/api/region/aws/us-east-1`).
+- `/{region-name}/api/region`: The same through the per-region Region API that older provider versions call (e.g., `/us-east-1/api/region`).
 
 ## Using with Terraform
 

@@ -973,7 +973,7 @@ func (m *MockCloudService) RoundTrip(req *http.Request) (*http.Response, error) 
 			Body:       io.NopCloser(bytes.NewReader(respData)),
 			Header:     make(http.Header),
 		}, nil
-	} else if strings.HasSuffix(req.URL.Path, "/api/region") {
+	} else if strings.HasPrefix(req.URL.Path, "/api/region/") {
 		// Return mock response for GetRegionDetails
 		details := clients.CloudRegion{
 			RegionInfo: &clients.RegionInfo{
