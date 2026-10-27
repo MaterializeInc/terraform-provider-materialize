@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Misc
+
+* The provider now reads and enables regions through the global Cloud API (`/api/region/{cloud_provider}/{region}`) instead of the per-region Region API, which Materialize Cloud is removing. Earlier provider versions will stop working in Cloud mode once that API is gone, so upgrade to this release or later. The `url` attribute of the `materialize_region` data source is no longer used and will be empty once Materialize Cloud stops returning it [#957](https://github.com/MaterializeInc/terraform-provider-materialize/pull/957).
+
 ## 0.11.11 - 2026-10-13
 
 ### Bug Fixes

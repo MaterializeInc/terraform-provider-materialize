@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -37,7 +38,7 @@ func (m *MockFronteggService) RoundTrip(req *http.Request) (*http.Response, erro
 			Body:       io.NopCloser(bytes.NewReader(respData)),
 			Header:     make(http.Header),
 		}, nil
-	} else if strings.HasSuffix(req.URL.Path, "/api/region") {
+	} else if strings.HasPrefix(req.URL.Path, "/api/region/") {
 		// Return mock response for GetRegionDetails
 		details := CloudRegion{
 			RegionInfo: &RegionInfo{
@@ -91,9 +92,9 @@ func TestCloudAPIClient_GetRegionDetails(t *testing.T) {
 	}
 
 	provider := CloudProvider{
-		ID:   "aws/us-east-1",
-		Name: "us-east-1",
-		Url:  "http://mockendpoint.com/api/region",
+		ID:            "aws/us-east-1",
+		Name:          "us-east-1",
+		CloudProvider: "aws",
 	}
 
 	// Call the method to test
@@ -162,9 +163,9 @@ func TestCloudAPIClient_GetRegionDetails_ErrorResponse(t *testing.T) {
 		Endpoint:   "http://mockendpoint.com",
 	}
 	provider := CloudProvider{
-		ID:   "aws/us-east-1",
-		Name: "us-east-1",
-		Url:  "http://mockendpoint.com/api/region",
+		ID:            "aws/us-east-1",
+		Name:          "us-east-1",
+		CloudProvider: "aws",
 	}
 
 	// Call the method to test
@@ -228,9 +229,9 @@ func TestCloudAPIClient_EnableRegion_Success(t *testing.T) {
 	}
 
 	provider := CloudProvider{
-		ID:   "aws/us-east-1",
-		Name: "us-east-1",
-		Url:  "http://mockendpoint.com/api/region",
+		ID:            "aws/us-east-1",
+		Name:          "us-east-1",
+		CloudProvider: "aws",
 	}
 
 	region, err := apiClient.EnableRegion(context.Background(), provider)
@@ -253,13 +254,40 @@ func TestCloudAPIClient_EnableRegion_Error(t *testing.T) {
 	}
 
 	provider := CloudProvider{
-		ID:   "aws/us-east-1",
-		Name: "us-east-1",
-		Url:  "http://mockendpoint.com/api/region",
+		ID:            "aws/us-east-1",
+		Name:          "us-east-1",
+		CloudProvider: "aws",
 	}
 
 	// Simulate an error response for EnableRegion
 	_, err := apiClient.EnableRegion(context.Background(), provider)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "cloud API returned non-200/201 status code:")
+}
+
+// Region calls go to the global API, so they keep working once
+// /api/cloud-regions stops returning the per-region url.
+func TestCloudAPIClient_RegionCallsUseGlobalAPI(t *testing.T) {
+	var requests []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.Method+" "+r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"regionInfo":{"sqlAddress":"sql.materialize.com:6875","resolvable":true,"enabledAt":"2021-01-01T00:00:00Z"},"regionState":"enabled"}`))
+	}))
+	defer server.Close()
+
+	apiClient := &CloudAPIClient{HTTPClient: server.Client(), Endpoint: server.URL}
+	provider := CloudProvider{ID: "aws/us-east-1", Name: "us-east-1", CloudProvider: "aws"}
+
+	region, err := apiClient.GetRegionDetails(context.Background(), provider)
+	require.NoError(t, err)
+	require.Equal(t, "sql.materialize.com:6875", region.RegionInfo.SqlAddress)
+
+	_, err = apiClient.EnableRegion(context.Background(), provider)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{
+		"GET /api/region/aws/us-east-1",
+		"PATCH /api/region/aws/us-east-1",
+	}, requests)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -104,6 +105,11 @@ func main() {
 	regions := createRegions(config)
 
 	http.HandleFunc("/api/cloud-regions", cloudRegionsHandler(regions))
+	// The global API serves regions at /api/region/{cloud_provider}/{region}.
+	// Older provider versions call the per-region url from /api/cloud-regions.
+	http.HandleFunc("/api/region/", func(w http.ResponseWriter, r *http.Request) {
+		regionHandler(strings.TrimPrefix(r.URL.Path, "/api/region/"), regions)(w, r)
+	})
 	for _, region := range regions {
 		http.HandleFunc(fmt.Sprintf("/%s/api/region", region.Name), regionHandler(region.ID, regions))
 	}
