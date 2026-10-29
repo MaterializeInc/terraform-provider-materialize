@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+* Fixed `materialize_table` planning a replacement of every table with a column that has no default, on Materialize versions where `mz_columns.default` reports such a column as SQL NULL instead of `'NULL'` [#959](https://github.com/MaterializeInc/terraform-provider-materialize/pull/959). An unreviewed apply would drop the table and its data. SQL NULL is now read as no default, which works on both older and newer Materialize versions.
+
 ## 0.11.12 - 2026-10-28
 
 ### Misc
