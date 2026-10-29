@@ -1,11 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Misc
-
-* Added a nightly run of the acceptance and integration tests against the latest Materialize main build (`materialize/materialized:unstable`), and a manual trigger that takes any image tag, so Materialize changes that affect the provider show up before they are released. A failed nightly run opens a GitHub issue, or comments on the one already open [#960](https://github.com/MaterializeInc/terraform-provider-materialize/pull/960).
-
 ## 0.11.12 - 2026-10-28
 
 ### Misc
