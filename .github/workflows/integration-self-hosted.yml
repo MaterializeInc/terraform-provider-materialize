@@ -11,10 +11,17 @@ on:
       - go.mod
   schedule:
     - cron: 1 11 * * 0
+  workflow_call:
+    inputs:
+      materialize_tag:
+        type: string
+        default: latest
 
 jobs:
   self-hosted:
     runs-on: ubuntu-latest
+    env:
+      MZ_IMAGE_TAG: ${{ inputs.materialize_tag || 'latest' }}
     steps:
       - uses: actions/checkout@v7
 

@@ -1,0 +1,25 @@
+name: nightly
+on:
+  schedule:
+    - cron: 1 3 * * *
+  workflow_dispatch:
+    inputs:
+      materialize_tag:
+        description: materialize/materialized image tag to test against, for example a release candidate
+        default: unstable
+
+jobs:
+  acceptance:
+    uses: ./.github/workflows/acceptance.yml
+    with:
+      materialize_tag: ${{ inputs.materialize_tag || 'unstable' }}
+
+  saas:
+    uses: ./.github/workflows/integration.yml
+    with:
+      materialize_tag: ${{ inputs.materialize_tag || 'unstable' }}
+
+  self-hosted:
+    uses: ./.github/workflows/integration-self-hosted.yml
+    with:
+      materialize_tag: ${{ inputs.materialize_tag || 'unstable' }}
