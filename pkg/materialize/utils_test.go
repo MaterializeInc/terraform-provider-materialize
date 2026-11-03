@@ -1,9 +1,12 @@
 package materialize
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,6 +85,24 @@ func TestQuoteColumnName(t *testing.T) {
 	for in, want := range cases {
 		if got := QuoteColumnName(in); got != want {
 			t.Errorf("QuoteColumnName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestIsDependentObjectsStillExist(t *testing.T) {
+	cases := map[string]struct {
+		err  error
+		want bool
+	}{
+		"nil":            {nil, false},
+		"plain error":    {errors.New("(SQLSTATE 2BP01)"), false},
+		"2BP01":          {&pgconn.PgError{Code: "2BP01"}, true},
+		"wrapped 2BP01":  {fmt.Errorf("drop: %w", &pgconn.PgError{Code: "2BP01"}), true},
+		"other SQLSTATE": {&pgconn.PgError{Code: "XX000"}, false},
+	}
+	for name, c := range cases {
+		if got := IsDependentObjectsStillExist(c.err); got != c.want {
+			t.Errorf("%s: got %v, want %v", name, got, c.want)
 		}
 	}
 }

@@ -4,11 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
+	"time"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -84,7 +87,7 @@ var indexSchema = map[string]*schema.Schema{
 
 func Index() *schema.Resource {
 	return &schema.Resource{
-		Description: "Indexes represent query results stored in memory.",
+		Description: "Indexes represent query results stored in memory. Materialize does not drop an index that a materialized view or another index still reads from, and Terraform cannot see that link. Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each resource that reads from the index, so Terraform drops it before the index on destroy and replaces it together with the index. Anything built on those resources, such as their own indexes, needs the same block pointing at them.",
 
 		CreateContext: indexCreate,
 		ReadContext:   indexRead,
@@ -285,8 +288,38 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		},
 	)
 
-	if err := b.Drop(); err != nil {
+	if err := dropIndex(ctx, b.Drop); err != nil {
+		if materialize.IsDependentObjectsStillExist(err) {
+			return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error(), Detail: indexReadersHint}}
+		}
 		return diag.FromErr(err)
 	}
 	return nil
+}
+
+// Terraform cannot see that a materialized view reads from an index, so when
+// the index is replaced it drops the index without touching the view. The view
+// has to be told to follow the index.
+const indexReadersHint = "The objects named in the error still read from this index, so Materialize cannot drop it. " +
+	"Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each of those resources, " +
+	"so Terraform drops them before the index and recreates them when the index is replaced."
+
+// Materialize refuses to drop an index while a materialized view or another
+// index reads from it. terraform destroy drops those readers in parallel with
+// the index, because the configuration does not link them, so the index drop
+// gets a moment for them to go before it fails.
+var indexDropRetryTimeout = time.Minute
+
+func dropIndex(ctx context.Context, drop func() error) error {
+	return retry.RetryContext(ctx, indexDropRetryTimeout, func() *retry.RetryError {
+		err := drop()
+		if err == nil {
+			return nil
+		}
+		if materialize.IsDependentObjectsStillExist(err) {
+			log.Printf("[INFO] index is still read by other objects, retrying drop: %s", err)
+			return retry.RetryableError(err)
+		}
+		return retry.NonRetryableError(err)
+	})
 }

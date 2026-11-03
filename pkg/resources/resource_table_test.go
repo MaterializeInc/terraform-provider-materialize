@@ -91,6 +91,31 @@ func TestResourceTableReadIdMigration(t *testing.T) {
 	})
 }
 
+func TestResourceTableReadColumnDefault(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
+	r.NotNil(d)
+	d.SetId("aws/us-east-1:u1")
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		testhelpers.MockTableScan(mock, `WHERE mz_tables.id = 'u1'`)
+
+		ir := mock.NewRows([]string{"id", "name", "position", "nullable", "type", "default"}).
+			AddRow("u1", "a", "1", "true", "integer", nil).
+			AddRow("u1", "b", "2", "true", "integer", "NULL").
+			AddRow("u1", "c", "3", "true", "integer", "5")
+		mock.ExpectQuery(`FROM mz_columns`).WillReturnRows(ir)
+
+		if err := tableRead(context.TODO(), d, db); err != nil {
+			t.Fatal(err)
+		}
+
+		r.Equal("NULL", d.Get("column.0.default"))
+		r.Equal("NULL", d.Get("column.1.default"))
+		r.Equal("5", d.Get("column.2.default"))
+	})
+}
+
 func TestResourceTableDelete(t *testing.T) {
 	r := require.New(t)
 

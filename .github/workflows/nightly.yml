@@ -1,0 +1,46 @@
+name: nightly
+on:
+  schedule:
+    - cron: 1 3 * * *
+  workflow_dispatch:
+    inputs:
+      materialize_tag:
+        description: materialize/materialized image tag to test against, for example a release candidate
+        default: unstable
+
+jobs:
+  acceptance:
+    uses: ./.github/workflows/acceptance.yml
+    with:
+      materialize_tag: ${{ inputs.materialize_tag || 'unstable' }}
+
+  saas:
+    uses: ./.github/workflows/integration.yml
+    with:
+      materialize_tag: ${{ inputs.materialize_tag || 'unstable' }}
+
+  self-hosted:
+    uses: ./.github/workflows/integration-self-hosted.yml
+    with:
+      materialize_tag: ${{ inputs.materialize_tag || 'unstable' }}
+
+  report:
+    needs: [acceptance, saas, self-hosted]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Nightly tests against Materialize unstable are failing"
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --title "$title" --body "The nightly run against \`materialize/materialized:unstable\` failed: $RUN_URL. Close this issue once it passes again."
+          fi

@@ -33,7 +33,7 @@ func Region() *schema.Resource {
 						"url": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The URL at which the Region API can be reached.",
+							Description: "The URL at which the Region API can be reached. The provider no longer uses it, and it is empty once Materialize Cloud stops returning it.",
 						},
 						"cloud_provider": {
 							Type:        schema.TypeString,

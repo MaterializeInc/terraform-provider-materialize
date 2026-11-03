@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -25,7 +26,9 @@ type CloudRegion struct {
 	RegionInfo *RegionInfo `json:"regionInfo"`
 }
 
-// CloudProvider contains the information about a cloud provider and its region
+// CloudProvider contains the information about a cloud provider and its region.
+// Url points at the per-region Region API, which is being removed. The provider
+// uses the global API instead, and Url may come back empty.
 type CloudProvider struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
@@ -57,8 +60,8 @@ func NewCloudAPIClient(tokens TokenSource, cloudAPIEndpoint, baseEndpoint string
 }
 
 // get issues an authorized GET that honours ctx.
-func (c *CloudAPIClient) get(ctx context.Context, url string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func (c *CloudAPIClient) get(ctx context.Context, endpoint string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +96,14 @@ func (c *CloudAPIClient) ListCloudProviders(ctx context.Context) ([]CloudProvide
 	return response.Data, nil
 }
 
+// regionEndpoint returns the global API endpoint for a region.
+func (c *CloudAPIClient) regionEndpoint(provider CloudProvider) string {
+	return fmt.Sprintf("%s/api/region/%s/%s", c.Endpoint, url.PathEscape(provider.CloudProvider), url.PathEscape(provider.Name))
+}
+
 // GetRegionDetails fetches the details for a given region
 func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
-	regionEndpoint := fmt.Sprintf("%s/api/region", provider.Url)
-
-	resp, err := c.get(ctx, regionEndpoint)
+	resp, err := c.get(ctx, c.regionEndpoint(provider))
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving region details: %v", err)
 	}
@@ -125,7 +131,7 @@ func (c *CloudAPIClient) GetRegionDetails(ctx context.Context, provider CloudPro
 
 // EnableRegion sends a PATCH request to enable a cloud region
 func (c *CloudAPIClient) EnableRegion(ctx context.Context, provider CloudProvider) (*CloudRegion, error) {
-	endpoint := fmt.Sprintf("%s/api/region", provider.Url)
+	endpoint := c.regionEndpoint(provider)
 	emptyJSONPayload := bytes.NewBuffer([]byte("{}"))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, endpoint, emptyJSONPayload)
 	if err != nil {

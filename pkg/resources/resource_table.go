@@ -135,11 +135,16 @@ func tableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 	var tc []interface{}
 	for _, t := range tableColumns {
+		// Newer Materialize versions report a column without a default as SQL NULL instead of 'NULL'
+		columnDefault := "NULL"
+		if t.Default.Valid {
+			columnDefault = t.Default.String
+		}
 		column := map[string]interface{}{
 			"name":     t.Name.String,
 			"type":     t.Type.String,
 			"nullable": !t.Nullable.Bool,
-			"default":  t.Default.String,
+			"default":  columnDefault,
 			"comment":  t.Comment.String,
 		}
 		tc = append(tc, column)

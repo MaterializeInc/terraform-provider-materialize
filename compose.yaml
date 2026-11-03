@@ -1,7 +1,7 @@
 services:
 
   materialized:
-    image: materialize/materialized:latest
+    image: materialize/materialized:${MZ_IMAGE_TAG:-latest}
     container_name: materialized
     command:
       - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}}'
@@ -34,7 +34,7 @@ services:
     healthcheck: {test: curl -f localhost:6878/api/readyz, interval: 1s, start_period: 35s}
 
   materialized2:
-    image: materialize/materialized:latest
+    image: materialize/materialized:${MZ_IMAGE_TAG:-latest}
     container_name: materialized2
     command:
       - '--cluster-replica-sizes={"3xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "2xsmall": {"workers": 1, "scale": 1, "credits_per_hour": "1", "is_cc": false, "memory_limit": "256MiB"}, "25cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}, "50cc": {"workers": 1, "scale": 1, "credits_per_hour": "1", "memory_limit": "256MiB"}}'

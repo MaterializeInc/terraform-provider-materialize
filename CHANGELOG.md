@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+* Fixed `terraform destroy` failing to drop a `materialize_index` with SQLSTATE `2BP01` when a materialized view or index that reads from it is dropped in the same run. Materialize versions that refuse to drop an index other objects still read from return that error, and Terraform drops those objects in parallel because the configuration does not link them. The provider now retries the drop for up to a minute while they go. [#952](https://github.com/MaterializeInc/terraform-provider-materialize/pull/952)
+
+### Misc
+
+* Documented how to replace a `materialize_index` that a materialized view or another index reads from: Materialize does not drop such an index and Terraform cannot see that link, so the readers need `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }`, which also makes `terraform destroy` drop them before the index. The error for that case now includes this hint. [#953](https://github.com/MaterializeInc/terraform-provider-materialize/pull/953)
+
+## 0.11.13 - 2026-10-29
+
+### Bug Fixes
+
+* Fixed `materialize_table` planning a replacement of every table with a column that has no default, on Materialize versions where `mz_columns.default` reports such a column as SQL NULL instead of `'NULL'` [#959](https://github.com/MaterializeInc/terraform-provider-materialize/pull/959). An unreviewed apply would drop the table and its data. SQL NULL is now read as no default, which works on both older and newer Materialize versions.
+
+## 0.11.12 - 2026-10-28
+
+### Misc
+
+* The provider now reads and enables regions through the global Cloud API (`/api/region/{cloud_provider}/{region}`) instead of the per-region Region API, which Materialize Cloud is removing. Earlier provider versions will stop working in Cloud mode once that API is gone, so upgrade to this release or later. The `url` attribute of the `materialize_region` data source is no longer used and will be empty once Materialize Cloud stops returning it [#957](https://github.com/MaterializeInc/terraform-provider-materialize/pull/957).
+
 ## 0.11.11 - 2026-10-13
 
 ### Bug Fixes
