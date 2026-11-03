@@ -5,6 +5,7 @@
 ### Bug Fixes
 
 * Fixed `terraform destroy` failing to drop a `materialize_index` with SQLSTATE `2BP01` when a materialized view or index that reads from it is dropped in the same run. Materialize versions that refuse to drop an index other objects still read from return that error, and Terraform drops those objects in parallel because the configuration does not link them. The provider now retries the drop for up to a minute while they go. [#952](https://github.com/MaterializeInc/terraform-provider-materialize/pull/952)
+* Fixed `materialize_index` planning a replacement on every run when its key columns are in a different order than in the indexed object, for example an index on `(b, a)` over columns `(a, b)` [#955](https://github.com/MaterializeInc/terraform-provider-materialize/pull/955). The key columns were read back in the order of the object's columns; they now keep the order of the index key.
 
 ### Misc
 
