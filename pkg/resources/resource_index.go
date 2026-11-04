@@ -301,8 +301,9 @@ func indexDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 // the index is replaced it drops the index without touching the view. The view
 // has to be told to follow the index.
 const indexReadersHint = "The objects named in the error still read from this index, so Materialize cannot drop it. " +
-	"Add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each of those resources, " +
-	"so Terraform drops them before the index and recreates them when the index is replaced."
+	"If you are replacing the index, add `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }` to each of those resources, " +
+	"so Terraform drops them before the index and recreates them when the index is replaced. " +
+	"If you are removing the index, or those objects are not managed by Terraform, drop them first."
 
 // Materialize refuses to drop an index while a materialized view or another
 // index reads from it. terraform destroy drops those readers in parallel with

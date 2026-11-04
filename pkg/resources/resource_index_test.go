@@ -182,7 +182,7 @@ func TestResourceIndexDeleteGivesUpOnPersistentReaders(t *testing.T) {
 }
 
 // When the readers stay, the error explains how to replace the index together
-// with them.
+// with them, and what to do when removing it.
 func TestResourceIndexDeleteHintsAtReplaceTriggeredBy(t *testing.T) {
 	r := require.New(t)
 	orig := indexDropRetryTimeout
@@ -198,6 +198,7 @@ func TestResourceIndexDeleteHintsAtReplaceTriggeredBy(t *testing.T) {
 		r.True(diags.HasError())
 		r.Contains(diags[0].Summary, "(SQLSTATE 2BP01)")
 		r.Contains(diags[0].Detail, "replace_triggered_by = [materialize_index.<name>.id]")
+		r.Contains(diags[0].Detail, "If you are removing the index")
 	})
 }
 
