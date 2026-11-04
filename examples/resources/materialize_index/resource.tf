@@ -31,3 +31,29 @@ SQL
     replace_triggered_by = [materialize_index.loadgen_index.id]
   }
 }
+
+# A second index on the same object and in the same cluster. Of two such
+# indexes, the one created later reads from the other, so it needs the same
+# block pointing at the other index. The block also makes Terraform create it
+# second. Without it, Terraform creates both at the same time, and either can
+# end up reading from the other. Adding the block to both indexes is rejected
+# as a cycle. For two indexes that already exist, add it to the one that the
+# in-use error names.
+resource "materialize_index" "loadgen_index_by_id" {
+  name         = "example_index_by_id"
+  cluster_name = "cluster"
+
+  obj_name {
+    name          = "source"
+    schema_name   = "schema"
+    database_name = "database"
+  }
+
+  col_expr {
+    field = "id"
+  }
+
+  lifecycle {
+    replace_triggered_by = [materialize_index.loadgen_index.id]
+  }
+}
