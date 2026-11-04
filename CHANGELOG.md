@@ -10,6 +10,7 @@
 ### Misc
 
 * Documented how to replace a `materialize_index` that a materialized view or another index reads from: Materialize does not drop such an index and Terraform cannot see that link, so the readers need `lifecycle { replace_triggered_by = [materialize_index.<name>.id] }`, which also makes `terraform destroy` drop them before the index. The error for that case now includes this hint. [#953](https://github.com/MaterializeInc/terraform-provider-materialize/pull/953)
+* Documented how to replace one of two indexes on the same object, and the hint on that error now also says what to do when the index is removed or its readers are not managed by Terraform [#964](https://github.com/MaterializeInc/terraform-provider-materialize/pull/964).
 
 ## 0.11.13 - 2026-10-29
 
