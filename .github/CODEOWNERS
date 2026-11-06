@@ -1,1 +1,9 @@
-* @bobbyiliev @MaterializeInc/cloud
+# Include @materialize-bot in all rules.
+#
+# Doing so allows teams that don't want notifications on PRs sent to every
+# member, by adding the bot to their team and enabling the "only notify
+# requested team members" option.
+#
+# See: https://github.com/orgs/community/discussions/35673#discussioncomment-10561942
+
+* @bobbyiliev @MaterializeInc/cloud @MaterializeInc/on-call @materialize-bot
