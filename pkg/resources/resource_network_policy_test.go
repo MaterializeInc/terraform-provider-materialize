@@ -12,28 +12,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inNetworkPolicy = map[string]interface{}{
-	"name": "office_policy",
-	"rule": []interface{}{
-		map[string]interface{}{
-			"name":      "minnesota",
-			"action":    "allow",
-			"direction": "ingress",
-			"address":   "2.3.4.5/32",
+func inNetworkPolicy() map[string]interface{} {
+	return map[string]interface{}{
+		"name": "office_policy",
+		"rule": []interface{}{
+			map[string]interface{}{
+				"name":      "minnesota",
+				"action":    "allow",
+				"direction": "ingress",
+				"address":   "2.3.4.5/32",
+			},
+			map[string]interface{}{
+				"name":      "new_york",
+				"action":    "allow",
+				"direction": "ingress",
+				"address":   "1.2.3.4/28",
+			},
 		},
-		map[string]interface{}{
-			"name":      "new_york",
-			"action":    "allow",
-			"direction": "ingress",
-			"address":   "1.2.3.4/28",
-		},
-	},
-	"comment": "Network policy for office locations",
+		"comment": "Network policy for office locations",
+	}
 }
 
 func TestResourceNetworkPolicyCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy)
+	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -64,7 +66,7 @@ func TestResourceNetworkPolicyCreate(t *testing.T) {
 func TestResourceNetworkPolicyReadIdMigration(t *testing.T) {
 	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy)
+	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -124,7 +126,7 @@ func TestResourceNetworkPolicyUpdate(t *testing.T) {
 
 func TestResourceNetworkPolicyDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy)
+	d := schema.TestResourceDataRaw(t, NetworkPolicy().Schema, inNetworkPolicy())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

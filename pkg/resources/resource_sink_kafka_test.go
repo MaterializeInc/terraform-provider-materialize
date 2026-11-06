@@ -12,95 +12,97 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSinkKafka = map[string]interface{}{
-	"name":          "sink",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"from": []interface{}{
-		map[string]interface{}{
-			"name":          "item",
-			"schema_name":   "public",
-			"database_name": "database",
+func inSinkKafka() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "sink",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"from": []interface{}{
+			map[string]interface{}{
+				"name":          "item",
+				"schema_name":   "public",
+				"database_name": "database",
+			},
 		},
-	},
-	"kafka_connection":         []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-	"topic":                    "topic",
-	"topic_replication_factor": 3,
-	"topic_partition_count":    6,
-	"topic_config": map[string]interface{}{
-		"cleanup.policy": "compact",
-		"retention.ms":   "86400000",
-	},
-	"compression_type": "gzip",
-	"key":              []interface{}{"key_1", "key_2"},
-	"key_not_enforced": true,
-	"headers":          "headers",
-	"format": []interface{}{
-		map[string]interface{}{
-			"avro": []interface{}{
-				map[string]interface{}{
-					"avro_key_fullname":   "avro_key_fullname",
-					"avro_value_fullname": "avro_value_fullname",
-					"schema_registry_connection": []interface{}{
-						map[string]interface{}{
-							"name":          "csr_conn",
-							"database_name": "database",
-							"schema_name":   "schema",
-						},
-					},
-					"avro_doc_type": []interface{}{
-						map[string]interface{}{
-							"object": []interface{}{
-								map[string]interface{}{
-									"name":          "item",
-									"schema_name":   "public",
-									"database_name": "database",
-								},
+		"kafka_connection":         []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":                    "topic",
+		"topic_replication_factor": 3,
+		"topic_partition_count":    6,
+		"topic_config": map[string]interface{}{
+			"cleanup.policy": "compact",
+			"retention.ms":   "86400000",
+		},
+		"compression_type": "gzip",
+		"key":              []interface{}{"key_1", "key_2"},
+		"key_not_enforced": true,
+		"headers":          "headers",
+		"format": []interface{}{
+			map[string]interface{}{
+				"avro": []interface{}{
+					map[string]interface{}{
+						"avro_key_fullname":   "avro_key_fullname",
+						"avro_value_fullname": "avro_value_fullname",
+						"schema_registry_connection": []interface{}{
+							map[string]interface{}{
+								"name":          "csr_conn",
+								"database_name": "database",
+								"schema_name":   "schema",
 							},
-							"doc": "top-level comment",
 						},
-					},
-					"avro_doc_column": []interface{}{
-						map[string]interface{}{
-							"object": []interface{}{
-								map[string]interface{}{
-									"name":          "item",
-									"schema_name":   "public",
-									"database_name": "database",
+						"avro_doc_type": []interface{}{
+							map[string]interface{}{
+								"object": []interface{}{
+									map[string]interface{}{
+										"name":          "item",
+										"schema_name":   "public",
+										"database_name": "database",
+									},
 								},
+								"doc": "top-level comment",
 							},
-							"column": "c1",
-							"doc":    "comment on column only in key schema",
-							"key":    true,
 						},
-						map[string]interface{}{
-							"object": []interface{}{
-								map[string]interface{}{
-									"name":          "item",
-									"schema_name":   "public",
-									"database_name": "database",
+						"avro_doc_column": []interface{}{
+							map[string]interface{}{
+								"object": []interface{}{
+									map[string]interface{}{
+										"name":          "item",
+										"schema_name":   "public",
+										"database_name": "database",
+									},
 								},
+								"column": "c1",
+								"doc":    "comment on column only in key schema",
+								"key":    true,
 							},
-							"column": "c1",
-							"doc":    "comment on column only in value schema",
-							"value":  true,
+							map[string]interface{}{
+								"object": []interface{}{
+									map[string]interface{}{
+										"name":          "item",
+										"schema_name":   "public",
+										"database_name": "database",
+									},
+								},
+								"column": "c1",
+								"doc":    "comment on column only in value schema",
+								"value":  true,
+							},
 						},
+						"key_compatibility_level":   "BACKWARD",
+						"value_compatibility_level": "FORWARD",
 					},
-					"key_compatibility_level":   "BACKWARD",
-					"value_compatibility_level": "FORWARD",
 				},
 			},
 		},
-	},
-	"envelope":     []interface{}{map[string]interface{}{"upsert": true}},
-	"partition_by": "partition_by",
-	"snapshot":     false,
+		"envelope":     []interface{}{map[string]interface{}{"upsert": true}},
+		"partition_by": "partition_by",
+		"snapshot":     false,
+	}
 }
 
 func TestResourceSinkKafkaCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka)
+	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

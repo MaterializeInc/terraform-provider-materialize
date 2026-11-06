@@ -12,22 +12,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inAws = map[string]interface{}{
-	"name":                     "conn",
-	"endpoint":                 "http://localhost:4566",
-	"aws_region":               "us-east-1",
-	"schema_name":              "schema",
-	"database_name":            "database",
-	"access_key_id":            []interface{}{map[string]interface{}{"text": "foo"}},
-	"secret_access_key":        []interface{}{map[string]interface{}{"name": "conn_secret"}},
-	"session_token":            []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "conn_session"}}}},
-	"assume_role_arn":          "arn:aws:iam::123456789012:role/role",
-	"assume_role_session_name": "session",
+func inAws() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                     "conn",
+		"endpoint":                 "http://localhost:4566",
+		"aws_region":               "us-east-1",
+		"schema_name":              "schema",
+		"database_name":            "database",
+		"access_key_id":            []interface{}{map[string]interface{}{"text": "foo"}},
+		"secret_access_key":        []interface{}{map[string]interface{}{"name": "conn_secret"}},
+		"session_token":            []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "conn_session"}}}},
+		"assume_role_arn":          "arn:aws:iam::123456789012:role/role",
+		"assume_role_session_name": "session",
+	}
 }
 
 func TestResourceConnectionAwsCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws)
+	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -54,7 +56,7 @@ func TestResourceConnectionAwsCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceConnectionAwsReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws)
+	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -82,7 +84,7 @@ func TestResourceConnectionAwsReadIdMigration(t *testing.T) {
 
 func TestResourceConnectionAwsReadWithExternalId(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws)
+	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws())
 	r.NotNil(d)
 
 	d.SetId("u1")
@@ -114,7 +116,7 @@ func TestResourceConnectionAwsReadWithExternalId(t *testing.T) {
 
 func TestResourceConnectionAwsUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws)
+	d := schema.TestResourceDataRaw(t, ConnectionAws().Schema, inAws())
 
 	// Set current state
 	d.SetId("u1")

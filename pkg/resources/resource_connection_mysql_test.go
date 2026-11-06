@@ -12,38 +12,40 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inMySQL = map[string]interface{}{
-	"name":          "conn",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"host":          "mysql_host",
-	"port":          3306,
-	"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
-	"password":      []interface{}{map[string]interface{}{"name": "password"}},
-	"ssh_tunnel": []interface{}{
-		map[string]interface{}{
-			"name":          "ssh_conn",
-			"schema_name":   "tunnel_schema",
-			"database_name": "tunnel_database",
+func inMySQL() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"host":          "mysql_host",
+		"port":          3306,
+		"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
+		"password":      []interface{}{map[string]interface{}{"name": "password"}},
+		"ssh_tunnel": []interface{}{
+			map[string]interface{}{
+				"name":          "ssh_conn",
+				"schema_name":   "tunnel_schema",
+				"database_name": "tunnel_database",
+			},
 		},
-	},
-	"ssl_certificate_authority": []interface{}{
-		map[string]interface{}{
-			"secret": []interface{}{map[string]interface{}{
-				"name":          "root",
-				"database_name": "ssl_database",
-			}},
+		"ssl_certificate_authority": []interface{}{
+			map[string]interface{}{
+				"secret": []interface{}{map[string]interface{}{
+					"name":          "root",
+					"database_name": "ssl_database",
+				}},
+			},
 		},
-	},
-	"ssl_certificate": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
-	"ssl_key":         []interface{}{map[string]interface{}{"name": "key"}},
-	"ssl_mode":        "verify-ca",
-	"comment":         "object comment",
+		"ssl_certificate": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
+		"ssl_key":         []interface{}{map[string]interface{}{"name": "key"}},
+		"ssl_mode":        "verify-ca",
+		"comment":         "object comment",
+	}
 }
 
 func TestResourceConnectionMySQLCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionMySQL().Schema, inMySQL)
+	d := schema.TestResourceDataRaw(t, ConnectionMySQL().Schema, inMySQL())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -71,7 +73,7 @@ func TestResourceConnectionMySQLCreate(t *testing.T) {
 
 func TestResourceConnectionMySQLUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionMySQL().Schema, inMySQL)
+	d := schema.TestResourceDataRaw(t, ConnectionMySQL().Schema, inMySQL())
 
 	// Set current state
 	d.SetId("u1")

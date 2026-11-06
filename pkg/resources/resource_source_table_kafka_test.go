@@ -11,40 +11,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTableKafka = map[string]interface{}{
-	"name":          "table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"source": []interface{}{
-		map[string]interface{}{
-			"name":          "kafka_source",
-			"schema_name":   "public",
-			"database_name": "materialize",
+func inSourceTableKafka() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "kafka_source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"topic":                   "topic",
-	"include_key":             true,
-	"include_key_alias":       "message_key",
-	"include_headers":         true,
-	"include_headers_alias":   "message_headers",
-	"include_partition":       true,
-	"include_partition_alias": "message_partition",
-	"format": []interface{}{
-		map[string]interface{}{
-			"json": true,
+		"topic":                   "topic",
+		"include_key":             true,
+		"include_key_alias":       "message_key",
+		"include_headers":         true,
+		"include_headers_alias":   "message_headers",
+		"include_partition":       true,
+		"include_partition_alias": "message_partition",
+		"format": []interface{}{
+			map[string]interface{}{
+				"json": true,
+			},
 		},
-	},
-	"envelope": []interface{}{
-		map[string]interface{}{
-			"upsert": true,
-			"upsert_options": []interface{}{
-				map[string]interface{}{
-					"value_decoding_errors": []interface{}{
-						map[string]interface{}{
-							"inline": []interface{}{
-								map[string]interface{}{
-									"enabled": true,
-									"alias":   "decoding_error",
+		"envelope": []interface{}{
+			map[string]interface{}{
+				"upsert": true,
+				"upsert_options": []interface{}{
+					map[string]interface{}{
+						"value_decoding_errors": []interface{}{
+							map[string]interface{}{
+								"inline": []interface{}{
+									map[string]interface{}{
+										"enabled": true,
+										"alias":   "decoding_error",
+									},
 								},
 							},
 						},
@@ -52,12 +54,12 @@ var inSourceTableKafka = map[string]interface{}{
 				},
 			},
 		},
-	},
+	}
 }
 
 func TestResourceSourceTableKafkaCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka)
+	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -87,7 +89,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 
 func TestResourceSourceTableKafkaRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka)
+	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka())
 	d.SetId("u1")
 	r.NotNil(d)
 
@@ -108,7 +110,7 @@ func TestResourceSourceTableKafkaRead(t *testing.T) {
 
 func TestResourceSourceTableKafkaUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka)
+	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka())
 	d.SetId("u1")
 	d.Set("name", "old_table")
 	r.NotNil(d)
@@ -128,7 +130,7 @@ func TestResourceSourceTableKafkaUpdate(t *testing.T) {
 
 func TestResourceSourceTableKafkaDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka)
+	d := schema.TestResourceDataRaw(t, SourceTableKafka().Schema, inSourceTableKafka())
 	d.SetId("u1")
 	r.NotNil(d)
 
@@ -206,7 +208,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 func TestResourceSourceTableKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 	r := require.New(t)
 
-	testInSourceTableKafka := inSourceTableKafka
+	testInSourceTableKafka := inSourceTableKafka()
 	testInSourceTableKafka["include_key"] = true
 	delete(testInSourceTableKafka, "include_key_alias")
 	testInSourceTableKafka["include_headers"] = true
@@ -247,7 +249,7 @@ func TestResourceSourceTableKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 func TestResourceSourceTableKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 	r := require.New(t)
 
-	testInSourceTableKafka := inSourceTableKafka
+	testInSourceTableKafka := inSourceTableKafka()
 	testInSourceTableKafka["include_key"] = false
 	testInSourceTableKafka["include_headers"] = false
 	testInSourceTableKafka["include_partition"] = false

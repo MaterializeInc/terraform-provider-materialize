@@ -12,39 +12,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inKafka = map[string]interface{}{
-	"name":          "conn",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"service_name":  "service",
-	"kafka_broker": []interface{}{map[string]interface{}{
-		"broker":                 "b-1.hostname-1:9096",
-		"target_group_port":      9001,
-		"availability_zone":      "use1-az1",
-		"privatelink_connection": []interface{}{map[string]interface{}{"name": "pl_conn"}},
-		"ssh_tunnel":             []interface{}{map[string]interface{}{"name": "ssh"}},
-	}},
-	"aws_privatelink": []interface{}{map[string]interface{}{
-		"privatelink_connection":      []interface{}{map[string]interface{}{"name": "pl_conn"}},
-		"privatelink_connection_port": 9001,
-	}},
-	"security_protocol":                 "SASL_PLAINTEXT",
-	"progress_topic":                    "topic",
-	"progress_topic_replication_factor": 3,
-	"ssl_certificate_authority":         []interface{}{map[string]interface{}{"text": "key"}},
-	"ssl_certificate":                   []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
-	"ssl_key":                           []interface{}{map[string]interface{}{"name": "key"}},
-	"sasl_mechanisms":                   "PLAIN",
-	"sasl_username":                     []interface{}{map[string]interface{}{"text": "username"}},
-	"sasl_password":                     []interface{}{map[string]interface{}{"name": "password"}},
-	"ssh_tunnel":                        []interface{}{map[string]interface{}{"name": "tunnel"}},
-	"comment":                           "object comment",
+func inKafka() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"service_name":  "service",
+		"kafka_broker": []interface{}{map[string]interface{}{
+			"broker":                 "b-1.hostname-1:9096",
+			"target_group_port":      9001,
+			"availability_zone":      "use1-az1",
+			"privatelink_connection": []interface{}{map[string]interface{}{"name": "pl_conn"}},
+			"ssh_tunnel":             []interface{}{map[string]interface{}{"name": "ssh"}},
+		}},
+		"aws_privatelink": []interface{}{map[string]interface{}{
+			"privatelink_connection":      []interface{}{map[string]interface{}{"name": "pl_conn"}},
+			"privatelink_connection_port": 9001,
+		}},
+		"security_protocol":                 "SASL_PLAINTEXT",
+		"progress_topic":                    "topic",
+		"progress_topic_replication_factor": 3,
+		"ssl_certificate_authority":         []interface{}{map[string]interface{}{"text": "key"}},
+		"ssl_certificate":                   []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
+		"ssl_key":                           []interface{}{map[string]interface{}{"name": "key"}},
+		"sasl_mechanisms":                   "PLAIN",
+		"sasl_username":                     []interface{}{map[string]interface{}{"text": "username"}},
+		"sasl_password":                     []interface{}{map[string]interface{}{"name": "password"}},
+		"ssh_tunnel":                        []interface{}{map[string]interface{}{"name": "tunnel"}},
+		"comment":                           "object comment",
+	}
 }
 
 func TestResourceConnectionKafkaCreate(t *testing.T) {
 	r := require.New(t)
 
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inKafka)
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inKafka())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -90,7 +92,7 @@ func TestResourceConnectionKafkaCreateWithoutReplicationFactor(t *testing.T) {
 	r := require.New(t)
 
 	inKafkaWithoutReplicationFactor := map[string]interface{}{}
-	for k, v := range inKafka {
+	for k, v := range inKafka() {
 		if k != "progress_topic_replication_factor" {
 			inKafkaWithoutReplicationFactor[k] = v
 		}

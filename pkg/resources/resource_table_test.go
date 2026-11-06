@@ -12,24 +12,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inTable = map[string]interface{}{
-	"name":           "table",
-	"schema_name":    "schema",
-	"database_name":  "database",
-	"ownership_role": "joe",
-	"comment":        "object comment",
-	"column": []interface{}{map[string]interface{}{
-		"name":     "column",
-		"type":     "text",
-		"nullable": true,
-		"comment":  "column comment",
-	},
-	},
+func inTable() map[string]interface{} {
+	return map[string]interface{}{
+		"name":           "table",
+		"schema_name":    "schema",
+		"database_name":  "database",
+		"ownership_role": "joe",
+		"comment":        "object comment",
+		"column": []interface{}{map[string]interface{}{
+			"name":     "column",
+			"type":     "text",
+			"nullable": true,
+			"comment":  "column comment",
+		},
+		},
+	}
 }
 
 func TestResourceTableCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
+	d := schema.TestResourceDataRaw(t, Table().Schema, inTable())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -66,7 +68,7 @@ func TestResourceTableCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceTableReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
+	d := schema.TestResourceDataRaw(t, Table().Schema, inTable())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -93,7 +95,7 @@ func TestResourceTableReadIdMigration(t *testing.T) {
 
 func TestResourceTableReadColumnDefault(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Table().Schema, inTable)
+	d := schema.TestResourceDataRaw(t, Table().Schema, inTable())
 	r.NotNil(d)
 	d.SetId("aws/us-east-1:u1")
 

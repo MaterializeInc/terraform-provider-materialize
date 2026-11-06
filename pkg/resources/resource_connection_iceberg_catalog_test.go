@@ -13,20 +13,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inIcebergCatalog = map[string]interface{}{
-	"name":           "iceberg_conn",
-	"schema_name":    "schema",
-	"database_name":  "database",
-	"catalog_type":   "s3tablesrest",
-	"url":            "https://s3tables.us-east-1.amazonaws.com/iceberg",
-	"warehouse":      "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket",
-	"aws_connection": []interface{}{map[string]interface{}{"name": "aws_conn", "schema_name": "public", "database_name": "materialize"}},
-	"validate":       false,
+func inIcebergCatalog() map[string]interface{} {
+	return map[string]interface{}{
+		"name":           "iceberg_conn",
+		"schema_name":    "schema",
+		"database_name":  "database",
+		"catalog_type":   "s3tablesrest",
+		"url":            "https://s3tables.us-east-1.amazonaws.com/iceberg",
+		"warehouse":      "arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket",
+		"aws_connection": []interface{}{map[string]interface{}{"name": "aws_conn", "schema_name": "public", "database_name": "materialize"}},
+		"validate":       false,
+	}
 }
 
 func TestResourceConnectionIcebergCatalogCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog)
+	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -91,7 +93,7 @@ func TestResourceConnectionIcebergCatalogCreateRest(t *testing.T) {
 
 func TestResourceConnectionIcebergCatalogRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog)
+	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog())
 	r.NotNil(d)
 
 	// Set id before read
@@ -121,7 +123,7 @@ func TestResourceConnectionIcebergCatalogRead(t *testing.T) {
 
 func TestResourceConnectionIcebergCatalogUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog)
+	d := schema.TestResourceDataRaw(t, ConnectionIcebergCatalog().Schema, inIcebergCatalog())
 
 	// Set current state
 	d.SetId("u1")

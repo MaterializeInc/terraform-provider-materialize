@@ -12,27 +12,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceMySQLTable = map[string]interface{}{
-	"name":          "source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"mysql_connection": []interface{}{
-		map[string]interface{}{
-			"name": "mysql_connection",
+func inSourceMySQLTable() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"mysql_connection": []interface{}{
+			map[string]interface{}{
+				"name": "mysql_connection",
+			},
 		},
-	},
-	"ignore_columns": []interface{}{"column1", "column2"},
-	"text_columns":   []interface{}{"column3", "column4"},
-	"table": []interface{}{
-		map[string]interface{}{"upstream_name": "name1", "name": "alias"},
-		map[string]interface{}{"upstream_name": "name2"},
-	},
+		"ignore_columns": []interface{}{"column1", "column2"},
+		"text_columns":   []interface{}{"column3", "column4"},
+		"table": []interface{}{
+			map[string]interface{}{"upstream_name": "name1", "name": "alias"},
+			map[string]interface{}{"upstream_name": "name2"},
+		},
+	}
 }
 
 func TestResourceSourceMySQLCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceMySQL().Schema, inSourceMySQLTable)
+	d := schema.TestResourceDataRaw(t, SourceMySQL().Schema, inSourceMySQLTable())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -63,7 +65,7 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 
 func TestResourceSourceMySQLUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceMySQL().Schema, inSourceMySQLTable)
+	d := schema.TestResourceDataRaw(t, SourceMySQL().Schema, inSourceMySQLTable())
 
 	d.SetId("u1")
 	d.Set("name", "old_source")

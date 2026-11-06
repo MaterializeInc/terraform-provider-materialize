@@ -11,17 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inConnection = map[string]interface{}{
-	"name":          "conn",
-	"schema_name":   "schema",
-	"database_name": "database",
+func inConnection() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+	}
 }
 
 // All connections (other than AWS Privatelink and SSH Tunnel)
 // share the same update function
 func TestResourceConnectionUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection())
 
 	// Set current state
 	d.SetId("u1")
@@ -47,7 +49,7 @@ func TestResourceConnectionUpdate(t *testing.T) {
 func TestResourceConnectionReadIdMigration(t *testing.T) {
 	utils.SetDefaultRegion("aws/us-east-1")
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -72,7 +74,7 @@ func TestResourceConnectionReadIdMigration(t *testing.T) {
 func TestResourceConnectionDelete(t *testing.T) {
 	r := require.New(t)
 
-	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection)
+	d := schema.TestResourceDataRaw(t, ConnectionKafka().Schema, inConnection())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

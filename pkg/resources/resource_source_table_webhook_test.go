@@ -12,36 +12,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTableWebhook = map[string]interface{}{
-	"name":          "webhook_table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"body_format":   "JSON",
-	"include_headers": []interface{}{
-		map[string]interface{}{
-			"all": true,
+func inSourceTableWebhook() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "webhook_table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"body_format":   "JSON",
+		"include_headers": []interface{}{
+			map[string]interface{}{
+				"all": true,
+			},
 		},
-	},
-	"check_options": []interface{}{
-		map[string]interface{}{
-			"field": []interface{}{map[string]interface{}{
-				"body": true,
-			}},
-			"alias": "bytes",
+		"check_options": []interface{}{
+			map[string]interface{}{
+				"field": []interface{}{map[string]interface{}{
+					"body": true,
+				}},
+				"alias": "bytes",
+			},
+			map[string]interface{}{
+				"field": []interface{}{map[string]interface{}{
+					"headers": true,
+				}},
+				"alias": "headers",
+			},
 		},
-		map[string]interface{}{
-			"field": []interface{}{map[string]interface{}{
-				"headers": true,
-			}},
-			"alias": "headers",
-		},
-	},
-	"check_expression": "check_expression",
+		"check_expression": "check_expression",
+	}
 }
 
 func TestResourceSourceTableWebhookCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook)
+	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -66,7 +68,7 @@ func TestResourceSourceTableWebhookCreate(t *testing.T) {
 
 func TestResourceSourceTableWebhookDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook)
+	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -80,7 +82,7 @@ func TestResourceSourceTableWebhookDelete(t *testing.T) {
 
 func TestResourceSourceTableWebhookUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook)
+	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook())
 	d.SetId("u1")
 	d.Set("name", "webhook_table")
 	r.NotNil(d)
@@ -100,7 +102,7 @@ func TestResourceSourceTableWebhookUpdate(t *testing.T) {
 
 func TestResourceSourceTableWebhookRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook)
+	d := schema.TestResourceDataRaw(t, SourceTableWebhook().Schema, inSourceTableWebhook())
 	d.SetId("u1")
 	r.NotNil(d)
 

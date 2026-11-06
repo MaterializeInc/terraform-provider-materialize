@@ -11,26 +11,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTableSQLServer = map[string]interface{}{
-	"name":          "table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"source": []interface{}{
-		map[string]interface{}{
-			"name":          "source",
-			"schema_name":   "public",
-			"database_name": "materialize",
+func inSourceTableSQLServer() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"upstream_name":        "upstream_table",
-	"upstream_schema_name": "upstream_schema",
-	"text_columns":         []interface{}{"column1", "column2"},
-	"exclude_columns":      []interface{}{"column3", "column4"},
+		"upstream_name":        "upstream_table",
+		"upstream_schema_name": "upstream_schema",
+		"text_columns":         []interface{}{"column1", "column2"},
+		"exclude_columns":      []interface{}{"column3", "column4"},
+	}
 }
 
 func TestResourceSourceTableSQLServerCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -57,7 +59,7 @@ func TestResourceSourceTableSQLServerCreate(t *testing.T) {
 
 func TestResourceSourceTableSQLServerRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer())
 	d.SetId("u1")
 	r.NotNil(d)
 
@@ -78,7 +80,7 @@ func TestResourceSourceTableSQLServerRead(t *testing.T) {
 
 func TestResourceSourceTableSQLServerUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer())
 	d.SetId("u1")
 	d.Set("name", "old_table")
 	r.NotNil(d)
@@ -98,7 +100,7 @@ func TestResourceSourceTableSQLServerUpdate(t *testing.T) {
 
 func TestResourceSourceTableSQLServerDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceTableSQLServer().Schema, inSourceTableSQLServer())
 	d.SetId("u1")
 	r.NotNil(d)
 
