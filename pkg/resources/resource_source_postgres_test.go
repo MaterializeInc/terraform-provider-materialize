@@ -66,22 +66,6 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 	})
 }
 
-func inSourcePostgresSchema() map[string]interface{} {
-	return map[string]interface{}{
-		"name":          "source",
-		"schema_name":   "schema",
-		"database_name": "database",
-		"cluster_name":  "cluster",
-		"postgres_connection": []interface{}{
-			map[string]interface{}{
-				"name": "pg_connection",
-			},
-		},
-		"publication":  "mz_source",
-		"text_columns": []interface{}{"table.unsupported_type_1"},
-	}
-}
-
 func TestResourceSourcePostgresUpdate(t *testing.T) {
 	r := require.New(t)
 	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable())
