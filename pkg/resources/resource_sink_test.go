@@ -14,7 +14,7 @@ import (
 // Confirm id is updated with region for 0.4.0
 func TestResourceSinkReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka)
+	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka())
 	r.NotNil(d)
 
 	// Set current state
@@ -37,7 +37,7 @@ func TestResourceSinkReadIdMigration(t *testing.T) {
 
 func TestResourceSinkUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka)
+	d := schema.TestResourceDataRaw(t, SinkKafka().Schema, inSinkKafka())
 
 	// Set current state
 	d.SetId("u1")

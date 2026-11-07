@@ -14,7 +14,7 @@ import (
 // Confirm id is updated with region for 0.4.0
 func TestResourceSourceReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourcePostgresTable)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourcePostgresTable())
 	r.NotNil(d)
 
 	// Set current state
@@ -36,7 +36,7 @@ func TestResourceSourceReadIdMigration(t *testing.T) {
 }
 func TestResourceSourceUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourcePostgresTable)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourcePostgresTable())
 
 	// Set current state
 	d.SetId("u1")

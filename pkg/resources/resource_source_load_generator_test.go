@@ -12,22 +12,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceLoadgen = map[string]interface{}{
-	"name":                "source",
-	"schema_name":         "schema",
-	"database_name":       "database",
-	"cluster_name":        "cluster",
-	"expose_progress":     []interface{}{map[string]interface{}{"name": "progress"}},
-	"load_generator_type": "TPCH",
-	"tpch_options": []interface{}{map[string]interface{}{
-		"tick_interval": "1s",
-		"scale_factor":  0.5,
-	}},
+func inSourceLoadgen() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                "source",
+		"schema_name":         "schema",
+		"database_name":       "database",
+		"cluster_name":        "cluster",
+		"expose_progress":     []interface{}{map[string]interface{}{"name": "progress"}},
+		"load_generator_type": "TPCH",
+		"tpch_options": []interface{}{map[string]interface{}{
+			"tick_interval": "1s",
+			"scale_factor":  0.5,
+		}},
+	}
 }
 
 func TestResourceSourceLoadgenCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceLoadgen().Schema, inSourceLoadgen)
+	d := schema.TestResourceDataRaw(t, SourceLoadgen().Schema, inSourceLoadgen())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

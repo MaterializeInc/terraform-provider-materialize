@@ -13,42 +13,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSinkIceberg = map[string]interface{}{
-	"name":          "iceberg_sink",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "my_cluster",
-	"from": []interface{}{
-		map[string]interface{}{
-			"name":          "my_view",
-			"schema_name":   "public",
-			"database_name": "database",
+func inSinkIceberg() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "iceberg_sink",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "my_cluster",
+		"from": []interface{}{
+			map[string]interface{}{
+				"name":          "my_view",
+				"schema_name":   "public",
+				"database_name": "database",
+			},
 		},
-	},
-	"iceberg_catalog_connection": []interface{}{
-		map[string]interface{}{
-			"name":          "iceberg_catalog",
-			"schema_name":   "public",
-			"database_name": "materialize",
+		"iceberg_catalog_connection": []interface{}{
+			map[string]interface{}{
+				"name":          "iceberg_catalog",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"namespace": "my_namespace",
-	"table":     "my_table",
-	"aws_connection": []interface{}{
-		map[string]interface{}{
-			"name":          "aws_conn",
-			"schema_name":   "public",
-			"database_name": "materialize",
+		"namespace": "my_namespace",
+		"table":     "my_table",
+		"aws_connection": []interface{}{
+			map[string]interface{}{
+				"name":          "aws_conn",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"key":              []interface{}{"id"},
-	"key_not_enforced": false,
-	"commit_interval":  "10s",
+		"key":              []interface{}{"id"},
+		"key_not_enforced": false,
+		"commit_interval":  "10s",
+	}
 }
 
 func TestResourceSinkIcebergCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -171,7 +173,7 @@ func TestResourceSinkIcebergCreateAppend(t *testing.T) {
 
 func TestResourceSinkIcebergReadSetsModeFromEnvelope(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg())
 	r.NotNil(d)
 	d.SetId("u1")
 	r.Equal("upsert", d.Get("mode"), "schema default")
@@ -189,7 +191,7 @@ func TestResourceSinkIcebergReadSetsModeFromEnvelope(t *testing.T) {
 
 func TestResourceSinkIcebergRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg())
 	r.NotNil(d)
 
 	// Set id before read
@@ -283,7 +285,7 @@ func TestResourceSinkIcebergRemovingAwsConnectionDoesNotReplace(t *testing.T) {
 // leave mode as it is rather than blank it.
 func TestResourceSinkIcebergReadKeepsModeOnUnknownEnvelope(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg)
+	d := schema.TestResourceDataRaw(t, SinkIceberg().Schema, inSinkIceberg())
 	d.SetId("u1")
 	r.NoError(d.Set("mode", "append"))
 
@@ -309,14 +311,16 @@ func icebergSinkState(extra map[string]string) *terraform.InstanceState {
 	return &terraform.InstanceState{ID: "u1", Attributes: a}
 }
 
-var icebergSinkUpsertConfig = map[string]interface{}{
-	"name":                       "iceberg_sink",
-	"from":                       []interface{}{map[string]interface{}{"name": "my_view"}},
-	"iceberg_catalog_connection": []interface{}{map[string]interface{}{"name": "iceberg_catalog"}},
-	"namespace":                  "ns",
-	"table":                      "tbl",
-	"key":                        []interface{}{"id"},
-	"commit_interval":            "10s",
+func icebergSinkUpsertConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                       "iceberg_sink",
+		"from":                       []interface{}{map[string]interface{}{"name": "my_view"}},
+		"iceberg_catalog_connection": []interface{}{map[string]interface{}{"name": "iceberg_catalog"}},
+		"namespace":                  "ns",
+		"table":                      "tbl",
+		"key":                        []interface{}{"id"},
+		"commit_interval":            "10s",
+	}
 }
 
 // State written before mode existed has no mode. Planning it without a refresh
@@ -325,16 +329,12 @@ func TestResourceSinkIcebergUpgradeWithoutModeDoesNotReplace(t *testing.T) {
 	r := require.New(t)
 	res := SinkIceberg()
 
-	diff, err := res.Diff(context.TODO(), icebergSinkState(nil), terraform.NewResourceConfigRaw(icebergSinkUpsertConfig), nil)
+	diff, err := res.Diff(context.TODO(), icebergSinkState(nil), terraform.NewResourceConfigRaw(icebergSinkUpsertConfig()), nil)
 	r.NoError(err)
 	r.False(diff != nil && diff.RequiresNew(), "an upsert sink from an older provider must not be replaced, got %v", diff)
 
-	appendCfg := map[string]interface{}{}
-	for k, v := range icebergSinkUpsertConfig {
-		if k != "key" {
-			appendCfg[k] = v
-		}
-	}
+	appendCfg := icebergSinkUpsertConfig()
+	delete(appendCfg, "key")
 	appendCfg["mode"] = "append"
 	diff, err = res.Diff(context.TODO(), icebergSinkState(map[string]string{"mode": "upsert"}), terraform.NewResourceConfigRaw(appendCfg), nil)
 	r.NoError(err)
@@ -349,10 +349,7 @@ func TestResourceSinkIcebergAwsConnectionNamedZeroIsNotSuppressed(t *testing.T) 
 		"mode": "upsert", "aws_connection.#": "1", "aws_connection.0.name": "aws_conn",
 		"aws_connection.0.schema_name": "public", "aws_connection.0.database_name": "materialize",
 	})
-	cfg := map[string]interface{}{}
-	for k, v := range icebergSinkUpsertConfig {
-		cfg[k] = v
-	}
+	cfg := icebergSinkUpsertConfig()
 	cfg["aws_connection"] = []interface{}{map[string]interface{}{"name": "0"}}
 	diff, err := SinkIceberg().Diff(context.TODO(), state, terraform.NewResourceConfigRaw(cfg), nil)
 	r.NoError(err)

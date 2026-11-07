@@ -13,26 +13,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourcePostgresTable = map[string]interface{}{
-	"name":          "source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"postgres_connection": []interface{}{
-		map[string]interface{}{
-			"name": "pg_connection",
+func inSourcePostgresTable() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"postgres_connection": []interface{}{
+			map[string]interface{}{
+				"name": "pg_connection",
+			},
 		},
-	},
-	"publication":  "mz_source",
-	"text_columns": []interface{}{"table.unsupported_type_1"},
-	"table": []interface{}{
-		map[string]interface{}{"upstream_name": "name1", "name": "local_name"},
-	},
+		"publication":  "mz_source",
+		"text_columns": []interface{}{"table.unsupported_type_1"},
+		"table": []interface{}{
+			map[string]interface{}{"upstream_name": "name1", "name": "local_name"},
+		},
+	}
 }
 
 func TestResourceSourcePostgresCreateTable(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -64,23 +66,9 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 	})
 }
 
-var inSourcePostgresSchema = map[string]interface{}{
-	"name":          "source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"postgres_connection": []interface{}{
-		map[string]interface{}{
-			"name": "pg_connection",
-		},
-	},
-	"publication":  "mz_source",
-	"text_columns": []interface{}{"table.unsupported_type_1"},
-}
-
 func TestResourceSourcePostgresUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresTable())
 
 	d.SetId("u1")
 	d.Set("name", "old_source")
@@ -119,27 +107,29 @@ func TestDiffTextColumns(t *testing.T) {
 	}
 }
 
-var inSourcePostgresWithExcludeColumns = map[string]interface{}{
-	"name":          "source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"postgres_connection": []interface{}{
-		map[string]interface{}{
-			"name": "pg_connection",
+func inSourcePostgresWithExcludeColumns() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"postgres_connection": []interface{}{
+			map[string]interface{}{
+				"name": "pg_connection",
+			},
 		},
-	},
-	"publication":     "mz_source",
-	"exclude_columns": []interface{}{"public.users.image_data", "public.posts.binary_data"},
-	"table": []interface{}{
-		map[string]interface{}{"upstream_name": "users", "upstream_schema_name": "public", "name": "users"},
-		map[string]interface{}{"upstream_name": "posts", "upstream_schema_name": "public", "name": "posts"},
-	},
+		"publication":     "mz_source",
+		"exclude_columns": []interface{}{"public.users.image_data", "public.posts.binary_data"},
+		"table": []interface{}{
+			map[string]interface{}{"upstream_name": "users", "upstream_schema_name": "public", "name": "users"},
+			map[string]interface{}{"upstream_name": "posts", "upstream_schema_name": "public", "name": "posts"},
+		},
+	}
 }
 
 func TestResourceSourcePostgresCreateWithExcludeColumns(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresWithExcludeColumns)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresWithExcludeColumns())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -166,28 +156,30 @@ func TestResourceSourcePostgresCreateWithExcludeColumns(t *testing.T) {
 	})
 }
 
-var inSourcePostgresWithTextAndExcludeColumns = map[string]interface{}{
-	"name":          "source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"postgres_connection": []interface{}{
-		map[string]interface{}{
-			"name": "pg_connection",
+func inSourcePostgresWithTextAndExcludeColumns() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"postgres_connection": []interface{}{
+			map[string]interface{}{
+				"name": "pg_connection",
+			},
 		},
-	},
-	"publication":     "mz_source",
-	"text_columns":    []interface{}{"public.users.description", "public.posts.content"},
-	"exclude_columns": []interface{}{"public.users.image_data", "public.posts.binary_data"},
-	"table": []interface{}{
-		map[string]interface{}{"upstream_name": "users", "upstream_schema_name": "public", "name": "users"},
-		map[string]interface{}{"upstream_name": "posts", "upstream_schema_name": "public", "name": "posts"},
-	},
+		"publication":     "mz_source",
+		"text_columns":    []interface{}{"public.users.description", "public.posts.content"},
+		"exclude_columns": []interface{}{"public.users.image_data", "public.posts.binary_data"},
+		"table": []interface{}{
+			map[string]interface{}{"upstream_name": "users", "upstream_schema_name": "public", "name": "users"},
+			map[string]interface{}{"upstream_name": "posts", "upstream_schema_name": "public", "name": "posts"},
+		},
+	}
 }
 
 func TestResourceSourcePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresWithTextAndExcludeColumns)
+	d := schema.TestResourceDataRaw(t, SourcePostgres().Schema, inSourcePostgresWithTextAndExcludeColumns())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

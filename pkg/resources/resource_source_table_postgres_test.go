@@ -12,26 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTablePostgres = map[string]interface{}{
-	"name":          "table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"source": []interface{}{
-		map[string]interface{}{
-			"name":          "source",
-			"schema_name":   "public",
-			"database_name": "materialize",
+func inSourceTablePostgres() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"upstream_name":        "upstream_table",
-	"upstream_schema_name": "upstream_schema",
-	"text_columns":         []interface{}{"column1", "column2"},
-	"exclude_columns":      []interface{}{"exclude1", "exclude2"},
+		"upstream_name":        "upstream_table",
+		"upstream_schema_name": "upstream_schema",
+		"text_columns":         []interface{}{"column1", "column2"},
+		"exclude_columns":      []interface{}{"exclude1", "exclude2"},
+	}
 }
 
 func TestResourceSourceTablePostgresCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres)
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -58,7 +60,7 @@ func TestResourceSourceTablePostgresCreate(t *testing.T) {
 
 func TestResourceSourceTablePostgresRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres)
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres())
 	d.SetId("u1")
 	r.NotNil(d)
 
@@ -79,7 +81,7 @@ func TestResourceSourceTablePostgresRead(t *testing.T) {
 
 func TestResourceSourceTablePostgresUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres)
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres())
 	d.SetId("u1")
 	d.Set("name", "old_table")
 	r.NotNil(d)
@@ -268,7 +270,7 @@ func TestResourceSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T
 
 func TestResourceSourceTablePostgresDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres)
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTablePostgres())
 	d.SetId("u1")
 	r.NotNil(d)
 

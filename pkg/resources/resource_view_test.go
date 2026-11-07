@@ -12,16 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inView = map[string]interface{}{
-	"name":          "view",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"statement":     "SELECT 1 FROM 1",
+func inView() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "view",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"statement":     "SELECT 1 FROM 1",
+	}
 }
 
 func TestResourceViewCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, View().Schema, inView)
+	d := schema.TestResourceDataRaw(t, View().Schema, inView())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -45,7 +47,7 @@ func TestResourceViewCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceViewReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, View().Schema, inView)
+	d := schema.TestResourceDataRaw(t, View().Schema, inView())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -68,7 +70,7 @@ func TestResourceViewReadIdMigration(t *testing.T) {
 
 func TestResourceViewUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, View().Schema, inView)
+	d := schema.TestResourceDataRaw(t, View().Schema, inView())
 
 	// Set current state
 	d.SetId("u1")

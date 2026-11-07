@@ -12,16 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSecret = map[string]interface{}{
-	"name":          "secret",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"value":         "value",
+func inSecret() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "secret",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"value":         "value",
+	}
 }
 
 func TestResourceSecretCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
+	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -48,7 +50,7 @@ func TestResourceSecretCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceSecretReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
+	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -71,7 +73,7 @@ func TestResourceSecretReadIdMigration(t *testing.T) {
 
 func TestResourceSecretUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret)
+	d := schema.TestResourceDataRaw(t, Secret().Schema, inSecret())
 
 	// Set current state
 	d.SetId("u1")

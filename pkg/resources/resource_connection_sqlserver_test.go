@@ -12,36 +12,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSQLServer = map[string]interface{}{
-	"name":          "conn",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"host":          "sqlserver_host",
-	"port":          1433,
-	"database":      "testdb",
-	"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
-	"password":      []interface{}{map[string]interface{}{"name": "password"}},
-	"ssh_tunnel": []interface{}{
-		map[string]interface{}{
-			"name":          "ssh_conn",
-			"schema_name":   "tunnel_schema",
-			"database_name": "tunnel_database",
+func inSQLServer() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"host":          "sqlserver_host",
+		"port":          1433,
+		"database":      "testdb",
+		"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
+		"password":      []interface{}{map[string]interface{}{"name": "password"}},
+		"ssh_tunnel": []interface{}{
+			map[string]interface{}{
+				"name":          "ssh_conn",
+				"schema_name":   "tunnel_schema",
+				"database_name": "tunnel_database",
+			},
 		},
-	},
-	"aws_privatelink": []interface{}{
-		map[string]interface{}{
-			"name":          "aws_conn",
-			"schema_name":   "aws_schema",
-			"database_name": "aws_database",
+		"aws_privatelink": []interface{}{
+			map[string]interface{}{
+				"name":          "aws_conn",
+				"schema_name":   "aws_schema",
+				"database_name": "aws_database",
+			},
 		},
-	},
-	"validate": true,
-	"comment":  "SQL Server connection comment",
+		"validate": true,
+		"comment":  "SQL Server connection comment",
+	}
 }
 
 func TestResourceConnectionSQLServerCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer)
+	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -138,7 +140,7 @@ func TestResourceConnectionSQLServerCreateWithoutValidation(t *testing.T) {
 
 func TestResourceConnectionSQLServerUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer)
+	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer())
 
 	// Set current state
 	d.SetId("u1")
@@ -284,7 +286,7 @@ func TestResourceConnectionSQLServerCreateWithSSLSecret(t *testing.T) {
 
 func TestResourceConnectionSQLServerRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer)
+	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer())
 	d.SetId("aws/us-east-1:u1")
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -304,7 +306,7 @@ func TestResourceConnectionSQLServerRead(t *testing.T) {
 
 func TestResourceConnectionSQLServerDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer)
+	d := schema.TestResourceDataRaw(t, ConnectionSQLServer().Schema, inSQLServer())
 	d.SetId("u1")
 	r.NotNil(d)
 

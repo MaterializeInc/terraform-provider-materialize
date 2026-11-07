@@ -12,21 +12,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSshTunnel = map[string]interface{}{
-	"name":          "conn",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"database":      "default",
-	"host":          "localhost",
-	"port":          123,
-	"user":          "user",
-	"comment":       "object comment",
+func inSshTunnel() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"database":      "default",
+		"host":          "localhost",
+		"port":          123,
+		"user":          "user",
+		"comment":       "object comment",
+	}
 }
 
 func TestResourceConnectionSshTunnelCreate(t *testing.T) {
 	r := require.New(t)
 
-	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel)
+	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -56,7 +58,7 @@ func TestResourceConnectionSshTunnelCreate(t *testing.T) {
 func TestResourceConnectionSshTunnelReadIdMigration(t *testing.T) {
 	r := require.New(t)
 
-	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel)
+	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -79,7 +81,7 @@ func TestResourceConnectionSshTunnelReadIdMigration(t *testing.T) {
 
 func TestResourceConnectionSshTunnelUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel)
+	d := schema.TestResourceDataRaw(t, ConnectionSshTunnel().Schema, inSshTunnel())
 
 	// Set current state
 	d.SetId("u1")

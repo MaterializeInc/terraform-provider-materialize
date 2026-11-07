@@ -11,26 +11,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTableMySQL = map[string]interface{}{
-	"name":          "table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"source": []interface{}{
-		map[string]interface{}{
-			"name":          "source",
-			"schema_name":   "public",
-			"database_name": "materialize",
+func inSourceTableMySQL() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"upstream_name":        "upstream_table",
-	"upstream_schema_name": "upstream_schema",
-	"text_columns":         []interface{}{"column1", "column2"},
-	"exclude_columns":      []interface{}{"column3", "column4"},
+		"upstream_name":        "upstream_table",
+		"upstream_schema_name": "upstream_schema",
+		"text_columns":         []interface{}{"column1", "column2"},
+		"exclude_columns":      []interface{}{"column3", "column4"},
+	}
 }
 
 func TestResourceSourceTableMySQLCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -58,7 +60,7 @@ func TestResourceSourceTableMySQLCreate(t *testing.T) {
 
 func TestResourceSourceTableMySQLRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL())
 	d.SetId("u1")
 	r.NotNil(d)
 
@@ -79,7 +81,7 @@ func TestResourceSourceTableMySQLRead(t *testing.T) {
 
 func TestResourceSourceTableMySQLUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL())
 	d.SetId("u1")
 	d.Set("name", "old_table")
 	r.NotNil(d)
@@ -99,7 +101,7 @@ func TestResourceSourceTableMySQLUpdate(t *testing.T) {
 
 func TestResourceSourceTableMySQLDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL)
+	d := schema.TestResourceDataRaw(t, SourceTableMySQL().Schema, inSourceTableMySQL())
 	d.SetId("u1")
 	r.NotNil(d)
 

@@ -12,18 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inAwsPrivatelink = map[string]interface{}{
-	"name":               "conn",
-	"schema_name":        "schema",
-	"database_name":      "database",
-	"service_name":       "service",
-	"availability_zones": []interface{}{"use1-az1", "use1-az2"},
-	"validate":           false,
+func inAwsPrivatelink() map[string]interface{} {
+	return map[string]interface{}{
+		"name":               "conn",
+		"schema_name":        "schema",
+		"database_name":      "database",
+		"service_name":       "service",
+		"availability_zones": []interface{}{"use1-az1", "use1-az2"},
+		"validate":           false,
+	}
 }
 
 func TestResourceConnectionAwsPrivatelinkCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
+	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -51,7 +53,7 @@ func TestResourceConnectionAwsPrivatelinkCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceConnectionAwsPrivatelinkReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
+	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -75,7 +77,7 @@ func TestResourceConnectionAwsPrivatelinkReadIdMigration(t *testing.T) {
 
 func TestResourceConnectionAwsPrivatelinkUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink)
+	d := schema.TestResourceDataRaw(t, ConnectionAwsPrivatelink().Schema, inAwsPrivatelink())
 	// Set current state
 	d.SetId("u1")
 	d.Set("name", "old_conn")

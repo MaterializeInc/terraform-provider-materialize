@@ -12,35 +12,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inConfluentSchemaRegistry = map[string]interface{}{
-	"name":                      "conn",
-	"schema_name":               "schema",
-	"database_name":             "database",
-	"service_name":              "service",
-	"url":                       "http://localhost:8081",
-	"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
-	"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
-	"ssl_key": []interface{}{
-		map[string]interface{}{
-			"name":          "ssl",
-			"database_name": "ssl_key",
+func inConfluentSchemaRegistry() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                      "conn",
+		"schema_name":               "schema",
+		"database_name":             "database",
+		"service_name":              "service",
+		"url":                       "http://localhost:8081",
+		"ssl_certificate_authority": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
+		"ssl_certificate":           []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "ssl"}}}},
+		"ssl_key": []interface{}{
+			map[string]interface{}{
+				"name":          "ssl",
+				"database_name": "ssl_key",
+			},
 		},
-	},
-	"password": []interface{}{map[string]interface{}{"name": "password"}},
-	"username": []interface{}{map[string]interface{}{"text": "user"}},
-	"ssh_tunnel": []interface{}{
-		map[string]interface{}{
-			"name":        "tunnel",
-			"schema_name": "tunnel_schema",
+		"password": []interface{}{map[string]interface{}{"name": "password"}},
+		"username": []interface{}{map[string]interface{}{"text": "user"}},
+		"ssh_tunnel": []interface{}{
+			map[string]interface{}{
+				"name":        "tunnel",
+				"schema_name": "tunnel_schema",
+			},
 		},
-	},
-	"aws_privatelink": []interface{}{map[string]interface{}{"name": "privatelink"}},
-	"comment":         "object comment",
+		"aws_privatelink": []interface{}{map[string]interface{}{"name": "privatelink"}},
+		"comment":         "object comment",
+	}
 }
 
 func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry)
+	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -68,7 +70,7 @@ func TestResourceConnectionConfluentSchemaRegistryCreate(t *testing.T) {
 
 func TestResourceConnectionConfluentSchemaRegistryUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry)
+	d := schema.TestResourceDataRaw(t, ConnectionConfluentSchemaRegistry().Schema, inConfluentSchemaRegistry())
 
 	// Set current state
 	d.SetId("u1")

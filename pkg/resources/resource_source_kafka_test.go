@@ -12,51 +12,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceKafka = map[string]interface{}{
-	"name":                    "source",
-	"schema_name":             "schema",
-	"database_name":           "database",
-	"cluster_name":            "cluster",
-	"item_name":               "item",
-	"kafka_connection":        []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-	"topic":                   "topic",
-	"include_key":             true,
-	"include_key_alias":       "key",
-	"include_headers":         true,
-	"include_headers_alias":   "headers",
-	"include_partition":       true,
-	"include_partition_alias": "partition",
-	"include_offset":          true,
-	"include_offset_alias":    "offset",
-	"include_timestamp":       true,
-	"include_timestamp_alias": "timestamp",
-	"format": []interface{}{
-		map[string]interface{}{
-			"avro": []interface{}{
-				map[string]interface{}{
-					"value_strategy": "avro_key_fullname",
-					"schema_registry_connection": []interface{}{
-						map[string]interface{}{
-							"name":          "csr_conn",
-							"database_name": "database",
-							"schema_name":   "schema",
+func inSourceKafka() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                    "source",
+		"schema_name":             "schema",
+		"database_name":           "database",
+		"cluster_name":            "cluster",
+		"item_name":               "item",
+		"kafka_connection":        []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":                   "topic",
+		"include_key":             true,
+		"include_key_alias":       "key",
+		"include_headers":         true,
+		"include_headers_alias":   "headers",
+		"include_partition":       true,
+		"include_partition_alias": "partition",
+		"include_offset":          true,
+		"include_offset_alias":    "offset",
+		"include_timestamp":       true,
+		"include_timestamp_alias": "timestamp",
+		"format": []interface{}{
+			map[string]interface{}{
+				"avro": []interface{}{
+					map[string]interface{}{
+						"value_strategy": "avro_key_fullname",
+						"schema_registry_connection": []interface{}{
+							map[string]interface{}{
+								"name":          "csr_conn",
+								"database_name": "database",
+								"schema_name":   "schema",
+							},
 						},
 					},
 				},
 			},
 		},
-	},
-	"envelope": []interface{}{
-		map[string]interface{}{
-			"upsert": true,
-			"upsert_options": []interface{}{
-				map[string]interface{}{
-					"value_decoding_errors": []interface{}{
-						map[string]interface{}{
-							"inline": []interface{}{
-								map[string]interface{}{
-									"enabled": true,
-									"alias":   "my_error_col",
+		"envelope": []interface{}{
+			map[string]interface{}{
+				"upsert": true,
+				"upsert_options": []interface{}{
+					map[string]interface{}{
+						"value_decoding_errors": []interface{}{
+							map[string]interface{}{
+								"inline": []interface{}{
+									map[string]interface{}{
+										"enabled": true,
+										"alias":   "my_error_col",
+									},
 								},
 							},
 						},
@@ -64,95 +66,103 @@ var inSourceKafka = map[string]interface{}{
 				},
 			},
 		},
-	},
-	"start_offset":    []interface{}{1, 2, 3},
-	"start_timestamp": -1000,
+		"start_offset":    []interface{}{1, 2, 3},
+		"start_timestamp": -1000,
+	}
 }
 
-var inSourceKafkaText = map[string]interface{}{
-	"name":             "source_text",
-	"schema_name":      "schema",
-	"database_name":    "database",
-	"cluster_name":     "cluster",
-	"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-	"topic":            "topic_text",
-	"key_format": []interface{}{
-		map[string]interface{}{
-			"json": true,
+func inSourceKafkaText() map[string]interface{} {
+	return map[string]interface{}{
+		"name":             "source_text",
+		"schema_name":      "schema",
+		"database_name":    "database",
+		"cluster_name":     "cluster",
+		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":            "topic_text",
+		"key_format": []interface{}{
+			map[string]interface{}{
+				"json": true,
+			},
 		},
-	},
-	"value_format": []interface{}{
-		map[string]interface{}{
-			"text": true,
+		"value_format": []interface{}{
+			map[string]interface{}{
+				"text": true,
+			},
 		},
-	},
+	}
 }
 
-var inSourceKafkaJSON = map[string]interface{}{
-	"name":             "source_json",
-	"schema_name":      "schema",
-	"database_name":    "database",
-	"cluster_name":     "cluster",
-	"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-	"topic":            "topic_json",
-	"key_format": []interface{}{
-		map[string]interface{}{
-			"bytes": true,
+func inSourceKafkaJSON() map[string]interface{} {
+	return map[string]interface{}{
+		"name":             "source_json",
+		"schema_name":      "schema",
+		"database_name":    "database",
+		"cluster_name":     "cluster",
+		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":            "topic_json",
+		"key_format": []interface{}{
+			map[string]interface{}{
+				"bytes": true,
+			},
 		},
-	},
-	"value_format": []interface{}{
-		map[string]interface{}{
-			"json": true,
+		"value_format": []interface{}{
+			map[string]interface{}{
+				"json": true,
+			},
 		},
-	},
+	}
 }
 
-var inSourceKafkaBytes = map[string]interface{}{
-	"name":             "source_bytes",
-	"schema_name":      "schema",
-	"database_name":    "database",
-	"cluster_name":     "cluster",
-	"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-	"topic":            "topic_bytes",
-	"key_format": []interface{}{
-		map[string]interface{}{
-			"text": true,
+func inSourceKafkaBytes() map[string]interface{} {
+	return map[string]interface{}{
+		"name":             "source_bytes",
+		"schema_name":      "schema",
+		"database_name":    "database",
+		"cluster_name":     "cluster",
+		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":            "topic_bytes",
+		"key_format": []interface{}{
+			map[string]interface{}{
+				"text": true,
+			},
 		},
-	},
-	"value_format": []interface{}{
-		map[string]interface{}{
-			"bytes": true,
+		"value_format": []interface{}{
+			map[string]interface{}{
+				"bytes": true,
+			},
 		},
-	},
+	}
 }
 
-var inSourceKafkaCSV = map[string]interface{}{
-	"name":             "source_csv",
-	"schema_name":      "schema",
-	"database_name":    "database",
-	"cluster_name":     "cluster",
-	"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
-	"topic":            "topic_csv",
-	"key_format": []interface{}{
-		map[string]interface{}{
-			"json": true,
+func inSourceKafkaCSV() map[string]interface{} {
+	return map[string]interface{}{
+		"name":             "source_csv",
+		"schema_name":      "schema",
+		"database_name":    "database",
+		"cluster_name":     "cluster",
+		"kafka_connection": []interface{}{map[string]interface{}{"name": "kafka_conn"}},
+		"topic":            "topic_csv",
+		"key_format": []interface{}{
+			map[string]interface{}{
+				"json": true,
+			},
 		},
-	},
-	"value_format": []interface{}{
-		map[string]interface{}{
-			"csv": []interface{}{
-				map[string]interface{}{
-					"delimited_by": ",",
-					"header":       []interface{}{"column1", "column2", "column3"},
+		"value_format": []interface{}{
+			map[string]interface{}{
+				"csv": []interface{}{
+					map[string]interface{}{
+						"delimited_by": ",",
+						"header":       []interface{}{"column1", "column2", "column3"},
+					},
 				},
 			},
 		},
-	},
+	}
 }
 
 func TestResourceSourceKafkaCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafka)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafka())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -190,7 +200,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 func TestResourceSourceKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 	r := require.New(t)
 
-	testInSourceKafka := inSourceKafka
+	testInSourceKafka := inSourceKafka()
 	testInSourceKafka["include_key"] = true
 	delete(testInSourceKafka, "include_key_alias")
 	testInSourceKafka["include_headers"] = true
@@ -246,7 +256,7 @@ func TestResourceSourceKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 	r := require.New(t)
 
-	testInSourceKafka := inSourceKafka
+	testInSourceKafka := inSourceKafka()
 	testInSourceKafka["include_key"] = false
 	testInSourceKafka["include_headers"] = false
 	testInSourceKafka["include_partition"] = false
@@ -291,7 +301,7 @@ func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 
 func TestResourceSourceKafkaCreateTextFormat(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaText)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaText())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -323,7 +333,7 @@ func TestResourceSourceKafkaCreateTextFormat(t *testing.T) {
 
 func TestResourceSourceKafkaCreateJSONFormat(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaJSON)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaJSON())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -355,7 +365,7 @@ func TestResourceSourceKafkaCreateJSONFormat(t *testing.T) {
 
 func TestResourceSourceKafkaCreateBytesFormat(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaBytes)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaBytes())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -387,7 +397,7 @@ func TestResourceSourceKafkaCreateBytesFormat(t *testing.T) {
 
 func TestResourceSourceKafkaCreateCSVFormat(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaCSV)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafkaCSV())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

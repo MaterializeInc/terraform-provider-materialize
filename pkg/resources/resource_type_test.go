@@ -12,16 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inType = map[string]interface{}{
-	"name":            "type",
-	"schema_name":     "schema",
-	"database_name":   "database",
-	"list_properties": []interface{}{map[string]interface{}{"element_type": "int4"}},
+func inType() map[string]interface{} {
+	return map[string]interface{}{
+		"name":            "type",
+		"schema_name":     "schema",
+		"database_name":   "database",
+		"list_properties": []interface{}{map[string]interface{}{"element_type": "int4"}},
+	}
 }
 
 func TestResourceTypeCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Type().Schema, inType)
+	d := schema.TestResourceDataRaw(t, Type().Schema, inType())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -45,7 +47,7 @@ func TestResourceTypeCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceTypeReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Type().Schema, inType)
+	d := schema.TestResourceDataRaw(t, Type().Schema, inType())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -69,7 +71,7 @@ func TestResourceTypeReadIdMigration(t *testing.T) {
 func TestResourceTypeDelete(t *testing.T) {
 	r := require.New(t)
 
-	d := schema.TestResourceDataRaw(t, Type().Schema, inType)
+	d := schema.TestResourceDataRaw(t, Type().Schema, inType())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {

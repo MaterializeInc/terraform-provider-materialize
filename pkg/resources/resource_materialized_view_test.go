@@ -12,18 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inMaterializedView = map[string]interface{}{
-	"name":               "materialized_view",
-	"schema_name":        "schema",
-	"database_name":      "database",
-	"cluster_name":       "cluster",
-	"not_null_assertion": []interface{}{"column_1", "column_2"},
-	"statement":          "SELECT 1 FROM 1",
+func inMaterializedView() map[string]interface{} {
+	return map[string]interface{}{
+		"name":               "materialized_view",
+		"schema_name":        "schema",
+		"database_name":      "database",
+		"cluster_name":       "cluster",
+		"not_null_assertion": []interface{}{"column_1", "column_2"},
+		"statement":          "SELECT 1 FROM 1",
+	}
 }
 
 func TestResourceMaterializedViewCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)
+	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -49,7 +51,7 @@ func TestResourceMaterializedViewCreate(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceMaterializedViewReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)
+	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -72,7 +74,7 @@ func TestResourceMaterializedViewReadIdMigration(t *testing.T) {
 
 func TestResourceMaterializedViewUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView)
+	d := schema.TestResourceDataRaw(t, MaterializedView().Schema, inMaterializedView())
 
 	// Set current state
 	d.SetId("u1")

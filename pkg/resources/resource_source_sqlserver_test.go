@@ -12,44 +12,46 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceSQLServer = map[string]interface{}{
-	"name":          "source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "test_cluster",
-	"sqlserver_connection": []interface{}{
-		map[string]interface{}{
-			"name":          "sqlserver_connection",
-			"schema_name":   "schema",
-			"database_name": "database",
+func inSourceSQLServer() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "test_cluster",
+		"sqlserver_connection": []interface{}{
+			map[string]interface{}{
+				"name":          "sqlserver_connection",
+				"schema_name":   "schema",
+				"database_name": "database",
+			},
 		},
-	},
-	"text_columns":    []interface{}{"dbo.table1.xml_column", "custom.table2.ntext_column"},
-	"exclude_columns": []interface{}{"dbo.table1.geometry_column", "custom.table2.geography_column"},
-	"table": []interface{}{
-		map[string]interface{}{
-			"upstream_name":        "table1",
-			"upstream_schema_name": "dbo",
-			"name":                 "renamed_table1",
+		"text_columns":    []interface{}{"dbo.table1.xml_column", "custom.table2.ntext_column"},
+		"exclude_columns": []interface{}{"dbo.table1.geometry_column", "custom.table2.geography_column"},
+		"table": []interface{}{
+			map[string]interface{}{
+				"upstream_name":        "table1",
+				"upstream_schema_name": "dbo",
+				"name":                 "renamed_table1",
+			},
+			map[string]interface{}{
+				"upstream_name":        "table2",
+				"upstream_schema_name": "custom",
+			},
 		},
-		map[string]interface{}{
-			"upstream_name":        "table2",
-			"upstream_schema_name": "custom",
+		"expose_progress": []interface{}{
+			map[string]interface{}{
+				"name":          "progress",
+				"schema_name":   "schema",
+				"database_name": "database",
+			},
 		},
-	},
-	"expose_progress": []interface{}{
-		map[string]interface{}{
-			"name":          "progress",
-			"schema_name":   "schema",
-			"database_name": "database",
-		},
-	},
-	"comment": "SQL Server source comment",
+		"comment": "SQL Server source comment",
+	}
 }
 
 func TestResourceSourceSQLServerCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -209,7 +211,7 @@ func TestResourceSourceSQLServerCreateWithExcludeColumnsOnly(t *testing.T) {
 
 func TestResourceSourceSQLServerRead(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer())
 	d.SetId("aws/us-east-1:u1")
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -233,7 +235,7 @@ func TestResourceSourceSQLServerRead(t *testing.T) {
 
 func TestResourceSourceSQLServerUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer())
 
 	// Set current state
 	d.SetId("u1")
@@ -267,7 +269,7 @@ func TestResourceSourceSQLServerUpdate(t *testing.T) {
 
 func TestResourceSourceSQLServerDelete(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer)
+	d := schema.TestResourceDataRaw(t, SourceSQLServer().Schema, inSourceSQLServer())
 	d.SetId("u1")
 	r.NotNil(d)
 

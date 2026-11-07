@@ -12,40 +12,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inPostgres = map[string]interface{}{
-	"name":          "conn",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"database":      "default",
-	"host":          "postgres_host",
-	"port":          5432,
-	"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
-	"password":      []interface{}{map[string]interface{}{"name": "password"}},
-	"ssh_tunnel": []interface{}{
-		map[string]interface{}{
-			"name":          "ssh_conn",
-			"schema_name":   "tunnel_schema",
-			"database_name": "tunnel_database",
+func inPostgres() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "conn",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"database":      "default",
+		"host":          "postgres_host",
+		"port":          5432,
+		"user":          []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "user"}}}},
+		"password":      []interface{}{map[string]interface{}{"name": "password"}},
+		"ssh_tunnel": []interface{}{
+			map[string]interface{}{
+				"name":          "ssh_conn",
+				"schema_name":   "tunnel_schema",
+				"database_name": "tunnel_database",
+			},
 		},
-	},
-	"ssl_certificate_authority": []interface{}{
-		map[string]interface{}{
-			"secret": []interface{}{map[string]interface{}{
-				"name":          "root",
-				"database_name": "ssl_database",
-			}},
+		"ssl_certificate_authority": []interface{}{
+			map[string]interface{}{
+				"secret": []interface{}{map[string]interface{}{
+					"name":          "root",
+					"database_name": "ssl_database",
+				}},
+			},
 		},
-	},
-	"ssl_certificate": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
-	"ssl_key":         []interface{}{map[string]interface{}{"name": "key"}},
-	"ssl_mode":        "verify-full",
-	"aws_privatelink": []interface{}{map[string]interface{}{"name": "link"}},
-	"comment":         "object comment",
+		"ssl_certificate": []interface{}{map[string]interface{}{"secret": []interface{}{map[string]interface{}{"name": "cert"}}}},
+		"ssl_key":         []interface{}{map[string]interface{}{"name": "key"}},
+		"ssl_mode":        "verify-full",
+		"aws_privatelink": []interface{}{map[string]interface{}{"name": "link"}},
+		"comment":         "object comment",
+	}
 }
 
 func TestResourceConnectionPostgresCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres)
+	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -73,7 +75,7 @@ func TestResourceConnectionPostgresCreate(t *testing.T) {
 
 func TestResourceConnectionPostgresUpdate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres)
+	d := schema.TestResourceDataRaw(t, ConnectionPostgres().Schema, inPostgres())
 
 	// Set current state
 	d.SetId("u1")

@@ -12,54 +12,68 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inRole = map[string]interface{}{
-	"name":    "role",
-	"inherit": true,
+func inRole() map[string]interface{} {
+	return map[string]interface{}{
+		"name":    "role",
+		"inherit": true,
+	}
 }
 
-var inRoleWithLogin = map[string]interface{}{
-	"name":    "role",
-	"inherit": true,
-	"login":   true,
+func inRoleWithLogin() map[string]interface{} {
+	return map[string]interface{}{
+		"name":    "role",
+		"inherit": true,
+		"login":   true,
+	}
 }
 
-var inRoleWithPasswordAndLogin = map[string]interface{}{
-	"name":     "role",
-	"inherit":  true,
-	"password": "password123",
-	"login":    true,
+func inRoleWithPasswordAndLogin() map[string]interface{} {
+	return map[string]interface{}{
+		"name":     "role",
+		"inherit":  true,
+		"password": "password123",
+		"login":    true,
+	}
 }
 
-var inRoleWithPasswordNoLogin = map[string]interface{}{
-	"name":     "role",
-	"inherit":  true,
-	"password": "password123",
-	"login":    false,
+func inRoleWithPasswordNoLogin() map[string]interface{} {
+	return map[string]interface{}{
+		"name":     "role",
+		"inherit":  true,
+		"password": "password123",
+		"login":    false,
+	}
 }
 
-var inRoleWithPasswordWo = map[string]interface{}{
-	"name":                "role",
-	"inherit":             true,
-	"password_wo":         "ephemeral_password_value",
-	"password_wo_version": 1,
+func inRoleWithPasswordWo() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                "role",
+		"inherit":             true,
+		"password_wo":         "ephemeral_password_value",
+		"password_wo_version": 1,
+	}
 }
 
-var inRoleAdoptExisting = map[string]interface{}{
-	"name":                 "role",
-	"login":                true,
-	"password":             "password123",
-	"create_if_not_exists": true,
+func inRoleAdoptExisting() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                 "role",
+		"login":                true,
+		"password":             "password123",
+		"create_if_not_exists": true,
+	}
 }
 
-var inRoleCreateIfNotExistsNew = map[string]interface{}{
-	"name":                 "role",
-	"inherit":              true,
-	"create_if_not_exists": true,
+func inRoleCreateIfNotExistsNew() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                 "role",
+		"inherit":              true,
+		"create_if_not_exists": true,
+	}
 }
 
 func TestResourceRoleCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRole())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -84,7 +98,7 @@ func TestResourceRoleCreate(t *testing.T) {
 
 func TestResourceRoleCreateWithLogin(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithLogin)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithLogin())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -109,7 +123,7 @@ func TestResourceRoleCreateWithLogin(t *testing.T) {
 
 func TestResourceRoleCreateWithPasswordAndLogin(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordAndLogin)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordAndLogin())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -134,7 +148,7 @@ func TestResourceRoleCreateWithPasswordAndLogin(t *testing.T) {
 
 func TestResourceRoleCreateWithPasswordNoLogin(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordNoLogin)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordNoLogin())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -163,7 +177,7 @@ func TestResourceRoleCreateWithPasswordNoLogin(t *testing.T) {
 // ALTER ROLE.
 func TestResourceRoleCreateIfNotExistsAdoptsExisting(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleAdoptExisting)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleAdoptExisting())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -195,7 +209,7 @@ func TestResourceRoleCreateIfNotExistsAdoptsExisting(t *testing.T) {
 // must fall through to the normal CREATE ROLE path.
 func TestResourceRoleCreateIfNotExistsCreatesWhenAbsent(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleCreateIfNotExistsNew)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleCreateIfNotExistsNew())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -234,7 +248,7 @@ func TestResourceRoleCreateIfNotExistsSchema(t *testing.T) {
 // Confirm id is updated with region for 0.4.0
 func TestResourceRoleReadIdMigration(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRole())
 	r.NotNil(d)
 
 	// Set id before migration
@@ -258,7 +272,7 @@ func TestResourceRoleReadIdMigration(t *testing.T) {
 func TestResourceRoleDelete(t *testing.T) {
 	r := require.New(t)
 
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRole)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRole())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
@@ -295,7 +309,7 @@ func TestResourceRoleUpdateWithPasswordWo(t *testing.T) {
 }
 
 func TestResourceRoleSchema_ExactlyOneOf(t *testing.T) {
-	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordWo)
+	d := schema.TestResourceDataRaw(t, Role().Schema, inRoleWithPasswordWo())
 	require.NotNil(t, d)
 
 	passwordWoField := Role().Schema["password_wo"]

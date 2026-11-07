@@ -11,18 +11,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceTable = map[string]interface{}{
-	"name":          "table",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"source": []interface{}{
-		map[string]interface{}{
-			"name":          "source",
-			"schema_name":   "public",
-			"database_name": "materialize",
+func inSourceTable() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "table",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"source": []interface{}{
+			map[string]interface{}{
+				"name":          "source",
+				"schema_name":   "public",
+				"database_name": "materialize",
+			},
 		},
-	},
-	"region": "aws/us-east-1",
+		"region": "aws/us-east-1",
+	}
 }
 
 func TestSourceTableRead(t *testing.T) {
@@ -45,7 +47,7 @@ func TestSourceTableRead(t *testing.T) {
 		"ownership_role": {Type: schema.TypeString, Optional: true},
 		"comment":        {Type: schema.TypeString, Optional: true},
 		"region":         {Type: schema.TypeString, Optional: true},
-	}, inSourceTable)
+	}, inSourceTable())
 	d.SetId("aws/us-east-1:u1")
 	r.NotNil(d)
 
@@ -67,7 +69,7 @@ func TestSourceTableRead(t *testing.T) {
 
 func TestSourceTableUpdateRename(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTable)
+	d := schema.TestResourceDataRaw(t, SourceTablePostgres().Schema, inSourceTable())
 	d.SetId("u1")
 	d.Set("name", "old_table")
 	r.NotNil(d)
@@ -92,7 +94,7 @@ func TestSourceTableDelete(t *testing.T) {
 		"schema_name":   {Type: schema.TypeString, Optional: true},
 		"database_name": {Type: schema.TypeString, Optional: true},
 		"region":        {Type: schema.TypeString, Optional: true},
-	}, inSourceTable)
+	}, inSourceTable())
 	d.SetId("aws/us-east-1:u1")
 	r.NotNil(d)
 

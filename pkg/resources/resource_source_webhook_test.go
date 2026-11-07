@@ -12,37 +12,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var inSourceWebhook = map[string]interface{}{
-	"name":          "webhook_source",
-	"schema_name":   "schema",
-	"database_name": "database",
-	"cluster_name":  "cluster",
-	"body_format":   "JSON",
-	"include_headers": []interface{}{
-		map[string]interface{}{
-			"all": true,
+func inSourceWebhook() map[string]interface{} {
+	return map[string]interface{}{
+		"name":          "webhook_source",
+		"schema_name":   "schema",
+		"database_name": "database",
+		"cluster_name":  "cluster",
+		"body_format":   "JSON",
+		"include_headers": []interface{}{
+			map[string]interface{}{
+				"all": true,
+			},
 		},
-	},
-	"check_options": []interface{}{
-		map[string]interface{}{
-			"field": []interface{}{map[string]interface{}{
-				"body": true,
-			}},
-			"alias": "bytes",
+		"check_options": []interface{}{
+			map[string]interface{}{
+				"field": []interface{}{map[string]interface{}{
+					"body": true,
+				}},
+				"alias": "bytes",
+			},
+			map[string]interface{}{
+				"field": []interface{}{map[string]interface{}{
+					"headers": true,
+				}},
+				"alias": "headers",
+			},
 		},
-		map[string]interface{}{
-			"field": []interface{}{map[string]interface{}{
-				"headers": true,
-			}},
-			"alias": "headers",
-		},
-	},
-	"check_expression": "check_expression",
+		"check_expression": "check_expression",
+	}
 }
 
 func TestResourceSourceWebhookCreate(t *testing.T) {
 	r := require.New(t)
-	d := schema.TestResourceDataRaw(t, SourceWebhook().Schema, inSourceWebhook)
+	d := schema.TestResourceDataRaw(t, SourceWebhook().Schema, inSourceWebhook())
 	r.NotNil(d)
 
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
