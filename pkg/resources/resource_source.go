@@ -47,7 +47,7 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 			// Set the potentially updated options back into the state
 			envelope["upsert_options"] = upsertOptions
 		}
-		d.Set("envelope", []interface{}{envelope})
+		_ = d.Set("envelope", []interface{}{envelope})
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func sourceReadParams(ctx context.Context, d *schema.ResourceData, meta interfac
 // setSourceConnection sets the connection block of a source that reads through
 // a connection, such as kafka_connection or postgres_connection.
 func setSourceConnection(d *schema.ResourceData, key string, s *materialize.SourceParams) error {
-	if !(s.ConnectionName.Valid && s.ConnectionSchemaName.Valid && s.ConnectionDatabaseName.Valid) {
+	if !s.ConnectionName.Valid || !s.ConnectionSchemaName.Valid || !s.ConnectionDatabaseName.Valid {
 		return nil
 	}
 	return d.Set(key, []interface{}{
