@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -15,7 +14,7 @@ var tableInput = []TableStruct{
 }
 
 func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
 			FROM POSTGRES CONNECTION "database"."schema"."pg_connection"
@@ -50,7 +49,7 @@ func TestSourcePostgresSpecificTablesCreate(t *testing.T) {
 }
 
 func TestSourceAddSubsource(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER SOURCE "database"."schema"."source"
 			ADD SUBSOURCE "schema"."table_1", "schema"."table_2" AS "database"."schema"."table_alias";`,
@@ -64,7 +63,7 @@ func TestSourceAddSubsource(t *testing.T) {
 }
 
 func TestSourceAddSubsourceTextColumns(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER SOURCE "database"."schema"."source"
 			ADD SUBSOURCE "schema"."table_1", "schema"."table_2" AS "database"."schema"."table_alias"
@@ -79,7 +78,7 @@ func TestSourceAddSubsourceTextColumns(t *testing.T) {
 }
 
 func TestSourceDropSubsource(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP SOURCE "database"."schema"."table_1", "database"."schema"."table_alias";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -92,7 +91,7 @@ func TestSourceDropSubsource(t *testing.T) {
 }
 
 func TestSourcePostgresWithExcludeColumnsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', EXCLUDE COLUMNS \(public.users.image_data, public.posts.binary_data\)\) FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -116,7 +115,7 @@ func TestSourcePostgresWithExcludeColumnsCreate(t *testing.T) {
 }
 
 func TestSourcePostgresWithTextAndExcludeColumnsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM POSTGRES CONNECTION "database"."schema"."pg_connection" \(PUBLICATION 'mz_source', TEXT COLUMNS \(public.users.description, public.posts.content\), EXCLUDE COLUMNS \(public.users.image_data, public.posts.binary_data\)\) FOR TABLES \("schema1"."table_1" AS "database"."schema"."s1_table_1", "schema2"."table_2" AS "database"."schema"."s2_table_2"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

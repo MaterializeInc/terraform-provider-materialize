@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 // https://materialize.com/docs/sql/create-type/
 
 func TestTypeCustomListCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TYPE "database"."schema"."type" AS LIST \(ELEMENT TYPE = int4\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -31,7 +30,7 @@ func TestTypeCustomListCreate(t *testing.T) {
 }
 
 func TestTypeCustomMapCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TYPE "database"."schema"."type" AS MAP \(KEY TYPE text, VALUE TYPE = int\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -52,7 +51,7 @@ func TestTypeCustomMapCreate(t *testing.T) {
 }
 
 func TestTypeCustomRowCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TYPE "database"."schema"."type" AS \(a int, b text\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -77,7 +76,7 @@ func TestTypeCustomRowCreate(t *testing.T) {
 }
 
 func TestTypeDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP TYPE "database"."schema"."type";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

@@ -76,7 +76,7 @@ type ConnectionParams struct {
 	Privileges     StringArray    `db:"privileges"`
 }
 
-var connectionQuery = NewBaseQuery(`
+var ConnectionQuery = NewBaseQuery(`
 	SELECT
 		mz_connections.id,
 		mz_connections.name AS connection_name,
@@ -106,7 +106,7 @@ func ConnectionId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_databases.name":   obj.DatabaseName,
 		"mz_schemas.name":     obj.SchemaName,
 	}
-	q := connectionQuery.QueryPredicate(p)
+	q := ConnectionQuery.QueryPredicate(p)
 
 	var c ConnectionParams
 	if err := conn.Get(&c, q); err != nil {
@@ -117,7 +117,7 @@ func ConnectionId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanConnection(conn *sqlx.DB, id string) (ConnectionParams, error) {
-	q := connectionQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
+	q := ConnectionQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
 
 	var c ConnectionParams
 	if err := conn.Get(&c, q); err != nil {
@@ -132,7 +132,7 @@ func ListConnections(conn *sqlx.DB, schemaName, databaseName string) ([]Connecti
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := connectionQuery.QueryPredicate(p)
+	q := ConnectionQuery.QueryPredicate(p)
 
 	var c []ConnectionParams
 	if err := conn.Select(&c, q); err != nil {

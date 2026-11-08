@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var connKafka = MaterializeObject{Name: "kafka_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionKafkaCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SECURITY PROTOCOL = 'PLAIN', PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -36,7 +35,7 @@ func TestConnectionKafkaCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaDefaultSshTunnelCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SSH TUNNEL "database"."schema"."ssh_conn"\, PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -61,7 +60,7 @@ func TestConnectionKafkaDefaultSshTunnelCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaMultipleBrokersCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092', 'localhost:9093'\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -88,7 +87,7 @@ func TestConnectionKafkaMultipleBrokersCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaSshCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092' USING SSH TUNNEL "database"."schema"."ssh_conn"\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -113,7 +112,7 @@ func TestConnectionKafkaSshCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaBrokersCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092', 'localhost:9093'\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -140,7 +139,7 @@ func TestConnectionKafkaBrokersCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaBrokersSshCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092' USING SSH TUNNEL "database"."schema"."ssh_conn", 'localhost:9093' USING SSH TUNNEL "database"."schema"."ssh_conn"\), PROGRESS TOPIC 'topic', SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -169,7 +168,7 @@ func TestConnectionKafkaBrokersSshCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaSslCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SECURITY PROTOCOL = 'SSL', PROGRESS TOPIC 'topic', SSL CERTIFICATE AUTHORITY = SECRET "database"."schema"."ca", SSL CERTIFICATE = SECRET "database"."schema"."cert", SSL KEY = SECRET "database"."schema"."key"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -194,7 +193,7 @@ func TestConnectionKafkaSslCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaAwsPrivatelinkCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('b-1.hostname-1:9096' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9001, AVAILABILITY ZONE 'use1-az1'\), 'b-1.hostname-1:9097' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9002, AVAILABILITY ZONE 'use1-az2'\)\), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -315,7 +314,7 @@ func TestBuildBrokersStringPermutations(t *testing.T) {
 }
 
 func TestConnectionKafkaBrokerMatchingRulesCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('lkc-825730.endpoint.cloud:9092' USING AWS PRIVATELINK "database"."schema"."privatelink_conn", MATCHING '\*.use1-az1.\*' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(AVAILABILITY ZONE 'use1-az1'\), MATCHING '\*.use1-az4.\*' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(AVAILABILITY ZONE 'use1-az4'\)\), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -351,7 +350,7 @@ func TestConnectionKafkaBrokerMatchingRulesCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaBrokerMatchingRulesWithPortCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('broker:9092', MATCHING '\*.use1-az1.\*' USING AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9001, AVAILABILITY ZONE 'use1-az1'\)\)\) WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -377,7 +376,7 @@ func TestConnectionKafkaBrokerMatchingRulesWithPortCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaAwsPrivateLinkCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \( AWS PRIVATELINK "database"."schema"."privatelink_conn" \(PORT 9000\), SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`
 
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -403,7 +402,7 @@ func TestConnectionKafkaAwsPrivateLinkCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaProgressTopicReplicationFactorCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('localhost:9092'\), SECURITY PROTOCOL = 'PLAIN', PROGRESS TOPIC 'topic', PROGRESS TOPIC REPLICATION FACTOR 3, SASL MECHANISMS = 'PLAIN', SASL USERNAME = 'user', SASL PASSWORD = SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -429,7 +428,7 @@ func TestConnectionKafkaProgressTopicReplicationFactorCreate(t *testing.T) {
 }
 
 func TestConnectionKafkaAwsIAMAuthCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `CREATE CONNECTION "database"."schema"."kafka_conn" TO KAFKA \(BROKERS \('broker1:9092', 'broker2:9092'\), SECURITY PROTOCOL = 'SASL_SSL', AWS CONNECTION = "database"."schema"."aws_conn"\);`
 
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))

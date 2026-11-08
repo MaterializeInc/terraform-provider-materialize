@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourceLoadgen = MaterializeObject{Name: "source", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSourceLoadgenAuctionCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR AUCTION
@@ -32,7 +31,7 @@ func TestSourceLoadgenAuctionCreate(t *testing.T) {
 }
 
 func TestSourceLoadgenMarketingCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR MARKETING
@@ -53,7 +52,7 @@ func TestSourceLoadgenMarketingCreate(t *testing.T) {
 }
 
 func TestSourceLoadgenTPCHParamsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
 			FROM LOAD GENERATOR TPCH

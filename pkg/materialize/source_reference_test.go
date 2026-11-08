@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestSourceReferenceId(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(
 			`SELECT sr\.source_id, sr\.namespace, sr\.name, sr\.updated_at, sr\.columns, s\.name AS source_name, ss\.name AS source_schema_name, sd\.name AS source_database_name, s\.type AS source_type
 			FROM mz_internal\.mz_source_references sr
@@ -31,7 +30,7 @@ func TestSourceReferenceId(t *testing.T) {
 }
 
 func TestScanSourceReference(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(
 			`SELECT sr\.source_id, sr\.namespace, sr\.name, sr\.updated_at, sr\.columns, s\.name AS source_name, ss\.name AS source_schema_name, sd\.name AS source_database_name, s\.type AS source_type
 			FROM mz_internal\.mz_source_references sr
@@ -54,7 +53,7 @@ func TestScanSourceReference(t *testing.T) {
 }
 
 func TestRefreshSourceReferences(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER SOURCE "test-database"\."test-schema"\."test-source" REFRESH REFERENCES`,
 		).
@@ -68,7 +67,7 @@ func TestRefreshSourceReferences(t *testing.T) {
 }
 
 func TestListSourceReferences(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(
 			`SELECT sr\.source_id, sr\.namespace, sr\.name, sr\.updated_at, sr\.columns, s\.name AS source_name, ss\.name AS source_schema_name, sd\.name AS source_database_name, s\.type AS source_type
 			FROM mz_internal\.mz_source_references sr

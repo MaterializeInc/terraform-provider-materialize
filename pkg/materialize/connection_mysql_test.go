@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var connMySQL = MaterializeObject{Name: "mysql_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionMySQLCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."mysql_conn" TO MYSQL \(HOST 'mysql_host', PORT 3306, USER 'user', PASSWORD SECRET "database"."schema"."password"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -30,7 +29,7 @@ func TestConnectionMySQLCreate(t *testing.T) {
 }
 
 func TestConnectionMySQLSshCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."mysql_conn" TO MYSQL \(HOST 'mysql_host', PORT 3306, USER 'user', PASSWORD SECRET "database"."schema"."password", SSH TUNNEL "database"."schema"."ssh_conn"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -50,7 +49,7 @@ func TestConnectionMySQLSshCreate(t *testing.T) {
 }
 
 func TestConnectionMySQLSslCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."mysql_conn" TO MYSQL \(HOST 'mysql_host', PORT 3306, USER SECRET "database"."schema"."user", PASSWORD SECRET "database"."schema"."password", SSL MODE 'verify-ca', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."root", SSL CERTIFICATE SECRET "database"."schema"."cert", SSL KEY SECRET "database"."schema"."key"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

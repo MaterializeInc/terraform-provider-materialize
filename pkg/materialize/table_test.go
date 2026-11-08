@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -12,7 +11,7 @@ import (
 // https://materialize.com/docs/sql/create-table/
 
 func TestTableCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			\("a" int, "b" text, "c" text NOT NULL, "d" int DEFAULT \(1\), "e" text NOT NULL DEFAULT NULL\);`,
@@ -54,7 +53,7 @@ func TestTableCreate(t *testing.T) {
 }
 
 func TestTableRename(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER TABLE "database"."schema"."table" RENAME TO "new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -67,7 +66,7 @@ func TestTableRename(t *testing.T) {
 }
 
 func TestTableDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP TABLE "database"."schema"."table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -82,7 +81,7 @@ func TestTableDrop(t *testing.T) {
 // Column names are quoted so Materialize keeps them exactly as written; unquoted
 // names folded to lower case and could not contain spaces or other characters.
 func TestTableCreateQuotesColumnNames(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			\("TenantId" int, "first name" text, "order" text, "we""ird" text, "Quoted" text\);`,

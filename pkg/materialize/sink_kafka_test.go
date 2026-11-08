@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,7 +12,7 @@ import (
 // https://materialize.com/docs/sql/create-sink/kafka/
 
 func TestSinkKafkaCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -49,7 +48,7 @@ func TestSinkKafkaCreate(t *testing.T) {
 }
 
 func TestSinkKafkaSnapshotCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -85,7 +84,7 @@ func TestSinkKafkaSnapshotCreate(t *testing.T) {
 }
 
 func TestSinkKafkaSnapshotDisabledCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -123,7 +122,7 @@ func TestSinkKafkaSnapshotDisabledCreate(t *testing.T) {
 // A builder that never had Snapshot called should not emit the option at all,
 // leaving the server default in place.
 func TestSinkKafkaSnapshotUnsetCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -145,7 +144,7 @@ func TestSinkKafkaSnapshotUnsetCreate(t *testing.T) {
 }
 
 func TestSinkKafkaSizeSnapshotCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -181,7 +180,7 @@ func TestSinkKafkaSizeSnapshotCreate(t *testing.T) {
 }
 
 func TestSinkKafkaJsonCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -205,7 +204,7 @@ func TestSinkKafkaJsonCreate(t *testing.T) {
 }
 
 func TestSinkKafkaKeyCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -231,7 +230,7 @@ func TestSinkKafkaKeyCreate(t *testing.T) {
 }
 
 func TestSinkKafkaKeyNotEnforcedCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			IN CLUSTER "my_io_cluster"
@@ -261,7 +260,7 @@ func TestSinkKafkaKeyNotEnforcedCreate(t *testing.T) {
 
 func TestSinkKafkaAvroDocsTypeCreate(t *testing.T) {
 	from := IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."table"
@@ -305,7 +304,7 @@ func TestSinkKafkaAvroDocsTypeCreate(t *testing.T) {
 
 func TestSinkKafkaAvroDocsColumnCreate(t *testing.T) {
 	from := IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."table"
@@ -359,7 +358,7 @@ func TestSinkKafkaAvroDocsColumnCreate(t *testing.T) {
 
 func TestSinkKafkaAvroDocsCreate(t *testing.T) {
 	from := IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."table"
@@ -418,7 +417,7 @@ func TestSinkKafkaAvroDocsCreate(t *testing.T) {
 }
 
 func TestSinkKafkaHeadersCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -454,7 +453,7 @@ func TestSinkKafkaHeadersCreate(t *testing.T) {
 }
 
 func TestSinkKafkaTopicOptionsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
             FROM "database"."schema"."src"
@@ -486,7 +485,7 @@ func TestSinkKafkaTopicOptionsCreate(t *testing.T) {
 }
 
 func TestSinkKafkaTopicOptionsWithCompressionCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -531,7 +530,7 @@ func TestSinkKafkaTopicOptionsWithCompressionCreate(t *testing.T) {
 
 func TestSinkKafkaAvroCompatibilityLevelsCreate(t *testing.T) {
 	from := IdentifierSchemaStruct{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
             FROM "database"."schema"."table"
@@ -575,7 +574,7 @@ func TestSinkKafkaAvroCompatibilityLevelsCreate(t *testing.T) {
 }
 
 func TestSinkKafkaPartitionByCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"
@@ -604,7 +603,7 @@ func TestSinkKafkaPartitionByCreate(t *testing.T) {
 // value that already carries quotes passes through, which is how a
 // case-sensitive column is referenced.
 func TestSinkKafkaKeyCaseHandling(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."sink"
 			FROM "database"."schema"."src"

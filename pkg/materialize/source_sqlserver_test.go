@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -15,7 +14,7 @@ var tableInputSQLServer = []TableStruct{
 }
 
 func TestSourceSQLServerAllTablesCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -30,7 +29,7 @@ func TestSourceSQLServerAllTablesCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerSpecificTablesCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" FOR TABLES \("dbo"."table_1" AS "database"."schema"."s1_table_1", "custom"."table_2" AS "database"."schema"."table_alias"\) EXPOSE PROGRESS AS "database"."schema"."progress";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -58,7 +57,7 @@ func TestSourceSQLServerSpecificTablesCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerWithTextColumnsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(TEXT COLUMNS \(xml_column, ntext_column\)\) FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -74,7 +73,7 @@ func TestSourceSQLServerWithTextColumnsCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerWithExcludeColumnsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(EXCLUDE COLUMNS \(geometry_column, geography_column\)\) FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -90,7 +89,7 @@ func TestSourceSQLServerWithExcludeColumnsCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerWithTextAndExcludeColumnsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(TEXT COLUMNS \(xml_column, ntext_column\), EXCLUDE COLUMNS \(geometry_column, geography_column\)\) FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -107,7 +106,7 @@ func TestSourceSQLServerWithTextAndExcludeColumnsCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerWithClusterCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" IN CLUSTER "test_cluster" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -123,7 +122,7 @@ func TestSourceSQLServerWithClusterCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerDefaultSchemaHandling(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" FOR TABLES \("dbo"."users" AS "database"."schema"."users", "dbo"."orders" AS "database"."schema"."orders"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -148,7 +147,7 @@ func TestSourceSQLServerDefaultSchemaHandling(t *testing.T) {
 }
 
 func TestSourceSQLServerWithAWSPrivateLinkCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source" FROM SQL SERVER CONNECTION "database"."schema"."sqlserver_connection" \(AWS PRIVATELINK "database"."schema"."aws_privatelink_conn"\) FOR ALL TABLES;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -164,7 +163,7 @@ func TestSourceSQLServerWithAWSPrivateLinkCreate(t *testing.T) {
 }
 
 func TestSourceSQLServerAddSubsource(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER SOURCE "database"."schema"."source" ADD SUBSOURCE "dbo"."table_1", "dbo"."table_2" AS "database"."schema"."table_alias";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -177,7 +176,7 @@ func TestSourceSQLServerAddSubsource(t *testing.T) {
 }
 
 func TestSourceSQLServerDropSubsource(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP SOURCE "database"."schema"."table_1", "database"."schema"."table_alias"`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

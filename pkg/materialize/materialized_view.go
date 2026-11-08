@@ -91,7 +91,7 @@ type MaterializedViewParams struct {
 	CreateSQL            sql.NullString `db:"create_sql"`
 }
 
-var materializedViewQuery = NewBaseQuery(`
+var MaterializedViewQuery = NewBaseQuery(`
 	SELECT
 		mz_materialized_views.id,
 		mz_materialized_views.name AS materialized_view_name,
@@ -125,7 +125,7 @@ func MaterializedViewId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":            obj.SchemaName,
 		"mz_databases.name":          obj.DatabaseName,
 	}
-	q := materializedViewQuery.QueryPredicate(p)
+	q := MaterializedViewQuery.QueryPredicate(p)
 
 	var c MaterializedViewParams
 	if err := conn.Get(&c, q); err != nil {
@@ -139,7 +139,7 @@ func ScanMaterializedView(conn *sqlx.DB, id string) (MaterializedViewParams, err
 	p := map[string]string{
 		"mz_materialized_views.id": id,
 	}
-	q := materializedViewQuery.QueryPredicate(p)
+	q := MaterializedViewQuery.QueryPredicate(p)
 
 	var c MaterializedViewParams
 	if err := conn.Get(&c, q); err != nil {
@@ -154,7 +154,7 @@ func ListMaterializedViews(conn *sqlx.DB, schemaName, databaseName string) ([]Ma
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := materializedViewQuery.QueryPredicate(p)
+	q := MaterializedViewQuery.QueryPredicate(p)
 
 	var c []MaterializedViewParams
 	if err := conn.Select(&c, q); err != nil {

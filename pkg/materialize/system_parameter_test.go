@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestSystemParameterSet(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		paramName := "max_connections"
 		paramValue := "100"
 
@@ -28,7 +27,7 @@ func TestSystemParameterSet(t *testing.T) {
 }
 
 func TestSystemParameterReset(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Define the system parameter name that you want to reset
 		paramName := "max_connections"
 
@@ -49,7 +48,7 @@ func TestSystemParameterReset(t *testing.T) {
 }
 
 func TestShowSystemParameter(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		// Define the system parameter name and the expected value to be retrieved
 		paramName := "max_connections"
 		expectedValue := "100"
@@ -78,7 +77,7 @@ func TestShowSystemParameter(t *testing.T) {
 // A parameter value containing an apostrophe must be escaped rather than
 // terminating the string literal early.
 func TestSystemParameterSetQuotesValue(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER SYSTEM SET "cluster" TO 'it''s';`).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		if err := NewSystemParameterBuilder(db, "cluster", "it's").Set(); err != nil {

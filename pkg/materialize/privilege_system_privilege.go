@@ -38,11 +38,11 @@ type SytemPrivilegeParams struct {
 	Privileges string `db:"privileges"`
 }
 
-var systemPrivilegeQuery = `SELECT privileges FROM mz_system_privileges`
+var SystemPrivilegeQuery = `SELECT privileges FROM mz_system_privileges`
 
 func ScanSystemPrivileges(conn *sqlx.DB) ([]SytemPrivilegeParams, error) {
 	var c []SytemPrivilegeParams
-	if err := conn.Select(&c, systemPrivilegeQuery); err != nil {
+	if err := conn.Select(&c, SystemPrivilegeQuery); err != nil {
 		return c, err
 	}
 

@@ -97,7 +97,7 @@ type DefaultPrivilegeParams struct {
 	Privileges  sql.NullString `db:"privileges"`
 }
 
-var defaultPrivilegeQuery = NewBaseQuery(`
+var DefaultPrivilegeQuery = NewBaseQuery(`
 	SELECT
 		mz_default_privileges.object_type,
 		mz_default_privileges.grantee AS grantee_id,
@@ -132,7 +132,7 @@ func ScanDefaultPrivilege(conn *sqlx.DB, objectType, granteeId, targetRoleId, da
 		p["mz_default_privileges.schema_id"] = schemaId
 	}
 
-	q := defaultPrivilegeQuery.QueryPredicate(p)
+	q := DefaultPrivilegeQuery.QueryPredicate(p)
 
 	var c []DefaultPrivilegeParams
 	if err := conn.Select(&c, q); err != nil {

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
@@ -12,7 +11,7 @@ import (
 // https://materialize.com/docs/sql/create-index/
 
 func TestIndexFieldCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" \(column\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -31,7 +30,7 @@ func TestIndexFieldCreate(t *testing.T) {
 }
 
 func TestIndexFieldLiteralCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE INDEX index IN CLUSTER cluster ON "database"."schema"."source" \(upper\(guid\), geo_id\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -51,7 +50,7 @@ func TestIndexFieldLiteralCreate(t *testing.T) {
 }
 
 func TestIndexDefaultCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE DEFAULT INDEX IN CLUSTER cluster ON "database"."schema"."source" USING ARRANGEMENT;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -68,7 +67,7 @@ func TestIndexDefaultCreate(t *testing.T) {
 }
 
 func TestIndexDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP INDEX "database"."schema"."index" RESTRICT;`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "index"}
@@ -80,7 +79,7 @@ func TestIndexDrop(t *testing.T) {
 }
 
 func TestIndexComment(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`COMMENT ON INDEX "database"."schema"."index" IS 'comment';`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "index"}
@@ -94,7 +93,7 @@ func TestIndexComment(t *testing.T) {
 // exec flattens driver errors into one message; the SQLSTATE must survive it so
 // callers can tell a dependency error apart from any other failure.
 func TestIndexDropKeepsSQLState(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP INDEX "database"."schema"."index" RESTRICT;`).WillReturnError(&pgconn.PgError{
 			Severity: "ERROR",
 			Code:     "2BP01",

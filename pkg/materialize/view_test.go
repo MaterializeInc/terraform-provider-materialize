@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -12,7 +11,7 @@ import (
 // https://materialize.com/docs/sql/create-view/
 
 func TestViewCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE VIEW "database"."schema"."view" AS SELECT 1 FROM t1;`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -28,7 +27,7 @@ func TestViewCreate(t *testing.T) {
 }
 
 func TestViewRename(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER VIEW "database"."schema"."view" RENAME TO "new_view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -41,7 +40,7 @@ func TestViewRename(t *testing.T) {
 }
 
 func TestViewDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP VIEW "database"."schema"."view";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

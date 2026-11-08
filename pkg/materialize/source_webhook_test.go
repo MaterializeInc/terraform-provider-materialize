@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourceWebhook = MaterializeObject{Name: "webhook_source", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSourceWebhookCreateExposeHeaders(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."webhook_source"
 			IN CLUSTER "cluster"
@@ -42,7 +41,7 @@ func TestSourceWebhookCreateExposeHeaders(t *testing.T) {
 }
 
 func TestSourceWebhookCreateIncludeHeaders(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."webhook_source"
 			IN CLUSTER "cluster"
@@ -63,7 +62,7 @@ func TestSourceWebhookCreateIncludeHeaders(t *testing.T) {
 }
 
 func TestSourceWebhookCreateValidated(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."webhook_source"
 			IN CLUSTER "cluster"
@@ -104,7 +103,7 @@ func TestSourceWebhookCreateValidated(t *testing.T) {
 }
 
 func TestSourceWebhookCreateSegment(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."webhook_source"
 			IN CLUSTER "cluster"
@@ -155,7 +154,7 @@ func TestSourceWebhookCreateSegment(t *testing.T) {
 }
 
 func TestSourceWebhookCreateRudderstack(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."webhook_source" IN CLUSTER "cluster" FROM WEBHOOK BODY FORMAT JSON CHECK \( WITH \(HEADERS, BODY AS request_body, SECRET "database"."schema"."my_webhook_shared_secret"\) headers->'authorization' = rudderstack_shared_secret\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

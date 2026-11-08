@@ -55,7 +55,7 @@ type SinkParams struct {
 	OwnerName      sql.NullString `db:"owner_name"`
 }
 
-var sinkQuery = NewBaseQuery(`
+var SinkQuery = NewBaseQuery(`
 	SELECT
 		mz_sinks.id,
 		mz_sinks.name,
@@ -92,7 +92,7 @@ func SinkId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := sinkQuery.QueryPredicate(p)
+	q := SinkQuery.QueryPredicate(p)
 
 	var c SinkParams
 	if err := conn.Get(&c, q); err != nil {
@@ -103,7 +103,7 @@ func SinkId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanSink(conn *sqlx.DB, id string) (SinkParams, error) {
-	q := sinkQuery.QueryPredicate(map[string]string{"mz_sinks.id": id})
+	q := SinkQuery.QueryPredicate(map[string]string{"mz_sinks.id": id})
 
 	var c SinkParams
 	if err := conn.Get(&c, q); err != nil {
@@ -118,7 +118,7 @@ func ListSinks(conn *sqlx.DB, schemaName, databaseName string) ([]SinkParams, er
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := sinkQuery.QueryPredicate(p)
+	q := SinkQuery.QueryPredicate(p)
 
 	var c []SinkParams
 	if err := conn.Select(&c, q); err != nil {

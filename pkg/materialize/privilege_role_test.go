@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -42,7 +41,7 @@ func TestParseRolePrivileges(t *testing.T) {
 }
 
 func TestRolePrivilegeGrant(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`GRANT "dev_role" TO "user";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewRolePrivilegeBuilder(db, "dev_role", "user")
@@ -53,7 +52,7 @@ func TestRolePrivilegeGrant(t *testing.T) {
 }
 
 func TestRolePrivilegeRevoke(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE "dev_role" FROM "user";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewRolePrivilegeBuilder(db, "dev_role", "user")

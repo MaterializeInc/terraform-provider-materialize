@@ -53,7 +53,7 @@ type SchemaParams struct {
 	Privileges   StringArray    `db:"privileges"`
 }
 
-var schemaQuery = NewBaseQuery(`
+var SchemaQuery = NewBaseQuery(`
 	SELECT
 		mz_schemas.id,
 		mz_schemas.name AS schema_name,
@@ -78,7 +78,7 @@ func SchemaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.Name,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := schemaQuery.QueryPredicate(p)
+	q := SchemaQuery.QueryPredicate(p)
 
 	var c SchemaParams
 	if err := conn.Get(&c, q); err != nil {
@@ -104,7 +104,7 @@ func ScanSchema(conn *sqlx.DB, identifier string, byName bool) (SchemaParams, er
 			"mz_schemas.id": identifier,
 		}
 	}
-	q := schemaQuery.QueryPredicate(p)
+	q := SchemaQuery.QueryPredicate(p)
 
 	var c SchemaParams
 	if err := conn.Get(&c, q); err != nil {
@@ -116,7 +116,7 @@ func ScanSchema(conn *sqlx.DB, identifier string, byName bool) (SchemaParams, er
 
 func ListSchemas(conn *sqlx.DB, databaseName string) ([]SchemaParams, error) {
 	p := map[string]string{"mz_databases.name": databaseName}
-	q := schemaQuery.QueryPredicate(p)
+	q := SchemaQuery.QueryPredicate(p)
 
 	var c []SchemaParams
 	if err := conn.Select(&c, q); err != nil {

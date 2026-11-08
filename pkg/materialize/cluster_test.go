@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
@@ -14,7 +13,7 @@ import (
 // https://materialize.com/docs/sql/create-cluster/
 
 func TestClusterCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" \(REPLICAS \(\)\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -25,7 +24,7 @@ func TestClusterCreate(t *testing.T) {
 }
 
 func TestClusterManagedCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" \(SIZE 'xsmall'\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -38,7 +37,7 @@ func TestClusterManagedCreate(t *testing.T) {
 }
 
 func TestClusterManagedReplicationFactorCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" \(SIZE 'xsmall', REPLICATION FACTOR 3\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 		o := MaterializeObject{Name: "cluster"}
 		b := NewClusterBuilder(db, o)
@@ -52,7 +51,7 @@ func TestClusterManagedReplicationFactorCreate(t *testing.T) {
 }
 
 func TestClusterManagedSizeDiskCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`CREATE CLUSTER "cluster" \(SIZE 'xsmall', DISK\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -66,7 +65,7 @@ func TestClusterManagedSizeDiskCreate(t *testing.T) {
 }
 
 func TestClusterManagedAllCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			CREATE CLUSTER "cluster"
 			\(SIZE 'xsmall',
@@ -91,7 +90,7 @@ func TestClusterManagedAllCreate(t *testing.T) {
 }
 
 func TestClusterDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`DROP CLUSTER "cluster";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -102,7 +101,7 @@ func TestClusterDrop(t *testing.T) {
 }
 
 func TestClusterWithSchedulingCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `CREATE CLUSTER "cluster" \(SIZE 'xsmall', SCHEDULE = ON REFRESH \(HYDRATION TIME ESTIMATE = '2 hours'\)\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -128,7 +127,7 @@ func TestClusterWithSchedulingCreate(t *testing.T) {
 }
 
 func TestClusterWithAutoScalingCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `CREATE CLUSTER "cluster" \(SIZE 'xsmall', AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc', LINGER DURATION = '15s'\)\)\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -154,7 +153,7 @@ func TestClusterWithAutoScalingCreate(t *testing.T) {
 }
 
 func TestClusterWithAutoScalingNoLingerCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `CREATE CLUSTER "cluster" \(SIZE 'xsmall', AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc'\)\)\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -179,7 +178,7 @@ func TestClusterWithAutoScalingNoLingerCreate(t *testing.T) {
 }
 
 func TestClusterAutoScalingUpdate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `ALTER CLUSTER "cluster" SET \(AUTO SCALING STRATEGY = \(ON HYDRATION \(HYDRATION SIZE = '800cc'\)\)\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -202,7 +201,7 @@ func TestClusterAutoScalingUpdate(t *testing.T) {
 }
 
 func TestClusterAutoScalingReset(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER CLUSTER "cluster" RESET \(AUTO SCALING STRATEGY\);`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{Name: "cluster"}
@@ -215,7 +214,7 @@ func TestClusterAutoScalingReset(t *testing.T) {
 }
 
 func TestClusterUpdate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `ALTER CLUSTER "cluster" SET \(SIZE 'xsmall', REPLICATION FACTOR 2\);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -231,7 +230,7 @@ func TestClusterUpdate(t *testing.T) {
 }
 
 func TestClusterUpdateWithWaitUntilReady(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		expectedSQL := `ALTER CLUSTER "cluster" SET \(SIZE 'xsmall', REPLICATION FACTOR 2\) WITH \( WAIT UNTIL READY \( TIMEOUT '10s', ON TIMEOUT 'COMMIT' \) \);`
 		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -247,7 +246,7 @@ func TestClusterUpdateWithWaitUntilReady(t *testing.T) {
 }
 
 func TestScanClusterAutoScalingStrategyMissingView(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_auto_scaling_strategies`).
 			WillReturnError(&pgconn.PgError{Code: "42P01", Message: "unknown catalog item"})
 
@@ -262,7 +261,7 @@ func TestScanClusterAutoScalingStrategyMissingView(t *testing.T) {
 }
 
 func TestScanClusterAutoScalingStrategyQueryError(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_auto_scaling_strategies`).
 			WillReturnError(errors.New("connection reset by peer"))
 
@@ -273,7 +272,7 @@ func TestScanClusterAutoScalingStrategyQueryError(t *testing.T) {
 }
 
 func TestScanClusterPendingReconfigurationById(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`WHERE cluster_id = \$1 AND status = 'in-progress'`).
 			WithArgs("u1").
 			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}).AddRow("small", 2))
@@ -291,7 +290,7 @@ func TestScanClusterPendingReconfigurationById(t *testing.T) {
 // Name-based cluster ids resolve the cluster inside the same query, so the
 // lookup and the reconfiguration row come from one snapshot.
 func TestScanClusterPendingReconfigurationByName(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`WHERE cluster_id = \(SELECT id FROM mz_clusters WHERE name = \$1\) AND status = 'in-progress'`).
 			WithArgs("cluster").
 			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}).AddRow("small", 2))
@@ -309,7 +308,7 @@ func TestScanClusterPendingReconfigurationByName(t *testing.T) {
 // A source's cluster is resolved inside the same query, so the lookup can run
 // before the source row is read.
 func TestScanSourcePendingReconfiguration(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`WHERE cluster_id = \(SELECT cluster_id FROM mz_sources WHERE id = \$1\) AND status = 'in-progress'`).
 			WithArgs("u1").
 			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}).AddRow("small", 1))
@@ -326,7 +325,7 @@ func TestScanSourcePendingReconfiguration(t *testing.T) {
 
 // A finalized or otherwise settled row is not a pending reconfiguration.
 func TestScanClusterPendingReconfigurationNoneInFlight(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`AND status = 'in-progress'`).
 			WithArgs("u1").
 			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}))
@@ -342,7 +341,7 @@ func TestScanClusterPendingReconfigurationNoneInFlight(t *testing.T) {
 }
 
 func TestScanClusterPendingReconfigurationMissingView(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
 			WillReturnError(&pgconn.PgError{Code: "42P01", Message: "unknown catalog item"})
 
@@ -357,7 +356,7 @@ func TestScanClusterPendingReconfigurationMissingView(t *testing.T) {
 }
 
 func TestScanClusterPendingReconfigurationQueryError(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).
 			WillReturnError(errors.New("connection reset by peer"))
 

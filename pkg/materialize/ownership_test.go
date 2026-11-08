@@ -3,14 +3,12 @@ package materialize
 import (
 	"testing"
 
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
-
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestOwnershipAlter(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "my_role";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{
@@ -30,7 +28,7 @@ func TestOwnershipAlter(t *testing.T) {
 // A role name containing a double quote must be escaped rather than closing the
 // identifier early.
 func TestOwnershipAlterQuotesRoleName(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`ALTER TABLE "database"."schema"."table" OWNER TO "we""ird";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		o := MaterializeObject{

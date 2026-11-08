@@ -16,7 +16,7 @@ type TableColumnParams struct {
 	Default  sql.NullString `db:"default"`
 }
 
-var tableColumnQuery = NewBaseQuery(`
+var TableColumnQuery = NewBaseQuery(`
 	SELECT
 		mz_columns.id,
 		mz_columns.name,
@@ -36,7 +36,7 @@ var tableColumnQuery = NewBaseQuery(`
 
 func ListTableColumns(conn *sqlx.DB, objectId string) ([]TableColumnParams, error) {
 	p := map[string]string{"mz_columns.id": objectId}
-	q := tableColumnQuery.QueryPredicate(p)
+	q := TableColumnQuery.QueryPredicate(p)
 
 	var c []TableColumnParams
 	if err := conn.Select(&c, q); err != nil {
@@ -58,7 +58,7 @@ type IndexColumnParams struct {
 	IndexId       sql.NullString `db:"index_id"`
 }
 
-var indexColumnQuery = NewBaseQuery(`
+var IndexColumnQuery = NewBaseQuery(`
 	SELECT
 		mz_columns.id,
 		mz_columns.name,
@@ -80,7 +80,7 @@ func ListIndexColumns(conn *sqlx.DB, indexId string) ([]IndexColumnParams, error
 	p := map[string]string{
 		"mz_indexes.id": indexId,
 	}
-	q := indexColumnQuery.QueryPredicate(p)
+	q := IndexColumnQuery.QueryPredicate(p)
 
 	// Filter out non-indexed columns
 	var allColumns []IndexColumnParams

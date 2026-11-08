@@ -14,7 +14,7 @@ type SourceTableMySQLParams struct {
 	TextColumns    StringArray `db:"text_columns"`
 }
 
-var sourceTableMySQLQuery = `
+var SourceTableMySQLQuery = `
 	SELECT
 		mz_tables.id,
 		mz_tables.name,
@@ -59,7 +59,7 @@ func SourceTableMySQLId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := NewBaseQuery(sourceTableMySQLQuery).QueryPredicate(p)
+	q := NewBaseQuery(SourceTableMySQLQuery).QueryPredicate(p)
 
 	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
@@ -70,7 +70,7 @@ func SourceTableMySQLId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanSourceTableMySQL(conn *sqlx.DB, id string) (SourceTableMySQLParams, error) {
-	q := NewBaseQuery(sourceTableMySQLQuery).QueryPredicate(map[string]string{"mz_tables.id": id})
+	q := NewBaseQuery(SourceTableMySQLQuery).QueryPredicate(map[string]string{"mz_tables.id": id})
 
 	var params SourceTableMySQLParams
 	if err := conn.Get(&params, q); err != nil {

@@ -11,7 +11,7 @@ type SourceTableKafkaParams struct {
 	SourceTableParams
 }
 
-var sourceTableKafkaQuery = `
+var SourceTableKafkaQuery = `
     SELECT
         mz_tables.id,
         mz_tables.name,
@@ -55,7 +55,7 @@ func SourceTableKafkaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := NewBaseQuery(sourceTableKafkaQuery).QueryPredicate(p)
+	q := NewBaseQuery(SourceTableKafkaQuery).QueryPredicate(p)
 
 	var t SourceTableKafkaParams
 	if err := conn.Get(&t, q); err != nil {
@@ -66,7 +66,7 @@ func SourceTableKafkaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanSourceTableKafka(conn *sqlx.DB, id string) (SourceTableKafkaParams, error) {
-	q := NewBaseQuery(sourceTableKafkaQuery).QueryPredicate(map[string]string{"mz_tables.id": id})
+	q := NewBaseQuery(SourceTableKafkaQuery).QueryPredicate(map[string]string{"mz_tables.id": id})
 
 	var params SourceTableKafkaParams
 	if err := conn.Get(&params, q); err != nil {

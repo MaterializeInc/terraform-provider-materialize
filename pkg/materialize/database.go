@@ -46,7 +46,7 @@ type DatabaseParams struct {
 	Privileges   StringArray    `db:"privileges"`
 }
 
-var databaseQuery = NewBaseQuery(`
+var DatabaseQuery = NewBaseQuery(`
 	SELECT
 		mz_databases.id,
 		mz_databases.name AS database_name,
@@ -64,7 +64,7 @@ var databaseQuery = NewBaseQuery(`
 		ON mz_databases.id = comments.id`)
 
 func DatabaseId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
-	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.name": obj.Name})
+	q := DatabaseQuery.QueryPredicate(map[string]string{"mz_databases.name": obj.Name})
 
 	var c DatabaseParams
 	if err := conn.Get(&c, q); err != nil {
@@ -75,7 +75,7 @@ func DatabaseId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanDatabase(conn *sqlx.DB, id string) (DatabaseParams, error) {
-	q := databaseQuery.QueryPredicate(map[string]string{"mz_databases.id": id})
+	q := DatabaseQuery.QueryPredicate(map[string]string{"mz_databases.id": id})
 
 	var c DatabaseParams
 	if err := conn.Get(&c, q); err != nil {
@@ -86,7 +86,7 @@ func ScanDatabase(conn *sqlx.DB, id string) (DatabaseParams, error) {
 }
 
 func ListDatabases(conn *sqlx.DB) ([]DatabaseParams, error) {
-	q := databaseQuery.QueryPredicate(map[string]string{})
+	q := DatabaseQuery.QueryPredicate(map[string]string{})
 
 	var c []DatabaseParams
 	if err := conn.Select(&c, q); err != nil {

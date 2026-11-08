@@ -128,7 +128,7 @@ type SourceParams struct {
 	Privileges             StringArray    `db:"privileges"`
 }
 
-var sourceQuery = NewBaseQuery(`
+var SourceQuery = NewBaseQuery(`
 		SELECT
 			mz_sources.id,
 			mz_sources.name,
@@ -176,7 +176,7 @@ func SourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := sourceQuery.QueryPredicate(p)
+	q := SourceQuery.QueryPredicate(p)
 
 	var c SourceParams
 	if err := conn.Get(&c, q); err != nil {
@@ -187,7 +187,7 @@ func SourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanSource(conn *sqlx.DB, id string) (SourceParams, error) {
-	q := sourceQuery.QueryPredicate(map[string]string{"mz_sources.id": id})
+	q := SourceQuery.QueryPredicate(map[string]string{"mz_sources.id": id})
 
 	var c SourceParams
 	if err := conn.Get(&c, q); err != nil {
@@ -202,7 +202,7 @@ func ListSources(conn *sqlx.DB, schemaName, databaseName string) ([]SourceParams
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := sourceQuery.QueryPredicate(p)
+	q := SourceQuery.QueryPredicate(p)
 
 	var c []SourceParams
 	if err := conn.Select(&c, q); err != nil {

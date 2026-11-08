@@ -129,7 +129,7 @@ type RoleParams struct {
 	Comment   sql.NullString `db:"comment"`
 }
 
-var roleQuery = NewBaseQuery(`
+var RoleQuery = NewBaseQuery(`
 	SELECT
 		mz_roles.id,
 		mz_roles.name AS role_name,
@@ -154,7 +154,7 @@ func RoleId(conn *sqlx.DB, roleName string) (string, error) {
 		return publicRoleId, nil
 	} else {
 		p := map[string]string{"mz_roles.name": roleName}
-		q := roleQuery.QueryPredicate(p)
+		q := RoleQuery.QueryPredicate(p)
 
 		var c RoleParams
 		if err := conn.Get(&c, q); err != nil {
@@ -167,7 +167,7 @@ func RoleId(conn *sqlx.DB, roleName string) (string, error) {
 
 func ScanRole(conn *sqlx.DB, id string) (RoleParams, error) {
 	p := map[string]string{"mz_roles.id": id}
-	q := roleQuery.QueryPredicate(p)
+	q := RoleQuery.QueryPredicate(p)
 
 	var c RoleParams
 	if err := conn.Get(&c, q); err != nil {
@@ -178,7 +178,7 @@ func ScanRole(conn *sqlx.DB, id string) (RoleParams, error) {
 }
 
 func ListRoles(conn *sqlx.DB, likePattern string) ([]RoleParams, error) {
-	localQuery := *roleQuery
+	localQuery := *RoleQuery
 
 	var customPredicate []string
 	if likePattern != "" {

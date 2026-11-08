@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestConnectionIcebergCatalogCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 's3tablesrest', URL = 'https://s3tables.us-east-1.amazonaws.com/iceberg', WAREHOUSE = 'arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket', AWS CONNECTION = "database"."schema"."aws_conn"\) WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -29,7 +28,7 @@ func TestConnectionIcebergCatalogCreate(t *testing.T) {
 }
 
 func TestConnectionIcebergCatalogCreateWithValidation(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 's3tablesrest', URL = 'https://s3tables.us-east-1.amazonaws.com/iceberg', WAREHOUSE = 'arn:aws:s3tables:us-east-1:123456789012:bucket/my-bucket', AWS CONNECTION = "database"."schema"."aws_conn"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -49,7 +48,7 @@ func TestConnectionIcebergCatalogCreateWithValidation(t *testing.T) {
 }
 
 func TestConnectionIcebergCatalogCreateRest(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 'rest', URL = 'https://dbc.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest', WAREHOUSE = 'main', CREDENTIAL = SECRET "database"."schema"."databricks_oauth", OAUTH2 SERVER URL = 'https://dbc.cloud.databricks.com/oidc/v1/token', SCOPE = 'all-apis', ACCESS DELEGATION = 'vended-credentials'\) WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -72,7 +71,7 @@ func TestConnectionIcebergCatalogCreateRest(t *testing.T) {
 }
 
 func TestConnectionIcebergCatalogCreateRestTextCredential(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."iceberg_conn" TO ICEBERG CATALOG \(CATALOG TYPE = 'rest', URL = 'https://catalog.example.com/iceberg', CREDENTIAL = 'client:secret'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

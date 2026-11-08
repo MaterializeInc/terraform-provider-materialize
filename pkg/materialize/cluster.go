@@ -446,7 +446,7 @@ type ClusterParams struct {
 	Privileges        StringArray    `db:"privileges"`
 }
 
-var clusterQuery = NewBaseQuery(`
+var ClusterQuery = NewBaseQuery(`
 	SELECT
 		mz_clusters.id,
 		mz_clusters.name,
@@ -469,7 +469,7 @@ var clusterQuery = NewBaseQuery(`
 		ON mz_clusters.id = comments.id`)
 
 func ClusterId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
-	q := clusterQuery.QueryPredicate(map[string]string{"mz_clusters.name": obj.Name})
+	q := ClusterQuery.QueryPredicate(map[string]string{"mz_clusters.name": obj.Name})
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
@@ -486,7 +486,7 @@ func ScanCluster(conn *sqlx.DB, identifier string, byName bool) (ClusterParams, 
 	} else {
 		predicate = map[string]string{"mz_clusters.id": identifier}
 	}
-	q := clusterQuery.QueryPredicate(predicate)
+	q := ClusterQuery.QueryPredicate(predicate)
 
 	var c ClusterParams
 	if err := conn.Get(&c, q); err != nil {
@@ -534,7 +534,7 @@ func ScanClusterAutoScalingStrategy(conn *sqlx.DB, clusterId string) (AutoScalin
 }
 
 func ListClusters(conn *sqlx.DB) ([]ClusterParams, error) {
-	q := clusterQuery.QueryPredicate(map[string]string{})
+	q := ClusterQuery.QueryPredicate(map[string]string{})
 
 	var c []ClusterParams
 	if err := conn.Select(&c, q); err != nil {
