@@ -87,6 +87,7 @@ func TestResourceSourceReadState(t *testing.T) {
 				d.SetId(id)
 
 				testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+					testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 					testhelpers.MockSourceScan(mock, `WHERE mz_sources.id = 'u1'`)
 					if c.subsources != nil {
 						c.subsources(mock, subsourcePredicate)
@@ -135,7 +136,8 @@ func TestResourceSourceReadGone(t *testing.T) {
 			d.SetId("aws/us-east-1:u1")
 
 			testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-				mock.ExpectQuery(`SELECT`).WillReturnError(sql.ErrNoRows)
+				testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+				mock.ExpectQuery(`FROM mz_sources`).WillReturnError(sql.ErrNoRows)
 
 				r.False(c.read(context.TODO(), d, db).HasError())
 				r.NoError(mock.ExpectationsWereMet())
@@ -147,7 +149,9 @@ func TestResourceSourceReadGone(t *testing.T) {
 }
 
 // While a resize of the source's cluster is in flight, every source type
-// reports the target size instead of the size the cluster is leaving.
+// reports the target size instead of the size the cluster is leaving. The
+// resize is looked up before the source row, so a resize that finalizes
+// between the two reads is not missed by both.
 func TestResourceSourceReadInFlightResize(t *testing.T) {
 	for _, c := range sourceReadCases() {
 		for _, pending := range []struct{ target, want string }{{"", "small"}, {"medium", "medium"}} {
@@ -157,12 +161,12 @@ func TestResourceSourceReadInFlightResize(t *testing.T) {
 				d.SetId("aws/us-east-1:u1")
 
 				testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-					testhelpers.MockSourceScanInCluster(mock, `WHERE mz_sources.id = 'u1'`, "u5")
 					rows := mock.NewRows([]string{"size", "replication_factor"})
 					if pending.target != "" {
 						rows.AddRow(pending.target, 1)
 					}
-					mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).WithArgs("u5").WillReturnRows(rows)
+					mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).WithArgs("u1").WillReturnRows(rows)
+					testhelpers.MockSourceScan(mock, `WHERE mz_sources.id = 'u1'`)
 					if c.subsources != nil {
 						c.subsources(mock, subsourcePredicate)
 					}
@@ -186,8 +190,7 @@ func TestResourceSourceReadResizeLookupError(t *testing.T) {
 			d.SetId("aws/us-east-1:u1")
 
 			testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
-				testhelpers.MockSourceScanInCluster(mock, `WHERE mz_sources.id = 'u1'`, "u5")
-				mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).WithArgs("u5").WillReturnError(errors.New("connection reset"))
+				mock.ExpectQuery(`FROM mz_internal.mz_cluster_reconfigurations`).WithArgs("u1").WillReturnError(errors.New("connection reset"))
 
 				r.True(c.read(context.TODO(), d, db).HasError())
 				r.NoError(mock.ExpectationsWereMet())
@@ -196,4 +199,23 @@ func TestResourceSourceReadResizeLookupError(t *testing.T) {
 			r.Equal("aws/us-east-1:u1", d.Id())
 		})
 	}
+}
+
+// Creating or updating a Kafka source reads back its kafka_connection.
+func TestResourceSourceKafkaUpdateReadsConnection(t *testing.T) {
+	r := require.New(t)
+	d := schema.TestResourceDataRaw(t, SourceKafka().Schema, inSourceKafka())
+	d.SetId("aws/us-east-1:u1")
+	d.Set("kafka_connection", []interface{}{map[string]interface{}{"name": "stale", "schema_name": "stale", "database_name": "stale"}})
+
+	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
+		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source";`).WillReturnResult(sqlmock.NewResult(1, 1))
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
+		testhelpers.MockSourceScan(mock, `WHERE mz_sources.id = 'u1'`)
+
+		r.False(sourceKafkaUpdate(context.TODO(), d, db).HasError())
+		r.NoError(mock.ExpectationsWereMet())
+	})
+
+	r.Equal([]interface{}{map[string]interface{}{"name": "conn", "schema_name": "public", "database_name": "materialize"}}, d.Get("kafka_connection"))
 }

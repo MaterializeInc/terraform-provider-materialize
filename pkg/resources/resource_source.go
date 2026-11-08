@@ -23,33 +23,6 @@ func sourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		_ = d.Set("url", s.WebhookUrl.String)
 	}
 
-	if v, ok := d.GetOk("envelope"); ok {
-		envelope := v.([]interface{})[0].(map[string]interface{})
-		if upsertOptions, ok := envelope["upsert_options"].([]interface{}); ok && len(upsertOptions) > 0 {
-			options := upsertOptions[0].(map[string]interface{})
-
-			// Check for old format
-			if oldValue, ok := options["value_decoding_errors"].(string); ok {
-				// Convert old format to new format
-				newValue := []interface{}{
-					map[string]interface{}{
-						"inline": []interface{}{
-							map[string]interface{}{
-								"enabled": oldValue == "INLINE",
-								"alias":   "", // No way to know the old alias, so leave it empty
-							},
-						},
-					},
-				}
-				options["value_decoding_errors"] = newValue
-			}
-
-			// Set the potentially updated options back into the state
-			envelope["upsert_options"] = upsertOptions
-		}
-		_ = d.Set("envelope", []interface{}{envelope})
-	}
-
 	return nil
 }
 
@@ -63,6 +36,17 @@ func sourceReadParams(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
+
+	// A source's size is backed by its linked cluster. As of Materialize
+	// v26.34 a resize is graceful and proceeds in the background, so
+	// mz_clusters still reports the old size until it commits. Read the
+	// in-flight target before the source row, as clusterRead does, so a resize
+	// that finalizes between the two reads is not missed by both.
+	pending, inFlight, err := materialize.ScanSourcePendingReconfiguration(metaDb, utils.ExtractId(i))
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
 	s, err := materialize.ScanSource(metaDb, utils.ExtractId(i))
 	if errors.Is(err, sql.ErrNoRows) {
 		d.SetId("")
@@ -85,20 +69,9 @@ func sourceReadParams(ctx context.Context, d *schema.ResourceData, meta interfac
 		return nil, diag.FromErr(err)
 	}
 
-	// A source's size is backed by its linked cluster. As of Materialize
-	// v26.34 a resize is graceful and proceeds in the background, so
-	// mz_clusters still reports the old size until it commits. Reflect the
-	// in-flight target so Terraform sees the intended end-state instead of
-	// perpetually diffing against the pre-resize value.
 	size := s.Size.String
-	if s.ClusterId.Valid {
-		pending, inFlight, err := materialize.ScanClusterPendingReconfiguration(metaDb, s.ClusterId.String, false)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-		if inFlight && pending.Size.Valid {
-			size = pending.Size.String
-		}
+	if inFlight && pending.Size.Valid {
+		size = pending.Size.String
 	}
 	if err := d.Set("size", size); err != nil {
 		return nil, diag.FromErr(err)
@@ -140,6 +113,15 @@ func setSourceConnection(d *schema.ResourceData, key string, s *materialize.Sour
 }
 
 func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if diags := alterSource(d, meta); diags != nil {
+		return diags
+	}
+	return sourceRead(ctx, d, meta)
+}
+
+// alterSource applies the changes every source type supports in place: name,
+// ownership_role and comment.
+func alterSource(d *schema.ResourceData, meta any) diag.Diagnostics {
 	sourceName := d.Get("name").(string)
 	schemaName := d.Get("schema_name").(string)
 	databaseName := d.Get("database_name").(string)
@@ -177,7 +159,7 @@ func sourceUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 		}
 	}
 
-	return sourceRead(ctx, d, meta)
+	return nil
 }
 
 func sourceDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {

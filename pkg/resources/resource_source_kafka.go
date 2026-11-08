@@ -228,7 +228,7 @@ func SourceKafka() *schema.Resource {
 
 		CreateContext: sourceKafkaCreate,
 		ReadContext:   sourceKafkaRead,
-		UpdateContext: sourceUpdate,
+		UpdateContext: sourceKafkaUpdate,
 		DeleteContext: sourceDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -362,7 +362,7 @@ func sourceKafkaCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 	}
 	d.SetId(utils.TransformIdWithRegion(string(region), i))
 
-	return sourceRead(ctx, d, meta)
+	return sourceKafkaRead(ctx, d, meta)
 }
 
 func sourceKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -376,4 +376,11 @@ func sourceKafkaRead(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	return nil
+}
+
+func sourceKafkaUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if diags := alterSource(d, meta); diags != nil {
+		return diags
+	}
+	return sourceKafkaRead(ctx, d, meta)
 }

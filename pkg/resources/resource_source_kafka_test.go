@@ -185,6 +185,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
@@ -241,6 +242,7 @@ func TestResourceSourceKafkaCreateIncludeTrueNoAlias(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
@@ -287,6 +289,7 @@ func TestResourceSourceKafkaCreateIncludeFalseWithAlias(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
@@ -319,6 +322,7 @@ func TestResourceSourceKafkaCreateTextFormat(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
@@ -351,6 +355,7 @@ func TestResourceSourceKafkaCreateJSONFormat(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
@@ -383,6 +388,7 @@ func TestResourceSourceKafkaCreateBytesFormat(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources
@@ -415,6 +421,7 @@ func TestResourceSourceKafkaCreateCSVFormat(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources

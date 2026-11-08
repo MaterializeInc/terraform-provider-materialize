@@ -69,6 +69,7 @@ func TestResourceSourceSQLServerCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources - SQL Server
@@ -111,6 +112,7 @@ func TestResourceSourceSQLServerCreateAllTablesMinimal(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources - SQL Server
@@ -154,6 +156,7 @@ func TestResourceSourceSQLServerCreateWithTextColumnsOnly(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources - SQL Server
@@ -197,6 +200,7 @@ func TestResourceSourceSQLServerCreateWithExcludeColumnsOnly(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Subsources - SQL Server
@@ -217,6 +221,7 @@ func TestResourceSourceSQLServerRead(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		p := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, p)
 
 		// Query Subsources - SQL Server
@@ -254,6 +259,7 @@ func TestResourceSourceSQLServerUpdate(t *testing.T) {
 
 		// Query Params
 		p := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, p)
 
 		// Query Subsources - SQL Server

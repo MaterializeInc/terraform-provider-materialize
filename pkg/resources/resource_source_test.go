@@ -23,6 +23,7 @@ func TestResourceSourceReadIdMigration(t *testing.T) {
 	testhelpers.WithMockProviderMeta(t, func(db *utils.ProviderMeta, mock sqlmock.Sqlmock) {
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		if err := sourceRead(context.TODO(), d, db); err != nil {
@@ -47,6 +48,7 @@ func TestResourceSourceUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."" RENAME TO "source";`).WillReturnResult(sqlmock.NewResult(1, 1))
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		if err := sourceUpdate(context.TODO(), d, db); err != nil {

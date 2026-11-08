@@ -306,6 +306,24 @@ func TestScanClusterPendingReconfigurationByName(t *testing.T) {
 	})
 }
 
+// A source's cluster is resolved inside the same query, so the lookup can run
+// before the source row is read.
+func TestScanSourcePendingReconfiguration(t *testing.T) {
+	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`WHERE cluster_id = \(SELECT cluster_id FROM mz_sources WHERE id = \$1\) AND status = 'in-progress'`).
+			WithArgs("u1").
+			WillReturnRows(sqlmock.NewRows([]string{"size", "replication_factor"}).AddRow("small", 1))
+
+		p, inFlight, err := ScanSourcePendingReconfiguration(db, "u1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !inFlight || p.Size.String != "small" {
+			t.Fatalf("unexpected result: inFlight=%v size=%q", inFlight, p.Size.String)
+		}
+	})
+}
+
 // A finalized or otherwise settled row is not a pending reconfiguration.
 func TestScanClusterPendingReconfigurationNoneInFlight(t *testing.T) {
 	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {

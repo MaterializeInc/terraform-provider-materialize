@@ -49,6 +49,7 @@ func TestResourceSourceMySQLCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Tables
@@ -76,6 +77,7 @@ func TestResourceSourceMySQLUpdate(t *testing.T) {
 		mock.ExpectExec(`ALTER SOURCE "database"."schema"."old_source" ADD SUBSOURCE "schema"."name2", "schema"."name1" AS "database"."schema"."alias" WITH \(TEXT COLUMNS \[column3, column4\]\)`).WillReturnResult(sqlmock.NewResult(1, 1))
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Tables
