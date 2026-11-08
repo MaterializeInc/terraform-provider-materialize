@@ -5,6 +5,8 @@
 ### Bug Fixes
 
 * Fixed `materialize_source_kafka`, `materialize_source_postgres`, `materialize_source_mysql` and `materialize_source_sqlserver` reporting the old `size` while the source's cluster is being resized. They now report the target size, as the load generator and webhook sources already did. [#967](https://github.com/MaterializeInc/terraform-provider-materialize/pull/967)
+* Fixed sources keeping the old `size` until the next refresh when a resize of their cluster finished during the read. The in-flight resize is now looked up before the source, as `materialize_cluster` already does. [#968](https://github.com/MaterializeInc/terraform-provider-materialize/pull/968)
+* Fixed `materialize_source_kafka` not reading back `kafka_connection` after create and update. [#968](https://github.com/MaterializeInc/terraform-provider-materialize/pull/968)
 
 ## 0.11.14 - 2026-11-04
 
