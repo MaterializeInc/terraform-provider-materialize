@@ -668,6 +668,16 @@ func mockSinkScanWithEnvelope(mock sqlmock.Sqlmock, predicate, sinkType, envelop
 }
 
 func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
+	mockSourceScan(mock, predicate, nil)
+}
+
+// MockSourceScanInCluster also returns the source's cluster id, so the read
+// looks up an in-flight resize of that cluster.
+func MockSourceScanInCluster(mock sqlmock.Sqlmock, predicate string, clusterId string) {
+	mockSourceScan(mock, predicate, clusterId)
+}
+
+func mockSourceScan(mock sqlmock.Sqlmock, predicate string, clusterId interface{}) {
 	b := `
 	SELECT
 		mz_sources.id,
@@ -711,8 +721,8 @@ func MockSourceScan(mock sqlmock.Sqlmock, predicate string) {
 		ON mz_sources.id = mz_webhook_sources.id`
 
 	q := mockQueryBuilder(b, predicate, "")
-	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "connection_schema_name", "connection_database_name", "cluster_name", "comment", "owner_name", "webhook_url", "privileges"}).
-		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "public", "materialize", "cluster", nil, "joe", "https://webhook.url/example", defaultPrivilege)
+	ir := mock.NewRows([]string{"id", "name", "schema_name", "database_name", "source_type", "size", "envelope_type", "connection_name", "connection_schema_name", "connection_database_name", "cluster_id", "cluster_name", "comment", "owner_name", "webhook_url", "privileges"}).
+		AddRow("u1", "source", "schema", "database", "kafka", "small", "BYTES", "conn", "public", "materialize", clusterId, "cluster", nil, "joe", "https://webhook.url/example", defaultPrivilege)
 	mock.ExpectQuery(q).WillReturnRows(ir)
 }
 

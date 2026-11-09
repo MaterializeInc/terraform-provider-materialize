@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+* Fixed `materialize_source_kafka`, `materialize_source_postgres`, `materialize_source_mysql` and `materialize_source_sqlserver` reporting the old `size` while the source's cluster is being resized. They now report the target size, as the load generator and webhook sources already did. [#967](https://github.com/MaterializeInc/terraform-provider-materialize/pull/967)
+
 ## 0.11.14 - 2026-11-04
 
 ### Bug Fixes

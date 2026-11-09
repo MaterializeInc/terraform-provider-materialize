@@ -2,8 +2,6 @@ package resources
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/materialize"
 	"github.com/MaterializeInc/terraform-provider-materialize/pkg/utils"
@@ -189,69 +187,20 @@ func sourceMySQLCreate(ctx context.Context, d *schema.ResourceData, meta any) di
 }
 
 func sourceMySQLRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	i := d.Id()
+	s, diags := sourceReadParams(ctx, d, meta)
+	if s == nil {
+		return diags
+	}
 
-	metaDb, region, err := utils.GetDBClientFromMeta(meta, d)
+	if err := setSourceConnection(d, "mysql_connection", s); err != nil {
+		return diag.FromErr(err)
+	}
+
+	metaDb, _, err := utils.GetDBClientFromMeta(meta, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	s, err := materialize.ScanSource(metaDb, utils.ExtractId(i))
-	if errors.Is(err, sql.ErrNoRows) {
-		d.SetId("")
-		return nil
-	} else if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(utils.TransformIdWithRegion(string(region), i))
-
-	if err := d.Set("name", s.SourceName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("schema_name", s.SchemaName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("database_name", s.DatabaseName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("size", s.Size.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("cluster_name", s.ClusterName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("ownership_role", s.OwnerName.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	b := materialize.Source{SourceName: s.SourceName.String, SchemaName: s.SchemaName.String, DatabaseName: s.DatabaseName.String}
-	if err := d.Set("qualified_sql_name", b.QualifiedName()); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("comment", s.Comment.String); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if s.ConnectionName.Valid && s.ConnectionSchemaName.Valid && s.ConnectionDatabaseName.Valid {
-		mysqlConnection := []interface{}{
-			map[string]interface{}{
-				"name":          s.ConnectionName.String,
-				"schema_name":   s.ConnectionSchemaName.String,
-				"database_name": s.ConnectionDatabaseName.String,
-			},
-		}
-		if err := d.Set("mysql_connection", mysqlConnection); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	deps, err := materialize.ListMysqlSubsources(metaDb, utils.ExtractId(i), "subsource")
+	deps, err := materialize.ListMysqlSubsources(metaDb, utils.ExtractId(d.Id()), "subsource")
 	if err != nil {
 		return diag.FromErr(err)
 	}
