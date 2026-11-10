@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>MaterializeInc/renovate-config"],
+  "schedule": ["* 22-23 * * 0"],
+  "postUpdateOptions": ["gomodTidy"],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["hashicorp/terraform"],
+      "extractVersion": "^v(?<version>.+)$"
+    }
+  ]
+}
