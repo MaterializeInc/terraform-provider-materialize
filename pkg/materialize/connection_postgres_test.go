@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var connPostgres = MaterializeObject{Name: "postgres_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionPostgresCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "database"."schema"."password", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -31,7 +30,7 @@ func TestConnectionPostgresCreate(t *testing.T) {
 }
 
 func TestConnectionPostgresSshCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "database"."schema"."password", SSH TUNNEL "database"."schema"."ssh_conn", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -52,7 +51,7 @@ func TestConnectionPostgresSshCreate(t *testing.T) {
 }
 
 func TestConnectionPostgresPrivateLinkCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER 'user', PASSWORD SECRET "database"."schema"."password", AWS PRIVATELINK "database"."schema"."private_link", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -73,7 +72,7 @@ func TestConnectionPostgresPrivateLinkCreate(t *testing.T) {
 }
 
 func TestConnectionPostgresSslCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."postgres_conn" TO POSTGRES \(HOST 'postgres_host', PORT 5432, USER SECRET "database"."schema"."user", PASSWORD SECRET "database"."schema"."password", SSL MODE 'verify-full', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."root", SSL CERTIFICATE SECRET "database"."schema"."cert", SSL KEY SECRET "database"."schema"."key", DATABASE 'default'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

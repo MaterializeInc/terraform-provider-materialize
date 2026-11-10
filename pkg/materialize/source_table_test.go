@@ -4,44 +4,10 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourceTable = MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
-
-func TestSourceTableId(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		ip := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema' AND mz_tables.name = 'table'`
-		testhelpers.MockSourceTableScan(mock, ip)
-
-		id, err := SourceTableId(db, sourceTable)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if id != "u1" {
-			t.Errorf("Expected id 'u1', got '%s'", id)
-		}
-	})
-}
-
-func TestScanSourceTable(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		pp := `WHERE mz_tables.id = 'u1'`
-		testhelpers.MockSourceTableScan(mock, pp)
-
-		params, err := ScanSourceTable(db, "u1")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if params.TableId.String != "u1" {
-			t.Errorf("Expected table id 'u1', got '%s'", params.TableId.String)
-		}
-		if params.TableName.String != "table" {
-			t.Errorf("Expected table name 'table', got '%s'", params.TableName.String)
-		}
-	})
-}
 
 func TestSourceTableBuilderQualifiedName(t *testing.T) {
 	b := NewSourceTableBuilder(nil, sourceTable)
@@ -80,7 +46,7 @@ func TestSourceTableBuilderUpstreamSchemaName(t *testing.T) {
 }
 
 func TestSourceTableBuilderRename(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -93,7 +59,7 @@ func TestSourceTableBuilderRename(t *testing.T) {
 }
 
 func TestSourceTableBuilderDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP TABLE "database"."schema"."table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -106,7 +72,7 @@ func TestSourceTableBuilderDrop(t *testing.T) {
 }
 
 func TestSourceTableBuilderBaseCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table" FROM SOURCE "materialize"."public"."source" \(REFERENCE "upstream_schema"."upstream_table"\) WITH \(TEXT COLUMNS \("col1", "col2"\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -126,7 +92,7 @@ func TestSourceTableBuilderBaseCreate(t *testing.T) {
 }
 
 func TestSourceTableBuilderBaseCreateWithoutReference(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table" FROM SOURCE "materialize"."public"."source" WITH \(TEXT COLUMNS \("col1"\)\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -144,7 +110,7 @@ func TestSourceTableBuilderBaseCreateWithoutReference(t *testing.T) {
 }
 
 func TestSourceTableBuilderBaseCreateWithoutOptions(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table" FROM SOURCE "materialize"."public"."source" \(REFERENCE "upstream_table"\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -156,24 +122,6 @@ func TestSourceTableBuilderBaseCreateWithoutOptions(t *testing.T) {
 		err := b.BaseCreate("postgres", nil)
 		if err != nil {
 			t.Fatal(err)
-		}
-	})
-}
-
-func TestListSourceTables(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		predicate := `WHERE mz_databases.name = 'database' AND mz_schemas.name = 'schema'`
-		testhelpers.MockSourceTableScan(mock, predicate)
-
-		tables, err := ListSourceTables(db, "schema", "database")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(tables) != 1 {
-			t.Errorf("Expected 1 table, got %d", len(tables))
-		}
-		if tables[0].TableName.String != "table" {
-			t.Errorf("Expected table name 'table', got '%s'", tables[0].TableName.String)
 		}
 	})
 }

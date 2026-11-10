@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestConnectionAwsCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."aws_conn" TO AWS
 			    \( ENDPOINT = 'localhost',
@@ -34,30 +33,6 @@ func TestConnectionAwsCreate(t *testing.T) {
 
 		if err := b.Create(); err != nil {
 			t.Fatal(err)
-		}
-	})
-}
-
-func TestScanConnectionAws(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		expectedExternalId := "mz_12345678-1234-1234-1234-123456789012_u123"
-
-		// Mock the scan query response
-		pp := `WHERE mz_connections.id = 'u1'`
-		testhelpers.MockConnectionAwsScan(mock, pp)
-
-		// Test ScanConnectionAws
-		params, err := ScanConnectionAws(db, "u1")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if params.ExternalId.String != expectedExternalId {
-			t.Fatalf("Expected external_id to be %s, got %s", expectedExternalId, params.ExternalId.String)
-		}
-
-		if params.AssumeRoleArn.String != "arn:aws:iam::123456789012:user/JohnDoe" {
-			t.Fatalf("Expected assume_role_arn to be %s, got %s", "arn:aws:iam::123456789012:user/JohnDoe", params.AssumeRoleArn.String)
 		}
 	})
 }

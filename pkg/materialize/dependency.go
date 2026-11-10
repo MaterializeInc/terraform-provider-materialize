@@ -17,7 +17,7 @@ type DependencyParams struct {
 	FilerId           sql.NullString `db:"filter_id"`
 }
 
-var dependencyQuery = NewBaseQuery(`
+var DependencyQuery = NewBaseQuery(`
 WITH dependencies AS (
 	SELECT
 		mz_object_dependencies.object_id,
@@ -63,7 +63,7 @@ func ListDependencies(conn *sqlx.DB, objectId, objectType string) ([]DependencyP
 		p["type"] = objectType
 	}
 
-	q := dependencyQuery.QueryPredicate(p)
+	q := DependencyQuery.QueryPredicate(p)
 
 	var d []DependencyParams
 	if err := conn.Select(&d, q); err != nil {

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -100,7 +99,7 @@ func TestGetObjectPermissions(t *testing.T) {
 }
 
 func TestPrivilegeGrant(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`GRANT CREATE ON DATABASE "materialize" TO "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: Database, Name: "materialize"})
@@ -111,30 +110,12 @@ func TestPrivilegeGrant(t *testing.T) {
 }
 
 func TestPrivilegeRevoke(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`REVOKE CREATE ON DATABASE "materialize" FROM "joe";`).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		b := NewPrivilegeBuilder(db, "joe", "CREATE", MaterializeObject{ObjectType: Database, Name: "materialize"})
 		if err := b.Revoke(); err != nil {
 			t.Fatal(err)
-		}
-	})
-}
-
-func TestScanPrivileges(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		// Query Id
-		ip := `WHERE mz_databases.id = 'u1'`
-		testhelpers.MockDatabaseScan(mock, ip)
-
-		o, err := ScanPrivileges(db, Database, "u1")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		e := []string{"s1=arwd/s1", "u1=UC/u18", "u8=arw/s1", "=UC/s1"}
-		if !reflect.DeepEqual(o, e) {
-			t.Fatalf("unexpected privileges %s", o)
 		}
 	})
 }

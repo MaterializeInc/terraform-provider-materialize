@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var connSQLServer = MaterializeObject{Name: "sqlserver_conn", SchemaName: "schema", DatabaseName: "database"}
 
 func TestConnectionSQLServerCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -31,7 +30,7 @@ func TestConnectionSQLServerCreate(t *testing.T) {
 }
 
 func TestConnectionSQLServerSshCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSH TUNNEL "database"."schema"."ssh_conn", DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -52,7 +51,7 @@ func TestConnectionSQLServerSshCreate(t *testing.T) {
 }
 
 func TestConnectionSQLServerAWSPrivateLinkCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER SECRET "database"."schema"."user", PASSWORD SECRET "database"."schema"."password", AWS PRIVATELINK "database"."schema"."aws_conn", DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -73,7 +72,7 @@ func TestConnectionSQLServerAWSPrivateLinkCreate(t *testing.T) {
 }
 
 func TestConnectionSQLServerWithoutValidation(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", DATABASE 'testdb'\) WITH \(VALIDATE = false\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -93,7 +92,7 @@ func TestConnectionSQLServerWithoutValidation(t *testing.T) {
 }
 
 func TestConnectionSQLServerWithSSLCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSL MODE 'required', SSL CERTIFICATE AUTHORITY '-----BEGIN CERTIFICATE-----', DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -115,7 +114,7 @@ func TestConnectionSQLServerWithSSLCreate(t *testing.T) {
 }
 
 func TestConnectionSQLServerWithSSLSecretCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 1433, USER 'user', PASSWORD SECRET "database"."schema"."password", SSL MODE 'verify-ca', SSL CERTIFICATE AUTHORITY SECRET "database"."schema"."ssl_ca_secret", DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -137,7 +136,7 @@ func TestConnectionSQLServerWithSSLSecretCreate(t *testing.T) {
 }
 
 func TestConnectionSQLServerDefaultPort(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE CONNECTION "database"."schema"."sqlserver_conn" TO SQL SERVER \(HOST 'sqlserver_host', PORT 0, USER 'user', PASSWORD SECRET "database"."schema"."password", DATABASE 'testdb'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

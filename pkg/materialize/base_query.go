@@ -16,6 +16,12 @@ func NewBaseQuery(statement string) *BaseQuery {
 	return &BaseQuery{statement: statement}
 }
 
+// Statement returns the query without its predicates and order, so the test
+// mocks can be built from the same SQL.
+func (b *BaseQuery) Statement() string {
+	return b.statement
+}
+
 func (b *BaseQuery) CustomPredicate(c []string) *BaseQuery {
 	b.customPredicate = c
 	return b

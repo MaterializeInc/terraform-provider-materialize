@@ -12,7 +12,7 @@ type SourceTablePostgresParams struct {
 	SourceTableParams
 }
 
-var sourceTablePostgresQuery = `
+var SourceTablePostgresQuery = `
 	SELECT
 		mz_tables.id,
 		mz_tables.name,
@@ -57,7 +57,7 @@ func SourceTablePostgresId(conn *sqlx.DB, obj MaterializeObject) (string, error)
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := NewBaseQuery(sourceTablePostgresQuery).QueryPredicate(p)
+	q := NewBaseQuery(SourceTablePostgresQuery).QueryPredicate(p)
 
 	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
@@ -68,7 +68,7 @@ func SourceTablePostgresId(conn *sqlx.DB, obj MaterializeObject) (string, error)
 }
 
 func ScanSourceTablePostgres(conn *sqlx.DB, id string) (SourceTablePostgresParams, error) {
-	q := NewBaseQuery(sourceTablePostgresQuery).QueryPredicate(map[string]string{"mz_tables.id": id})
+	q := NewBaseQuery(SourceTablePostgresQuery).QueryPredicate(map[string]string{"mz_tables.id": id})
 
 	var params SourceTablePostgresParams
 	if err := conn.Get(&params, q); err != nil {

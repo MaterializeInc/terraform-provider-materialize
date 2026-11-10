@@ -19,7 +19,7 @@ type SourceReferenceParams struct {
 	SourceType       sql.NullString `db:"source_type"`
 }
 
-var sourceReferenceQuery = NewBaseQuery(`
+var SourceReferenceQuery = NewBaseQuery(`
     SELECT
         sr.source_id,
         sr.namespace,
@@ -40,7 +40,7 @@ func SourceReferenceId(conn *sqlx.DB, sourceId string) (string, error) {
 	p := map[string]string{
 		"sr.source_id": sourceId,
 	}
-	q := sourceReferenceQuery.QueryPredicate(p)
+	q := SourceReferenceQuery.QueryPredicate(p)
 
 	var s SourceReferenceParams
 	if err := conn.Get(&s, q); err != nil {
@@ -51,7 +51,7 @@ func SourceReferenceId(conn *sqlx.DB, sourceId string) (string, error) {
 }
 
 func ScanSourceReference(conn *sqlx.DB, id string) (SourceReferenceParams, error) {
-	q := sourceReferenceQuery.QueryPredicate(map[string]string{"sr.source_id": id})
+	q := SourceReferenceQuery.QueryPredicate(map[string]string{"sr.source_id": id})
 
 	var s SourceReferenceParams
 	if err := conn.Get(&s, q); err != nil {
@@ -78,7 +78,7 @@ func ListSourceReferences(conn *sqlx.DB, id string) ([]SourceReferenceParams, er
 	p := map[string]string{
 		"sr.source_id": id,
 	}
-	q := sourceReferenceQuery.QueryPredicate(p)
+	q := SourceReferenceQuery.QueryPredicate(p)
 
 	var references []SourceReferenceParams
 	if err := conn.Select(&references, q); err != nil {

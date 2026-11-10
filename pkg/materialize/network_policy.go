@@ -101,7 +101,7 @@ type NetworkPolicyQueryResult struct {
 	Rules      []byte         `db:"rules"`
 }
 
-var networkPolicyQuery = NewBaseQuery(`
+var NetworkPolicyQuery = NewBaseQuery(`
 	WITH policy AS (
 		SELECT
 			mz_network_policies.id,
@@ -142,7 +142,7 @@ func NetworkPolicyId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 	p := map[string]string{
 		"policy_name": obj.Name,
 	}
-	q := networkPolicyQuery.QueryPredicate(p)
+	q := NetworkPolicyQuery.QueryPredicate(p)
 
 	var result NetworkPolicyQueryResult
 	if err := conn.Get(&result, q); err != nil {
@@ -156,7 +156,7 @@ func ScanNetworkPolicy(conn *sqlx.DB, id string) (NetworkPolicyParams, error) {
 	p := map[string]string{
 		"policy.id": id,
 	}
-	q := networkPolicyQuery.QueryPredicate(p)
+	q := NetworkPolicyQuery.QueryPredicate(p)
 
 	var result NetworkPolicyQueryResult
 	if err := conn.Get(&result, q); err != nil {
@@ -181,7 +181,7 @@ func ScanNetworkPolicy(conn *sqlx.DB, id string) (NetworkPolicyParams, error) {
 
 func ListNetworkPolicies(conn *sqlx.DB) ([]NetworkPolicyParams, error) {
 	var policies []NetworkPolicyParams
-	q := networkPolicyQuery.QueryPredicate(map[string]string{})
+	q := NetworkPolicyQuery.QueryPredicate(map[string]string{})
 
 	var results []NetworkPolicyQueryResult
 	if err := conn.Select(&results, q); err != nil {

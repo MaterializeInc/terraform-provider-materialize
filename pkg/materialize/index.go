@@ -119,7 +119,7 @@ type IndexParams struct {
 	Comment            sql.NullString `db:"comment"`
 }
 
-var indexQuery = NewBaseQuery(`
+var IndexQuery = NewBaseQuery(`
 	SELECT
 		mz_indexes.id,
 		mz_indexes.name AS index_name,
@@ -143,7 +143,7 @@ var indexQuery = NewBaseQuery(`
 	CustomPredicate([]string{"mz_objects.type IN ('source', 'view', 'materialized-view')"})
 
 func IndexId(conn *sqlx.DB, indexName string) (string, error) {
-	q := indexQuery.QueryPredicate(map[string]string{"mz_indexes.name": indexName})
+	q := IndexQuery.QueryPredicate(map[string]string{"mz_indexes.name": indexName})
 
 	var c IndexParams
 	if err := conn.Get(&c, q); err != nil {
@@ -154,7 +154,7 @@ func IndexId(conn *sqlx.DB, indexName string) (string, error) {
 }
 
 func ScanIndex(conn *sqlx.DB, id string) (IndexParams, error) {
-	q := indexQuery.QueryPredicate(map[string]string{"mz_indexes.id": id})
+	q := IndexQuery.QueryPredicate(map[string]string{"mz_indexes.id": id})
 
 	var c IndexParams
 	if err := conn.Get(&c, q); err != nil {
@@ -170,7 +170,7 @@ func ListIndexes(conn *sqlx.DB, schemaName, databaseName string) ([]IndexParams,
 		"mz_databases.name": databaseName,
 	}
 
-	q := indexQuery.QueryPredicate(p)
+	q := IndexQuery.QueryPredicate(p)
 
 	var c []IndexParams
 	if err := conn.Select(&c, q); err != nil {
@@ -192,7 +192,7 @@ func FindDefaultIndexByObject(conn *sqlx.DB, objectName, schemaName, databaseNam
 		"mz_indexes.name":   defaultIndexPattern,
 	}
 
-	q := indexQuery.QueryPredicate(p)
+	q := IndexQuery.QueryPredicate(p)
 
 	var index IndexParams
 	if err := conn.Get(&index, q); err != nil {

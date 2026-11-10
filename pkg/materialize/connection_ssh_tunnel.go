@@ -58,7 +58,7 @@ type ConnectionSshTunnelParams struct {
 	OwnerName      sql.NullString `db:"owner_name"`
 }
 
-var connectionSshTunnelQuery = NewBaseQuery(`
+var ConnectionSshTunnelQuery = NewBaseQuery(`
 	SELECT
 		mz_connections.id,
 		mz_connections.name AS connection_name,
@@ -85,7 +85,7 @@ var connectionSshTunnelQuery = NewBaseQuery(`
 		ON mz_connections.id = comments.id`)
 
 func ScanConnectionSshTunnel(conn *sqlx.DB, id string) (ConnectionSshTunnelParams, error) {
-	q := connectionSshTunnelQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
+	q := ConnectionSshTunnelQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
 
 	var c ConnectionSshTunnelParams
 	if err := conn.Get(&c, q); err != nil {

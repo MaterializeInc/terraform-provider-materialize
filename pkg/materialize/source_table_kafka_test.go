@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestResourceSourceTableKafkaCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
@@ -41,7 +40,7 @@ func TestResourceSourceTableKafkaCreate(t *testing.T) {
 }
 
 func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"
@@ -74,7 +73,7 @@ func TestResourceSourceTableKafkaCreateWithAvroFormat(t *testing.T) {
 }
 
 func TestResourceSourceTableKafkaCreateWithUpsertOptions(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."source"
             FROM SOURCE "database"."schema"."kafka_source"

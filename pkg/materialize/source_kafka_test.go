@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestResourceSourceKafkaCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
             FROM KAFKA CONNECTION "database"."schema"."kafka_connection"
@@ -39,7 +38,7 @@ func TestResourceSourceKafkaCreate(t *testing.T) {
 }
 
 func TestResourceSourceKafkaCreateWithUpsertOptions(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SOURCE "database"."schema"."source"
             FROM KAFKA CONNECTION "database"."schema"."kafka_connection"

@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourceTableMySQL = MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSourceTableCreateWithMySQLSource(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
@@ -33,7 +32,7 @@ func TestSourceTableCreateWithMySQLSource(t *testing.T) {
 }
 
 func TestSourceTableMySQLRename(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -46,7 +45,7 @@ func TestSourceTableMySQLRename(t *testing.T) {
 }
 
 func TestSourceTableMySQLDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP TABLE "database"."schema"."table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

@@ -62,7 +62,7 @@ type ViewParams struct {
 	CreateSQL    sql.NullString `db:"create_sql"`
 }
 
-var viewQuery = NewBaseQuery(`
+var ViewQuery = NewBaseQuery(`
 	SELECT
 		mz_views.id,
 		mz_views.name,
@@ -93,7 +93,7 @@ func ViewId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := viewQuery.QueryPredicate(p)
+	q := ViewQuery.QueryPredicate(p)
 
 	var c ViewParams
 	if err := conn.Get(&c, q); err != nil {
@@ -107,7 +107,7 @@ func ScanView(conn *sqlx.DB, id string) (ViewParams, error) {
 	p := map[string]string{
 		"mz_views.id": id,
 	}
-	q := viewQuery.QueryPredicate(p)
+	q := ViewQuery.QueryPredicate(p)
 
 	var c ViewParams
 	if err := conn.Get(&c, q); err != nil {
@@ -122,7 +122,7 @@ func ListViews(conn *sqlx.DB, schemaName, databaseName string) ([]ViewParams, er
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := viewQuery.QueryPredicate(p)
+	q := ViewQuery.QueryPredicate(p)
 
 	var c []ViewParams
 	if err := conn.Select(&c, q); err != nil {

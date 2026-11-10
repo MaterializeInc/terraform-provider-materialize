@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestSinkIcebergCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" IN CLUSTER "my_cluster" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'my_namespace', TABLE = 'my_table'\) USING AWS CONNECTION "database"."schema"."aws_conn" KEY \(id\) MODE UPSERT WITH \(COMMIT INTERVAL = '10s'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -32,7 +31,7 @@ func TestSinkIcebergCreate(t *testing.T) {
 }
 
 func TestSinkIcebergCreateWithMultipleKeys(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" IN CLUSTER "my_cluster" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'my_namespace', TABLE = 'my_table'\) USING AWS CONNECTION "database"."schema"."aws_conn" KEY \(id, tenant_id\) MODE UPSERT WITH \(COMMIT INTERVAL = '1m'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -55,7 +54,7 @@ func TestSinkIcebergCreateWithMultipleKeys(t *testing.T) {
 }
 
 func TestSinkIcebergCreateWithKeyNotEnforced(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" IN CLUSTER "my_cluster" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'my_namespace', TABLE = 'my_table'\) USING AWS CONNECTION "database"."schema"."aws_conn" KEY \(id\) NOT ENFORCED MODE UPSERT WITH \(COMMIT INTERVAL = '30s'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -79,7 +78,7 @@ func TestSinkIcebergCreateWithKeyNotEnforced(t *testing.T) {
 }
 
 func TestSinkIcebergCreateMinimal(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'ns', TABLE = 'tbl'\) USING AWS CONNECTION "database"."schema"."aws_conn" KEY \(id\) MODE UPSERT WITH \(COMMIT INTERVAL = '10s'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -101,7 +100,7 @@ func TestSinkIcebergCreateMinimal(t *testing.T) {
 }
 
 func TestSinkIcebergCreateAppend(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" IN CLUSTER "my_cluster" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'my_namespace', TABLE = 'my_table'\) MODE APPEND WITH \(COMMIT INTERVAL = '10s'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -123,7 +122,7 @@ func TestSinkIcebergCreateAppend(t *testing.T) {
 }
 
 func TestSinkIcebergCreateAppendIgnoresKeyNotEnforcedWithoutKey(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'ns', TABLE = 'tbl'\) MODE APPEND WITH \(COMMIT INTERVAL = '10s'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -146,7 +145,7 @@ func TestSinkIcebergCreateAppendIgnoresKeyNotEnforcedWithoutKey(t *testing.T) {
 
 // See TestSinkKafkaKeyCaseHandling: unquoted keys fold, quoted ones pass through.
 func TestSinkIcebergKeyCaseHandling(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE SINK "database"."schema"."iceberg_sink" FROM "database"."schema"."my_view" INTO ICEBERG CATALOG CONNECTION "database"."schema"."iceberg_catalog" \(NAMESPACE = 'ns', TABLE = 'tbl'\) USING AWS CONNECTION "database"."schema"."aws_conn" KEY \(TenantId, "CaseSensitive"\) MODE UPSERT WITH \(COMMIT INTERVAL = '10s'\);`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

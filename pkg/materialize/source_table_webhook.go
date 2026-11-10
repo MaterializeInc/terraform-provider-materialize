@@ -13,7 +13,7 @@ type SourceTableWebhookParams struct {
 }
 
 // Query to get webhook source table information
-var sourceTableWebhookQuery = NewBaseQuery(`
+var SourceTableWebhookQuery = NewBaseQuery(`
 	SELECT
 		mz_tables.id,
 		mz_tables.name,
@@ -44,7 +44,7 @@ func SourceTableWebhookId(conn *sqlx.DB, obj MaterializeObject) (string, error) 
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := sourceTableWebhookQuery.QueryPredicate(p)
+	q := SourceTableWebhookQuery.QueryPredicate(p)
 
 	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
@@ -56,7 +56,7 @@ func SourceTableWebhookId(conn *sqlx.DB, obj MaterializeObject) (string, error) 
 
 // ScanSourceTableWebhook scans a webhook source table by ID
 func ScanSourceTableWebhook(conn *sqlx.DB, id string) (SourceTableWebhookParams, error) {
-	q := sourceTableWebhookQuery.QueryPredicate(map[string]string{"mz_tables.id": id})
+	q := SourceTableWebhookQuery.QueryPredicate(map[string]string{"mz_tables.id": id})
 
 	var params SourceTableWebhookParams
 	if err := conn.Get(&params, q); err != nil {

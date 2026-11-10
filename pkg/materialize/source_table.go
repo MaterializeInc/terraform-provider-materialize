@@ -24,7 +24,7 @@ type SourceTableParams struct {
 	Privileges         StringArray    `db:"privileges"`
 }
 
-var sourceTableQuery = NewBaseQuery(`
+var SourceTableQuery = NewBaseQuery(`
     SELECT
         mz_tables.id,
         mz_tables.name,
@@ -80,7 +80,7 @@ func SourceTableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := sourceTableQuery.QueryPredicate(p)
+	q := SourceTableQuery.QueryPredicate(p)
 
 	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
@@ -91,7 +91,7 @@ func SourceTableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 }
 
 func ScanSourceTable(conn *sqlx.DB, id string) (SourceTableParams, error) {
-	q := sourceTableQuery.QueryPredicate(map[string]string{"mz_tables.id": id})
+	q := SourceTableQuery.QueryPredicate(map[string]string{"mz_tables.id": id})
 
 	var t SourceTableParams
 	if err := conn.Get(&t, q); err != nil {
@@ -187,7 +187,7 @@ func ListSourceTables(conn *sqlx.DB, schemaName, databaseName string) ([]SourceT
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := sourceTableQuery.QueryPredicate(p)
+	q := SourceTableQuery.QueryPredicate(p)
 
 	var c []SourceTableParams
 	if err := conn.Select(&c, q); err != nil {

@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 var sourceTablePostgres = MaterializeObject{Name: "table", SchemaName: "schema", DatabaseName: "database"}
 
 func TestSourceTablePostgresCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
@@ -32,7 +31,7 @@ func TestSourceTablePostgresCreate(t *testing.T) {
 }
 
 func TestSourceTablePostgresRename(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER TABLE "database"."schema"."table" RENAME TO "database"."schema"."new_table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -45,7 +44,7 @@ func TestSourceTablePostgresRename(t *testing.T) {
 }
 
 func TestSourceTablePostgresCreateWithExcludeColumns(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
@@ -66,7 +65,7 @@ func TestSourceTablePostgresCreateWithExcludeColumns(t *testing.T) {
 }
 
 func TestSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
@@ -88,7 +87,7 @@ func TestSourceTablePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
 }
 
 func TestSourceTablePostgresCreateWithExcludeConstraints(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
@@ -110,7 +109,7 @@ func TestSourceTablePostgresCreateWithExcludeConstraints(t *testing.T) {
 }
 
 func TestSourceTablePostgresCreateWithExcludeAllConstraints(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE TABLE "database"."schema"."table"
 			FROM SOURCE "materialize"."public"."source"
@@ -131,7 +130,7 @@ func TestSourceTablePostgresCreateWithExcludeAllConstraints(t *testing.T) {
 }
 
 func TestSourceTablePostgresDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP TABLE "database"."schema"."table";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))

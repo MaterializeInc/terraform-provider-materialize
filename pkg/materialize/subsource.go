@@ -17,7 +17,7 @@ type SubsourceDetail struct {
 	UpstreamTableSchemaName sql.NullString `db:"upstream_table_schema"`
 }
 
-var postgresSubsourceQuery = NewBaseQuery(`
+var PostgresSubsourceQuery = NewBaseQuery(`
 	SELECT DISTINCT
 		mz_sources.id AS object_id,
 		subsources.id AS referenced_object_id,
@@ -40,7 +40,7 @@ var postgresSubsourceQuery = NewBaseQuery(`
 		ON mz_sources.id = mz_postgres_source_tables.id
 `)
 
-var mysqlSubsourceQuery = NewBaseQuery(`
+var MysqlSubsourceQuery = NewBaseQuery(`
 	SELECT DISTINCT
 		mz_sources.id AS object_id,
 		subsources.id AS referenced_object_id,
@@ -63,7 +63,7 @@ var mysqlSubsourceQuery = NewBaseQuery(`
 		ON mz_sources.id = mz_mysql_source_tables.id
 `)
 
-var sqlserverSubsourceQuery = NewBaseQuery(`
+var SqlserverSubsourceQuery = NewBaseQuery(`
 	SELECT DISTINCT
 		mz_sources.id AS object_id,
 		subsources.id AS referenced_object_id,
@@ -95,7 +95,7 @@ func ListPostgresSubsources(conn *sqlx.DB, sourceId string, objectType string) (
 		p["mz_sources.type"] = objectType
 	}
 
-	q := postgresSubsourceQuery.QueryPredicate(p)
+	q := PostgresSubsourceQuery.QueryPredicate(p)
 
 	var subsources []SubsourceDetail
 	if err := conn.Select(&subsources, q); err != nil {
@@ -113,7 +113,7 @@ func ListMysqlSubsources(conn *sqlx.DB, sourceId string, objectType string) ([]S
 		p["mz_sources.type"] = objectType
 	}
 
-	q := mysqlSubsourceQuery.QueryPredicate(p)
+	q := MysqlSubsourceQuery.QueryPredicate(p)
 
 	var subsources []SubsourceDetail
 	if err := conn.Select(&subsources, q); err != nil {
@@ -131,7 +131,7 @@ func ListSQLServerSubsources(conn *sqlx.DB, sourceId string, objectType string) 
 		p["mz_sources.type"] = objectType
 	}
 
-	q := sqlserverSubsourceQuery.QueryPredicate(p)
+	q := SqlserverSubsourceQuery.QueryPredicate(p)
 
 	var subsources []SubsourceDetail
 	if err := conn.Select(&subsources, q); err != nil {

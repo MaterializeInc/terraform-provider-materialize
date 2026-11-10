@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -60,7 +59,7 @@ func TestParseDefaultPrivileges(t *testing.T) {
 }
 
 func TestDefaultPrivilegeGrantSimple(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			ALTER DEFAULT PRIVILEGES FOR ROLE "emily"
 			GRANT SELECT ON TABLES TO "joe";
@@ -74,7 +73,7 @@ func TestDefaultPrivilegeGrantSimple(t *testing.T) {
 }
 
 func TestDefaultPrivilegeGrantComplex(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			ALTER DEFAULT PRIVILEGES FOR ROLE "interns"
 			IN DATABASE "dev"
@@ -90,7 +89,7 @@ func TestDefaultPrivilegeGrantComplex(t *testing.T) {
 }
 
 func TestDefaultPrivilegeRevokeSimple(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			ALTER DEFAULT PRIVILEGES FOR ROLE "developers"
 			REVOKE USAGE ON SECRETS FROM "project_managers";
@@ -104,7 +103,7 @@ func TestDefaultPrivilegeRevokeSimple(t *testing.T) {
 }
 
 func TestDefaultPrivilegeGrantPublicTarget(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			ALTER DEFAULT PRIVILEGES FOR ALL ROLES
 			GRANT SELECT ON TABLES TO "managers";
@@ -118,7 +117,7 @@ func TestDefaultPrivilegeGrantPublicTarget(t *testing.T) {
 }
 
 func TestDefaultPrivilegeGrantPublicGrantee(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(`
 			ALTER DEFAULT PRIVILEGES FOR ROLE "managers"
 			GRANT SELECT ON TABLES TO PUBLIC;

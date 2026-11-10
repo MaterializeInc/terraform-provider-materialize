@@ -141,7 +141,7 @@ type ConnectionAwsParams struct {
 	OwnerName               sql.NullString `db:"owner_name"`
 }
 
-var connectionAwsQuery = NewBaseQuery(`
+var ConnectionAwsQuery = NewBaseQuery(`
 	SELECT
 		mz_connections.id,
 		mz_connections.name AS connection_name,
@@ -177,7 +177,7 @@ var connectionAwsQuery = NewBaseQuery(`
 		ON mz_connections.id = comments.id`)
 
 func ScanConnectionAws(conn *sqlx.DB, id string) (ConnectionAwsParams, error) {
-	q := connectionAwsQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
+	q := ConnectionAwsQuery.QueryPredicate(map[string]string{"mz_connections.id": id})
 
 	var c ConnectionAwsParams
 	if err := conn.Get(&c, q); err != nil {

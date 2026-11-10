@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/MaterializeInc/terraform-provider-materialize/pkg/testhelpers"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestNetworkPolicyCreate(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE NETWORK POLICY "office_policy" \( RULES \( ` +
 				`"new_york" \(action='allow', direction='ingress', address='1\.2\.3\.4/28'\), ` +
@@ -42,7 +41,7 @@ func TestNetworkPolicyCreate(t *testing.T) {
 }
 
 func TestNetworkPolicyCreateNoRules(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`CREATE NETWORK POLICY "empty_policy";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -57,7 +56,7 @@ func TestNetworkPolicyCreateNoRules(t *testing.T) {
 }
 
 func TestNetworkPolicyAlter(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`ALTER NETWORK POLICY "office_policy" SET \( RULES \( ` +
 				`"new_york" \(action='allow', direction='ingress', address='1\.2\.3\.4/28'\), ` +
@@ -90,7 +89,7 @@ func TestNetworkPolicyAlter(t *testing.T) {
 }
 
 func TestNetworkPolicyDrop(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		mock.ExpectExec(
 			`DROP NETWORK POLICY "office_policy";`,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -103,7 +102,7 @@ func TestNetworkPolicyDrop(t *testing.T) {
 }
 
 func TestNetworkPolicyScan(t *testing.T) {
-	testhelpers.WithMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
+	withMockDb(t, func(db *sqlx.DB, mock sqlmock.Sqlmock) {
 		rows := sqlmock.NewRows([]string{
 			"id", "policy_name", "comment", "owner_name", "privileges", "rules",
 		}).AddRow(

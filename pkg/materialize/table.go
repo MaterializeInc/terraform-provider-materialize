@@ -103,7 +103,7 @@ type TableParams struct {
 	Privileges   StringArray    `db:"privileges"`
 }
 
-var tableQuery = NewBaseQuery(`
+var TableQuery = NewBaseQuery(`
 	SELECT
 		mz_tables.id,
 		mz_tables.name,
@@ -133,7 +133,7 @@ func TableId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := tableQuery.QueryPredicate(p)
+	q := TableQuery.QueryPredicate(p)
 
 	var c TableParams
 	if err := conn.Get(&c, q); err != nil {
@@ -147,7 +147,7 @@ func ScanTable(conn *sqlx.DB, id string) (TableParams, error) {
 	p := map[string]string{
 		"mz_tables.id": id,
 	}
-	q := tableQuery.QueryPredicate(p)
+	q := TableQuery.QueryPredicate(p)
 
 	var c TableParams
 	if err := conn.Get(&c, q); err != nil {
@@ -162,7 +162,7 @@ func ListTables(conn *sqlx.DB, schemaName, databaseName string) ([]TableParams, 
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := tableQuery.QueryPredicate(p)
+	q := TableQuery.QueryPredicate(p)
 
 	var c []TableParams
 	if err := conn.Select(&c, q); err != nil {

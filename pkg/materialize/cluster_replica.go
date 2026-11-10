@@ -113,7 +113,7 @@ type ClusterReplicaParams struct {
 	Comment          sql.NullString `db:"comment"`
 }
 
-var clusterReplicaQuery = NewBaseQuery(`
+var ClusterReplicaQuery = NewBaseQuery(`
 	SELECT
 		mz_cluster_replicas.id,
 		mz_cluster_replicas.name AS replica_name,
@@ -137,7 +137,7 @@ func ClusterReplicaId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_cluster_replicas.name": obj.Name,
 		"mz_clusters.name":         obj.ClusterName,
 	}
-	q := clusterReplicaQuery.QueryPredicate(p)
+	q := ClusterReplicaQuery.QueryPredicate(p)
 
 	var c ClusterReplicaParams
 	if err := conn.Get(&c, q); err != nil {
@@ -151,7 +151,7 @@ func ScanClusterReplica(conn *sqlx.DB, id string) (ClusterReplicaParams, error) 
 	p := map[string]string{
 		"mz_cluster_replicas.id": id,
 	}
-	q := clusterReplicaQuery.QueryPredicate(p)
+	q := ClusterReplicaQuery.QueryPredicate(p)
 
 	var c ClusterReplicaParams
 	if err := conn.Get(&c, q); err != nil {
@@ -163,7 +163,7 @@ func ScanClusterReplica(conn *sqlx.DB, id string) (ClusterReplicaParams, error) 
 
 func ListClusterReplicas(conn *sqlx.DB) ([]ClusterReplicaParams, error) {
 	p := map[string]string{}
-	q := clusterReplicaQuery.QueryPredicate(p)
+	q := ClusterReplicaQuery.QueryPredicate(p)
 
 	var c []ClusterReplicaParams
 	if err := conn.Select(&c, q); err != nil {

@@ -65,7 +65,7 @@ type SecretParams struct {
 	Privileges   StringArray    `db:"privileges"`
 }
 
-var secretQuery = NewBaseQuery(`
+var SecretQuery = NewBaseQuery(`
 	SELECT
 		mz_secrets.id,
 		mz_secrets.name,
@@ -94,7 +94,7 @@ func SecretId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := secretQuery.QueryPredicate(p)
+	q := SecretQuery.QueryPredicate(p)
 
 	var c SecretParams
 	if err := conn.Get(&c, q); err != nil {
@@ -108,7 +108,7 @@ func ScanSecret(conn *sqlx.DB, id string) (SecretParams, error) {
 	p := map[string]string{
 		"mz_secrets.id": id,
 	}
-	q := secretQuery.QueryPredicate(p)
+	q := SecretQuery.QueryPredicate(p)
 
 	var c SecretParams
 	if err := conn.Get(&c, q); err != nil {
@@ -123,7 +123,7 @@ func ListSecrets(conn *sqlx.DB, schemaName, databaseName string) ([]SecretParams
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := secretQuery.QueryPredicate(p)
+	q := SecretQuery.QueryPredicate(p)
 
 	var c []SecretParams
 	if err := conn.Select(&c, q); err != nil {

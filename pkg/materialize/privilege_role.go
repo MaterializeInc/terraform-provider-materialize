@@ -41,7 +41,7 @@ type RolePrivilegeParams struct {
 	Grantor sql.NullString `db:"grantor"`
 }
 
-var rolePrivilegeQuery = NewBaseQuery(`
+var RolePrivilegeQuery = NewBaseQuery(`
 	SELECT
 		mz_role_members.role_id,
 		mz_role_members.member,
@@ -54,7 +54,7 @@ func ScanRolePrivilege(conn *sqlx.DB, roleId, memberId string) ([]RolePrivilegeP
 		"mz_role_members.member":  memberId,
 	}
 
-	q := rolePrivilegeQuery.QueryPredicate(p)
+	q := RolePrivilegeQuery.QueryPredicate(p)
 
 	var c []RolePrivilegeParams
 	if err := conn.Select(&c, q); err != nil {

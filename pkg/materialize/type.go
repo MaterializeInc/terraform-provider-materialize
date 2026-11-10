@@ -147,7 +147,7 @@ type TypeParams struct {
 	Privileges   StringArray    `db:"privileges"`
 }
 
-var typeQuery = NewBaseQuery(`
+var TypeQuery = NewBaseQuery(`
 	SELECT
 		mz_types.id,
 		mz_types.name,
@@ -177,7 +177,7 @@ func TypeId(conn *sqlx.DB, obj MaterializeObject) (string, error) {
 		"mz_schemas.name":   obj.SchemaName,
 		"mz_databases.name": obj.DatabaseName,
 	}
-	q := typeQuery.QueryPredicate(p)
+	q := TypeQuery.QueryPredicate(p)
 
 	var c TypeParams
 	if err := conn.Get(&c, q); err != nil {
@@ -191,7 +191,7 @@ func ScanType(conn *sqlx.DB, id string) (TypeParams, error) {
 	p := map[string]string{
 		"mz_types.id": id,
 	}
-	q := typeQuery.QueryPredicate(p)
+	q := TypeQuery.QueryPredicate(p)
 
 	var c TypeParams
 	if err := conn.Get(&c, q); err != nil {
@@ -206,7 +206,7 @@ func ListTypes(conn *sqlx.DB, schemaName, databaseName string) ([]TypeParams, er
 		"mz_schemas.name":   schemaName,
 		"mz_databases.name": databaseName,
 	}
-	q := typeQuery.QueryPredicate(p)
+	q := TypeQuery.QueryPredicate(p)
 
 	var c []TypeParams
 	if err := conn.Select(&c, q); err != nil {
