@@ -379,11 +379,22 @@ type ClusterReconfigParams struct {
 // finalizes between them would otherwise be missed by both, leaving the old
 // shape from mz_clusters as the result.
 func ScanClusterPendingReconfiguration(conn *sqlx.DB, identifier string, byName bool) (ClusterReconfigParams, bool, error) {
-	var p ClusterReconfigParams
 	predicate := `cluster_id = $1`
 	if byName {
 		predicate = `cluster_id = (SELECT id FROM mz_clusters WHERE name = $1)`
 	}
+	return scanPendingReconfiguration(conn, predicate, identifier)
+}
+
+// ScanSourcePendingReconfiguration is ScanClusterPendingReconfiguration for the
+// cluster a source runs on, looked up by the source id so that it can run
+// before the source row is read.
+func ScanSourcePendingReconfiguration(conn *sqlx.DB, sourceId string) (ClusterReconfigParams, bool, error) {
+	return scanPendingReconfiguration(conn, `cluster_id = (SELECT cluster_id FROM mz_sources WHERE id = $1)`, sourceId)
+}
+
+func scanPendingReconfiguration(conn *sqlx.DB, predicate, identifier string) (ClusterReconfigParams, bool, error) {
+	var p ClusterReconfigParams
 	q := `
 		SELECT
 			target->>'size' AS size,
@@ -396,7 +407,7 @@ func ScanClusterPendingReconfiguration(conn *sqlx.DB, identifier string, byName 
 			return p, false, nil
 		}
 		if isUndefinedObject(err) {
-			log.Printf("[DEBUG] reconfigurations view unavailable for cluster %s: %s", identifier, err)
+			log.Printf("[DEBUG] reconfigurations view unavailable for %s: %s", identifier, err)
 			return p, false, nil
 		}
 		return p, false, err

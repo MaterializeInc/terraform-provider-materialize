@@ -54,6 +54,7 @@ func TestResourceSourcePostgresCreateTable(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Tables
@@ -80,6 +81,7 @@ func TestResourceSourcePostgresUpdate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Tables
@@ -144,6 +146,7 @@ func TestResourceSourcePostgresCreateWithExcludeColumns(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Tables
@@ -194,6 +197,7 @@ func TestResourceSourcePostgresCreateWithTextAndExcludeColumns(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		// Query Tables

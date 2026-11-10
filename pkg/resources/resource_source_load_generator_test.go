@@ -49,6 +49,7 @@ func TestResourceSourceLoadgenCreate(t *testing.T) {
 
 		// Query Params
 		pp := `WHERE mz_sources.id = 'u1'`
+		testhelpers.MockClusterReconfigurationScan(mock, "", 0)
 		testhelpers.MockSourceScan(mock, pp)
 
 		if err := sourceLoadgenCreate(context.TODO(), d, db); err != nil {
