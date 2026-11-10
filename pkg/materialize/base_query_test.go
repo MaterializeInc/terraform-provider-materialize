@@ -33,8 +33,7 @@ func TestQueryPredicateParams(t *testing.T) {
 
 func TestQueryPredicateAdditionalParams(t *testing.T) {
 	r := require.New(t)
-	b := NewBaseQuery(statement)
-	b.CustomPredicate([]string{"salary BETWEEN 1 AND 10"})
+	b := NewBaseQuery(statement).CustomPredicate([]string{"salary BETWEEN 1 AND 10"})
 
 	q := b.QueryPredicate(map[string]string{})
 	r.Equal(`SELECT * FROM table WHERE salary BETWEEN 1 AND 10;`, q)
@@ -42,9 +41,18 @@ func TestQueryPredicateAdditionalParams(t *testing.T) {
 
 func TestQueryPredicateAllParams(t *testing.T) {
 	r := require.New(t)
-	b := NewBaseQuery(statement)
-	b.CustomPredicate([]string{"salary BETWEEN 1 AND 10"})
+	b := NewBaseQuery(statement).CustomPredicate([]string{"salary BETWEEN 1 AND 10"})
 
 	q := b.QueryPredicate(map[string]string{"table": "table_name"})
 	r.Equal(`SELECT * FROM table WHERE salary BETWEEN 1 AND 10 AND table = 'table_name';`, q)
+}
+
+func TestQuerySettersDoNotChangeReceiver(t *testing.T) {
+	r := require.New(t)
+	b := NewBaseQuery(statement)
+	b.CustomPredicate([]string{"salary BETWEEN 1 AND 10"})
+	b.Order("salary")
+
+	q := b.QueryPredicate(map[string]string{})
+	r.Equal(`SELECT * FROM table;`, q)
 }

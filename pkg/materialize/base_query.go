@@ -22,14 +22,18 @@ func (b *BaseQuery) Statement() string {
 	return b.statement
 }
 
+// CustomPredicate and Order return a copy, so the shared query variables are
+// not changed by callers adding their own predicates.
 func (b *BaseQuery) CustomPredicate(c []string) *BaseQuery {
-	b.customPredicate = c
-	return b
+	q := *b
+	q.customPredicate = c
+	return &q
 }
 
 func (b *BaseQuery) Order(c string) *BaseQuery {
-	b.order = c
-	return b
+	q := *b
+	q.order = c
+	return &q
 }
 
 func (b *BaseQuery) QueryPredicate(predicate map[string]string) string {
