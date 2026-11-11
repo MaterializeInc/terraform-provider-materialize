@@ -178,14 +178,12 @@ func ScanRole(conn *sqlx.DB, id string) (RoleParams, error) {
 }
 
 func ListRoles(conn *sqlx.DB, likePattern string) ([]RoleParams, error) {
-	localQuery := *RoleQuery
-
 	var customPredicate []string
 	if likePattern != "" {
 		customPredicate = append(customPredicate, fmt.Sprintf("mz_roles.name LIKE %s", QuoteString(likePattern)))
 	}
 
-	q := localQuery.CustomPredicate(customPredicate).QueryPredicate(map[string]string{})
+	q := RoleQuery.CustomPredicate(customPredicate).QueryPredicate(map[string]string{})
 
 	var c []RoleParams
 	if err := conn.Select(&c, q); err != nil {
