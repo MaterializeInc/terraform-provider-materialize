@@ -17,7 +17,7 @@ description: >-
 
 # Materialize Terraform Provider: Development Guide
 
-This skill covers contributing to the `terraform-provider-materialize` codebase. For using the provider as an end user, see the `materialize-terraform-provider` skill instead.
+This skill covers contributing to the `terraform-provider-materialize` codebase. For using the provider as an end user, see the `mz-terraform-provider` skill in [MaterializeInc/agent-skills](https://github.com/MaterializeInc/agent-skills) instead.
 
 ## How to Use This Skill
 
@@ -33,11 +33,15 @@ Key reference files in the repo: `DESIGN.md` (architecture patterns), `CONTRIBUT
 
 | Command | Purpose |
 |---------|---------|
+| `make build` | Build the provider binary |
 | `make install` | Build and install provider to `~/.terraform.d/plugins/` |
 | `make test` | Run unit tests |
 | `make testacc` | Run acceptance tests (requires `docker compose up -d`) |
 | `make docs` | Generate docs from schema (`go generate ./...`) |
 | `make fmt` | Format Go and Terraform code |
+| `make vet` | Run `go vet` |
+| `make lint` | Run `golangci-lint` (same as CI) |
+| `make release` | Local goreleaser snapshot only, does not publish |
 
 ## Architecture
 
@@ -45,7 +49,7 @@ Three-tier design. Each tier has a clear responsibility.
 
 ### Tier 1: Materialize layer (`pkg/materialize/`)
 
-SQL builders and query definitions. About 107 files, one per object type. Every object follows the builder pattern (see `DESIGN.md`):
+SQL builders and query definitions, one file per object type. Every object follows the builder pattern (see `DESIGN.md`):
 
 ```go
 // Builder: constructs SQL statements
@@ -70,7 +74,7 @@ type DatabaseParams struct {
     OwnerName    sql.NullString `db:"owner_name"`
 }
 
-var databaseQuery = NewBaseQuery(`
+var DatabaseQuery = NewBaseQuery(`
     SELECT mz_databases.id, mz_databases.name AS database_name, ...
     FROM mz_databases
     JOIN mz_roles ON mz_databases.owner_id = mz_roles.id
@@ -82,11 +86,13 @@ Key utilities:
 - `QuoteString(s)`: single-quote SQL string literals
 - `QualifiedName(parts...)`: join as `"db"."schema"."object"`
 - `NewBaseQuery(sql)` + `.QueryPredicate(map)`: build filtered queries
+- `.CustomPredicate([]string)` and `.Order(string)` return a copy, so always use the returned value. The shared query variables are never changed
+- `.Statement()`: the bare statement, used by the test mocks
 - `MaterializeObject`: struct with `Name`, `SchemaName`, `DatabaseName`, `ObjectType`
 
 ### Tier 2: Resources and data sources (`pkg/resources/`, `pkg/datasources/`)
 
-Terraform resource definitions. About 151 resource files and 55 data source files. Each resource has:
+Terraform resource definitions. Each resource has:
 
 - Schema definition (map of `*schema.Schema`)
 - Constructor returning `*schema.Resource` with CRUD functions
@@ -110,7 +116,11 @@ Schema helpers in `pkg/resources/schema.go`:
 - `pkg/clients/`: Database connection management (pgx/sqlx)
 - `pkg/frontegg/`: Cloud/SaaS API client (Frontegg auth)
 - `pkg/testhelpers/`: Mock database setup, shared mock scan functions
-- `pkg/utils/`: ID extraction, region transforms, DB client helpers
+- `pkg/utils/`: ID extraction, region transforms, DB client helpers, provider mode
+
+### Provider modes
+
+The provider runs in SaaS mode (`utils.ModeSaaS`, the default) or self-hosted mode (`utils.ModeSelfHosted`). Check with `providerMeta.IsSaaS()` or `IsSelfHosted()`. Resources and data sources that use the Frontegg cloud API (users, SSO, SCIM, app passwords) only work in SaaS mode and should call `providerMeta.ValidateSaaSOnly("<name>")` first.
 
 ## Adding a Resource End to End
 
@@ -140,12 +150,12 @@ func (b *MyResourceBuilder) Drop() error { ... }
 
 // Query layer
 type MyResourceParams struct { ... }
-var myResourceQuery = NewBaseQuery(`SELECT ... FROM ...`)
+var MyResourceQuery = NewBaseQuery(`SELECT ... FROM ...`)
 func ScanMyResource(conn *sqlx.DB, id string) (MyResourceParams, error) { ... }
 func MyResourceId(conn *sqlx.DB, obj MaterializeObject) (string, error) { ... }
 ```
 
-Convention: parameter names should match Materialize SQL syntax as closely as possible (see `DESIGN.md`).
+Convention: parameter names should match Materialize SQL syntax as closely as possible (see `DESIGN.md`). Export the query variable (`MyResourceQuery`) so the test mocks can build their expected SQL from it.
 
 ### Step 2: Resource in `pkg/resources/`
 
@@ -172,6 +182,10 @@ CRUD pattern:
 - **Update**: Check `d.HasChange("field")` for each mutable field. Apply changes via builder.
 - **Delete**: Build and execute DROP.
 
+Sources share their common read logic in `sourceReadParams()` in `pkg/resources/resource_source.go`. A source type calls it and then sets only its own fields.
+
+If a Read also looks up an in-flight change (for example a pending cluster resize), do that lookup before reading the object row. Otherwise a change that finishes between the two reads is missed by both. See `clusterRead` and `sourceReadParams`.
+
 ID management:
 - After CREATE, query by name to get the `mz_catalog` ID
 - Store as: `utils.TransformIdWithRegion(string(region), id)`
@@ -195,11 +209,24 @@ Register in `DataSourcesMap`:
 
 ### Step 5: Mock scans in `pkg/testhelpers/mock_scans.go`
 
-Add a `MockMyResourceScan` function that sets up `sqlmock` expectations matching your query.
+Add a `MockMyResourceScan` function. Build the expected SQL from the production query, so it stays in sync when the query changes:
+
+```go
+func MockMyResourceScan(mock sqlmock.Sqlmock, predicate string) {
+    q := mockQueryBuilder(materialize.MyResourceQuery.Statement(), predicate, "")
+    ir := mock.NewRows([]string{"id", "name", "owner_name"}).
+        AddRow("u1", "my_resource", "joe")
+    mock.ExpectQuery(q).WillReturnRows(ir)
+}
+```
+
+The returned row columns are still written by hand and must match the query's columns.
 
 ### Step 6: Unit tests
 
 Create `pkg/resources/resource_<type>_test.go` and optionally `pkg/materialize/<type>_test.go`.
+
+Tests inside `pkg/materialize` (package `materialize`) cannot import `testhelpers`, since that creates an import cycle. Use the local `withMockDb` from `helpers_test.go`, or put tests that need the shared mock scans in `scan_test.go` (package `materialize_test`).
 
 Unit tests use `testhelpers.WithMockProviderMeta()` to set up a mock database:
 
@@ -212,7 +239,7 @@ func TestResourceMyResourceCreate(t *testing.T) {
         mock.ExpectExec(`CREATE ...`).WillReturnResult(sqlmock.NewResult(1, 1))
         mock.ExpectQuery(`SELECT ...`).WillReturnRows(...)
 
-        if err := myResourceCreate(context.TODO(), d, db); err != nil {
+        if err := myResourceCreate(context.Background(), d, db); err != nil {
             t.Fatal(err)
         }
     })
@@ -322,22 +349,36 @@ docker compose exec materialized psql -U materialize -d materialize -c "SELECT *
 
 ## CI Pipelines
 
+PR workflows only run when their paths change (mostly `pkg/**`, `main.go`, `go.mod`). A PR that only touches `CHANGELOG.md` gets no checks. Branch protection on `main` needs one approval but no required checks, so wait for CI to pass before merging.
+
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
-| `test.yml` | PR touching pkg/, main.go, go.mod | Unit tests with 50% coverage gate |
-| `acceptance.yml` | PR | Acceptance tests against Docker Compose |
-| `integration.yml` | PR | Full integration test (apply/plan/destroy) |
+| `test.yml` | PR | Unit tests with `-race` and a 50% coverage gate |
+| `lint.yml` | PR | `golangci-lint` |
 | `gofmt.yml` | PR | Go formatting check |
-| `terraform.yml` | PR | Terraform HCL syntax check |
 | `documentation.yml` | PR | Docs generation check |
+| `terraform.yml` | PR touching examples/ or integration/ | Terraform HCL format check |
+| `acceptance.yml` | PR, weekly | Acceptance tests against Docker Compose |
+| `integration.yml` | PR, weekly | SaaS integration test (apply/plan/destroy) |
+| `integration-self-hosted.yml` | PR, weekly | Self-hosted integration test |
+| `nightly.yml` | Daily, manual | Acceptance and integration against a chosen `materialize_tag` (default `unstable`). Opens an issue on failure |
 | `release.yml` | Tag push (v*) | Goreleaser build, GPG sign, publish to GitHub Releases |
+
+Dependency updates come from Renovate (`.github/renovate.json5`), not Dependabot.
+
+## Changelog
+
+Every user-facing PR adds an entry to `CHANGELOG.md` under `## Unreleased` (for example `### Bug Fixes` or `### Features`) with a link to the PR. Test-only, CI-only and pure refactor PRs need no entry.
 
 ## Release Flow
 
-Tag and push:
+1. Open a PR that renames `## Unreleased` in `CHANGELOG.md` to `## X.Y.Z - YYYY-MM-DD`. List dependency and security bumps under `### Misc` with PR links.
+2. Get one approval and merge it.
+3. Tag the merge commit and push the tag:
+
 ```bash
-git tag -a vX.Y.Z -m vX.Y.Z
-git push origin vX.Y.Z
+git tag -a vX.Y.Z -m vX.Y.Z <merge-commit-sha>
+git push origin refs/tags/vX.Y.Z
 ```
 
 This triggers `.goreleaser.yml` via GitHub Actions. Builds binaries for all platforms, signs with GPG, and publishes to GitHub Releases. The Terraform Registry picks up the release automatically.
@@ -371,7 +412,9 @@ This triggers `.goreleaser.yml` via GitHub Actions. Builds binaries for all plat
 - **Forgetting region prefix on IDs**: Always wrap IDs with `utils.TransformIdWithRegion()` and extract with `utils.ExtractId()`.
 - **Not handling sql.ErrNoRows**: In Read functions, check for `sql.ErrNoRows` and call `d.SetId("")` to mark the resource as deleted.
 - **ForceNew on immutable fields**: Fields like `database_name` and `schema_name` that cannot be changed after creation need `ForceNew: true` in the schema.
-- **Not updating mock_scans.go**: When you add or change query columns, the mock scan function must match.
+- **Not updating mock_scans.go**: The mock SQL follows the production query, but when you add or change query columns, the mock's returned columns must match.
+- **Ignoring the return value of `CustomPredicate()` or `Order()`**: They return a copy, so `q.CustomPredicate(...)` on its own does nothing.
+- **Import cycle in `pkg/materialize` tests**: Do not import `testhelpers` there. Use `withMockDb` or `scan_test.go`.
 - **Not updating the data source**: When adding a field to a resource, also add it to the corresponding data source schema and read function.
 - **Pre-commit hooks**: Install with `pre-commit install`. They run `make docs`, `gofmt`, and `terraform fmt` automatically.
 
@@ -380,7 +423,7 @@ This triggers `.goreleaser.yml` via GitHub Actions. Builds binaries for all plat
 | Package | Purpose |
 |---------|---------|
 | `hashicorp/terraform-plugin-sdk/v2` | Terraform plugin framework |
-| `jackc/pgx/v4` | PostgreSQL driver |
+| `jackc/pgx/v5` | PostgreSQL driver |
 | `jmoiron/sqlx` | SQL utility wrapper (named params, struct scanning) |
 | `DATA-DOG/go-sqlmock` | Mock database for unit tests |
 | `hashicorp/terraform-plugin-testing` | Acceptance test framework |
