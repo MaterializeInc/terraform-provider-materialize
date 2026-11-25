@@ -23,7 +23,7 @@ jobs:
     env:
       MZ_IMAGE_TAG: ${{ inputs.materialize_tag || 'latest' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Docker Compose Up
         run: docker compose up --build -d materialized materialized_init redpanda postgres mysql provider sqlserver
